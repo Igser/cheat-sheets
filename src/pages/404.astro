@@ -1,0 +1,44 @@
+---
+// Страница ошибки для GitHub Pages: dist/404.html отдаётся на любой неизвестный
+// адрес. Она намеренно не описана в src/data/sheets.js — это не конспект, а
+// служебная страница, и ссылки в ней абсолютные: 404 открывается по
+// произвольному пути (/cheat-sheets/что-угодно/ещё), где относительный
+// href="index.html" указал бы в никуда.
+import Sheet from '../layouts/Sheet.astro';
+import css from '../styles/pages/index.css?raw';
+
+const href = (path) => new URL(path, Astro.site).pathname;
+
+const suggestions = [
+  ['php.html', 'PHP: от основ до внутренностей'],
+  ['sql.html', 'SQL и базы данных'],
+  ['system-design.html', 'System Design'],
+  ['algorithms.html', 'Алгоритмы для live-coding'],
+];
+
+const html = `
+<div class="page">
+<header class="hero">
+  <p class="eyebrow">Ошибка 404 · страница не найдена</p>
+  <h1>Такой страницы здесь нет</h1>
+  <p class="lead">Адрес набран с опечаткой, конспект переименован или ссылка ведёт на старую версию сайта. Каталог из 29 конспектов открыт и никуда не делся.</p>
+  <div class="hero-actions">
+    <a class="button" href="${href('index.html')}">Ко всем конспектам <span aria-hidden="true">→</span></a>
+    <a class="button secondary" href="${href('php.html')}">Открыть PHP <span aria-hidden="true">→</span></a>
+  </div>
+  <div class="stats">${suggestions
+    .map(([file, label]) => `<span><a href="${href(file)}">${label}</a></span>`)
+    .join('')}</div>
+</header>
+</div>
+`;
+---
+<Sheet
+  title="Страница не найдена — PHP Developer Notes"
+  description="Запрошенной страницы нет. Вернитесь в каталог конспектов PHP Developer Notes."
+  author="PHP Tech Lead notes"
+  robots="noindex, follow"
+  bodyId={null}
+  css={css}
+  html={html}
+/>
