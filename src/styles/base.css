@@ -381,6 +381,8 @@ hr.sep{border:0;border-top:1px dashed var(--line);margin:26px 0}
 }
 
 /* ============ ПЕЧАТЬ ============ */
+@page{size:A4;margin:15mm 14mm}
+
 @media print{
   :root{--paper:#fff}
   body{font-size:10.5pt;line-height:1.42;background:#fff}
@@ -402,6 +404,21 @@ hr.sep{border:0;border-top:1px dashed var(--line);margin:26px 0}
   table{font-size:9pt;min-width:0}
   a{color:#000;text-decoration:none}
   thead{display:table-header-group}
+
+  /* На экране широкое содержимое прокручивается вбок; на бумаге прокрутки
+     нет, поэтому обрезанное надо распустить, иначе правый край уедет в никуда. */
+  .tw,.formula,.code pre{overflow:visible}
+  .flow{overflow:visible;flex-wrap:wrap}
+  .node{flex:1 0 auto}
+
+  /* Бумага не кликается: адрес внешней ссылки печатаем рядом с текстом.
+     Внутренние ссылки и якоря остаются как есть — их адрес читателю не нужен. */
+  a[href^="http"]::after{content:" (" attr(href) ")";font:8pt var(--f-mono);color:#555;word-break:break-all}
+
+  /* Мелочи вёрстки полосы: не отрывать одиночные строки абзаца
+     и не разрывать строку таблицы между листами. */
+  p,li{orphans:3;widows:3}
+  tr,.badge{break-inside:avoid}
 }
 
 /* ============ СХЕМЫ И РАСЧЁТЫ ============ */
