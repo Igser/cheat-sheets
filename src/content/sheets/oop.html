@@ -1,0 +1,1455 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · объекты · типы · проектирование классов</p>
+  <h1>ООП в PHP</h1>
+  <p class="lead">Объектно-ориентированный код оценивают не по количеству классов и не по наличию интерфейсов, а по одному признаку: сколько состояний объекта возможно и сколько из них корректны. Класс, который можно создать наполовину заполненным, изменить в любом порядке и оставить в противоречивом виде, не является абстракцией — это структура данных с методами, и все проверки корректности рано или поздно расползутся по всему приложению.</p>
+  <p class="lead">Отсюда практический критерий, к которому сводится большая часть темы: объект отвечает за свои инварианты сам. Конструктор не даёт создать некорректный экземпляр, публичные методы переводят объект только между допустимыми состояниями, а всё, что не должно меняться, физически не меняется. Такой класс невозможно использовать неправильно — и именно это, а не количество слоёв абстракции, отличает хороший объектный дизайн.</p>
+  <p class="lead">Конспект идёт от механики к проектированию: инкапсуляция, интерфейсы против абстрактных классов, наследование и композиция, трейты → типизация и вариантность, иммутабельность, идентичность и клонирование, магические методы, исключения, стандартные интерфейсы → инварианты, связанность, рефлексия и атрибуты, эволюция публичного API. Смежные темы: <a href="patterns.html">паттерны и архитектура кода</a> (SOLID, каталог паттернов, DDD), <a href="php.html">PHP</a> (синтаксис и рантайм), <a href="new-in-php.html">новые версии языка</a>, <a href="testing.html">тестирование</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Инкапсуляция и состояние, интерфейсы против абстрактных классов, наследование и композиция, трейты, статика и константы.</span></div>
+    <div class="aud m"><b>Middle</b><span>Типизация и вариантность, обобщённые типы через анализатор, иммутабельность и объекты-значения, идентичность и клонирование, магические методы, исключения, стандартные интерфейсы.</span></div>
+    <div class="aud s"><b>Senior</b><span>Инварианты и невозможные состояния, связанность и границы, рефлексия и атрибуты, эволюция публичного API, антипаттерны.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>15</i></span>
+    <span>Блоков кода: <i>14</i></span>
+    <span>Сравнительных таблиц: <i>25</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#encapsulation">Инкапсуляция и состояние</a></li>
+    <li><span class="tree">├─</span> <a href="#interfaces">Интерфейсы и абстрактные классы</a></li>
+    <li><span class="tree">├─</span> <a href="#inheritance">Наследование и композиция</a></li>
+    <li><span class="tree">├─</span> <a href="#traits">Трейты, статика, константы</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#typing">Типы и вариантность</a></li>
+    <li><span class="tree">├─</span> <a href="#generics">Обобщённые типы</a></li>
+    <li><span class="tree">├─</span> <a href="#immutable">Иммутабельность и значения</a></li>
+    <li><span class="tree">├─</span> <a href="#identity">Идентичность и клонирование</a></li>
+    <li><span class="tree">├─</span> <a href="#magic">Магические методы</a></li>
+    <li><span class="tree">├─</span> <a href="#contracts">Исключения и контракт</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#invariants">Инварианты и невозможные состояния</a></li>
+    <li><span class="tree">├─</span> <a href="#coupling">Связанность и границы</a></li>
+    <li><span class="tree">├─</span> <a href="#meta">Рефлексия и атрибуты</a></li>
+    <li><span class="tree">├─</span> <a href="#evolution">Эволюция публичного API</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Антипаттерны</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Шаблоны классов</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · механика объектов</p>
+    <h2>Junior: из чего состоит класс и зачем это нужно</h2>
+    <p>Первый уровень — не про синтаксис, а про смысл конструкций. Модификатор доступа, интерфейс, наследование и трейт решают конкретные задачи, и умение сказать, какую именно, отличает понимание от заученных определений.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="encapsulation">
+    <p class="path">junior / инкапсуляция</p>
+    <div class="card-top"><h3>Инкапсуляция и состояние</h3><span class="badge b-1">База</span></div>
+    <p>Инкапсуляция — это не «сделать свойства приватными и написать геттеры». Это обещание класса: снаружи известно, что он умеет, но не известно, как он это хранит. Класс с приватными свойствами и полным набором геттеров и сеттеров ничего не инкапсулирует — его внутреннее устройство видно целиком, просто через методы.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Данные с методами против объекта</span></div><pre><span class="cm">// НЕ инкапсуляция: структура данных, притворяющаяся объектом</span>
+<span class="kw">class</span> <span class="nm">Order</span>
+{
+    <span class="kw">private array</span> <span class="nm">$items</span> = [];
+    <span class="kw">private string</span> <span class="nm">$status</span> = <span class="st">'new'</span>;
+
+    <span class="kw">public function</span> <span class="fn">getItems</span>(): <span class="kw">array</span> { <span class="kw">return</span> <span class="nm">$this</span>-&gt;items; }
+    <span class="kw">public function</span> <span class="fn">setItems</span>(<span class="kw">array</span> <span class="nm">$i</span>): <span class="kw">void</span> { <span class="nm">$this</span>-&gt;items = <span class="nm">$i</span>; }
+    <span class="kw">public function</span> <span class="fn">setStatus</span>(<span class="kw">string</span> <span class="nm">$s</span>): <span class="kw">void</span> { <span class="nm">$this</span>-&gt;status = <span class="nm">$s</span>; }
+}
+<span class="cm">// Правила живут в вызывающем коде и дублируются в пяти местах:</span>
+<span class="cm">// if ($order-&gt;getStatus() === 'new') { $order-&gt;setStatus('paid'); }</span>
+
+<span class="cm">// Инкапсуляция: наружу — операции, внутрь — правила</span>
+<span class="kw">final class</span> <span class="nm">Order</span>
+{
+    <span class="kw">private array</span> <span class="nm">$items</span> = [];
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private</span> <span class="nm">OrderStatus</span> <span class="nm">$status</span> = <span class="nm">OrderStatus</span>::New) {}
+
+    <span class="kw">public function</span> <span class="fn">addItem</span>(<span class="nm">Sku</span> <span class="nm">$sku</span>, <span class="kw">int</span> <span class="nm">$qty</span>): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> (!<span class="nm">$this</span>-&gt;status-&gt;<span class="fn">allowsEditing</span>()) {
+            <span class="kw">throw new</span> <span class="nm">OrderIsLocked</span>(<span class="nm">$this</span>-&gt;status);
+        }
+        <span class="nm">$this</span>-&gt;items[] = <span class="kw">new</span> <span class="nm">OrderItem</span>(<span class="nm">$sku</span>, <span class="nm">$qty</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">pay</span>(<span class="nm">Money</span> <span class="nm">$amount</span>): <span class="kw">void</span>
+    {
+        <span class="cm">// правило живёт ровно в одном месте — здесь</span>
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;status !== <span class="nm">OrderStatus</span>::New) {
+            <span class="kw">throw new</span> <span class="nm">OrderAlreadyPaid</span>();
+        }
+        <span class="kw">if</span> (!<span class="nm">$amount</span>-&gt;<span class="fn">equals</span>(<span class="nm">$this</span>-&gt;<span class="fn">total</span>())) {
+            <span class="kw">throw new</span> <span class="nm">AmountMismatch</span>(<span class="nm">$amount</span>, <span class="nm">$this</span>-&gt;<span class="fn">total</span>());
+        }
+        <span class="nm">$this</span>-&gt;status = <span class="nm">OrderStatus</span>::Paid;
+    }
+
+    <span class="cm">// наружу отдаём копию, а не внутренний массив</span>
+    <span class="kw">public function</span> <span class="fn">items</span>(): <span class="kw">array</span> { <span class="kw">return</span> [...<span class="nm">$this</span>-&gt;items]; }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · признаки настоящей инкапсуляции</caption>
+      <thead><tr><th>Признак</th><th>Инкапсулировано</th><th>Не инкапсулировано</th></tr></thead>
+      <tbody>
+        <tr><td>Публичные методы</td><td>Операции предметной области</td><td>Пары получить и установить для каждого свойства</td></tr>
+        <tr><td>Правила перехода состояний</td><td>Внутри класса, в одном месте</td><td>В вызывающем коде, в нескольких местах</td></tr>
+        <tr><td>Внутренние коллекции</td><td>Отдаются копией или неизменяемым представлением</td><td>Отдаются ссылкой, снаружи меняют напрямую</td></tr>
+        <tr><td>Смена внутреннего хранения</td><td>Не затрагивает пользователей класса</td><td>Ломает всех, кто читал свойства через геттеры</td></tr>
+        <tr><td>Некорректное состояние</td><td>Невозможно создать</td><td>Достигается вызовом сеттеров в другом порядке</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Возврат внутреннего массива — самая частая незаметная дыра. В PHP массивы копируются при присваивании, поэтому <span class="nm">return $this-&gt;items</span> для массива относительно безопасен, но массив объектов копируется поверхностно: элементы остаются теми же экземплярами, и вызывающий код может изменить их состояние в обход всех правил класса. С объектами это уже полноценная утечка инкапсуляции.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое инкапсуляция и зачем она нужна?</b><br>Это сокрытие внутреннего устройства объекта за набором операций: снаружи известно, что объект умеет, но не известно, как он хранит данные. Практическая ценность в двух вещах: правила корректности живут в одном месте, а не размазаны по вызывающему коду, и внутреннее устройство можно менять, не ломая пользователей класса. Приватные свойства с полным набором геттеров и сеттеров инкапсуляцией не являются — они просто дают доступ к тем же данным другим синтаксисом.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="interfaces">
+    <p class="path">junior / контракты</p>
+    <div class="card-top"><h3>Интерфейсы и абстрактные классы</h3><span class="badge b-1">Контракт</span></div>
+    <p>Интерфейс говорит, что объект умеет; абстрактный класс говорит, чем объект является, и приносит с собой часть реализации. Различие не в синтаксисе, а в отношении: интерфейс описывает роль, абстрактный класс — общее устройство семейства.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · интерфейс против абстрактного класса</caption>
+      <thead><tr><th>Признак</th><th>Интерфейс</th><th>Абстрактный класс</th></tr></thead>
+      <tbody>
+        <tr><td>Смысл</td><td>Роль: «умеет делать X»</td><td>Природа: «является разновидностью Y»</td></tr>
+        <tr><td>Сколько можно реализовать</td><td>Сколько угодно</td><td>Один</td></tr>
+        <tr><td>Реализация методов</td><td>Нет</td><td>Есть</td></tr>
+        <tr><td>Свойства и состояние</td><td>Нет</td><td>Есть</td></tr>
+        <tr><td>Конструктор</td><td>Нет</td><td>Есть</td></tr>
+        <tr><td>Связывает наследников</td><td>Слабо: только сигнатурами</td><td>Сильно: изменение задевает всех</td></tr>
+        <tr><td>Типичное применение</td><td>Границы, подмена реализации, тесты</td><td>Общий каркас родственных классов</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Практическое правило.</strong> Начинайте с интерфейса, если нужна подмена реализации или граница между слоями. Абстрактный класс берите, когда у нескольких классов действительно есть общая реализация и они образуют одно семейство. Часто правильный ответ — интерфейс плюс отдельный класс с общей логикой, который реализации используют композицией, а не наследуют.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Интерфейс на каждый класс «на всякий случай»: <span class="nm">UserService</span> и <span class="nm">UserServiceInterface</span> с одной реализацией навсегда. Такой интерфейс ничего не абстрагирует и удваивает количество файлов: любое изменение приходится делать дважды. Интерфейс оправдан, когда реализаций больше одной, когда он проходит по границе слоя или когда его подменяют в тестах, — а не потому, что «так принято».</div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Хороший интерфейс узкий: два-три метода, связанных одной ролью. Интерфейс с пятнадцатью методами почти наверняка описывает не роль, а целый класс, и его реализация всегда будет наполовину состоять из заглушек. Если у половины реализаций часть методов выбрасывает исключение «не поддерживается» — интерфейс нужно разделить.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="inheritance">
+    <p class="path">junior / наследование</p>
+    <div class="card-top"><h3>Наследование и композиция</h3><span class="badge b-1">Выбор</span></div>
+    <p>Наследование — самая соблазнительная и самая дорогая связь в объектном коде. Оно даёт переиспользование одной строчкой и взамен намертво привязывает потомка к родителю: наследник видит защищённые свойства, зависит от порядка вызовов внутри родительских методов и ломается от изменений, которые формально ничего не нарушают.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · наследование против композиции</caption>
+      <thead><tr><th>Признак</th><th>Наследование</th><th>Композиция</th></tr></thead>
+      <tbody>
+        <tr><td>Отношение</td><td>Является</td><td>Использует или содержит</td></tr>
+        <tr><td>Связанность</td><td>Очень сильная</td><td>Слабая, через интерфейс</td></tr>
+        <tr><td>Меняется в рантайме</td><td>Нет, фиксируется при написании</td><td>Да, поведение подставляется</td></tr>
+        <tr><td>Сколько источников поведения</td><td>Один родитель</td><td>Сколько угодно</td></tr>
+        <tr><td>Влияние изменений в родителе</td><td>Задевает всех наследников</td><td>Ограничено интерфейсом</td></tr>
+        <tr><td>Тестируемость</td><td>Требует поднимать иерархию</td><td>Зависимость подменяется</td></tr>
+        <tr><td>Когда уместно</td><td>Настоящее семейство, стабильный родитель</td><td>Почти всегда остальное</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Когда наследование ломается</span></div><pre><span class="cm">// Классическая ловушка: квадрат «является» прямоугольником</span>
+<span class="kw">class</span> <span class="nm">Rectangle</span>
+{
+    <span class="kw">public function</span> <span class="fn">setWidth</span>(<span class="kw">int</span> <span class="nm">$w</span>): <span class="kw">void</span>  { <span class="nm">$this</span>-&gt;w = <span class="nm">$w</span>; }
+    <span class="kw">public function</span> <span class="fn">setHeight</span>(<span class="kw">int</span> <span class="nm">$h</span>): <span class="kw">void</span> { <span class="nm">$this</span>-&gt;h = <span class="nm">$h</span>; }
+    <span class="kw">public function</span> <span class="fn">area</span>(): <span class="kw">int</span> { <span class="kw">return</span> <span class="nm">$this</span>-&gt;w * <span class="nm">$this</span>-&gt;h; }
+}
+
+<span class="kw">class</span> <span class="nm">Square</span> <span class="kw">extends</span> <span class="nm">Rectangle</span>
+{
+    <span class="kw">public function</span> <span class="fn">setWidth</span>(<span class="kw">int</span> <span class="nm">$w</span>): <span class="kw">void</span> { <span class="nm">$this</span>-&gt;w = <span class="nm">$this</span>-&gt;h = <span class="nm">$w</span>; }
+    <span class="kw">public function</span> <span class="fn">setHeight</span>(<span class="kw">int</span> <span class="nm">$h</span>): <span class="kw">void</span> { <span class="nm">$this</span>-&gt;w = <span class="nm">$this</span>-&gt;h = <span class="nm">$h</span>; }
+}
+
+<span class="cm">// Код, корректный для Rectangle, ломается на Square:</span>
+<span class="kw">function</span> <span class="fn">resize</span>(<span class="nm">Rectangle</span> <span class="nm">$r</span>): <span class="kw">int</span>
+{
+    <span class="nm">$r</span>-&gt;<span class="fn">setWidth</span>(5);
+    <span class="nm">$r</span>-&gt;<span class="fn">setHeight</span>(4);
+    <span class="kw">return</span> <span class="nm">$r</span>-&gt;<span class="fn">area</span>();   <span class="cm">// ожидали 20, для Square получим 16</span>
+}
+<span class="cm">// Наследование корректно, только если наследника можно</span>
+<span class="cm">// подставить всюду вместо родителя, ничего не сломав.</span>
+
+<span class="cm">// Композиция решает это без иерархии вовсе:</span>
+<span class="kw">final class</span> <span class="nm">Square</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly int</span> <span class="nm">$side</span>) {}
+    <span class="kw">public function</span> <span class="fn">area</span>(): <span class="kw">int</span> { <span class="kw">return</span> <span class="nm">$this</span>-&gt;side ** 2; }
+}
+</pre></div>
+
+    <p><strong>Проверочный вопрос перед наследованием:</strong> можно ли подставить наследника всюду, где ожидается родитель, и весь существующий код останется корректным? Если хотя бы в одном сценарии нет — это не наследование, а попытка переиспользовать код через иерархию, и решается композицией.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Ключевое слово <span class="nm">final</span> по умолчанию — хорошая привычка. Класс, от которого нельзя наследоваться, можно свободно менять внутри: никто не завязан на порядок вызовов внутренних методов. Открывать класс для наследования стоит осознанно, спроектировав, какие именно методы предназначены для переопределения, — а это отдельная работа, а не свойство, возникающее само собой.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="traits">
+    <p class="path">junior / трейты и статика</p>
+    <div class="card-top"><h3>Трейты, статика, константы</h3><span class="badge b-1">Инструменты</span></div>
+    <p>Трейт — механическая вставка кода в класс на этапе компиляции. Он не создаёт типа: класс с трейтом нельзя передать туда, где ожидается «что-то, использующее этот трейт». Из-за этого трейт удобен для технических мелочей и плох для предметного поведения.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · когда трейт уместен</caption>
+      <thead><tr><th>Ситуация</th><th>Трейт</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Одинаковая техническая мелочь в неродственных классах</td><td>Уместен</td><td>Нет общего типа, дублирование бессмысленно</td></tr>
+        <tr><td>Поведение, по которому нужно подставлять объекты</td><td>Не уместен</td><td>Трейт не даёт типа: нужен интерфейс</td></tr>
+        <tr><td>Трейт обращается к свойствам класса-хозяина</td><td>Опасно</td><td>Скрытая связь, ломается молча</td></tr>
+        <tr><td>Трейт с состоянием и логикой</td><td>Не уместен</td><td>Это отдельный класс, подключаемый композицией</td></tr>
+        <tr><td>Несколько трейтов с одинаковыми методами</td><td>Опасно</td><td>Конфликт разрешается вручную, легко ошибиться</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Статические методы</strong> удобны и опасны по одной причине: их нельзя подменить. Статический вызов внутри класса — жёсткая зависимость от конкретной реализации, невидимая в конструкторе и непроверяемая в тестах. Разумное применение статики — именованные конструкторы и чистые функции без зависимостей.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Именованные конструкторы и константы</span></div><pre><span class="kw">final class</span> <span class="nm">Money</span>
+{
+    <span class="cm">// приватный конструктор: создание только через понятные имена</span>
+    <span class="kw">private function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> <span class="nm">$amount</span>,     <span class="cm">// в минимальных единицах</span>
+        <span class="kw">public readonly</span> <span class="nm">Currency</span> <span class="nm">$currency</span>,
+    ) {}
+
+    <span class="cm">// имя объясняет, что именно означает число</span>
+    <span class="kw">public static function</span> <span class="fn">fromMinorUnits</span>(<span class="kw">int</span> <span class="nm">$m</span>, <span class="nm">Currency</span> <span class="nm">$c</span>): <span class="kw">self</span>
+    {
+        <span class="kw">return</span> <span class="kw">new</span> <span class="kw">self</span>(<span class="nm">$m</span>, <span class="nm">$c</span>);
+    }
+
+    <span class="kw">public static function</span> <span class="fn">zero</span>(<span class="nm">Currency</span> <span class="nm">$c</span>): <span class="kw">self</span>
+    {
+        <span class="kw">return</span> <span class="kw">new</span> <span class="kw">self</span>(0, <span class="nm">$c</span>);
+    }
+
+    <span class="cm">// статика здесь безопасна: нет зависимостей и нет состояния</span>
+}
+
+<span class="cm">// Константы класса вместо разбросанных строк и чисел</span>
+<span class="kw">final class</span> <span class="nm">RetryPolicy</span>
+{
+    <span class="kw">public const int</span> MAX_ATTEMPTS = 5;
+    <span class="kw">public const int</span> BASE_DELAY_MS = 200;
+}
+
+<span class="cm">// Набор связанных значений — это enum, а не набор констант:</span>
+<span class="kw">enum</span> <span class="nm">OrderStatus</span>: <span class="kw">string</span>
+{
+    <span class="kw">case</span> New     = <span class="st">'new'</span>;
+    <span class="kw">case</span> Paid    = <span class="st">'paid'</span>;
+    <span class="kw">case</span> Shipped = <span class="st">'shipped'</span>;
+
+    <span class="cm">// поведение живёт рядом со значением, а не в switch по коду</span>
+    <span class="kw">public function</span> <span class="fn">allowsEditing</span>(): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span> === <span class="kw">self</span>::New;
+    }
+}
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Перечисление почти всегда лучше набора строковых констант: невозможные значения перестают существовать на уровне типов, а поведение, зависящее от варианта, переезжает в методы перечисления вместо ветвлений по строке, разбросанных по коду. Проверка «а что если сюда придёт неизвестный статус» исчезает сама.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card lvl-j" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Проверка</span></div>
+    <p>Что должно быть понятно перед переходом на следующий уровень.</p>
+    <ul class="check">
+      <li>Объяснить, почему приватные свойства с полным набором геттеров и сеттеров не являются инкапсуляцией.</li>
+      <li>Переписать класс с сеттерами в класс с операциями предметной области.</li>
+      <li>Назвать риск возврата внутренней коллекции объектов наружу.</li>
+      <li>Выбрать между интерфейсом и абстрактным классом и обосновать выбор.</li>
+      <li>Объяснить, почему интерфейс с одной реализацией навсегда обычно лишний.</li>
+      <li>Привести пример, где наследование ломает корректный код, и решить его композицией.</li>
+      <li>Сформулировать проверочный вопрос перед наследованием и объяснить пользу <span class="nm">final</span> по умолчанию.</li>
+      <li>Назвать, когда трейт уместен, а когда нужен интерфейс или композиция.</li>
+      <li>Заменить набор строковых констант перечислением с поведением.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · типы и значения</p>
+    <h2>Middle: типы, неизменяемость, идентичность</h2>
+    <p>Уровень, на котором объект перестаёт быть контейнером для данных. Типы начинают работать как проверка вместо документации, часть объектов становится неизменяемой, а вопросы «когда два объекта равны» и «что происходит при копировании» получают явные ответы вместо поведения по умолчанию.</p>
+  </div>
+
+  <!-- 6 -->
+  <article class="card" id="typing">
+    <p class="path">middle / типы</p>
+    <div class="card-top"><h3>Типы и вариантность</h3><span class="badge b-2">Проверки</span></div>
+    <p>Типы в PHP проверяются в рантайме, но настоящую пользу приносят раньше — в анализаторе и в редакторе. Строгий режим превращает молчаливое приведение в явную ошибку, а это разница между багом, найденным при разработке, и багом, найденным пользователем.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Что даёт strict_types</span></div><pre><span class="kw">declare</span>(strict_types=1);
+
+<span class="kw">function</span> <span class="fn">discount</span>(<span class="kw">int</span> <span class="nm">$percent</span>): <span class="kw">int</span> { <span class="kw">return</span> <span class="nm">$percent</span>; }
+
+<span class="cm">// без strict_types: тихое приведение, ошибка уезжает дальше</span>
+<span class="fn">discount</span>(<span class="st">'15'</span>);     <span class="cm">// 15</span>
+<span class="fn">discount</span>(15.9);      <span class="cm">// 15 — дробная часть потеряна молча</span>
+<span class="fn">discount</span>(<span class="kw">true</span>);      <span class="cm">// 1</span>
+
+<span class="cm">// со strict_types: TypeError сразу, в точке ошибки</span>
+<span class="fn">discount</span>(<span class="st">'15'</span>);     <span class="cm">// TypeError</span>
+
+<span class="cm">// объявление действует на ВЫЗОВЫ из этого файла,</span>
+<span class="cm">// а не на объявленные в нём функции — поэтому строка</span>
+<span class="cm">// нужна в каждом файле, а не один раз в проекте</span>
+</pre></div>
+
+    <p><strong>Вариантность</strong> описывает, как разрешено менять типы при переопределении метода. Правило вытекает из подстановки: наследник должен уметь всё, что умеет родитель, поэтому принимать он может больше, а возвращать — меньше.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · что можно менять при переопределении</caption>
+      <thead><tr><th>Элемент</th><th>Разрешено</th><th>Правило</th></tr></thead>
+      <tbody>
+        <tr><td>Тип возвращаемого значения</td><td>Сузить до наследника</td><td>Ковариантность: обещаем не меньше</td></tr>
+        <tr><td>Тип параметра</td><td>Расширить до родителя</td><td>Контравариантность: принимаем не меньше</td></tr>
+        <tr><td>Тип свойства</td><td>Не менять</td><td>Свойство и читают, и пишут — обе стороны сразу</td></tr>
+        <tr><td>Обязательные параметры</td><td>Не добавлять</td><td>Иначе старые вызовы перестанут работать</td></tr>
+        <tr><td>Необязательные параметры</td><td>Можно добавлять</td><td>Старые вызовы остаются корректными</td></tr>
+        <tr><td>Видимость</td><td>Только расширять</td><td>Приватное нельзя сделать менее доступным</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · выразительные типы вместо примитивов</caption>
+      <thead><tr><th>Вместо</th><th>Лучше</th><th>Что это даёт</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">string $status</span></td><td>Перечисление</td><td>Невозможных значений не существует</td></tr>
+        <tr><td><span class="nm">?User $user</span> везде</td><td>Разделить сценарии или явный тип отсутствия</td><td>Проверки на null перестают расползаться</td></tr>
+        <tr><td><span class="nm">array $data</span></td><td>Объект или типизированная коллекция</td><td>Известно, что внутри, без чтения реализации</td></tr>
+        <tr><td><span class="nm">float $price</span></td><td>Объект-значение с целыми единицами</td><td>Нет ошибок округления и путаницы с валютой</td></tr>
+        <tr><td><span class="nm">int $userId</span></td><td>Отдельный тип идентификатора</td><td>Нельзя перепутать с идентификатором заказа</td></tr>
+        <tr><td><span class="nm">mixed</span></td><td>Объединение конкретных типов</td><td>Анализатор снова начинает помогать</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Самая дешёвая победа в типизации — заменить пары примитивов, которые легко перепутать местами. Сигнатура <span class="nm">transfer(int $from, int $to, int $amount)</span> позволяет вызвать себя с переставленными аргументами, и это никогда не будет замечено ни компилятором, ни ревью. Та же сигнатура с отдельными типами счёта и суммы делает такую ошибку невозможной.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card" id="generics">
+    <p class="path">middle / обобщения</p>
+    <div class="card-top"><h3>Обобщённые типы</h3><span class="badge b-2">Анализатор</span></div>
+    <p>Обобщённых типов в самом языке нет: <span class="nm">array</span> ничего не сообщает о содержимом, а типизированная коллекция в рантайме проверяет элементы вручную. Но статические анализаторы понимают обобщения из аннотаций и ловят ошибки до запуска — на практике это закрывает большую часть потребности.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Типизированная коллекция с аннотациями</span></div><pre><span class="cm">/**
+ * Обобщение существует только для анализатора,
+ * но этого достаточно: ошибка видна в редакторе.
+ *
+ * @template T of object
+ * @implements \IteratorAggregate&lt;int, T&gt;
+ */</span>
+<span class="kw">final class</span> <span class="nm">TypedCollection</span> <span class="kw">implements</span> <span class="nm">\IteratorAggregate</span>, <span class="nm">\Countable</span>
+{
+    <span class="cm">/** @var list&lt;T&gt; */</span>
+    <span class="kw">private array</span> <span class="nm">$items</span>;
+
+    <span class="cm">/**
+     * @param class-string&lt;T&gt; $type
+     * @param list&lt;T&gt;         $items
+     */</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly string</span> <span class="nm">$type</span>, <span class="kw">array</span> <span class="nm">$items</span> = [])
+    {
+        <span class="kw">foreach</span> (<span class="nm">$items</span> <span class="kw">as</span> <span class="nm">$item</span>) {
+            <span class="cm">// рантайм-проверка нужна на границе: данные извне</span>
+            <span class="nm">$item</span> <span class="kw">instanceof</span> <span class="nm">$this</span>-&gt;type
+                || <span class="kw">throw new</span> <span class="nm">\InvalidArgumentException</span>(<span class="nm">$type</span>);
+        }
+        <span class="nm">$this</span>-&gt;items = <span class="fn">array_values</span>(<span class="nm">$items</span>);
+    }
+
+    <span class="cm">/**
+     * @param callable(T): bool $predicate
+     * @return self&lt;T&gt;
+     */</span>
+    <span class="kw">public function</span> <span class="fn">filter</span>(<span class="kw">callable</span> <span class="nm">$predicate</span>): <span class="kw">self</span>
+    {
+        <span class="kw">return new</span> <span class="kw">self</span>(<span class="nm">$this</span>-&gt;type, <span class="fn">array_filter</span>(<span class="nm">$this</span>-&gt;items, <span class="nm">$predicate</span>));
+    }
+
+    <span class="cm">/** @return \Traversable&lt;int, T&gt; */</span>
+    <span class="kw">public function</span> <span class="fn">getIterator</span>(): <span class="nm">\Traversable</span>
+    {
+        <span class="kw">return new</span> <span class="nm">\ArrayIterator</span>(<span class="nm">$this</span>-&gt;items);
+    }
+
+    <span class="kw">public function</span> <span class="fn">count</span>(): <span class="kw">int</span> { <span class="kw">return</span> <span class="fn">count</span>(<span class="nm">$this</span>-&gt;items); }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · полезные типы уровня анализатора</caption>
+      <thead><tr><th>Запись</th><th>Что означает</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">list&lt;T&gt;</span></td><td>Массив с последовательными числовыми ключами от нуля</td></tr>
+        <tr><td><span class="nm">array&lt;string, T&gt;</span></td><td>Ассоциативный массив с известным типом ключа и значения</td></tr>
+        <tr><td><span class="nm">non-empty-list&lt;T&gt;</span></td><td>Гарантированно непустой список: проверка на пустоту не нужна</td></tr>
+        <tr><td><span class="nm">class-string&lt;T&gt;</span></td><td>Строка, содержащая имя класса определённого типа</td></tr>
+        <tr><td><span class="nm">positive-int</span>, <span class="nm">non-empty-string</span></td><td>Уточнённые примитивы: часть проверок становится лишней</td></tr>
+        <tr><td><span class="nm">callable(T): bool</span></td><td>Сигнатура передаваемой функции</td></tr>
+        <tr><td><span class="nm">@psalm-immutable</span></td><td>Класс, который анализатор проверит на неизменяемость</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Аннотации проверяются анализатором, но не рантаймом, поэтому на границе системы — данные из запроса, из очереди, из внешнего API — нужна настоящая проверка. Внутри же, где данные уже прошли границу, аннотаций достаточно, и добавлять к ним рантайм-проверки в каждом методе не нужно: это дублирование, которое замедляет код и ничего не ловит.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="immutable">
+    <p class="path">middle / неизменяемость</p>
+    <div class="card-top"><h3>Иммутабельность и значения</h3><span class="badge b-2">Надёжность</span></div>
+    <p>Неизменяемый объект нельзя испортить: после создания его состояние не меняется никогда. Отсюда всё остальное — его можно свободно передавать, кэшировать, сравнивать и использовать как ключ, не опасаясь, что кто-то изменит его за спиной вызывающего кода.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Объект-значение и методы порождения</span></div><pre><span class="kw">final class</span> <span class="nm">DateRange</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly</span> <span class="nm">\DateTimeImmutable</span> <span class="nm">$from</span>,
+        <span class="kw">public readonly</span> <span class="nm">\DateTimeImmutable</span> <span class="nm">$to</span>,
+    ) {
+        <span class="cm">// инвариант проверяется один раз — при создании</span>
+        <span class="kw">if</span> (<span class="nm">$from</span> &gt; <span class="nm">$to</span>) {
+            <span class="kw">throw new</span> <span class="nm">\InvalidArgumentException</span>(<span class="st">'Начало позже конца'</span>);
+        }
+    }
+
+    <span class="cm">// изменение = новый объект, старый остаётся валидным</span>
+    <span class="kw">public function</span> <span class="fn">withTo</span>(<span class="nm">\DateTimeImmutable</span> <span class="nm">$to</span>): <span class="kw">self</span>
+    {
+        <span class="kw">return new</span> <span class="kw">self</span>(<span class="nm">$this</span>-&gt;from, <span class="nm">$to</span>);   <span class="cm">// проверка снова сработает</span>
+    }
+
+    <span class="kw">public function</span> <span class="fn">overlaps</span>(<span class="kw">self</span> <span class="nm">$other</span>): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;from &lt;= <span class="nm">$other</span>-&gt;to &amp;&amp; <span class="nm">$other</span>-&gt;from &lt;= <span class="nm">$this</span>-&gt;to;
+    }
+}
+
+<span class="cm">// ОСТОРОЖНО: readonly запрещает переприсваивание свойства,</span>
+<span class="cm">// но не делает объект внутри неизменяемым</span>
+<span class="kw">final class</span> <span class="nm">Report</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly</span> <span class="nm">\ArrayObject</span> <span class="nm">$rows</span>) {}
+}
+<span class="nm">$r</span> = <span class="kw">new</span> <span class="nm">Report</span>(<span class="kw">new</span> <span class="nm">\ArrayObject</span>([1, 2]));
+<span class="nm">$r</span>-&gt;rows = <span class="kw">new</span> <span class="nm">\ArrayObject</span>();   <span class="cm">// Error: нельзя переприсвоить</span>
+<span class="nm">$r</span>-&gt;rows[] = 3;                     <span class="cm">// РАБОТАЕТ: объект внутри изменяем</span>
+<span class="cm">// Неизменяемость глубокая только если внутри тоже неизменяемое.</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · сущность против объекта-значения</caption>
+      <thead><tr><th>Признак</th><th>Сущность</th><th>Объект-значение</th></tr></thead>
+      <tbody>
+        <tr><td>Что делает её собой</td><td>Идентификатор</td><td>Набор значений</td></tr>
+        <tr><td>Равенство</td><td>По идентификатору</td><td>По всем полям</td></tr>
+        <tr><td>Изменяемость</td><td>Меняется, оставаясь той же</td><td>Не меняется никогда</td></tr>
+        <tr><td>Жизненный цикл</td><td>Создаётся, живёт, удаляется</td><td>Создаётся и заменяется целиком</td></tr>
+        <tr><td>Примеры</td><td>Заказ, пользователь, счёт</td><td>Деньги, диапазон дат, адрес, координата</td></tr>
+        <tr><td>Хранение</td><td>Отдельная таблица со своим ключом</td><td>Колонки внутри владельца</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · что даёт неизменяемость</caption>
+      <thead><tr><th>Свойство</th><th>Следствие</th></tr></thead>
+      <tbody>
+        <tr><td>Состояние не меняется после создания</td><td>Проверка нужна ровно в одном месте — в конструкторе</td></tr>
+        <tr><td>Нет действия на расстоянии</td><td>Переданный объект не изменится у вас за спиной</td></tr>
+        <tr><td>Безопасно разделять между потребителями</td><td>Можно кэшировать и переиспользовать один экземпляр</td></tr>
+        <tr><td>Поведение зависит только от аргументов</td><td>Тесты без подготовки состояния</td></tr>
+        <tr><td>Копирование не нужно</td><td>Клонирование теряет смысл</td></tr>
+        <tr><td>Плата</td><td>Больше создаваемых объектов и методы порождения вместо сеттеров</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Делает ли readonly объект неизменяемым?</b><br>Нет, только само свойство: его нельзя переприсвоить после инициализации. Если в свойстве лежит изменяемый объект или коллекция, их внутреннее состояние прекрасно меняется — <span class="nm">$obj-&gt;list[] = $x</span> для объекта-коллекции сработает. Настоящая неизменяемость требует, чтобы всё содержимое тоже было неизменяемым: скалярные значения, перечисления, <span class="nm">DateTimeImmutable</span> и такие же неизменяемые объекты, а массивы отдавались копией.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="identity">
+    <p class="path">middle / равенство</p>
+    <div class="card-top"><h3>Идентичность и клонирование</h3><span class="badge b-2">Копии</span></div>
+    <p>Два вопроса, на которые каждый класс отвечает — явно или молчаливым поведением по умолчанию: когда два экземпляра считаются одинаковыми и что происходит при копировании. Умолчания редко совпадают с тем, что нужно.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Сравнение и копирование объектов</span></div><pre><span class="nm">$a</span> = <span class="kw">new</span> <span class="nm">Money</span>(100, <span class="nm">Currency</span>::RUB);
+<span class="nm">$b</span> = <span class="kw">new</span> <span class="nm">Money</span>(100, <span class="nm">Currency</span>::RUB);
+
+<span class="nm">$a</span> == <span class="nm">$b</span>;    <span class="cm">// true:  тот же класс и равные свойства (рекурсивно)</span>
+<span class="nm">$a</span> === <span class="nm">$b</span>;   <span class="cm">// false: это разные экземпляры</span>
+
+<span class="cm">// Для сущности сравнение по всем полям неверно:</span>
+<span class="cm">// два объекта одного заказа с разным набором загруженных связей</span>
+<span class="cm">// не равны по ==, хотя это один и тот же заказ.</span>
+<span class="cm">// Поэтому равенство объявляют явно:</span>
+<span class="kw">public function</span> <span class="fn">equals</span>(<span class="kw">self</span> <span class="nm">$other</span>): <span class="kw">bool</span>
+{
+    <span class="kw">return</span> <span class="nm">$this</span>-&gt;id-&gt;<span class="fn">equals</span>(<span class="nm">$other</span>-&gt;id);   <span class="cm">// сущность: по идентификатору</span>
+}
+
+<span class="cm">// ---------- клонирование ----------</span>
+<span class="kw">final class</span> <span class="nm">Basket</span>
+{
+    <span class="cm">/** @var list&lt;Item&gt; */</span>
+    <span class="kw">private array</span> <span class="nm">$items</span> = [];
+    <span class="kw">private</span> <span class="nm">\DateTimeImmutable</span> <span class="nm">$createdAt</span>;
+
+    <span class="cm">// clone копирует свойства ПОВЕРХНОСТНО:</span>
+    <span class="cm">// массив копируется, но объекты внутри остаются общими</span>
+    <span class="kw">public function</span> <span class="fn">__clone</span>(): <span class="kw">void</span>
+    {
+        <span class="cm">// без этого изменение позиции в копии заденет оригинал</span>
+        <span class="nm">$this</span>-&gt;items = <span class="fn">array_map</span>(
+            <span class="kw">static fn</span>(<span class="nm">Item</span> <span class="nm">$i</span>): <span class="nm">Item</span> =&gt; <span class="kw">clone</span> <span class="nm">$i</span>,
+            <span class="nm">$this</span>-&gt;items,
+        );
+        <span class="cm">// DateTimeImmutable клонировать не нужно: он неизменяем</span>
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · сравнение объектов в PHP</caption>
+      <thead><tr><th>Операция</th><th>Что проверяет</th><th>Когда применять</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">==</span></td><td>Тот же класс и равные свойства, рекурсивно</td><td>Простые значения; опасно для сущностей и связей</td></tr>
+        <tr><td><span class="nm">===</span></td><td>Один и тот же экземпляр</td><td>Проверка тождества, работа с реестром объектов</td></tr>
+        <tr><td>Собственный <span class="nm">equals()</span></td><td>То, что вы объявили равенством</td><td>Всегда, когда равенство имеет смысл в предметной области</td></tr>
+        <tr><td>Сравнение перечислений</td><td>Тождество: варианты — синглтоны</td><td><span class="nm">===</span> всегда корректно</td></tr>
+        <tr><td>Сравнение по строковому ключу</td><td>Значение, приведённое к строке</td><td>Ключи массивов, дедупликация, кэш</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · поверхностное и глубокое копирование</caption>
+      <thead><tr><th>Что внутри</th><th>Поведение <span class="nm">clone</span></th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>Скаляры и перечисления</td><td>Копируются полноценно</td><td>Ничего</td></tr>
+        <tr><td>Неизменяемые объекты</td><td>Разделяются, но это безопасно</td><td>Ничего</td></tr>
+        <tr><td>Изменяемые объекты</td><td>Разделяются: копия влияет на оригинал</td><td>Клонировать в <span class="nm">__clone</span></td></tr>
+        <tr><td>Массив объектов</td><td>Массив копируется, объекты общие</td><td>Клонировать каждый элемент</td></tr>
+        <tr><td>Внешние ресурсы и соединения</td><td>Разделяются</td><td>Не копировать: пересоздавать или запретить клонирование</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Оператор <span class="nm">==</span> для сущностей опаснее, чем кажется: он сравнивает все свойства рекурсивно, поэтому два объекта одного и того же заказа с разным набором подгруженных связей окажутся неравными, а сравнение объектов с циклическими ссылками может привести к неприятным сюрпризам. Для всего, что имеет идентификатор, равенство объявляют явным методом.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="magic">
+    <p class="path">middle / магия</p>
+    <div class="card-top"><h3>Магические методы</h3><span class="badge b-2">Цена</span></div>
+    <p>Магические методы дают гибкость ценой предсказуемости: код перестаёт быть видимым в сигнатурах, редактор перестаёт подсказывать, анализатор перестаёт проверять, а ошибка в имени свойства превращается из фатальной в тихую. Пользоваться ими стоит осознанно и редко.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · магические методы и их цена</caption>
+      <thead><tr><th>Метод</th><th>Что делает</th><th>Стоит ли</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">__get</span> / <span class="nm">__set</span></td><td>Перехват доступа к несуществующим свойствам</td><td>Почти никогда: убивает подсказки и проверки</td></tr>
+        <tr><td><span class="nm">__call</span> / <span class="nm">__callStatic</span></td><td>Перехват вызова неизвестного метода</td><td>Только в прокси и обёртках, с описанием в аннотациях</td></tr>
+        <tr><td><span class="nm">__toString</span></td><td>Приведение к строке</td><td>Да, вместе с интерфейсом <span class="nm">Stringable</span></td></tr>
+        <tr><td><span class="nm">__invoke</span></td><td>Вызов объекта как функции</td><td>Да, для объектов с одной операцией</td></tr>
+        <tr><td><span class="nm">__clone</span></td><td>Донастройка после копирования</td><td>Да, обязателен при изменяемом содержимом</td></tr>
+        <tr><td><span class="nm">__isset</span> / <span class="nm">__unset</span></td><td>Поддержка проверок для магических свойств</td><td>Только вместе с <span class="nm">__get</span></td></tr>
+        <tr><td><span class="nm">__serialize</span> / <span class="nm">__unserialize</span></td><td>Управление сериализацией</td><td>Да, когда объект содержит несериализуемое</td></tr>
+        <tr><td><span class="nm">__destruct</span></td><td>Действия при уничтожении</td><td>Осторожно: момент вызова не гарантирован</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Стандартные интерфейсы — цивилизованная альтернатива магии.</strong> Они дают объекту привычное поведение, оставаясь видимыми для анализатора и редактора: объект можно посчитать, обойти циклом, привести к строке или сериализовать в JSON, и всё это явно объявлено в списке реализуемых интерфейсов.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · стандартные интерфейсы</caption>
+      <thead><tr><th>Интерфейс</th><th>Что даёт</th><th>Типичное применение</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">Stringable</span></td><td>Объект можно привести к строке</td><td>Идентификаторы, объекты-значения</td></tr>
+        <tr><td><span class="nm">Countable</span></td><td>Работает <span class="nm">count()</span></td><td>Коллекции</td></tr>
+        <tr><td><span class="nm">IteratorAggregate</span></td><td>Объект обходится в <span class="nm">foreach</span></td><td>Коллекции: лучше, чем возвращать массив</td></tr>
+        <tr><td><span class="nm">JsonSerializable</span></td><td>Контроль над сериализацией в JSON</td><td>Ответы API, если сериализация не вынесена отдельно</td></tr>
+        <tr><td><span class="nm">ArrayAccess</span></td><td>Обращение по квадратным скобкам</td><td>Редко: маскирует объект под массив</td></tr>
+        <tr><td><span class="nm">Traversable</span></td><td>Общий тип для всего обходимого</td><td>Типизация параметров вместо <span class="nm">array</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Класс с <span class="nm">__get</span> и <span class="nm">__set</span> поверх массива данных: выглядит удобно, а на деле у объекта нет ни известного набора свойств, ни типов, ни подсказок в редакторе, а опечатка в имени возвращает <span class="nm">null</span> вместо ошибки. Такой класс невозможно проверить анализатором и тяжело рефакторить: поиск использований свойства по проекту перестаёт работать.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="contracts">
+    <p class="path">middle / контракт</p>
+    <div class="card-top"><h3>Исключения и контракт</h3><span class="badge b-2">Обещания</span></div>
+    <p>Публичный метод — это обещание: при таких входных данных произойдёт то-то, а при таких будет ошибка определённого вида. Исключения — часть этого обещания наравне с типами, и проектировать их нужно так же осознанно.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · виды ошибок и как с ними обращаться</caption>
+      <thead><tr><th>Вид</th><th>Пример</th><th>Кто обрабатывает</th></tr></thead>
+      <tbody>
+        <tr><td>Ошибка программиста</td><td>Нарушен инвариант, передан неверный тип</td><td>Никто: должна упасть и попасть в трекер</td></tr>
+        <tr><td>Ожидаемая ситуация предметной области</td><td>Недостаточно средств, заказ уже оплачен</td><td>Вызывающий код, осмысленно</td></tr>
+        <tr><td>Отсутствие данных</td><td>Пользователь не найден</td><td>Зависит: исключение или пустой результат</td></tr>
+        <tr><td>Внешний сбой</td><td>Недоступен платёжный сервис</td><td>Повтор, деградация, предохранитель</td></tr>
+        <tr><td>Ошибка ввода пользователя</td><td>Неверный формат поля</td><td>Валидация до вызова, а не исключение внутри</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Иерархия исключений предметной области</span></div><pre><span class="cm">// Базовый маркер модуля: позволяет ловить всё своё разом</span>
+<span class="kw">interface</span> <span class="nm">BillingException</span> <span class="kw">extends</span> <span class="nm">\Throwable</span> {}
+
+<span class="cm">// Конкретные ситуации — с данными, а не только с текстом</span>
+<span class="kw">final class</span> <span class="nm">InsufficientFunds</span> <span class="kw">extends</span> <span class="nm">\DomainException</span> <span class="kw">implements</span> <span class="nm">BillingException</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly</span> <span class="nm">Money</span> <span class="nm">$required</span>,
+        <span class="kw">public readonly</span> <span class="nm">Money</span> <span class="nm">$available</span>,
+    ) {
+        <span class="kw">parent</span>::<span class="fn">__construct</span>(<span class="fn">sprintf</span>(
+            <span class="st">'Требуется %s, доступно %s'</span>,
+            <span class="nm">$required</span>, <span class="nm">$available</span>,
+        ));
+    }
+
+    <span class="cm">// вызывающий код принимает решение по данным, а не парсит текст</span>
+    <span class="kw">public function</span> <span class="fn">shortage</span>(): <span class="nm">Money</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;required-&gt;<span class="fn">minus</span>(<span class="nm">$this</span>-&gt;available);
+    }
+}
+
+<span class="cm">// Именованные конструкторы делают выброс читаемым</span>
+<span class="kw">final class</span> <span class="nm">OrderNotFound</span> <span class="kw">extends</span> <span class="nm">\RuntimeException</span> <span class="kw">implements</span> <span class="nm">BillingException</span>
+{
+    <span class="kw">public static function</span> <span class="fn">withId</span>(<span class="nm">OrderId</span> <span class="nm">$id</span>): <span class="kw">self</span>
+    {
+        <span class="kw">return new</span> <span class="kw">self</span>(<span class="st">"Заказ {$id} не найден"</span>);
+    }
+}
+
+<span class="cm">// Использование: ловим то, что умеем обработать, остальное — наверх</span>
+<span class="kw">try</span> {
+    <span class="nm">$this</span>-&gt;billing-&gt;<span class="fn">charge</span>(<span class="nm">$order</span>);
+} <span class="kw">catch</span> (<span class="nm">InsufficientFunds</span> <span class="nm">$e</span>) {
+    <span class="kw">return</span> <span class="nm">$this</span>-&gt;<span class="fn">offerTopUp</span>(<span class="nm">$e</span>-&gt;<span class="fn">shortage</span>());
+}
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Ловить нужно то, что вы действительно умеете обработать. Блок <span class="nm">catch (\Throwable $e)</span> в середине бизнес-логики превращает падение в тишину: ошибка программиста маскируется под нормальную работу, а данные тихо портятся. Общий перехват уместен на границе приложения — в обработчике HTTP-запроса или воркере, — где он логирует и превращает исключение в ответ или в повтор задачи.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Возвращать null или бросать исключение, если объект не найден?</b><br>Зависит от того, нормальна ли эта ситуация для вызывающего кода. Метод <span class="nm">findByEmail</span> в поиске по фильтру возвращает <span class="nm">null</span>: отсутствие — ожидаемый результат. Метод <span class="nm">getById</span> с идентификатором, полученным из системы, бросает исключение: отсутствие означает нарушенную целостность. Плохо только смешивать — когда один и тот же метод иногда возвращает <span class="nm">null</span>, иногда бросает, а иногда отдаёт пустой массив, вызывающий код обрастает проверками на все случаи сразу.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card lvl-m" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Проверка</span></div>
+    <p>Практические навыки уровня.</p>
+    <ul class="check">
+      <li>Объяснить, что именно даёт <span class="nm">strict_types</span> и почему объявление нужно в каждом файле.</li>
+      <li>Сформулировать правила ковариантности и контравариантности через принцип подстановки.</li>
+      <li>Заменить пару примитивов, которые легко перепутать местами, отдельными типами.</li>
+      <li>Написать типизированную коллекцию с аннотациями обобщений и рантайм-проверкой на границе.</li>
+      <li>Объяснить, почему <span class="nm">readonly</span> не делает объект неизменяемым.</li>
+      <li>Отличить сущность от объекта-значения и выбрать правильное равенство для каждого.</li>
+      <li>Рассказать, чем <span class="nm">==</span> отличается от <span class="nm">===</span> для объектов и почему первое опасно для сущностей.</li>
+      <li>Реализовать <span class="nm">__clone</span> для класса с коллекцией изменяемых объектов.</li>
+      <li>Назвать цену <span class="nm">__get</span> и подобрать стандартный интерфейс вместо магии.</li>
+      <li>Спроектировать иерархию исключений с данными и объяснить, где уместен общий перехват.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · проектирование</p>
+    <h2>Senior: класс, который невозможно использовать неправильно</h2>
+    <p>На этом уровне вопрос смещается от «как написано» к «что этот класс гарантирует». Хороший объектный дизайн измеряется не количеством абстракций, а количеством ошибок, которые он делает невозможными, и стоимостью изменений, которые он позволяет вносить без поломки чужого кода.</p>
+  </div>
+
+  <!-- 13 -->
+  <article class="card" id="invariants">
+    <p class="path">senior / инварианты</p>
+    <div class="card-top"><h3>Инварианты и невозможные состояния</h3><span class="badge b-3">Главное</span></div>
+    <p>Инвариант — утверждение о состоянии объекта, истинное всё время его жизни: у диапазона дат начало не позже конца, у оплаченного заказа есть платёж, у суммы в рублях валюта не меняется. Задача проектирования — сделать так, чтобы нарушить инвариант было невозможно, а не чтобы нарушение проверялось везде.</p>
+
+    <div class="flow" role="img" aria-label="Где проверяется корректность объекта">
+      <div class="node">Конструктор<small>невалидное не создаётся</small></div><span class="arr">→</span>
+      <div class="node">Операции<small>только допустимые переходы</small></div><span class="arr">→</span>
+      <div class="node">Типы<small>невозможное не выражается</small></div><span class="arr">→</span>
+      <div class="node">Итог<small>проверок снаружи не нужно</small></div>
+    </div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Опциональные поля против явных состояний</span></div><pre><span class="cm">// ПЛОХО: восемь комбинаций null, из которых корректны три.</span>
+<span class="cm">// Каждый потребитель обязан помнить, какие именно.</span>
+<span class="kw">final class</span> <span class="nm">Delivery</span>
+{
+    <span class="kw">public</span> ?<span class="nm">Address</span> <span class="nm">$address</span> = <span class="kw">null</span>;
+    <span class="kw">public</span> ?<span class="nm">PickupPoint</span> <span class="nm">$point</span> = <span class="kw">null</span>;
+    <span class="kw">public</span> ?<span class="nm">\DateTimeImmutable</span> <span class="nm">$slot</span> = <span class="kw">null</span>;
+}
+<span class="cm">// if ($d-&gt;address !== null &amp;&amp; $d-&gt;slot !== null) { ... } — и так везде</span>
+
+<span class="cm">// ХОРОШО: каждое состояние — отдельный тип.</span>
+<span class="cm">// Некорректных комбинаций просто не существует.</span>
+<span class="kw">interface</span> <span class="nm">Delivery</span>
+{
+    <span class="kw">public function</span> <span class="fn">cost</span>(): <span class="nm">Money</span>;
+}
+
+<span class="kw">final class</span> <span class="nm">CourierDelivery</span> <span class="kw">implements</span> <span class="nm">Delivery</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly</span> <span class="nm">Address</span> <span class="nm">$address</span>,           <span class="cm">// обязателен</span>
+        <span class="kw">public readonly</span> <span class="nm">\DateTimeImmutable</span> <span class="nm">$slot</span>,  <span class="cm">// обязателен</span>
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">cost</span>(): <span class="nm">Money</span> { <span class="cm">/* ... */</span> }
+}
+
+<span class="kw">final class</span> <span class="nm">PickupDelivery</span> <span class="kw">implements</span> <span class="nm">Delivery</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly</span> <span class="nm">PickupPoint</span> <span class="nm">$point</span>) {}
+
+    <span class="kw">public function</span> <span class="fn">cost</span>(): <span class="nm">Money</span> { <span class="kw">return</span> <span class="nm">Money</span>::<span class="fn">zero</span>(<span class="nm">Currency</span>::RUB); }
+}
+
+<span class="cm">// Проверки на null исчезли из всего приложения:</span>
+<span class="cm">// адрес есть тогда и только тогда, когда доставка курьерская.</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · как сделать неверное состояние невыразимым</caption>
+      <thead><tr><th>Проблема</th><th>Приём</th></tr></thead>
+      <tbody>
+        <tr><td>Половина полей может быть <span class="nm">null</span></td><td>Разделить на отдельные типы состояний</td></tr>
+        <tr><td>Объект создаётся пустым и заполняется сеттерами</td><td>Все обязательные данные в конструктор</td></tr>
+        <tr><td>Строка со статусом принимает любое значение</td><td>Перечисление</td></tr>
+        <tr><td>Переходы состояний разрешены в любом порядке</td><td>Методы-операции с проверкой текущего состояния</td></tr>
+        <tr><td>Одинаковые примитивы легко перепутать</td><td>Отдельные типы-обёртки</td></tr>
+        <tr><td>Коллекция может оказаться пустой там, где это недопустимо</td><td>Проверка в конструкторе и тип непустого списка</td></tr>
+        <tr><td>Число может быть отрицательным там, где это бессмысленно</td><td>Объект-значение с проверкой при создании</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Практический критерий качества класса: сколько проверок вынуждены писать его пользователи. Если после получения объекта приходится выяснять, заполнены ли поля, в каком он состоянии и можно ли вызывать метод, — инварианты не инкапсулированы. Идеал — объект, у которого любой публичный метод можно вызвать в любой момент, и он либо сделает работу, либо бросит осмысленное исключение.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как избавиться от проверок на null, разбросанных по коду?</b><br>Обычно они означают, что один класс описывает несколько разных состояний сразу. Вместо объекта с шестью опциональными полями делают несколько типов, у каждого из которых обязательные поля действительно обязательны, и общий интерфейс с нужной операцией. Проверки исчезают не потому, что их спрятали, а потому, что невозможных комбинаций больше нет. Там, где отсутствие значения действительно осмысленно, помогает явный тип отсутствия или значение по умолчанию, заданное в конструкторе.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="coupling">
+    <p class="path">senior / связанность</p>
+    <div class="card-top"><h3>Связанность и границы</h3><span class="badge b-3">Зависимости</span></div>
+    <p>Стоимость изменения кода определяется не его объёмом, а количеством мест, которые придётся тронуть. Именно это измеряет связанность: сколько чужих знаний класс держит в себе и сколько классов узнают о его внутреннем устройстве.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · виды связанности от худшей к лучшей</caption>
+      <thead><tr><th>Вид</th><th>Как выглядит</th><th>Чем плох</th></tr></thead>
+      <tbody>
+        <tr><td>Через внутреннее устройство</td><td>Класс лезет в потроха другого через цепочки вызовов</td><td>Любое изменение внутри ломает соседа</td></tr>
+        <tr><td>Через глобальное состояние</td><td>Общая статика, синглтоны, суперглобальные</td><td>Связь невидима, порядок выполнения важен</td></tr>
+        <tr><td>Через конкретный класс</td><td>Создание зависимости оператором <span class="nm">new</span> внутри</td><td>Нельзя подменить, нельзя протестировать</td></tr>
+        <tr><td>Через флаг поведения</td><td>Параметр <span class="nm">bool $withTax</span>, меняющий смысл метода</td><td>Один метод делает два разных дела</td></tr>
+        <tr><td>Через интерфейс</td><td>Зависимость от роли, а не от реализации</td><td>Приемлемо: связь ограничена контрактом</td></tr>
+        <tr><td>Через данные</td><td>Передан ровно тот аргумент, который нужен</td><td>Лучший вариант: класс ничего не знает об источнике</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Цепочки вызовов и передача нужного</span></div><pre><span class="cm">// ПЛОХО: класс знает устройство трёх чужих объектов.</span>
+<span class="cm">// Переименовали поле в Address — правим здесь.</span>
+<span class="kw">public function</span> <span class="fn">notify</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="kw">void</span>
+{
+    <span class="nm">$city</span> = <span class="nm">$order</span>-&gt;<span class="fn">getCustomer</span>()-&gt;<span class="fn">getAddress</span>()-&gt;<span class="fn">getCity</span>()-&gt;<span class="fn">getName</span>();
+    <span class="nm">$this</span>-&gt;sms-&gt;<span class="fn">send</span>(
+        <span class="nm">$order</span>-&gt;<span class="fn">getCustomer</span>()-&gt;<span class="fn">getPhone</span>()-&gt;<span class="fn">getE164</span>(),
+        <span class="st">"Доставка в {$city}"</span>,
+    );
+}
+
+<span class="cm">// ЛУЧШЕ: просим объект сделать, а не рассказать о себе</span>
+<span class="kw">public function</span> <span class="fn">notify</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="kw">void</span>
+{
+    <span class="nm">$this</span>-&gt;sms-&gt;<span class="fn">send</span>(<span class="nm">$order</span>-&gt;<span class="fn">contactPhone</span>(), <span class="nm">$order</span>-&gt;<span class="fn">deliverySummary</span>());
+}
+
+<span class="cm">// ЕЩЁ ЛУЧШЕ: методу нужен телефон и текст, а не заказ.</span>
+<span class="cm">// Такой метод переиспользуется и тестируется без построения заказа.</span>
+<span class="kw">public function</span> <span class="fn">notify</span>(<span class="nm">Phone</span> <span class="nm">$phone</span>, <span class="kw">string</span> <span class="nm">$text</span>): <span class="kw">void</span>
+{
+    <span class="nm">$this</span>-&gt;sms-&gt;<span class="fn">send</span>(<span class="nm">$phone</span>, <span class="nm">$text</span>);
+}
+</pre></div>
+
+    <p><strong>Принцип «просить сделать, а не спрашивать».</strong> Если код достаёт из объекта данные, принимает по ним решение и кладёт результат обратно, это решение принадлежит самому объекту. Перенос такой логики внутрь убирает и цепочки вызовов, и дублирование: правило оказывается в одном месте, а не в каждом вызывающем.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · признаки чрезмерной связанности</caption>
+      <thead><tr><th>Признак</th><th>Что означает</th></tr></thead>
+      <tbody>
+        <tr><td>Длинные цепочки вызовов через точку</td><td>Класс знает устройство чужих объектов</td></tr>
+        <tr><td>Изменение поля затрагивает десяток файлов</td><td>Внутреннее устройство утекло наружу</td></tr>
+        <tr><td>Тест требует построить полдюжины объектов</td><td>Слишком много зависимостей для одной операции</td></tr>
+        <tr><td>Конструктор с восемью зависимостями</td><td>Класс делает несколько разных дел</td></tr>
+        <tr><td>Логический флаг в аргументах</td><td>Внутри метода два разных сценария</td></tr>
+        <tr><td>Классы всегда правятся парами</td><td>Граница между ними проведена неверно</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="meta">
+    <p class="path">senior / метапрограммирование</p>
+    <div class="card-top"><h3>Рефлексия и атрибуты</h3><span class="badge b-3">Инструменты каркасов</span></div>
+    <p>Рефлексия позволяет коду изучать самого себя: получить список свойств, прочитать типы, создать объект в обход конструктора. На этом построены контейнеры зависимостей, ORM, сериализаторы и валидаторы. В прикладном коде она нужна редко и почти всегда является признаком того, что задачу решают не с той стороны.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Атрибут и его обработка</span></div><pre><span class="cm">// Атрибут — это обычный класс, помеченный как атрибут</span>
+#[<span class="nm">\Attribute</span>(<span class="nm">\Attribute</span>::TARGET_METHOD)]
+<span class="kw">final class</span> <span class="nm">Retry</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> <span class="nm">$attempts</span> = 3,
+        <span class="kw">public readonly int</span> <span class="nm">$delayMs</span> = 200,
+    ) {}
+}
+
+<span class="kw">final class</span> <span class="nm">PaymentGateway</span>
+{
+    #[<span class="nm">Retry</span>(attempts: 5, delayMs: 500)]
+    <span class="kw">public function</span> <span class="fn">charge</span>(<span class="nm">Money</span> <span class="nm">$amount</span>): <span class="nm">Receipt</span> { <span class="cm">/* ... */</span> }
+}
+
+<span class="cm">// Чтение атрибута: объект создаётся только при newInstance()</span>
+<span class="kw">final class</span> <span class="nm">RetryPolicyReader</span>
+{
+    <span class="kw">public function</span> <span class="fn">read</span>(<span class="kw">string</span> <span class="nm">$class</span>, <span class="kw">string</span> <span class="nm">$method</span>): ?<span class="nm">Retry</span>
+    {
+        <span class="nm">$ref</span>   = <span class="kw">new</span> <span class="nm">\ReflectionMethod</span>(<span class="nm">$class</span>, <span class="nm">$method</span>);
+        <span class="nm">$attrs</span> = <span class="nm">$ref</span>-&gt;<span class="fn">getAttributes</span>(<span class="nm">Retry</span>::<span class="kw">class</span>);
+
+        <span class="kw">return</span> <span class="nm">$attrs</span> === [] ? <span class="kw">null</span> : <span class="nm">$attrs</span>[0]-&gt;<span class="fn">newInstance</span>();
+    }
+}
+
+<span class="cm">// ВАЖНО: рефлексия дорога. В проде результат кэшируют —</span>
+<span class="cm">// именно так делают все фреймворки: разбор атрибутов</span>
+<span class="cm">// происходит при прогреве кэша, а не на каждом запросе.</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · где рефлексия уместна</caption>
+      <thead><tr><th>Задача</th><th>Уместна</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td>Контейнер зависимостей</td><td>Да</td><td>Классический случай, результат кэшируется</td></tr>
+        <tr><td>Сериализация и отображение данных</td><td>Да</td><td>Обход свойств, чтение типов</td></tr>
+        <tr><td>Восстановление объекта из базы</td><td>Да</td><td>Обход конструктора: объект уже существовал</td></tr>
+        <tr><td>Метаданные через атрибуты</td><td>Да</td><td>Маршруты, правила валидации, права доступа</td></tr>
+        <tr><td>Доступ к приватному в тестах</td><td>Спорно</td><td>Обычно признак того, что тестируется не то</td></tr>
+        <tr><td>Обход инкапсуляции в прикладном коде</td><td>Нет</td><td>Проблема в дизайне класса, а не в доступе</td></tr>
+        <tr><td>Вызов методов по строковому имени</td><td>Осторожно</td><td>Строка из внешних данных — уязвимость</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Атрибуты — это данные, а не поведение: они ничего не делают сами, пока кто-то их не прочитает. Отсюда два следствия. Первое: атрибут не может ничего гарантировать, если обработчик к нему не подключён, — легко получить помеченный метод, на который никто не смотрит. Второе: логика в атрибутах распределена между объявлением и обработчиком, поэтому её труднее проследить, чем явный вызов. Для каркасов это оправданная цена, для прикладного кода — редко.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="evolution">
+    <p class="path">senior / эволюция</p>
+    <div class="card-top"><h3>Эволюция публичного API</h3><span class="badge b-3">Совместимость</span></div>
+    <p>Всё публичное — это обещание, которое придётся поддерживать. Внутри библиотеки или модуля, которым пользуются другие команды, каждое публичное имя становится обязательством, а каждое изменение — потенциальной поломкой чужого кода. Отсюда правило: публичной должна быть минимальная поверхность, достаточная для работы.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 19 · что ломает обратную совместимость</caption>
+      <thead><tr><th>Изменение</th><th>Ломает</th><th>Безопасная альтернатива</th></tr></thead>
+      <tbody>
+        <tr><td>Удаление или переименование публичного метода</td><td>Да</td><td>Пометить устаревшим, удалить в следующей мажорной версии</td></tr>
+        <tr><td>Добавление обязательного параметра</td><td>Да</td><td>Необязательный параметр или новый метод</td></tr>
+        <tr><td>Сужение типа параметра</td><td>Да</td><td>Оставить широким, проверять внутри</td></tr>
+        <tr><td>Расширение типа возвращаемого значения</td><td>Да</td><td>Не расширять; новый метод при необходимости</td></tr>
+        <tr><td>Добавление метода в интерфейс</td><td>Да, для всех реализаций</td><td>Новый интерфейс или абстрактный класс с реализацией</td></tr>
+        <tr><td>Новое исключение из существующего метода</td><td>Да, по сути</td><td>Наследовать от уже объявленного типа</td></tr>
+        <tr><td>Добавление необязательного параметра в конец</td><td>Нет</td><td>Обычный способ расширения</td></tr>
+        <tr><td>Изменение приватной реализации</td><td>Нет</td><td>Ради этого и нужна инкапсуляция</td></tr>
+        <tr><td>Добавление <span class="nm">final</span> к существующему классу</td><td>Да, для наследников</td><td>Только в мажорной версии</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 20 · управление поверхностью API</caption>
+      <thead><tr><th>Приём</th><th>Что даёт</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">final</span> по умолчанию</td><td>Свобода менять внутренности: никто не наследуется</td></tr>
+        <tr><td><span class="nm">@internal</span> для служебных классов</td><td>Явное «это не часть публичного контракта»</td></tr>
+        <tr><td>Интерфейс для потребителей, класс — деталь</td><td>Реализацию можно заменить целиком</td></tr>
+        <tr><td>Именованные конструкторы вместо публичного <span class="nm">__construct</span></td><td>Сигнатуру создания можно менять</td></tr>
+        <tr><td>Пометка устаревшего с указанием замены</td><td>Плавный переход вместо резкой поломки</td></tr>
+        <tr><td>Семантическое версионирование</td><td>Потребитель знает, чего ждать от обновления</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Полезная привычка при добавлении публичного метода — спросить, готовы ли вы поддерживать его два года. Публичный метод, добавленный «пусть будет, вдруг пригодится», через год окажется вызван из трёх мест, и убрать его будет уже нельзя. Внутри приложения это не так строго, как в библиотеке, но направление то же: меньше публичного — дешевле изменения.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / антипаттерны</p>
+    <div class="card-top"><h3>Антипаттерны</h3><span class="badge b-3">Ошибки</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 21 · антипаттерны объектного дизайна</caption>
+      <thead><tr><th>Антипаттерн</th><th>Чем оборачивается</th><th>Как правильно</th></tr></thead>
+      <tbody>
+        <tr><td>Класс-мешок данных с сеттерами</td><td>Правила размазаны по вызывающему коду</td><td>Операции предметной области, проверки внутри</td></tr>
+        <tr><td>Объект, создаваемый пустым и заполняемый</td><td>Промежуточные некорректные состояния</td><td>Все обязательные данные в конструктор</td></tr>
+        <tr><td>Наследование ради переиспользования</td><td>Хрупкая иерархия, изменения ломают потомков</td><td>Композиция и интерфейс</td></tr>
+        <tr><td>Интерфейс на каждый класс</td><td>Удвоение файлов без пользы</td><td>Интерфейс там, где есть подмена или граница</td></tr>
+        <tr><td>Глубокая иерархия на четыре уровня</td><td>Поведение приходится собирать по всей цепочке</td><td>Плоская структура, поведение композицией</td></tr>
+        <tr><td>Магический доступ к свойствам</td><td>Нет типов, подсказок и проверок</td><td>Явные свойства или стандартные интерфейсы</td></tr>
+        <tr><td>Статические вызовы вместо зависимостей</td><td>Скрытые связи, нетестируемость</td><td>Внедрение зависимости через конструктор</td></tr>
+        <tr><td>Логический флаг, меняющий смысл метода</td><td>Два разных сценария в одном месте</td><td>Два метода с говорящими именами</td></tr>
+        <tr><td>Анемичная модель плюс сервис на всё</td><td>Объекты без поведения, сервисы без границ</td><td>Поведение рядом с данными, которыми оно управляет</td></tr>
+        <tr><td>Абстракция ради абстракции</td><td>Пять слоёв, чтобы поменять одну строку</td><td>Вводить абстракцию по факту второго случая</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Самый дорогой антипаттерн</span>Абстракция, введённая заранее «на будущее». Интерфейс с одной реализацией, фабрика для одного класса, слой адаптеров на случай смены базы, которая не сменится, — всё это платится ежедневно: каждое изменение проходит через лишние файлы, а понимание кода требует держать в голове конструкции, ничего не решающие. Абстракция оправдывает себя при втором реальном случае, а не при первом воображаемом.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card lvl-s" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Проверка</span></div>
+    <p>Что должно быть в арсенале.</p>
+    <ul class="check">
+      <li>Сформулировать инварианты класса и обеспечить их конструктором и операциями, а не проверками снаружи.</li>
+      <li>Превратить объект с шестью опциональными полями в несколько типов состояний.</li>
+      <li>Оценить класс по критерию «сколько проверок вынуждены писать его пользователи».</li>
+      <li>Назвать виды связанности от худшей к лучшей и найти в коде цепочки вызовов через точку.</li>
+      <li>Применить принцип «просить сделать, а не спрашивать» и объяснить, что он убирает.</li>
+      <li>Перечислить признаки чрезмерной связанности, включая пары классов, которые всегда правятся вместе.</li>
+      <li>Объяснить, где рефлексия оправдана, и почему её результат кэшируют.</li>
+      <li>Назвать, что атрибут ничего не делает без обработчика, и вытекающие из этого риски.</li>
+      <li>Перечислить изменения, ломающие обратную совместимость, и безопасные альтернативы к ним.</li>
+      <li>Обосновать <span class="nm">final</span> по умолчанию и минимальную публичную поверхность.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Сводки для повторения перед собеседованием и для быстрой проверки собственного кода на ревью.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Чем описать поведение</h3><span class="badge b-tag">Таблица 22</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 22 · пять способов переиспользовать поведение</caption>
+      <thead><tr><th>Признак</th><th>Интерфейс</th><th>Абстрактный класс</th><th>Трейт</th><th>Композиция</th><th>Перечисление</th></tr></thead>
+      <tbody>
+        <tr><td>Создаёт тип</td><td>Да</td><td>Да</td><td>Нет</td><td>Через интерфейс</td><td>Да</td></tr>
+        <tr><td>Несёт реализацию</td><td>Нет</td><td>Да</td><td>Да</td><td>Да</td><td>Да</td></tr>
+        <tr><td>Может быть состояние</td><td>Нет</td><td>Да</td><td>Да</td><td>Да</td><td>Нет</td></tr>
+        <tr><td>Сколько можно совместить</td><td>Много</td><td>Один</td><td>Много</td><td>Сколько угодно</td><td>Один</td></tr>
+        <tr><td>Меняется в рантайме</td><td>Да, подстановкой</td><td>Нет</td><td>Нет</td><td>Да</td><td>Нет</td></tr>
+        <tr><td>Связанность</td><td>Слабая</td><td>Очень сильная</td><td>Сильная и скрытая</td><td>Слабая</td><td>Нет</td></tr>
+        <tr><td>Типичное применение</td><td>Границы, подмена</td><td>Семейство классов</td><td>Технические мелочи</td><td>Почти всё остальное</td><td>Закрытый набор значений</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Как этим пользоваться</span>Строка «связанность» объясняет порядок предпочтения. При прочих равных берут вариант с более слабой связью: композицию вместо наследования, интерфейс вместо абстрактного класса, перечисление вместо иерархии из трёх классов-констант. Сильная связь оправдана, когда классы действительно образуют одно семейство и меняются вместе.</div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Симптом в коде и что за ним стоит</h3><span class="badge b-tag">Таблица 23</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 23 · запахи объектного кода</caption>
+      <thead><tr><th>Симптом</th><th>Что обычно означает</th><th>Куда двигаться</th></tr></thead>
+      <tbody>
+        <tr><td>Одинаковая проверка в пяти вызывающих местах</td><td>Правило живёт снаружи объекта</td><td>Перенести внутрь как операцию</td></tr>
+        <tr><td>Длинная цепочка вызовов через точку</td><td>Класс знает устройство чужих объектов</td><td>Попросить объект сделать, а не рассказать</td></tr>
+        <tr><td>Ветвление по строковому статусу в нескольких файлах</td><td>Поведение оторвано от значения</td><td>Перечисление с методами</td></tr>
+        <tr><td>Конструктор с восемью зависимостями</td><td>Класс делает несколько дел</td><td>Разделить по операциям</td></tr>
+        <tr><td>Метод на двести строк с флагами</td><td>Несколько сценариев в одном месте</td><td>Отдельные методы или отдельные типы</td></tr>
+        <tr><td>Тест требует построить полсистемы</td><td>Слишком много связей у одной операции</td><td>Передавать данные, а не графы объектов</td></tr>
+        <tr><td>Половина полей может быть <span class="nm">null</span></td><td>Один класс описывает несколько состояний</td><td>Разделить на типы состояний</td></tr>
+        <tr><td>Классы всегда правятся парами</td><td>Граница проведена неверно</td><td>Объединить или пересмотреть разделение</td></tr>
+        <tr><td>Наследник переопределяет почти всё</td><td>Это не наследование, а совпадение имён</td><td>Композиция и общий интерфейс</td></tr>
+        <tr><td>Комментарий объясняет, что делает метод</td><td>Имя или размер метода неудачны</td><td>Переименовать или разделить</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Термины, которые путают</h3><span class="badge b-tag">Таблица 24</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 24 · пары понятий и разница между ними</caption>
+      <thead><tr><th>Пара</th><th>Первое</th><th>Второе</th></tr></thead>
+      <tbody>
+        <tr><td>Инкапсуляция / сокрытие полей</td><td>Скрыто устройство, снаружи операции</td><td>Скрыты свойства, доступ через геттеры</td></tr>
+        <tr><td>Сущность / объект-значение</td><td>Есть идентификатор, меняется</td><td>Определяется значениями, неизменяем</td></tr>
+        <tr><td>Полиморфизм / ветвление по типу</td><td>Объект сам знает, как себя вести</td><td>Вызывающий код выбирает поведение</td></tr>
+        <tr><td><span class="nm">==</span> / <span class="nm">===</span> для объектов</td><td>Тот же класс и равные свойства</td><td>Тот же самый экземпляр</td></tr>
+        <tr><td>Поверхностное / глубокое копирование</td><td>Вложенные объекты общие</td><td>Вложенные объекты тоже скопированы</td></tr>
+        <tr><td><span class="nm">readonly</span> / иммутабельность</td><td>Свойство нельзя переприсвоить</td><td>Состояние объекта не меняется вообще</td></tr>
+        <tr><td>Ковариантность / контравариантность</td><td>Возвращаем более узкий тип</td><td>Принимаем более широкий тип</td></tr>
+        <tr><td>Абстракция / уровень косвенности</td><td>Скрывает сложность, упрощает работу</td><td>Добавляет слой, ничего не упрощая</td></tr>
+        <tr><td>Исключение предметной области / ошибка программиста</td><td>Ожидаемая ситуация, обрабатывается</td><td>Баг: должен упасть и попасть в трекер</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Уровень и ожидания</h3><span class="badge b-tag">Таблица 25</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 25 · чего ждут от Junior, Middle и Senior</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Инкапсуляция</td><td>Приватные свойства и геттеры</td><td>Операции вместо сеттеров</td><td>Инварианты, которые невозможно нарушить</td></tr>
+        <tr><td>Наследование</td><td>Знает синтаксис</td><td>Предпочитает композицию, знает подстановку</td><td>Проектирует точки расширения осознанно</td></tr>
+        <tr><td>Типы</td><td>Расставляет типы аргументов</td><td>Выразительные типы вместо примитивов</td><td>Типы как способ сделать ошибку невозможной</td></tr>
+        <tr><td>Изменяемость</td><td>Не задумывается</td><td>Использует <span class="nm">readonly</span> и объекты-значения</td><td>Понимает глубину неизменяемости и её цену</td></tr>
+        <tr><td>Ошибки</td><td>Бросает исключение с текстом</td><td>Иерархия исключений с данными</td><td>Исключения как часть контракта и границ</td></tr>
+        <tr><td>Абстракции</td><td>Добавляет интерфейсы на всякий случай</td><td>Вводит по потребности</td><td>Считает стоимость и умеет не вводить</td></tr>
+        <tr><td>Изменения</td><td>Правит код</td><td>Думает о тестируемости</td><td>Думает об обратной совместимости и цене поддержки</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Шаблоны классов</h2>
+    <p>Заготовки, которые закрывают большую часть повседневных задач объектного дизайна.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Объект-значение</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Полный набор: проверка, равенство, строка</span></div><pre><span class="kw">final class</span> <span class="nm">Email</span> <span class="kw">implements</span> <span class="nm">\Stringable</span>, <span class="nm">\JsonSerializable</span>
+{
+    <span class="cm">// 1. Приватный конструктор + именованные создатели</span>
+    <span class="kw">private function</span> <span class="fn">__construct</span>(<span class="kw">public readonly string</span> <span class="nm">$value</span>) {}
+
+    <span class="kw">public static function</span> <span class="fn">fromString</span>(<span class="kw">string</span> <span class="nm">$raw</span>): <span class="kw">self</span>
+    {
+        <span class="nm">$normalized</span> = <span class="fn">mb_strtolower</span>(<span class="fn">trim</span>(<span class="nm">$raw</span>));
+
+        <span class="cm">// 2. Инвариант проверяется ровно здесь и больше нигде</span>
+        <span class="kw">if</span> (!<span class="fn">filter_var</span>(<span class="nm">$normalized</span>, FILTER_VALIDATE_EMAIL)) {
+            <span class="kw">throw new</span> <span class="nm">\InvalidArgumentException</span>(<span class="st">"Неверный адрес: {$raw}"</span>);
+        }
+
+        <span class="kw">return new</span> <span class="kw">self</span>(<span class="nm">$normalized</span>);
+    }
+
+    <span class="cm">// 3. Равенство по значению, а не по экземпляру</span>
+    <span class="kw">public function</span> <span class="fn">equals</span>(<span class="kw">self</span> <span class="nm">$other</span>): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;value === <span class="nm">$other</span>-&gt;value;
+    }
+
+    <span class="cm">// 4. Поведение живёт рядом со значением</span>
+    <span class="kw">public function</span> <span class="fn">domain</span>(): <span class="kw">string</span>
+    {
+        <span class="kw">return</span> <span class="fn">substr</span>(<span class="fn">strrchr</span>(<span class="nm">$this</span>-&gt;value, <span class="st">'@'</span>) ?: <span class="st">'@'</span>, 1);
+    }
+
+    <span class="kw">public function</span> <span class="fn">__toString</span>(): <span class="kw">string</span> { <span class="kw">return</span> <span class="nm">$this</span>-&gt;value; }
+
+    <span class="kw">public function</span> <span class="fn">jsonSerialize</span>(): <span class="kw">string</span> { <span class="kw">return</span> <span class="nm">$this</span>-&gt;value; }
+}
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Сущность с состоянием</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Переходы состояний внутри объекта</span></div><pre><span class="kw">final class</span> <span class="nm">Subscription</span>
+{
+    <span class="kw">private</span> <span class="nm">SubscriptionStatus</span> <span class="nm">$status</span>;
+    <span class="kw">private</span> ?<span class="nm">\DateTimeImmutable</span> <span class="nm">$cancelledAt</span> = <span class="kw">null</span>;
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly</span> <span class="nm">SubscriptionId</span> <span class="nm">$id</span>,
+        <span class="kw">private readonly</span> <span class="nm">Plan</span> <span class="nm">$plan</span>,
+        <span class="kw">private</span> <span class="nm">\DateTimeImmutable</span> <span class="nm">$paidUntil</span>,
+    ) {
+        <span class="nm">$this</span>-&gt;status = <span class="nm">SubscriptionStatus</span>::Active;
+    }
+
+    <span class="cm">// Каждый переход — метод с проверкой предусловия.</span>
+    <span class="cm">// Снаружи невозможно перевести объект в неверное состояние.</span>
+    <span class="kw">public function</span> <span class="fn">renew</span>(<span class="nm">\DateTimeImmutable</span> <span class="nm">$until</span>): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;status === <span class="nm">SubscriptionStatus</span>::Cancelled) {
+            <span class="kw">throw new</span> <span class="nm">CannotRenewCancelled</span>(<span class="nm">$this</span>-&gt;id);
+        }
+        <span class="kw">if</span> (<span class="nm">$until</span> &lt;= <span class="nm">$this</span>-&gt;paidUntil) {
+            <span class="kw">throw new</span> <span class="nm">\InvalidArgumentException</span>(<span class="st">'Продление в прошлое'</span>);
+        }
+
+        <span class="nm">$this</span>-&gt;paidUntil = <span class="nm">$until</span>;
+        <span class="nm">$this</span>-&gt;status    = <span class="nm">SubscriptionStatus</span>::Active;
+    }
+
+    <span class="kw">public function</span> <span class="fn">cancel</span>(<span class="nm">\DateTimeImmutable</span> <span class="nm">$at</span>): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;status === <span class="nm">SubscriptionStatus</span>::Cancelled) {
+            <span class="kw">return</span>;   <span class="cm">// идемпотентно: повтор не ошибка</span>
+        }
+        <span class="nm">$this</span>-&gt;status      = <span class="nm">SubscriptionStatus</span>::Cancelled;
+        <span class="nm">$this</span>-&gt;cancelledAt = <span class="nm">$at</span>;
+    }
+
+    <span class="cm">// Вопросы вместо выдачи внутренностей наружу</span>
+    <span class="kw">public function</span> <span class="fn">isActiveAt</span>(<span class="nm">\DateTimeImmutable</span> <span class="nm">$moment</span>): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;status === <span class="nm">SubscriptionStatus</span>::Active
+            &amp;&amp; <span class="nm">$moment</span> &lt;= <span class="nm">$this</span>-&gt;paidUntil;
+    }
+}
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Вопросы к своему классу</h3><span class="badge b-tag">Ревью</span></div>
+    <div class="code"><div class="bar"><span>чек-лист</span><span class="r">Пройтись перед отправкой на ревью</span></div><pre><span class="cm"># СОЗДАНИЕ</span>
+   Можно ли создать объект в некорректном состоянии?
+   Все обязательные данные — в конструкторе?
+   Понятно ли из имени создателя, что означают аргументы?
+
+<span class="cm"># СОСТОЯНИЕ</span>
+   Какие инварианты обязаны выполняться всегда?
+   Где они проверяются — внутри или в вызывающем коде?
+   Что из этого вообще не должно меняться после создания?
+
+<span class="cm"># ИНТЕРФЕЙС</span>
+   Публичные методы — это операции или доступ к полям?
+   Сколько проверок вынужден писать пользователь класса?
+   Отдаём ли мы наружу изменяемые внутренности?
+
+<span class="cm"># СВЯЗИ</span>
+   Сколько зависимостей в конструкторе?
+   Есть ли цепочки вызовов через точку?
+   Можно ли протестировать, не поднимая полсистемы?
+
+<span class="cm"># ИЗМЕНЕНИЯ</span>
+   Что сломается, если изменить внутреннее хранение?
+   Что придётся править, если добавится новый вариант?
+   Не добавили ли мы абстракцию под воображаемое будущее?
+
+<span class="cm"># ОШИБКИ</span>
+   Какие исключения метод может бросить и объявлено ли это?
+   Различаем ли мы ошибку программиста и ситуацию предметной области?
+   Не глушим ли мы Throwable там, где не умеем его обработать?
+</pre></div>
+    <div class="box good"><span class="lbl">Практика</span>Самый полезный вопрос из списка — «сколько проверок вынужден писать пользователь класса». Он один выявляет и утечку инвариантов наружу, и опциональные поля, и правила, живущие в вызывающем коде. Если ответ «ни одной», всё остальное почти наверняка тоже в порядке.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== ИНТЕРВЬЮ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>ООП — тема, где легко отвечать определениями из учебника. Сильный ответ всегда содержит следствие: что именно этот механизм даёт и чего стоит.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">База</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое инкапсуляция?</span><span class="aa">Сокрытие внутреннего устройства объекта за набором операций: снаружи известно, что объект умеет, но не то, как он хранит данные. Даёт две вещи: правила корректности живут в одном месте и внутреннее устройство можно менять, не ломая пользователей класса.</span></li>
+      <li><span class="qq">Является ли инкапсуляцией набор приватных свойств с геттерами и сеттерами?</span><span class="aa">Нет. Внутреннее устройство при этом видно целиком, просто доступ идёт через методы, а правила корректности остаются в вызывающем коде. Настоящая инкапсуляция начинается там, где вместо установки полей есть операции предметной области.</span></li>
+      <li><span class="qq">Чем опасно возвращать внутреннюю коллекцию объектов?</span><span class="aa">Массив в PHP копируется при возврате, но объекты внутри остаются теми же экземплярами: вызывающий код может изменить их состояние в обход всех правил класса. Отдавать нужно копию с клонированными элементами или неизменяемое представление.</span></li>
+      <li><span class="qq">Что такое полиморфизм и зачем он?</span><span class="aa">Возможность вызвать одну и ту же операцию у разных типов и получить поведение, соответствующее конкретному типу. Практическая ценность в том, что ветвление по типу исчезает из вызывающего кода: добавление нового варианта не требует править существующие места.</span></li>
+      <li><span class="qq">Чем интерфейс отличается от абстрактного класса?</span><span class="aa">Интерфейс описывает роль — что объект умеет — и не несёт ни реализации, ни состояния; их можно реализовать сколько угодно. Абстрактный класс описывает природу, приносит реализацию и состояние, но он один и жёстко связывает наследников.</span></li>
+      <li><span class="qq">Когда выбирать интерфейс, а когда абстрактный класс?</span><span class="aa">Интерфейс — когда нужна подмена реализации или граница между слоями. Абстрактный класс — когда у нескольких классов действительно есть общая реализация и они образуют одно семейство. Часто лучший вариант — интерфейс плюс отдельный класс с общей логикой, используемый композицией.</span></li>
+      <li><span class="qq">Нужен ли интерфейс для класса с одной реализацией?</span><span class="aa">Обычно нет. Такой интерфейс ничего не абстрагирует и удваивает работу при каждом изменении. Он оправдан, если реализаций больше одной, если он проходит по границе слоя или если его подменяют в тестах.</span></li>
+      <li><span class="qq">Каким должен быть хороший интерфейс?</span><span class="aa">Узким: два-три метода, связанных одной ролью. Интерфейс с пятнадцатью методами описывает не роль, а целый класс, и его реализации всегда наполовину состоят из заглушек. Если часть методов выбрасывает «не поддерживается», интерфейс пора разделить.</span></li>
+      <li><span class="qq">Почему композицию предпочитают наследованию?</span><span class="aa">Наследование создаёт очень сильную связь: наследник зависит от внутреннего устройства родителя и ломается от изменений, которые формально ничего не нарушают. Композиция связывает через интерфейс, позволяет комбинировать несколько источников поведения и менять его в рантайме.</span></li>
+      <li><span class="qq">Как понять, что наследование здесь неуместно?</span><span class="aa">Проверить подстановку: можно ли использовать наследника всюду, где ожидается родитель, не сломав существующий код. Классический контрпример — квадрат, унаследованный от прямоугольника: код, который задаёт ширину и высоту, начинает давать неверную площадь.</span></li>
+      <li><span class="qq">Зачем помечать классы <span class="nm">final</span>?</span><span class="aa">Чтобы сохранить свободу менять внутренности: никто не завязан на порядок вызовов внутренних методов и на защищённые свойства. Открывать класс для наследования стоит осознанно, спроектировав точки расширения, — это отдельная работа, а не свойство, возникающее само.</span></li>
+      <li><span class="qq">Что такое трейт и когда он уместен?</span><span class="aa">Механическая вставка кода в класс на этапе компиляции. Он не создаёт типа, поэтому подставлять объекты по трейту нельзя. Уместен для одинаковой технической мелочи в неродственных классах; для предметного поведения нужен интерфейс или композиция.</span></li>
+      <li><span class="qq">Чем опасны трейты?</span><span class="aa">Скрытыми связями: трейт может обращаться к свойствам класса-хозяина, и эта зависимость нигде не объявлена. Плюс конфликты при подключении нескольких трейтов с одинаковыми методами, которые приходится разрешать вручную.</span></li>
+      <li><span class="qq">Чем плохи статические методы?</span><span class="aa">Их нельзя подменить: статический вызов внутри класса — жёсткая зависимость от конкретной реализации, невидимая в конструкторе и непроверяемая в тестах. Безопасные применения — именованные конструкторы и чистые функции без зависимостей и состояния.</span></li>
+      <li><span class="qq">Что такое именованный конструктор и зачем он?</span><span class="aa">Статический метод создания с говорящим именем вместо публичного <span class="nm">__construct</span>. Он объясняет, что означают аргументы, позволяет иметь несколько способов создания и оставляет свободу менять сигнатуру конструктора, не ломая вызывающий код.</span></li>
+      <li><span class="qq">Почему перечисление лучше набора строковых констант?</span><span class="aa">Невозможные значения перестают существовать на уровне типов: функция, принимающая перечисление, не может получить неизвестный статус. Плюс поведение, зависящее от варианта, переезжает в методы перечисления вместо ветвлений по строке, разбросанных по коду.</span></li>
+      <li><span class="qq">Зачем нужны константы класса?</span><span class="aa">Чтобы связанное с классом значение имело имя и одно место определения. Если значений несколько и они образуют закрытый набор, вместо констант нужно перечисление: оно даёт и тип, и возможность повесить на варианты поведение.</span></li>
+      <li><span class="qq">Что означает модификатор <span class="nm">protected</span> и когда он нужен?</span><span class="aa">Доступ для самого класса и его наследников. Нужен только там, где наследование спроектировано осознанно как точка расширения. В классе, помеченном <span class="nm">final</span>, защищённые члены смысла не имеют, и их наличие обычно означает, что наследование когда-то предполагалось, а потом о нём забыли.</span></li>
+      <li><span class="qq">Что такое абстрактный метод?</span><span class="aa">Объявление без реализации в абстрактном классе: наследник обязан его реализовать. Это способ зафиксировать каркас алгоритма в родителе, оставив наследникам конкретные шаги. Но каждый такой метод — точка жёсткой связи, поэтому их должно быть мало.</span></li>
+      <li><span class="qq">С чего начинать проектирование класса?</span><span class="aa">С вопроса, какие операции он должен предоставлять и какие утверждения о его состоянии обязаны быть истинны всегда. Список полей появляется потом, из этих ответов. Обратный порядок — сначала поля, потом методы доступа к ним — и даёт класс-мешок данных.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Механика</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что даёт <span class="nm">strict_types</span>?</span><span class="aa">Отключает тихое приведение скалярных типов в вызовах: передача строки туда, где объявлен <span class="nm">int</span>, становится ошибкой сразу, а не превращается в неверное значение где-то дальше. Объявление действует на вызовы из файла, где оно написано, поэтому нужно в каждом файле.</span></li>
+      <li><span class="qq">Что такое ковариантность и контравариантность?</span><span class="aa">Правила изменения типов при переопределении, вытекающие из подстановки. Возвращаемый тип можно сузить до наследника: наследник обещает не меньше родителя. Тип параметра можно расширить: наследник принимает не меньше. Тип свойства менять нельзя, потому что его и читают, и пишут.</span></li>
+      <li><span class="qq">Почему <span class="nm">array</span> в сигнатуре — слабая типизация?</span><span class="aa">Он не говорит ничего о содержимом: ни о типе элементов, ни о ключах, ни о том, может ли массив быть пустым. Заменяется объектом, типизированной коллекцией или хотя бы аннотацией вида <span class="nm">list&lt;Order&gt;</span>, которую понимает анализатор.</span></li>
+      <li><span class="qq">Есть ли в PHP обобщённые типы?</span><span class="aa">В самом языке нет: <span class="nm">array</span> ничего не знает о содержимом, а типизированная коллекция проверяет элементы вручную. Но статические анализаторы понимают обобщения из аннотаций и ловят ошибки до запуска, что на практике закрывает большую часть потребности.</span></li>
+      <li><span class="qq">Где нужны рантайм-проверки, а где хватит аннотаций?</span><span class="aa">На границе системы — данные из запроса, очереди, внешнего API — нужна настоящая проверка, потому что аннотации ничего не гарантируют. Внутри, где данные уже прошли границу, достаточно аннотаций: дублирующие проверки в каждом методе ничего не ловят и замедляют код.</span></li>
+      <li><span class="qq">Зачем заменять примитивы отдельными типами?</span><span class="aa">Чтобы сделать невозможными целые классы ошибок. Сигнатура с тремя <span class="nm">int</span> позволяет переставить аргументы местами, и этого не заметит ни анализатор, ни ревью. Отдельные типы счёта, суммы и идентификатора превращают такую ошибку в ошибку типов.</span></li>
+      <li><span class="qq">Что такое объект-значение?</span><span class="aa">Объект, который определяется своими значениями, а не идентификатором: две тысячи рублей равны двум тысячам рублей. Он неизменяем, проверяет свои инварианты при создании и несёт рядом поведение — сложение, сравнение, форматирование.</span></li>
+      <li><span class="qq">Чем сущность отличается от объекта-значения?</span><span class="aa">Сущность имеет идентификатор, меняется со временем и остаётся собой; равенство у неё по идентификатору. Объект-значение определяется набором полей, не меняется и заменяется целиком; равенство по всем полям. Из этого следуют разные способы хранения и сравнения.</span></li>
+      <li><span class="qq">Делает ли <span class="nm">readonly</span> объект неизменяемым?</span><span class="aa">Нет, только запрещает переприсваивание свойства. Если внутри лежит изменяемый объект или коллекция, их состояние прекрасно меняется. Настоящая неизменяемость требует, чтобы всё содержимое тоже было неизменяемым, а массивы отдавались копией.</span></li>
+      <li><span class="qq">Что даёт неизменяемость?</span><span class="aa">Проверка нужна ровно в одном месте — в конструкторе; переданный объект не изменится у вас за спиной; экземпляр можно свободно разделять и кэшировать; тесты не требуют подготовки состояния; клонирование теряет смысл. Плата — больше создаваемых объектов и методы порождения вместо сеттеров.</span></li>
+      <li><span class="qq">Как изменить неизменяемый объект?</span><span class="aa">Создать новый на основе старого методом вида <span class="nm">withX()</span>, который возвращает новый экземпляр через конструктор — значит, все инварианты проверятся заново. Исходный объект остаётся валидным, и код, который его держал, не заметит изменения.</span></li>
+      <li><span class="qq">Чем <span class="nm">==</span> отличается от <span class="nm">===</span> для объектов?</span><span class="aa">Первое проверяет, что это объекты одного класса с равными свойствами, сравнивая их рекурсивно. Второе — что это один и тот же экземпляр. Для объектов-значений <span class="nm">==</span> часто уместно, для сущностей опасно: два объекта одного заказа с разным набором подгруженных связей окажутся неравными.</span></li>
+      <li><span class="qq">Как правильно объявлять равенство?</span><span class="aa">Явным методом. Для объекта-значения — сравнение всех значащих полей, для сущности — сравнение идентификаторов. Это делает правило видимым и защищает от сюрпризов встроенного сравнения, особенно при циклических ссылках и ленивой загрузке.</span></li>
+      <li><span class="qq">Что делает <span class="nm">clone</span> и когда нужен <span class="nm">__clone</span>?</span><span class="aa">Копирует свойства поверхностно: скаляры копируются, а вложенные объекты остаются общими для оригинала и копии. Метод <span class="nm">__clone</span> нужен, когда внутри есть изменяемые объекты или массив объектов: их клонируют вручную, иначе изменение копии заденет оригинал.</span></li>
+      <li><span class="qq">Чем плохи <span class="nm">__get</span> и <span class="nm">__set</span>?</span><span class="aa">У объекта нет ни известного набора свойств, ни типов, ни подсказок в редакторе; опечатка возвращает <span class="nm">null</span> вместо ошибки; анализатор не может ничего проверить; поиск использований свойства по проекту перестаёт работать. Гибкость не стоит потери всех этих гарантий.</span></li>
+      <li><span class="qq">Какие магические методы использовать нормально?</span><span class="aa"><span class="nm">__toString</span> вместе с интерфейсом <span class="nm">Stringable</span>, <span class="nm">__invoke</span> для объектов с одной операцией, <span class="nm">__clone</span> при изменяемом содержимом, <span class="nm">__serialize</span> и <span class="nm">__unserialize</span> при несериализуемых полях. <span class="nm">__call</span> — только в прокси и обёртках, с описанием в аннотациях.</span></li>
+      <li><span class="qq">Зачем реализовывать <span class="nm">IteratorAggregate</span> вместо возврата массива?</span><span class="aa">Коллекция остаётся объектом со своим поведением и инвариантами, но её можно обойти в <span class="nm">foreach</span>, и внутренний массив не утекает наружу. Вместе с <span class="nm">Countable</span> это даёт привычный интерфейс без превращения объекта в массив.</span></li>
+      <li><span class="qq">Как проектировать исключения?</span><span class="aa">Как часть контракта метода: отдельный тип на каждую осмысленную ситуацию, данные внутри исключения вместо текста, который придётся разбирать, и общий интерфейс-маркер модуля, чтобы можно было поймать всё своё разом. Именованные конструкторы делают выброс читаемым.</span></li>
+      <li><span class="qq">Где уместен перехват <span class="nm">\Throwable</span>?</span><span class="aa">На границе приложения — в обработчике HTTP-запроса, в воркере, в консольной команде, — где он логирует и превращает исключение в ответ или в повтор задачи. В середине бизнес-логики он маскирует ошибку программиста под нормальную работу и позволяет данным тихо портиться.</span></li>
+      <li><span class="qq">Возвращать <span class="nm">null</span> или бросать исключение, если объект не найден?</span><span class="aa">Зависит от того, нормальна ли ситуация для вызывающего кода. Поиск по фильтру возвращает <span class="nm">null</span>: отсутствие ожидаемо. Получение по идентификатору, взятому из системы, бросает исключение: отсутствие означает нарушенную целостность. Плохо смешивать оба поведения в одном методе.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Проектирование</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое инвариант класса?</span><span class="aa">Утверждение о состоянии объекта, истинное всё время его жизни: начало диапазона не позже конца, сумма неотрицательна, у оплаченного заказа есть платёж. Задача проектирования — сделать нарушение невозможным, а не проверять его во всех местах использования.</span></li>
+      <li><span class="qq">Как избавиться от проверок на <span class="nm">null</span>, разбросанных по коду?</span><span class="aa">Обычно они означают, что один класс описывает несколько состояний сразу. Вместо объекта с шестью опциональными полями делают несколько типов с обязательными полями и общим интерфейсом. Проверки исчезают потому, что невозможных комбинаций больше не существует.</span></li>
+      <li><span class="qq">Как оценить качество класса?</span><span class="aa">По количеству проверок, которые вынуждены писать его пользователи. Если после получения объекта нужно выяснять, заполнены ли поля и можно ли вызывать метод, инварианты не инкапсулированы. Идеал — любой публичный метод можно вызвать в любой момент, и он либо работает, либо бросает осмысленное исключение.</span></li>
+      <li><span class="qq">Почему объект не должен создаваться пустым?</span><span class="aa">Потому что между созданием и заполнением существует некорректное состояние, и любой код, получивший объект в этот момент, работает с мусором. Все обязательные данные передаются в конструктор; если их слишком много, это признак, что класс описывает несколько сущностей.</span></li>
+      <li><span class="qq">Назовите виды связанности от худшей к лучшей.</span><span class="aa">Через внутреннее устройство другого класса; через глобальное состояние; через конкретный класс, создаваемый внутри; через флаг поведения; через интерфейс; через переданные данные. Последние два приемлемы, первые три делают изменения дорогими и непредсказуемыми.</span></li>
+      <li><span class="qq">Что означает «просить сделать, а не спрашивать»?</span><span class="aa">Если код достаёт данные из объекта, принимает по ним решение и кладёт результат обратно, это решение принадлежит самому объекту. Перенос логики внутрь убирает цепочки вызовов и дублирование: правило оказывается в одном месте вместо каждого вызывающего.</span></li>
+      <li><span class="qq">Чем плохи длинные цепочки вызовов через точку?</span><span class="aa">Класс начинает знать устройство трёх чужих объектов сразу, и переименование поля в дальнем конце цепочки ломает код, который формально с ним не связан. Лечится тем, что объект сам отвечает на нужный вопрос, или тем, что методу передают ровно те данные, которые ему нужны.</span></li>
+      <li><span class="qq">О чём говорит конструктор с восемью зависимостями?</span><span class="aa">О том, что класс делает несколько разных дел. Обычно его можно разделить по операциям: каждая нуждается в двух-трёх зависимостях, а вместе они собираются только потому, что оказались в одном файле. Побочный признак — тест, который требует построить полсистемы.</span></li>
+      <li><span class="qq">Чем плох логический флаг в аргументах метода?</span><span class="aa">Он означает, что внутри два разных сценария, и вызывающий код выбирает поведение вместо объекта. Читаемость страдает сразу: <span class="nm">save($order, true)</span> ничего не говорит. Решается двумя методами с говорящими именами или отдельными типами.</span></li>
+      <li><span class="qq">Что такое анемичная модель и всегда ли она плоха?</span><span class="aa">Объекты без поведения плюс сервисы, содержащие всю логику. Плоха, когда предметная область содержательна: правила размазываются по сервисам и дублируются. Приемлема для простых сценариев чтения и передачи данных, где никаких правил нет, — навязывать поведение там, где его нет, тоже не нужно.</span></li>
+      <li><span class="qq">Где уместна рефлексия?</span><span class="aa">В каркасах: контейнер зависимостей, сериализаторы, восстановление объекта из базы в обход конструктора, чтение атрибутов. Всегда с кэшированием результата, потому что рефлексия дорога. В прикладном коде она обычно означает, что задачу решают не с той стороны.</span></li>
+      <li><span class="qq">Что такое атрибуты и в чём их особенность?</span><span class="aa">Это данные, прикреплённые к элементам кода, а не поведение: атрибут ничего не делает, пока кто-то его не прочитает. Отсюда риски — помеченный метод без подключённого обработчика молча ничего не даёт, а логика оказывается распределена между объявлением и обработчиком.</span></li>
+      <li><span class="qq">Какие изменения ломают обратную совместимость?</span><span class="aa">Удаление и переименование публичного метода, добавление обязательного параметра, сужение типа параметра, расширение типа возврата, добавление метода в интерфейс, новое исключение вне объявленной иерархии, добавление <span class="nm">final</span> к существующему классу. Безопасны изменения приватной реализации и необязательный параметр в конец.</span></li>
+      <li><span class="qq">Как уменьшить поверхность публичного API?</span><span class="aa"><span class="nm">final</span> по умолчанию, пометка служебных классов как внутренних, интерфейс для потребителей при скрытой реализации, именованные конструкторы вместо публичного конструктора и привычка спрашивать перед добавлением метода, готовы ли вы поддерживать его два года.</span></li>
+      <li><span class="qq">Когда вводить абстракцию?</span><span class="aa">При втором реальном случае, а не при первом воображаемом. Абстракция, добавленная заранее, платится ежедневно: каждое изменение проходит через лишние файлы, а понимание кода требует держать в голове конструкции, ничего не решающие. Второй случай к тому же показывает, какая именно абстракция нужна.</span></li>
+      <li><span class="qq">Как понять, что граница между классами проведена неверно?</span><span class="aa">По тому, что они всегда правятся вместе: изменение в одном требует изменения в другом. Это означает, что они разделяют знание, которое должно жить в одном месте. Решение — либо объединить, либо перенести это знание внутрь одного из них.</span></li>
+      <li><span class="qq">Как подойти к рефакторингу класса на две тысячи строк?</span><span class="aa">Не переписывать целиком. Найти в нём группы методов, работающих с одним подмножеством полей: это будущие отдельные классы. Выделять по одной группе, покрывая тестами интерфейс перед выделением. Ключевой критерий готовности шага — старый код продолжает работать без изменений в вызывающих местах.</span></li>
+      <li><span class="qq">Как объектный дизайн влияет на тестируемость?</span><span class="aa">Напрямую: класс с зависимостями через конструктор и без статических вызовов тестируется подстановкой, а класс, создающий зависимости внутри и лезущий в глобальное состояние, требует поднимать окружение. Трудность написания теста — самый честный индикатор проблем с дизайном.</span></li>
+      <li><span class="qq">Когда объектный подход не нужен?</span><span class="aa">Там, где нет ни правил, ни состояния: чтение данных для отображения, простые преобразования, скрипты. Оборачивать структуру из трёх полей в класс с интерфейсом и фабрикой — расход без выигрыша. ООП оправдывает себя там, где есть инварианты, которые надо защищать, и поведение, которое надо держать рядом с данными.</span></li>
+      <li><span class="qq">Какой главный признак зрелого объектного дизайна?</span><span class="aa">Класс, который невозможно использовать неправильно: некорректный экземпляр не создаётся, недопустимый переход состояния не выполняется, а пользователю не приходится помнить правила. Второй признак — понимание цены: зрелый инженер умеет объяснить не только зачем нужна абстракция, но и почему в этом месте её не будет.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Задания рассчитаны на реальный код: почти каждое начинается с того, что вы находите нужный класс у себя в проекте.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Основы</span></div>
+    <h4>1. Убрать сеттеры</h4>
+    <p>Найдите класс с набором сеттеров, выпишите все места, где вызывающий код проверяет условия перед их вызовом. Замените сеттеры операциями предметной области, перенеся проверки внутрь.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Правила в одном месте вместо пяти и понимание, что инкапсуляция — не про модификаторы доступа.</div>
+    <h4>2. Найти утечку внутренностей</h4>
+    <p>Найдите метод, возвращающий внутреннюю коллекцию объектов. Напишите код, который меняет элемент снаружи в обход правил класса. Затем закройте дыру.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Наглядная демонстрация того, почему возврат массива объектов не безопасен.</div>
+    <h4>3. Строковый статус в перечисление</h4>
+    <p>Найдите строковое поле статуса и все ветвления по нему. Замените перечислением, перенеся поведение в его методы. Проверьте, сколько ветвлений исчезло.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Меньше ветвлений и невозможность передать несуществующий статус.</div>
+    <h4>4. Разобрать иерархию</h4>
+    <p>Возьмите класс, наследующийся от другого, и проверьте подстановку: можно ли использовать наследника всюду вместо родителя. Если нет — перепишите на композицию.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Личный пример того, где наследование не работает, вместо учебного про квадрат и прямоугольник.</div>
+    <h4>5. Интерфейс или абстрактный класс</h4>
+    <p>Найдите в проекте абстрактный класс и интерфейс. Для каждого ответьте: сколько реализаций, что общего они несут, что сломается при добавлении метода. Решите, правильный ли механизм выбран.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Осознанный выбор вместо привычки и, возможно, пара лишних интерфейсов на удаление.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Механика</span></div>
+    <h4>6. Объект-значение целиком</h4>
+    <p>Напишите объект-значение с приватным конструктором, именованным создателем, проверкой инварианта, методом равенства, поведением и приведением к строке. Покройте тестами создание с неверными данными.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Шаблон, который дальше применяется к деньгам, идентификаторам, телефонам и адресам.</div>
+    <h4>7. Примитивы в типы</h4>
+    <p>Найдите метод с двумя-тремя одинаковыми примитивами в аргументах. Заведите отдельные типы, перепишите сигнатуру. Попробуйте переставить аргументы местами и убедитесь, что теперь это ошибка.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Целый класс ошибок, ставший невозможным, ценой двух маленьких классов.</div>
+    <h4>8. Сломать readonly</h4>
+    <p>Создайте класс с <span class="nm">readonly</span> свойством, содержащим изменяемый объект. Измените его состояние снаружи. Затем сделайте объект по-настоящему неизменяемым.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание глубины неизменяемости и готовый ответ на частый вопрос собеседования.</div>
+    <h4>9. Клонирование с вложенными объектами</h4>
+    <p>Возьмите класс с коллекцией изменяемых объектов, склонируйте, измените элемент в копии и убедитесь, что оригинал тоже изменился. Реализуйте <span class="nm">__clone</span> и проверьте снова.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Практическое различие поверхностного и глубокого копирования на своём коде.</div>
+    <h4>10. Типизированная коллекция</h4>
+    <p>Замените возврат <span class="nm">array</span> на коллекцию с <span class="nm">IteratorAggregate</span>, <span class="nm">Countable</span> и аннотациями обобщений. Прогоните статический анализатор и посмотрите, что он теперь находит.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Анализатор начинает ловить ошибки, которые раньше были невидимы.</div>
+    <h4>11. Иерархия исключений</h4>
+    <p>Замените выброс общих исключений с текстовым сообщением на типы предметной области с данными и общим интерфейсом-маркером. Найдите места, где текст разбирали строковыми функциями.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Обработка ошибок по данным вместо разбора сообщений.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Проектирование</span></div>
+    <h4>12. Убрать невозможные состояния</h4>
+    <p>Найдите класс, где половина полей опциональна. Выпишите все комбинации и отметьте корректные. Разделите на отдельные типы состояний с общим интерфейсом и посчитайте, сколько проверок на <span class="nm">null</span> исчезло из проекта.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Число удалённых проверок — самая наглядная метрика этой темы.</div>
+    <h4>13. Аудит инвариантов</h4>
+    <p>Возьмите три ключевых класса и выпишите для каждого инварианты. Проверьте, где они обеспечиваются: в конструкторе, в операциях или в вызывающем коде. Перенесите всё, что можно, внутрь.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Классы, которые нельзя привести в некорректное состояние снаружи.</div>
+    <h4>14. Разбор связанности</h4>
+    <p>Найдите класс с конструктором на шесть и более зависимостей. Сгруппируйте методы по тому, какие зависимости они используют. Выделите группы в отдельные классы и проверьте, упростились ли тесты.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Несколько классов с двумя-тремя зависимостями и тесты, которые пишутся без подготовки половины системы.</div>
+    <h4>15. Ревизия публичной поверхности</h4>
+    <p>Возьмите модуль и выпишите все публичные классы и методы. Для каждого ответьте, используется ли он снаружи модуля. Всё лишнее сделайте внутренним, классы — <span class="nm">final</span>. Посмотрите, что сломалось.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Меньшая поверхность обязательств и понимание, что на самом деле держит модуль связанным с остальным кодом.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час-полтора в будний день. Вся практика — на собственном коде: учебные примеры в этой теме дают меньше, чем один разобранный класс из своего проекта.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Механика</h3><span class="badge b-1">База</span></div>
+    <h4>Задачи недели</h4>
+    <p>Разобраться, какую задачу решает каждая конструкция языка, и перестать выбирать их по привычке.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Переписать класс с сеттерами в класс с операциями предметной области (задание 1).</li>
+      <li>Найти утечку внутренней коллекции и закрыть её (задание 2).</li>
+      <li>Заменить строковый статус перечислением с поведением (задание 3).</li>
+      <li>Проверить одну иерархию наследования на подстановку и переписать на композицию (задание 4).</li>
+      <li>Разобрать имеющиеся интерфейсы и абстрактные классы: сколько реализаций, что они дают (задание 5).</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Умение объяснить выбор между интерфейсом, абстрактным классом, трейтом и композицией на своём коде.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Типы и значения</h3><span class="badge b-2">Точность</span></div>
+    <h4>Задачи недели</h4>
+    <p>Научиться делать ошибки невозможными через типы и вынести правила из процедурного кода в объекты-значения.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Написать полноценный объект-значение с проверкой, равенством и поведением (задание 6).</li>
+      <li>Заменить одинаковые примитивы в сигнатуре отдельными типами (задание 7).</li>
+      <li>Разобраться с ковариантностью и контравариантностью на своём коде.</li>
+      <li>Заменить возврат <span class="nm">array</span> типизированной коллекцией и прогнать анализатор (задание 10).</li>
+      <li>Включить <span class="nm">strict_types</span> там, где его нет, и разобрать возникшие ошибки.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Анализатор начинает находить то, что раньше находили пользователи, и часть проверок из кода исчезает.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Состояние и ошибки</h3><span class="badge b-2">Механика</span></div>
+    <h4>Задачи недели</h4>
+    <p>Закрыть вопросы, которые обычно решаются поведением по умолчанию: изменяемость, равенство, копирование, ошибки.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Сломать <span class="nm">readonly</span> изменяемым содержимым и сделать объект по-настоящему неизменяемым (задание 8).</li>
+      <li>Реализовать <span class="nm">__clone</span> для класса с коллекцией объектов (задание 9).</li>
+      <li>Объявить явное равенство для одной сущности и одного объекта-значения.</li>
+      <li>Построить иерархию исключений с данными вместо текстовых сообщений (задание 11).</li>
+      <li>Найти в коде перехват <span class="nm">\Throwable</span> в середине логики и решить, что с ним делать.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Явные ответы на вопросы о равенстве, копировании и ошибках вместо умолчаний, о которых никто не думал.</p>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Проектирование</h3><span class="badge b-3">Финиш</span></div>
+    <h4>Задачи недели</h4>
+    <p>Перейти от отдельных классов к дизайну: инварианты, связанность, границы, стоимость изменений.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Убрать невозможные состояния из класса с опциональными полями и посчитать удалённые проверки (задание 12).</li>
+      <li>Провести аудит инвариантов трёх ключевых классов (задание 13).</li>
+      <li>Разобрать класс с шестью зависимостями на несколько (задание 14).</li>
+      <li>Провести ревизию публичной поверхности модуля (задание 15).</li>
+      <li>Пройтись по чек-листу вопросов к классу на ближайшем ревью и записать, что нашли.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Готовность обсуждать дизайн в терминах инвариантов, связанности и стоимости изменений, а не определений.</p>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что помогает на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Не отвечайте определениями.</strong> «Инкапсуляция — это сокрытие данных» — ответ уровня учебника. Сильный ответ добавляет следствие: правила живут в одном месте, внутреннее устройство можно менять, не ломая пользователей.</li>
+      <li><strong>Приводите пример из своего кода.</strong> Классический пример про квадрат и прямоугольник знают все. Собственная история, где наследование пришлось разобрать на композицию, звучит принципиально иначе.</li>
+      <li><strong>Называйте цену.</strong> Любой механизм — компромисс: неизменяемость создаёт больше объектов, интерфейсы удваивают файлы, атрибуты распределяют логику. Умение назвать обратную сторону отличает опыт от начитанности.</li>
+      <li><strong>Умейте не вводить абстракцию.</strong> На вопрос «как бы вы это спроектировали» сильный ход — сказать, что здесь достаточно одного класса, и объяснить, при каком условии появится второй. Кандидаты чаще перепроектируют, чем недопроектируют.</li>
+      <li><strong>Считайте проверки у пользователя класса.</strong> Формулировка «сколько условий вынужден помнить тот, кто им пользуется» — быстрый и убедительный критерий качества, который редко звучит на интервью.</li>
+      <li><strong>Различайте ошибку программиста и ситуацию предметной области.</strong> Это одна из немногих тем про исключения, где сразу видно наличие продового опыта.</li>
+      <li><strong>Будьте готовы к вопросу про рефакторинг легаси.</strong> Ответ «переписать» слабый. Сильный — выделять по одной группе методов, работающих с общим подмножеством полей, покрывая интерфейс тестами перед каждым шагом.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «ООП в PHP» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

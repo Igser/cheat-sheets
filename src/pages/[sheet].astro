@@ -1,0 +1,15 @@
+---
+// Маршрут конспектов: по записи в src/data/sheets.js собирает страницу
+// из HTML-фрагмента (src/content/sheets) и списка стилей (src/styles).
+// Витрина живёт в index.astro и здесь исключена.
+import Sheet from '../layouts/Sheet.astro';
+import { sheets } from '../data/sheets.js';
+import { page } from '../data/render.js';
+
+export function getStaticPaths() {
+  return sheets
+    .filter((sheet) => sheet.slug !== 'index')
+    .map((sheet) => ({ params: { sheet: sheet.slug }, props: { slug: sheet.slug } }));
+}
+---
+<Sheet {...page(Astro.props.slug)} />

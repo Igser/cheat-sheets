@@ -1,0 +1,2161 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · backend · подготовка к собеседованию и к работе</p>
+  <h1>Laravel для PHP-разработчиков</h1>
+  <p class="lead">Laravel — это не «фреймворк с красивым синтаксисом», а набор готовых решений для задач, которые в любом веб-приложении всё равно придётся решать: маршрутизация, валидация, доступ к базе, аутентификация, очереди, кэш, планировщик, почта, тесты. Его сила в том, что всё это уже связано между собой и работает из коробки. Его же главная опасность в том, что писать плохо на нём так же удобно, как хорошо: три строки в контроллере превращаются в N+1 на 40 000 запросов, а пара «умных» фасадов — в код, который невозможно протестировать.</p>
+  <p class="lead">На собеседовании по Laravel почти никогда не спрашивают синтаксис — его подскажет IDE. Спрашивают, понимаете ли вы, что происходит под капотом: как запрос проходит через ядро и middleware, как контейнер разрешает зависимости, почему <code>$posts-&gt;user-&gt;name</code> в цикле — это катастрофа, чем джоб отличается от события, когда очередь обязательна и что случится с приложением, если Redis отвалится.</p>
+  <p class="lead">Конспект собирает то, что реально нужно в работе и что действительно спрашивают: от первого маршрута до архитектуры под нагрузкой, деплоя без простоя и обновления мажорных версий. Материал разбит по уровням — можно читать подряд или взять свой блок. Смежные темы вынесены в отдельные конспекты: <a href="sql.html">базы данных</a>, <a href="data-structures.html">структуры данных</a>, <a href="ai.html">AI и LLM</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Жизненный цикл запроса, роутинг, контроллеры, валидация, Eloquent, Blade, миграции, Artisan.</span></div>
+    <div class="aud m"><b>Middle</b><span>Контейнер и DI, связи и N+1, транзакции, API-ресурсы, авторизация, очереди, события, кэш, тесты.</span></div>
+    <div class="aud s"><b>Senior</b><span>Производительность и профилирование, масштабирование, границы модулей, безопасность, деплой, обновления.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>26</i></span>
+    <span>Блоков кода: <i>50</i></span>
+    <span>Сравнительных таблиц: <i>16</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#lifecycle">Жизненный цикл запроса</a></li>
+    <li><span class="tree">├─</span> <a href="#structure">Структура проекта</a></li>
+    <li><span class="tree">├─</span> <a href="#routing">Маршруты и контроллеры</a></li>
+    <li><span class="tree">├─</span> <a href="#validation">Валидация и Form Request</a></li>
+    <li><span class="tree">├─</span> <a href="#eloquent">Eloquent: основы</a></li>
+    <li><span class="tree">├─</span> <a href="#migrations">Миграции, фабрики, сидеры</a></li>
+    <li><span class="tree">├─</span> <a href="#blade">Blade и ответы</a></li>
+    <li><span class="tree">├─</span> <a href="#artisan">Artisan, конфиг, окружение</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#container">Контейнер и провайдеры</a></li>
+    <li><span class="tree">├─</span> <a href="#relations">Связи и N+1</a></li>
+    <li><span class="tree">├─</span> <a href="#queries">Запросы, транзакции, объёмы</a></li>
+    <li><span class="tree">├─</span> <a href="#api">API: ресурсы и пагинация</a></li>
+    <li><span class="tree">├─</span> <a href="#auth">Аутентификация и авторизация</a></li>
+    <li><span class="tree">├─</span> <a href="#queues">Очереди и джобы</a></li>
+    <li><span class="tree">├─</span> <a href="#events">События, слушатели, обсерверы</a></li>
+    <li><span class="tree">├─</span> <a href="#cache">Кэш и блокировки</a></li>
+    <li><span class="tree">├─</span> <a href="#testing">Тестирование</a></li>
+    <li><span class="tree">├─</span> <a href="#layers">Организация кода</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#performance">Производительность</a></li>
+    <li><span class="tree">├─</span> <a href="#scaling">Масштабирование и Octane</a></li>
+    <li><span class="tree">├─</span> <a href="#dbload">БД под нагрузкой</a></li>
+    <li><span class="tree">├─</span> <a href="#modules">Границы модулей</a></li>
+    <li><span class="tree">├─</span> <a href="#security">Безопасность</a></li>
+    <li><span class="tree">├─</span> <a href="#observability">Наблюдаемость</a></li>
+    <li><span class="tree">├─</span> <a href="#deploy">Деплой без простоя</a></li>
+    <li><span class="tree">├─</span> <a href="#upgrade">Обновление версий</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Artisan и хелперы</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · фундамент</p>
+    <h2>Junior Laravel Developer</h2>
+    <p>Задача этого уровня — перестать воспринимать фреймворк как набор заклинаний и начать видеть путь запроса: откуда он пришёл, через что прошёл, где превратился в ответ. Junior-а проверяют по четырём осям: жизненный цикл запроса и роль middleware, маршруты и контроллеры, валидация входных данных, базовый Eloquent и миграции.</p>
+  </div>
+
+  <!-- J1 -->
+  <article class="card" id="lifecycle">
+    <p class="path">junior / основы / жизненный цикл</p>
+    <div class="card-top"><h3>Жизненный цикл запроса</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Первое, что отличает человека, знающего Laravel, от человека, копирующего примеры, — понимание пути запроса. Всё приложение — это функция <code>Request → Response</code>, а фреймворк лишь организует, что происходит между ними.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Путь одного HTTP-запроса</span></div><pre><code>public/index.php            ← единственная точка входа (веб-сервер шлёт всё сюда)
+   │
+   ├─ vendor/autoload.php   ← автозагрузка Composer
+   ├─ bootstrap/app.php     ← сборка приложения: роуты, middleware, обработка ошибок
+   │
+   ▼
+HTTP-ядро
+   │
+   ├─ глобальные middleware        (TrustProxies, обработка строк, размер тела)
+   ├─ маршрутизация                (какой роут совпал; 404, если ни один)
+   ├─ middleware группы и маршрута (web/api, auth, throttle, can, свои)
+   │
+   ▼
+Контроллер / замыкание
+   │  ← контейнер внедряет зависимости по типам аргументов
+   │  ← Form Request валидирует вход ДО тела метода
+   │  ← Route Model Binding подставляет модель вместо id
+   │
+   ├─ бизнес-логика: сервисы, Eloquent, очереди, события
+   ▼
+Response  →  обратный проход по middleware  →  браузер
+
+После ответа: terminable middleware, отложенные задачи, запись логов.</code></pre></div>
+    <p><span class="t">Middleware</span> — это слои-луковицы вокруг обработчика: каждый может отклонить запрос, изменить его или подправить ответ на обратном пути. Аутентификация, CSRF, ограничение частоты, локаль, логирование — всё это middleware, а не строчки в начале каждого контроллера.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Своё middleware: до и после обработчика</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Http\Middleware;
+
+<span class="kw">use</span> Closure;
+<span class="kw">use</span> Illuminate\Http\Request;
+<span class="kw">use</span> Symfony\Component\HttpFoundation\Response;
+
+<span class="kw">final class</span> LogSlowRequests
+{
+    <span class="kw">public function</span> <span class="fn">handle</span>(Request $request, Closure $next): Response
+    {
+        $start = <span class="fn">microtime</span>(<span class="kw">true</span>);
+
+        <span class="cm">// ↓ здесь запрос идёт дальше по цепочке в контроллер</span>
+        $response = $next($request);
+        <span class="cm">// ↑ а здесь мы уже на обратном пути, ответ сформирован</span>
+
+        $ms = (<span class="fn">microtime</span>(<span class="kw">true</span>) - $start) * 1000;
+
+        <span class="kw">if</span> ($ms &gt; 500) {
+            <span class="fn">logger</span>()-&gt;<span class="fn">warning</span>(<span class="st">'slow.request'</span>, [
+                <span class="st">'route'</span> =&gt; $request-&gt;<span class="fn">route</span>()?-&gt;<span class="fn">getName</span>(),
+                <span class="st">'ms'</span>    =&gt; <span class="fn">round</span>($ms),
+            ]);
+        }
+
+        <span class="kw">return</span> $response;
+    }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Группа <code>web</code> и группа <code>api</code> — это разные наборы middleware, и разница принципиальна. <code>web</code> включает сессии, куки и CSRF-защиту; <code>api</code> — без состояния и обычно с ограничением частоты. Отсюда классическая ошибка новичка: «почему в API не работает <code>auth()-&gt;user()</code>» — потому что там нет сессии, и аутентификация идёт по токену.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что происходит от запроса пользователя до ответа?</b><br>Веб-сервер отправляет всё в <code>public/index.php</code>, тот подключает автозагрузку и собирает приложение. Запрос проходит глобальные middleware, попадает в маршрутизатор, затем — в middleware группы и маршрута, оттуда в контроллер, куда контейнер внедряет зависимости. Контроллер возвращает ответ, который проходит middleware в обратном порядке. После отправки ответа выполняются завершающие задачи.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите middleware, добавляющее в каждый ответ заголовок с временем обработки и идентификатором запроса. Подключите его глобально и убедитесь, что заголовок появляется и на ошибочных ответах тоже.</div>
+  </article>
+
+  <!-- J2 -->
+  <article class="card" id="structure">
+    <p class="path">junior / основы / структура</p>
+    <div class="card-top"><h3>Структура проекта и где что лежит</h3><span class="badge b-1">База</span></div>
+    <p>Начиная с Laravel 11 скелет приложения заметно похудел: исчезли <code>app/Http/Kernel.php</code> и большая часть провайдеров, а конфигурация маршрутов, middleware и обработки исключений переехала в один файл <code>bootstrap/app.php</code>. Файлы конфигурации тоже публикуются по необходимости, а не лежат все сразу.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Карта проекта</span></div><pre><code>app/
+  Http/Controllers/     контроллеры — тонкие: принять, делегировать, ответить
+  Http/Middleware/      слои вокруг обработчика
+  Http/Requests/        Form Request: валидация и авторизация входа
+  Http/Resources/       преобразование моделей в JSON для API
+  Models/               модели Eloquent
+  Providers/            регистрация сервисов и загрузочная логика
+  Jobs/ Events/ Listeners/ Policies/ Console/Commands/
+bootstrap/app.php       сборка приложения: роуты, middleware, исключения
+config/                 конфигурация (читается только через config(), не env())
+database/
+  migrations/ factories/ seeders/
+routes/
+  web.php               маршруты с сессиями и CSRF
+  api.php               маршруты без состояния (устанавливается отдельно)
+  console.php           консольные команды и расписание планировщика
+resources/views/        шаблоны Blade
+storage/                логи, кэш, загруженные файлы (в git не хранится)
+tests/                  Feature и Unit</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">bootstrap/app.php — точка сборки</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Illuminate\Foundation\Application;
+<span class="kw">use</span> Illuminate\Foundation\Configuration\Exceptions;
+<span class="kw">use</span> Illuminate\Foundation\Configuration\Middleware;
+
+<span class="kw">return</span> Application::<span class="fn">configure</span>(basePath: <span class="fn">dirname</span>(__DIR__))
+    -&gt;<span class="fn">withRouting</span>(
+        web: __DIR__ . <span class="st">'/../routes/web.php'</span>,
+        api: __DIR__ . <span class="st">'/../routes/api.php'</span>,
+        commands: __DIR__ . <span class="st">'/../routes/console.php'</span>,
+        health: <span class="st">'/up'</span>,                      <span class="cm">// готовый health-check для оркестратора</span>
+    )
+    -&gt;<span class="fn">withMiddleware</span>(<span class="kw">function</span> (Middleware $middleware) {
+        $middleware-&gt;<span class="fn">append</span>(App\Http\Middleware\LogSlowRequests::<span class="kw">class</span>);
+
+        $middleware-&gt;<span class="fn">alias</span>([
+            <span class="st">'admin'</span> =&gt; App\Http\Middleware\EnsureUserIsAdmin::<span class="kw">class</span>,
+        ]);
+    })
+    -&gt;<span class="fn">withExceptions</span>(<span class="kw">function</span> (Exceptions $exceptions) {
+        <span class="cm">// централизованная обработка: логирование, формат ответа, отчётность</span>
+        $exceptions-&gt;<span class="fn">dontReport</span>([App\Exceptions\BusinessRuleException::<span class="kw">class</span>]);
+    })
+    -&gt;<span class="fn">create</span>();</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Функцию <code>env()</code> можно вызывать <strong>только внутри файлов конфигурации</strong>. В коде приложения читайте <code>config('services.foo.key')</code>. Причина практическая: на проде конфигурация кэшируется, и после кэширования <code>env()</code> вне config-файлов вернёт <code>null</code>. Это одна из самых частых причин «на локали работает, на проде нет».</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Складывать всё в контроллеры и модели, потому что «так в туториале». Контроллер — это адаптер HTTP: принять запрос, вызвать логику, вернуть ответ. Модель — доступ к данным и её собственное поведение. Всё, что не относится ни к тому, ни к другому, выносится в отдельные классы (см. блок про организацию кода).</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем <code>config()</code> отличается от <code>env()</code>?</b><br><code>env()</code> читает переменную окружения и допустима только в файлах <code>config/</code>. <code>config()</code> читает уже собранную конфигурацию и работает всегда, включая режим с закэшированным конфигом. На проде конфиг кэшируют ради скорости, и после этого <code>env()</code> в коде приложения перестаёт видеть значения.</div>
+    <div class="box task"><span class="lbl">Практика</span>Добавьте в проект собственный файл конфигурации <code>config/billing.php</code>, читающий значения из окружения, и используйте его в коде через <code>config()</code>. Затем выполните кэширование конфига и убедитесь, что всё продолжает работать.</div>
+  </article>
+
+  <!-- J3 -->
+  <article class="card" id="routing">
+    <p class="path">junior / http / маршруты</p>
+    <div class="card-top"><h3>Маршруты, контроллеры и привязка моделей</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">routes/web.php — основные формы записи</span></div><pre><code>&lt;?php
+<span class="kw">use</span> App\Http\Controllers\PostController;
+<span class="kw">use</span> Illuminate\Support\Facades\Route;
+
+<span class="cm">// Базовые методы</span>
+Route::<span class="fn">get</span>(<span class="st">'/posts'</span>, [PostController::<span class="kw">class</span>, <span class="st">'index'</span>])-&gt;<span class="fn">name</span>(<span class="st">'posts.index'</span>);
+Route::<span class="fn">post</span>(<span class="st">'/posts'</span>, [PostController::<span class="kw">class</span>, <span class="st">'store'</span>])-&gt;<span class="fn">name</span>(<span class="st">'posts.store'</span>);
+
+<span class="cm">// Семь маршрутов CRUD одной строкой</span>
+Route::<span class="fn">resource</span>(<span class="st">'posts'</span>, PostController::<span class="kw">class</span>);
+<span class="cm">// Для API — без create/edit (там нет форм)</span>
+Route::<span class="fn">apiResource</span>(<span class="st">'posts'</span>, PostController::<span class="kw">class</span>);
+
+<span class="cm">// Группы: общий префикс, middleware, имя</span>
+Route::<span class="fn">middleware</span>([<span class="st">'auth'</span>, <span class="st">'admin'</span>])
+    -&gt;<span class="fn">prefix</span>(<span class="st">'admin'</span>)
+    -&gt;<span class="fn">name</span>(<span class="st">'admin.'</span>)
+    -&gt;<span class="fn">group</span>(<span class="kw">function</span> () {
+        Route::<span class="fn">get</span>(<span class="st">'/orders'</span>, [OrderController::<span class="kw">class</span>, <span class="st">'index'</span>])-&gt;<span class="fn">name</span>(<span class="st">'orders.index'</span>);
+    });
+
+<span class="cm">// Ограничение параметра: только цифры</span>
+Route::<span class="fn">get</span>(<span class="st">'/orders/{order}'</span>, ...)-&gt;<span class="fn">whereNumber</span>(<span class="st">'order'</span>);</code></pre></div>
+    <p><span class="t">Route Model Binding</span> — приём, который экономит десятки строк: если параметр маршрута назван так же, как аргумент метода с типом модели, Laravel сам найдёт запись и подставит её, а при отсутствии вернёт 404.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Привязка модели вместо ручного поиска</span></div><pre><code>&lt;?php
+<span class="cm">// БЫЛО: ручной поиск и проверка</span>
+<span class="kw">public function</span> <span class="fn">show</span>(<span class="kw">int</span> $id)
+{
+    $post = Post::<span class="fn">find</span>($id);
+    <span class="kw">if</span> ($post === <span class="kw">null</span>) { <span class="fn">abort</span>(404); }
+
+    <span class="kw">return view</span>(<span class="st">'posts.show'</span>, [<span class="st">'post'</span> =&gt; $post]);
+}
+
+<span class="cm">// СТАЛО: модель приходит уже найденной, 404 — автоматически</span>
+<span class="kw">public function</span> <span class="fn">show</span>(Post $post)
+{
+    <span class="kw">return view</span>(<span class="st">'posts.show'</span>, [<span class="st">'post'</span> =&gt; $post]);
+}
+
+<span class="cm">// Поиск по другому полю — прямо в маршруте:</span>
+<span class="cm">// Route::get('/posts/{post:slug}', ...);</span>
+
+<span class="cm">// Вложенная привязка: комментарий обязан принадлежать посту</span>
+Route::<span class="fn">get</span>(<span class="st">'/posts/{post}/comments/{comment}'</span>, ...)-&gt;<span class="fn">scopeBindings</span>();</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Привязка модели решает вопрос «существует ли запись», но <strong>не решает вопрос «имеет ли право этот пользователь её видеть»</strong>. Проверка прав — отдельный шаг: политика, middleware <code>can</code> или явный вызов авторизации. Забытая проверка здесь — самая распространённая уязвимость в Laravel-приложениях: подставил чужой id в URL и получил чужие данные.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Толстые контроллеры: запросы к базе, отправка почты, генерация PDF и бизнес-правила в одном методе на 150 строк. Такой код невозможно переиспользовать (например, из консольной команды) и тяжело тестировать. Контроллер должен читаться за десять секунд.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое Route Model Binding и в чём его подвох?</b><br>Автоматический поиск модели по параметру маршрута с возвратом 404, если её нет. Подвох в том, что это только поиск: авторизацию он не выполняет. Без политики или middleware <code>can</code> любой аутентифицированный пользователь получит доступ к чужой записи, просто поменяв id в адресе.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сделайте ресурсный контроллер для сущности проекта с привязкой моделей и именованными маршрутами. Затем напишите тест, который проверяет, что чужая запись отдаёт 403, а несуществующая — 404.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+
+  <!-- J4 -->
+  <article class="card" id="validation">
+    <p class="path">junior / http / валидация</p>
+    <div class="card-top"><h3>Валидация и Form Request</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Правило простое: <strong>в приложение не должны попадать невалидные данные</strong>. Валидация — это граница, и она должна стоять до бизнес-логики, а не внутри неё. Laravel даёт два способа: быстрый прямо в контроллере и вынесенный в отдельный класс.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Быстрый способ и правильный способ</span></div><pre><code>&lt;?php
+<span class="cm">// Быстро — годится для одного-двух полей</span>
+<span class="kw">public function</span> <span class="fn">store</span>(Request $request)
+{
+    $data = $request-&gt;<span class="fn">validate</span>([
+        <span class="st">'title'</span> =&gt; [<span class="st">'required'</span>, <span class="st">'string'</span>, <span class="st">'max:200'</span>],
+        <span class="st">'body'</span>  =&gt; [<span class="st">'required'</span>, <span class="st">'string'</span>],
+    ]);
+
+    <span class="cm">// При ошибке фреймворк сам вернёт 422 для API</span>
+    <span class="cm">// или редирект с ошибками и старым вводом для формы.</span>
+    $post = Post::<span class="fn">create</span>($data + [<span class="st">'user_id'</span> =&gt; $request-&gt;<span class="fn">user</span>()-&gt;id]);
+
+    <span class="kw">return redirect</span>()-&gt;<span class="fn">route</span>(<span class="st">'posts.show'</span>, $post);
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Form Request: валидация и авторизация в одном месте</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Http\Requests;
+
+<span class="kw">use</span> Illuminate\Foundation\Http\FormRequest;
+<span class="kw">use</span> Illuminate\Validation\Rule;
+
+<span class="kw">final class</span> StorePostRequest <span class="kw">extends</span> FormRequest
+{
+    <span class="cm">// Выполняется ДО правил: false → 403 и тело метода не запустится</span>
+    <span class="kw">public function</span> <span class="fn">authorize</span>(): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">user</span>()?-&gt;<span class="fn">can</span>(<span class="st">'create'</span>, Post::<span class="kw">class</span>) ?? <span class="kw">false</span>;
+    }
+
+    <span class="kw">public function</span> <span class="fn">rules</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [
+            <span class="st">'title'</span>       =&gt; [<span class="st">'required'</span>, <span class="st">'string'</span>, <span class="st">'max:200'</span>],
+            <span class="st">'slug'</span>        =&gt; [<span class="st">'required'</span>, <span class="st">'alpha_dash'</span>, Rule::<span class="fn">unique</span>(<span class="st">'posts'</span>)],
+            <span class="st">'body'</span>        =&gt; [<span class="st">'required'</span>, <span class="st">'string'</span>, <span class="st">'min:10'</span>],
+            <span class="st">'status'</span>      =&gt; [<span class="st">'required'</span>, Rule::<span class="fn">in</span>([<span class="st">'draft'</span>, <span class="st">'published'</span>])],
+            <span class="st">'category_id'</span> =&gt; [<span class="st">'required'</span>, <span class="st">'exists:categories,id'</span>],
+            <span class="st">'tags'</span>        =&gt; [<span class="st">'array'</span>, <span class="st">'max:10'</span>],
+            <span class="st">'tags.*'</span>      =&gt; [<span class="st">'integer'</span>, <span class="st">'exists:tags,id'</span>],
+            <span class="st">'published_at'</span> =&gt; [<span class="st">'nullable'</span>, <span class="st">'date'</span>, <span class="st">'after_or_equal:today'</span>],
+        ];
+    }
+
+    <span class="cm">// Нормализация входа до проверки правил</span>
+    <span class="kw">protected function</span> <span class="fn">prepareForValidation</span>(): <span class="kw">void</span>
+    {
+        $this-&gt;<span class="fn">merge</span>([<span class="st">'slug'</span> =&gt; <span class="fn">str</span>($this-&gt;<span class="fn">input</span>(<span class="st">'title'</span>, <span class="st">''</span>))-&gt;<span class="fn">slug</span>()-&gt;<span class="fn">value</span>()]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">messages</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [<span class="st">'title.required'</span> =&gt; <span class="st">'Укажите заголовок публикации.'</span>];
+    }
+}
+
+<span class="cm">// Контроллер становится тривиальным</span>
+<span class="kw">public function</span> <span class="fn">store</span>(StorePostRequest $request)
+{
+    <span class="cm">// validated() отдаёт ТОЛЬКО прошедшие проверку поля — это важно</span>
+    $post = $request-&gt;<span class="fn">user</span>()-&gt;posts()-&gt;<span class="fn">create</span>($request-&gt;<span class="fn">validated</span>());
+
+    <span class="kw">return redirect</span>()-&gt;<span class="fn">route</span>(<span class="st">'posts.show'</span>, $post);
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Используйте <code>validated()</code>, а не <code>all()</code>. <code>all()</code> вернёт всё, что прислал клиент, включая поля, которых нет в правилах, — а дальше это уходит в <code>create()</code>. В связке с широким <code>$fillable</code> так и появляется классическая уязвимость: пользователь дописывает в форму <code>is_admin=1</code>, и оно сохраняется.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Проверять данные в модели или в сервисе «на всякий случай» вместо валидации на входе. Получается двойная логика в двух местах, которая со временем расходится. Валидация формата и обязательности — на границе (Form Request), проверка бизнес-инвариантов («достаточно ли товара на складе») — в доменном коде и в БД.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем Form Request лучше валидации в контроллере?</b><br>Он выносит правила и авторизацию из контроллера в отдельный тестируемый класс, переиспользуется между методами, даёт места для нормализации входа и своих сообщений и гарантирует, что тело метода вообще не выполнится при неверных данных или отсутствии прав. Контроллер при этом остаётся тонким.</div>
+    <div class="box task"><span class="lbl">Практика</span>Переведите один «толстый» контроллер на Form Request с авторизацией, нормализацией входа и своими сообщениями. Напишите тесты на три случая: успешный запрос, невалидный (422) и без прав (403).</div>
+  </article>
+
+  <!-- J5 -->
+  <article class="card" id="eloquent">
+    <p class="path">junior / данные / eloquent</p>
+    <div class="card-top"><h3>Eloquent: модели, CRUD, связи</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p><span class="t">Eloquent</span> — реализация паттерна Active Record: модель одновременно и объект предметной области, и способ доступа к строке таблицы. Это делает простые вещи очень простыми, а сложные — требующими понимания того, какие SQL-запросы за этим стоят.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Модель: настройки, которые ставят всегда</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Models;
+
+<span class="kw">use</span> Illuminate\Database\Eloquent\Factories\HasFactory;
+<span class="kw">use</span> Illuminate\Database\Eloquent\Model;
+<span class="kw">use</span> Illuminate\Database\Eloquent\Relations\BelongsTo;
+<span class="kw">use</span> Illuminate\Database\Eloquent\Relations\HasMany;
+
+<span class="kw">final class</span> Post <span class="kw">extends</span> Model
+{
+    <span class="kw">use</span> HasFactory;
+
+    <span class="cm">// Что разрешено массово заполнять из запроса</span>
+    <span class="kw">protected</span> $fillable = [<span class="st">'title'</span>, <span class="st">'slug'</span>, <span class="st">'body'</span>, <span class="st">'status'</span>, <span class="st">'category_id'</span>, <span class="st">'published_at'</span>];
+
+    <span class="cm">// Приведение типов: из БД приходят строки, в PHP нужны типы</span>
+    <span class="kw">protected function</span> <span class="fn">casts</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [
+            <span class="st">'published_at'</span> =&gt; <span class="st">'datetime'</span>,
+            <span class="st">'is_featured'</span>  =&gt; <span class="st">'boolean'</span>,
+            <span class="st">'meta'</span>         =&gt; <span class="st">'array'</span>,        <span class="cm">// JSON-колонка ↔ массив PHP</span>
+            <span class="st">'price'</span>        =&gt; <span class="st">'decimal:2'</span>,
+        ];
+    }
+
+    <span class="kw">public function</span> <span class="fn">author</span>(): BelongsTo
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">belongsTo</span>(User::<span class="kw">class</span>, <span class="st">'user_id'</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">comments</span>(): HasMany
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">hasMany</span>(Comment::<span class="kw">class</span>);
+    }
+
+    <span class="cm">// Локальный скоуп: переиспользуемый кусок условия</span>
+    <span class="kw">public function</span> <span class="fn">scopePublished</span>($query)
+    {
+        <span class="kw">return</span> $query-&gt;<span class="fn">where</span>(<span class="st">'status'</span>, <span class="st">'published'</span>)
+                     -&gt;<span class="fn">whereNotNull</span>(<span class="st">'published_at'</span>);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Основные операции и что за ними в SQL</span></div><pre><code>&lt;?php
+<span class="cm">// Чтение</span>
+Post::<span class="fn">find</span>(1);                       <span class="cm">// SELECT ... WHERE id = 1 LIMIT 1, null если нет</span>
+Post::<span class="fn">findOrFail</span>(1);                 <span class="cm">// то же, но 404 при отсутствии</span>
+Post::<span class="fn">where</span>(<span class="st">'status'</span>, <span class="st">'published'</span>)-&gt;<span class="fn">first</span>();
+Post::<span class="fn">published</span>()-&gt;<span class="fn">latest</span>()-&gt;<span class="fn">paginate</span>(20);   <span class="cm">// скоуп + сортировка + пагинация</span>
+
+<span class="cm">// Создание и обновление</span>
+$post = Post::<span class="fn">create</span>($validated);      <span class="cm">// массовое заполнение по $fillable</span>
+$post-&gt;<span class="fn">update</span>([<span class="st">'status'</span> =&gt; <span class="st">'published'</span>]);
+$post-&gt;<span class="fn">fill</span>($data)-&gt;<span class="fn">save</span>();
+
+<span class="cm">// Атомарный инкремент — без чтения-изменения-записи</span>
+$post-&gt;<span class="fn">increment</span>(<span class="st">'views'</span>);          <span class="cm">// UPDATE ... SET views = views + 1</span>
+
+<span class="cm">// Удаление</span>
+$post-&gt;<span class="fn">delete</span>();
+
+<span class="cm">// Связи: чтение и запись</span>
+$post-&gt;author-&gt;name;                  <span class="cm">// ленивая загрузка — ОТДЕЛЬНЫЙ запрос!</span>
+$post-&gt;comments()-&gt;<span class="fn">create</span>([<span class="st">'body'</span> =&gt; $text, <span class="st">'user_id'</span> =&gt; $userId]);
+$post-&gt;tags()-&gt;<span class="fn">sync</span>([1, 2, 3]);       <span class="cm">// many-to-many: привести к списку</span></code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 1 · типы связей Eloquent</caption>
+      <thead><tr><th>Метод</th><th>Смысл</th><th>Где лежит ключ</th><th>Пример</th></tr></thead>
+      <tbody>
+        <tr><td><code>hasOne</code></td><td>Один к одному</td><td>В связанной таблице</td><td>У пользователя один профиль</td></tr>
+        <tr><td><code>belongsTo</code></td><td>Обратная сторона</td><td>В этой таблице</td><td>Пост принадлежит автору</td></tr>
+        <tr><td><code>hasMany</code></td><td>Один ко многим</td><td>В связанной таблице</td><td>У поста много комментариев</td></tr>
+        <tr><td><code>belongsToMany</code></td><td>Многие ко многим</td><td>В промежуточной таблице</td><td>Посты и теги</td></tr>
+        <tr><td><code>hasManyThrough</code></td><td>Через посредника</td><td>Цепочка из двух связей</td><td>Комментарии всех постов пользователя</td></tr>
+        <tr><td><code>morphMany</code> / <code>morphTo</code></td><td>Полиморфная</td><td>Тип + id в связанной таблице</td><td>Комментарии к постам и к товарам</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Каждое обращение к связи, которая не была загружена заранее, — это отдельный запрос в базу. В цикле по 100 постам <code>$post-&gt;author-&gt;name</code> даст 101 запрос вместо двух. Это проблема N+1, и ей посвящён отдельный блок уровня middle — на собеседовании её спрашивают почти гарантированно.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span><code>protected $guarded = [];</code> — «разрешаем заполнять всё, чтобы не мучиться». В связке с <code>$request-&gt;all()</code> это прямая дорога к тому, что пользователь пропишет себе служебное поле. Явный <code>$fillable</code> — одна строка, которая закрывает целый класс уязвимостей.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое mass assignment и чем он опасен?</b><br>Это заполнение модели массивом данных: <code>Post::create($data)</code>. Опасность в том, что в массив может попасть поле, которое пользователь менять не должен (<code>is_admin</code>, <code>user_id</code>, <code>balance</code>). Защита: перечислять разрешённые поля в <code>$fillable</code> и передавать в модель только <code>validated()</code>, а не весь пришедший запрос.</div>
+    <div class="box task"><span class="lbl">Практика</span>Опишите модели блога со всеми типами связей (автор, категория, комментарии, теги), приведением типов и скоупами. Затем включите логирование SQL и посмотрите, сколько запросов делает страница списка постов.</div>
+  </article>
+
+  <!-- J6 -->
+  <article class="card" id="migrations">
+    <p class="path">junior / данные / схема</p>
+    <div class="card-top"><h3>Миграции, фабрики и сидеры</h3><span class="badge b-1">База</span></div>
+    <p><span class="t">Миграции</span> — это версионирование схемы БД в git. Правило, которое нарушают чаще всего: <strong>применённую и уехавшую в общую ветку миграцию не правят</strong> — изменения оформляются новой миграцией. У всех, кто её уже применил, она записана как выполненная и повторно не запустится, а схемы разойдутся.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Миграция с внешними ключами и индексами</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Illuminate\Database\Migrations\Migration;
+<span class="kw">use</span> Illuminate\Database\Schema\Blueprint;
+<span class="kw">use</span> Illuminate\Support\Facades\Schema;
+
+<span class="kw">return new class</span> <span class="kw">extends</span> Migration {
+    <span class="kw">public function</span> <span class="fn">up</span>(): <span class="kw">void</span>
+    {
+        Schema::<span class="fn">create</span>(<span class="st">'posts'</span>, <span class="kw">function</span> (Blueprint $table) {
+            $table-&gt;<span class="fn">id</span>();
+            $table-&gt;<span class="fn">foreignId</span>(<span class="st">'user_id'</span>)-&gt;<span class="fn">constrained</span>()-&gt;<span class="fn">cascadeOnDelete</span>();
+            $table-&gt;<span class="fn">foreignId</span>(<span class="st">'category_id'</span>)-&gt;<span class="fn">constrained</span>()-&gt;<span class="fn">restrictOnDelete</span>();
+            $table-&gt;<span class="fn">string</span>(<span class="st">'title'</span>, 200);
+            $table-&gt;<span class="fn">string</span>(<span class="st">'slug'</span>)-&gt;<span class="fn">unique</span>();
+            $table-&gt;<span class="fn">text</span>(<span class="st">'body'</span>);
+            $table-&gt;<span class="fn">string</span>(<span class="st">'status'</span>, 20)-&gt;<span class="fn">default</span>(<span class="st">'draft'</span>);
+            $table-&gt;<span class="fn">timestamp</span>(<span class="st">'published_at'</span>)-&gt;<span class="fn">nullable</span>();
+            $table-&gt;<span class="fn">timestamps</span>();
+
+            <span class="cm">// Индекс под конкретный запрос: лента опубликованных по дате</span>
+            $table-&gt;<span class="fn">index</span>([<span class="st">'status'</span>, <span class="st">'published_at'</span>]);
+        });
+    }
+
+    <span class="kw">public function</span> <span class="fn">down</span>(): <span class="kw">void</span>
+    {
+        Schema::<span class="fn">dropIfExists</span>(<span class="st">'posts'</span>);
+    }
+};</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Фабрики и сидеры: данные для разработки и тестов</span></div><pre><code>&lt;?php
+<span class="cm">// database/factories/PostFactory.php</span>
+<span class="kw">public function</span> <span class="fn">definition</span>(): <span class="kw">array</span>
+{
+    <span class="kw">return</span> [
+        <span class="st">'user_id'</span>     =&gt; User::<span class="fn">factory</span>(),          <span class="cm">// создаст автора автоматически</span>
+        <span class="st">'category_id'</span> =&gt; Category::<span class="fn">factory</span>(),
+        <span class="st">'title'</span>       =&gt; $this-&gt;faker-&gt;<span class="fn">sentence</span>(),
+        <span class="st">'slug'</span>        =&gt; $this-&gt;faker-&gt;<span class="fn">unique</span>()-&gt;<span class="fn">slug</span>(),
+        <span class="st">'body'</span>        =&gt; $this-&gt;faker-&gt;<span class="fn">paragraphs</span>(3, <span class="kw">true</span>),
+        <span class="st">'status'</span>      =&gt; <span class="st">'draft'</span>,
+    ];
+}
+
+<span class="cm">// Состояние: именованный вариант объекта</span>
+<span class="kw">public function</span> <span class="fn">published</span>(): <span class="kw">static</span>
+{
+    <span class="kw">return</span> $this-&gt;<span class="fn">state</span>(<span class="kw">fn</span> () =&gt; [
+        <span class="st">'status'</span>       =&gt; <span class="st">'published'</span>,
+        <span class="st">'published_at'</span> =&gt; <span class="fn">now</span>()-&gt;<span class="fn">subDay</span>(),
+    ]);
+}
+
+<span class="cm">// Использование в тестах и сидерах</span>
+Post::<span class="fn">factory</span>()-&gt;<span class="fn">count</span>(50)-&gt;<span class="fn">published</span>()-&gt;<span class="fn">create</span>();
+Post::<span class="fn">factory</span>()-&gt;<span class="fn">has</span>(Comment::<span class="fn">factory</span>()-&gt;<span class="fn">count</span>(5))-&gt;<span class="fn">create</span>();
+User::<span class="fn">factory</span>()-&gt;<span class="fn">create</span>([<span class="st">'email'</span> =&gt; <span class="st">'admin@example.com'</span>]);   <span class="cm">// переопределение</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Индексы — часть миграции, а не то, что «добавим потом при тормозах». Каждый индекс должен соответствовать реальному запросу: порядок колонок в составном индексе критичен, а лишние индексы замедляют запись. Подробности — в <a href="sql.html">конспекте по базам данных</a>.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Пустой или неверный метод <code>down()</code>. Он нужен не только для локального отката: без рабочего отката вы не сможете безопасно откатить релиз. И отдельно — <code>migrate:fresh</code> на проде: команда удаляет все таблицы. Смертельная опечатка вместо <code>migrate</code>.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему нельзя менять уже применённую миграцию?</b><br>Потому что она записана как выполненная в таблице миграций на всех стендах и повторно не запустится. На вашей машине после отката вы увидите новую схему, а на проде и у коллег — старую. Любое изменение схемы оформляется отдельной новой миграцией.</div>
+    <div class="box task"><span class="lbl">Практика</span>Опишите схему блога миграциями с внешними ключами и индексами, напишите фабрики со состояниями и сидер, наполняющий базу за одну команду. Проверьте, что <code>migrate:fresh --seed</code> поднимает проект с нуля.</div>
+  </article>
+
+  <!-- J7 -->
+  <article class="card" id="blade">
+    <p class="path">junior / представление / blade</p>
+    <div class="card-top"><h3>Blade и формирование ответа</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Шаблон: наследование, компоненты, безопасность</span></div><pre><code><span class="cm">{{-- resources/views/posts/index.blade.php --}}</span>
+@extends(<span class="st">'layouts.app'</span>)
+
+@section(<span class="st">'content'</span>)
+    <span class="cm">{{-- {{ }} экранирует HTML — защита от XSS по умолчанию --}}</span>
+    &lt;h1&gt;{{ $title }}&lt;/h1&gt;
+
+    @forelse ($posts <span class="kw">as</span> $post)
+        &lt;article&gt;
+            &lt;a href="{{ <span class="fn">route</span>(<span class="st">'posts.show'</span>, $post) }}"&gt;{{ $post-&gt;title }}&lt;/a&gt;
+            &lt;small&gt;{{ $post-&gt;author-&gt;name }} · {{ $post-&gt;published_at-&gt;<span class="fn">diffForHumans</span>() }}&lt;/small&gt;
+
+            @can(<span class="st">'update'</span>, $post)
+                &lt;a href="{{ <span class="fn">route</span>(<span class="st">'posts.edit'</span>, $post) }}"&gt;Редактировать&lt;/a&gt;
+            @endcan
+        &lt;/article&gt;
+    @empty
+        &lt;p&gt;Публикаций пока нет.&lt;/p&gt;
+    @endforelse
+
+    {{ $posts-&gt;<span class="fn">links</span>() }}   <span class="cm">{{-- готовая разметка пагинации --}}</span>
+@endsection</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Формы и разные типы ответов</span></div><pre><code><span class="cm">{{-- Форма: CSRF обязателен, метод подменяется скрытым полем --}}</span>
+&lt;form method="POST" action="{{ <span class="fn">route</span>(<span class="st">'posts.update'</span>, $post) }}"&gt;
+    @csrf
+    @method(<span class="st">'PUT'</span>)
+
+    &lt;input name="title" value="{{ <span class="fn">old</span>(<span class="st">'title'</span>, $post-&gt;title) }}"&gt;
+    @error(<span class="st">'title'</span>) &lt;span class="err"&gt;{{ $message }}&lt;/span&gt; @enderror
+
+    &lt;button&gt;Сохранить&lt;/button&gt;
+&lt;/form&gt;</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ответы из контроллера</span></div><pre><code>&lt;?php
+<span class="kw">return view</span>(<span class="st">'posts.index'</span>, [<span class="st">'posts'</span> =&gt; $posts]);          <span class="cm">// HTML</span>
+<span class="kw">return response</span>()-&gt;<span class="fn">json</span>([<span class="st">'data'</span> =&gt; $posts]);              <span class="cm">// JSON вручную</span>
+<span class="kw">return</span> PostResource::<span class="fn">collection</span>($posts);                <span class="cm">// JSON через ресурс</span>
+<span class="kw">return redirect</span>()-&gt;<span class="fn">route</span>(<span class="st">'posts.index'</span>)-&gt;<span class="fn">with</span>(<span class="st">'status'</span>, <span class="st">'Сохранено'</span>);
+<span class="kw">return back</span>()-&gt;<span class="fn">withErrors</span>($errors)-&gt;<span class="fn">withInput</span>();
+<span class="kw">return response</span>()-&gt;<span class="fn">noContent</span>();                        <span class="cm">// 204 для API</span>
+<span class="fn">abort</span>(403, <span class="st">'Недостаточно прав'</span>);</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span><code>{{ $var }}</code> экранирует вывод, <code>{!! $var !!}</code> — нет. Второе допустимо только для HTML, который вы сами сформировали и в котором уверены. Вывод пользовательского контента без экранирования — это XSS, самая частая уязвимость в шаблонах.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Запросы к базе внутри шаблона: <code>@foreach (Post::all() as $post)</code> или обращение к незагруженным связям в цикле. Данные готовит контроллер или сервис; шаблон только отображает. Иначе вы не увидите N+1 и не сможете переиспользовать логику.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как Blade защищает от XSS и когда защита не работает?</b><br>Конструкция <code>{{ }}</code> прогоняет вывод через экранирование HTML. Защита не работает при <code>{!! !!}</code>, при вставке значений в атрибуты JavaScript без соответствующего экранирования и при выводе HTML, собранного вручную. Пользовательский ввод по умолчанию — недоверенные данные.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сделайте страницу списка с пагинацией, формой фильтра (с сохранением значений через <code>old()</code>) и выводом ошибок валидации. Попробуйте сохранить в заголовок поста тег <code>&lt;script&gt;</code> и убедитесь, что он выводится как текст.</div>
+  </article>
+
+  <!-- J8 -->
+  <article class="card" id="artisan">
+    <p class="path">junior / инструменты / artisan</p>
+    <div class="card-top"><h3>Artisan, конфигурация, окружение</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Команды на каждый день</span></div><pre><code><span class="cm"># Генерация кода</span>
+php artisan make:model Post -mfsc      <span class="cm"># модель + миграция + фабрика + сидер + контроллер</span>
+php artisan make:request StorePostRequest
+php artisan make:middleware EnsureUserIsAdmin
+php artisan make:job ProcessOrder
+php artisan make:policy PostPolicy --model=Post
+php artisan make:test PostTest
+
+<span class="cm"># База данных</span>
+php artisan migrate
+php artisan migrate:rollback           <span class="cm"># откат последней пачки</span>
+php artisan migrate:fresh --seed       <span class="cm"># ТОЛЬКО локально: сносит все таблицы</span>
+php artisan db:seed
+
+<span class="cm"># Диагностика</span>
+php artisan route:list --path=api      <span class="cm"># какие маршруты вообще есть</span>
+php artisan tinker                     <span class="cm"># REPL с загруженным приложением</span>
+php artisan about                      <span class="cm"># версии, драйверы, окружение</span>
+
+<span class="cm"># Эксплуатация</span>
+php artisan queue:work
+php artisan schedule:work               <span class="cm"># планировщик локально</span>
+php artisan storage:link
+php artisan optimize                    <span class="cm"># кэш конфига, роутов, событий — для прода</span>
+php artisan optimize:clear              <span class="cm"># сбросить все кэши</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Своя консольная команда и расписание</span></div><pre><code>&lt;?php
+<span class="cm">// app/Console/Commands/PublishScheduledPosts.php</span>
+<span class="kw">final class</span> PublishScheduledPosts <span class="kw">extends</span> Command
+{
+    <span class="kw">protected</span> $signature = <span class="st">'posts:publish-scheduled {--dry-run : Только показать}'</span>;
+    <span class="kw">protected</span> $description = <span class="st">'Публикует посты, у которых наступило время публикации'</span>;
+
+    <span class="kw">public function</span> <span class="fn">handle</span>(PostPublisher $publisher): <span class="kw">int</span>
+    {
+        $due = Post::<span class="fn">where</span>(<span class="st">'status'</span>, <span class="st">'scheduled'</span>)
+            -&gt;<span class="fn">where</span>(<span class="st">'published_at'</span>, <span class="st">'&lt;='</span>, <span class="fn">now</span>())
+            -&gt;<span class="fn">get</span>();
+
+        <span class="kw">foreach</span> ($due <span class="kw">as</span> $post) {
+            $this-&gt;<span class="fn">line</span>(<span class="st">"Публикую: {$post-&gt;title}"</span>);
+
+            <span class="kw">if</span> (!$this-&gt;<span class="fn">option</span>(<span class="st">'dry-run'</span>)) {
+                $publisher-&gt;<span class="fn">publish</span>($post);
+            }
+        }
+
+        <span class="kw">return</span> self::SUCCESS;
+    }
+}
+
+<span class="cm">// routes/console.php — расписание</span>
+<span class="kw">use</span> Illuminate\Support\Facades\Schedule;
+
+Schedule::<span class="fn">command</span>(<span class="st">'posts:publish-scheduled'</span>)
+    -&gt;<span class="fn">everyFiveMinutes</span>()
+    -&gt;<span class="fn">withoutOverlapping</span>()      <span class="cm">// не запускать, пока предыдущий не закончил</span>
+    -&gt;<span class="fn">onOneServer</span>();            <span class="cm">// на нескольких серверах выполнится один раз</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Планировщик Laravel требует одной системной cron-записи, которая раз в минуту дёргает <code>schedule:run</code>. Всё остальное расписание живёт в коде. Если задачи «не выполняются», в 90% случаев эта cron-запись просто не настроена на сервере.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как в Laravel устроены периодические задачи?</b><br>Расписание описывается в коде, а операционная система раз в минуту запускает одну команду <code>schedule:run</code>, которая решает, что пора выполнить. Для защиты от наложений есть <code>withoutOverlapping()</code>, для кластера — <code>onOneServer()</code>. Долгие задачи оттуда лучше отправлять в очередь, а не выполнять синхронно.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите команду с флагом <code>--dry-run</code>, которая находит и обрабатывает просроченные записи. Поставьте её в расписание с защитой от наложения и проверьте локально через <code>schedule:work</code>.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Рассказываю путь запроса от <code>index.php</code> до ответа</li>
+        <li>Объясняю роль middleware и разницу групп <code>web</code> и <code>api</code></li>
+        <li>Знаю, почему <code>env()</code> вне config ломается на проде</li>
+        <li>Пишу ресурсные маршруты и использую привязку моделей</li>
+        <li>Помню, что привязка модели не проверяет права</li>
+        <li>Выношу валидацию в Form Request и беру <code>validated()</code></li>
+      </ul>
+      <ul class="check">
+        <li>Описываю модели со связями, <code>$fillable</code> и приведением типов</li>
+        <li>Понимаю, что обращение к связи — отдельный запрос</li>
+        <li>Пишу миграции с индексами и рабочим <code>down()</code></li>
+        <li>Не правлю уже применённые миграции</li>
+        <li>Наполняю базу фабриками и сидерами</li>
+        <li>Экранирую вывод в Blade и не хожу в БД из шаблона</li>
+        <li>Пишу консольные команды и ставлю их в расписание</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-собеседование по Laravel почти всегда включает три вопроса: жизненный цикл запроса, как работает валидация и что такое N+1. Первые два закрывает этот блок, третий — первый же блок уровня middle.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · инженерия</p>
+    <h2>Middle Laravel Developer</h2>
+    <p>Middle отличается от junior не количеством известных фасадов, а пониманием того, что происходит под ними: как контейнер собирает зависимости, во сколько запросов обходится страница, когда нужна транзакция, что уходит в очередь, а что остаётся синхронным, и как всё это покрыть тестами. Здесь же появляется первая архитектурная ответственность — куда класть код, который не помещается ни в контроллер, ни в модель.</p>
+  </div>
+
+  <!-- M1 -->
+  <article class="card" id="container">
+    <p class="path">middle / ядро / контейнер</p>
+    <div class="card-top"><h3>Service Container, провайдеры и фасады</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p><span class="t">Service Container</span> — сердце фреймворка: он умеет создавать объекты, автоматически подставляя их зависимости по типам аргументов конструктора. Именно поэтому в контроллере можно просто попросить нужный сервис — и он появится.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Автоматическое разрешение зависимостей</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> OrderController <span class="kw">extends</span> Controller
+{
+    <span class="cm">// Контейнер сам создаст OrderService, а для него — его зависимости,</span>
+    <span class="cm">// и так далее по всей цепочке. Ничего вручную не new-им.</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> OrderService $orders,
+        <span class="kw">private readonly</span> PaymentGateway $payments,   <span class="cm">// это интерфейс!</span>
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">store</span>(StoreOrderRequest $request)
+    {
+        $order = $this-&gt;orders-&gt;<span class="fn">place</span>($request-&gt;<span class="fn">user</span>(), $request-&gt;<span class="fn">validated</span>());
+
+        <span class="kw">return</span> OrderResource::<span class="fn">make</span>($order);
+    }
+}</code></pre></div>
+    <p>Интерфейс контейнер создать не может — ему нужно сказать, какую реализацию подставлять. Это делается в <span class="t">сервис-провайдере</span>: <code>register()</code> только регистрирует привязки, <code>boot()</code> выполняется после регистрации всех провайдеров и годится для остальной загрузочной логики.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Привязки в провайдере</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> AppServiceProvider <span class="kw">extends</span> ServiceProvider
+{
+    <span class="kw">public function</span> <span class="fn">register</span>(): <span class="kw">void</span>
+    {
+        <span class="cm">// Интерфейс → реализация. Новый объект на каждое разрешение.</span>
+        $this-&gt;app-&gt;<span class="fn">bind</span>(PaymentGateway::<span class="kw">class</span>, StripeGateway::<span class="kw">class</span>);
+
+        <span class="cm">// Singleton: один экземпляр на весь запрос</span>
+        $this-&gt;app-&gt;<span class="fn">singleton</span>(ExchangeRates::<span class="kw">class</span>, <span class="kw">function</span> ($app) {
+            <span class="kw">return new</span> CachedExchangeRates(
+                $app-&gt;<span class="fn">make</span>(HttpExchangeRates::<span class="kw">class</span>),
+                $app-&gt;<span class="fn">make</span>(<span class="st">'cache.store'</span>),
+            );
+        });
+
+        <span class="cm">// Контекстная привязка: разным потребителям — разные реализации</span>
+        $this-&gt;app-&gt;<span class="fn">when</span>(ReportExporter::<span class="kw">class</span>)
+                  -&gt;<span class="fn">needs</span>(Filesystem::<span class="kw">class</span>)
+                  -&gt;<span class="fn">giveConfig</span>(<span class="st">'filesystems.disks.reports'</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">boot</span>(): <span class="kw">void</span>
+    {
+        <span class="cm">// Здесь всё, что требует уже собранного приложения</span>
+        Model::<span class="fn">shouldBeStrict</span>(!$this-&gt;app-&gt;<span class="fn">isProduction</span>());
+
+        RateLimiter::<span class="fn">for</span>(<span class="st">'api'</span>, <span class="kw">fn</span> (Request $r) =&gt;
+            Limit::<span class="fn">perMinute</span>(60)-&gt;<span class="fn">by</span>($r-&gt;<span class="fn">user</span>()?-&gt;id ?: $r-&gt;<span class="fn">ip</span>()));
+    }
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 2 · способы получить зависимость и их цена</caption>
+      <thead><tr><th>Способ</th><th>Пример</th><th>Тестируемость</th><th>Когда уместно</th></tr></thead>
+      <tbody>
+        <tr><td>Внедрение в конструктор</td><td><code>__construct(OrderService $s)</code></td><td>Отличная: подменяется в тесте</td><td>По умолчанию везде</td></tr>
+        <tr><td>Внедрение в метод</td><td><code>store(Request $r, Mailer $m)</code></td><td>Отличная</td><td>Зависимость нужна одному методу</td></tr>
+        <tr><td>Фасад</td><td><code>Cache::get(...)</code></td><td>Хорошая: есть <code>Cache::fake()</code> и подмена</td><td>Инфраструктурные вещи, короткий код</td></tr>
+        <tr><td>Хелпер</td><td><code>cache()</code>, <code>now()</code></td><td>Средняя</td><td>Мелочи, шаблоны</td></tr>
+        <tr><td><code>app()</code> / <code>resolve()</code> в теле метода</td><td><code>app(Foo::class)</code></td><td>Плохая: зависимость скрыта</td><td>Почти никогда — это service locator</td></tr>
+        <tr><td><code>new</code> вручную</td><td><code>new StripeGateway(...)</code></td><td>Плохая: жёсткая связь</td><td>Только для простых объектов-значений</td></tr>
+      </tbody>
+    </table></div>
+    <p><span class="t">Фасад</span> — это статический прокси к объекту в контейнере. <code>Cache::get()</code> под капотом достаёт из контейнера привязку кэша и вызывает у неё обычный метод. Поэтому фасады, вопреки распространённому мнению, тестируемы: их можно подменить.</p>
+    <div class="box imp"><span class="lbl">Важно</span>Разница <code>bind</code> и <code>singleton</code> — это разница «новый объект каждый раз» и «один на весь запрос». В обычном PHP-приложении процесс живёт один запрос, поэтому цена ошибки невелика. В долгоживущем воркере (очередь, Octane) синглтон живёт между запросами — и хранить в нём состояние текущего пользователя означает утечку данных между запросами. Это классический баг при переходе на Octane.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое Service Container и зачем он нужен?</b><br>Это механизм создания объектов с автоматическим разрешением зависимостей по типам. Он позволяет писать код против интерфейсов, а решение о реализации принимать в одном месте — провайдере. Практическая выгода: подмена реализации в тестах, единая точка конфигурации сервисов и отсутствие ручного связывания объектов по всему коду.</div>
+    <div class="box task"><span class="lbl">Практика</span>Заведите интерфейс платёжного шлюза с двумя реализациями (боевой и «песочница»), привяжите их в провайдере в зависимости от конфигурации и напишите тест, подменяющий реализацию на заглушку.</div>
+  </article>
+
+  <!-- M2 -->
+  <article class="card" id="relations">
+    <p class="path">middle / данные / n+1</p>
+    <div class="card-top"><h3>Связи и проблема N+1</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Самая частая проблема производительности в Laravel и самый частый вопрос на собеседовании. Суть: один запрос за списком плюс по запросу за связью для каждого элемента.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Как выглядит N+1 и как его убрать</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: 1 запрос за постами + 100 за авторами + 100 за счётчиками = 201</span>
+$posts = Post::<span class="fn">latest</span>()-&gt;<span class="fn">take</span>(100)-&gt;<span class="fn">get</span>();
+<span class="kw">foreach</span> ($posts <span class="kw">as</span> $post) {
+    <span class="fn">echo</span> $post-&gt;author-&gt;name;              <span class="cm">// +1 запрос на каждой итерации</span>
+    <span class="fn">echo</span> $post-&gt;comments-&gt;<span class="fn">count</span>();          <span class="cm">// +1 запрос и вся выборка в память</span>
+}
+
+<span class="cm">// ХОРОШО: 3 запроса независимо от числа постов</span>
+$posts = Post::<span class="fn">with</span>(<span class="st">'author'</span>)            <span class="cm">// подгрузить авторов одним IN-запросом</span>
+    -&gt;<span class="fn">withCount</span>(<span class="st">'comments'</span>)                 <span class="cm">// счётчик подзапросом, без загрузки строк</span>
+    -&gt;<span class="fn">latest</span>()-&gt;<span class="fn">take</span>(100)-&gt;<span class="fn">get</span>();
+
+<span class="kw">foreach</span> ($posts <span class="kw">as</span> $post) {
+    <span class="fn">echo</span> $post-&gt;author-&gt;name;
+    <span class="fn">echo</span> $post-&gt;comments_count;             <span class="cm">// уже посчитано</span>
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Инструменты жадной загрузки</span></div><pre><code>&lt;?php
+<span class="cm">// Вложенные связи через точку</span>
+Post::<span class="fn">with</span>(<span class="st">'comments.author'</span>)-&gt;<span class="fn">get</span>();
+
+<span class="cm">// Только нужные колонки: меньше трафика, работают покрывающие индексы</span>
+Post::<span class="fn">with</span>([<span class="st">'author:id,name,avatar'</span>])-&gt;<span class="fn">get</span>();
+
+<span class="cm">// Условие внутри связи</span>
+Post::<span class="fn">with</span>([<span class="st">'comments'</span> =&gt; <span class="kw">fn</span> ($q) =&gt; $q-&gt;<span class="fn">where</span>(<span class="st">'approved'</span>, <span class="kw">true</span>)-&gt;<span class="fn">latest</span>()-&gt;<span class="fn">limit</span>(3)])
+    -&gt;<span class="fn">get</span>();
+
+<span class="cm">// Догрузка для уже полученной коллекции</span>
+$posts-&gt;<span class="fn">load</span>(<span class="st">'tags'</span>);
+$posts-&gt;<span class="fn">loadMissing</span>(<span class="st">'author'</span>);       <span class="cm">// не перезагружает уже загруженное</span>
+
+<span class="cm">// Фильтр по наличию связи — без загрузки самой связи</span>
+Post::<span class="fn">whereHas</span>(<span class="st">'comments'</span>, <span class="kw">fn</span> ($q) =&gt; $q-&gt;<span class="fn">where</span>(<span class="st">'approved'</span>, <span class="kw">true</span>))-&gt;<span class="fn">get</span>();
+Post::<span class="fn">withExists</span>(<span class="st">'comments'</span>)-&gt;<span class="fn">get</span>();     <span class="cm">// флаг наличия вместо загрузки</span>
+
+<span class="cm">// Агрегаты по связи</span>
+Post::<span class="fn">withSum</span>(<span class="st">'orderItems'</span>, <span class="st">'total'</span>)-&gt;<span class="fn">get</span>();</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ловим N+1 автоматически, а не на проде</span></div><pre><code>&lt;?php
+<span class="cm">// AppServiceProvider::boot()</span>
+<span class="cm">// Вне продакшена ленивая загрузка бросает исключение —</span>
+<span class="cm">// N+1 находится на этапе разработки и в тестах, а не в инциденте.</span>
+Model::<span class="fn">preventLazyLoading</span>(!$this-&gt;app-&gt;<span class="fn">isProduction</span>());
+
+<span class="cm">// shouldBeStrict включает сразу три проверки:</span>
+<span class="cm">// запрет ленивой загрузки, запрет присвоения незаполняемых атрибутов</span>
+<span class="cm">// и обращение к отсутствующим атрибутам.</span>
+Model::<span class="fn">shouldBeStrict</span>(!$this-&gt;app-&gt;<span class="fn">isProduction</span>());</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Жадная загрузка — не всегда решение. Загрузить связь у 10 000 записей означает выбрать десятки тысяч строк в память. На больших объёмах правильнее агрегаты (<code>withCount</code>, <code>withSum</code>), джоины с выборкой нужных колонок или отдельный запрос по чанкам. «Просто добавь <code>with</code>» — рефлекс, который иногда меняет проблему запросов на проблему памяти.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span><code>$user-&gt;posts-&gt;count()</code> вместо <code>$user-&gt;posts()-&gt;count()</code>. Первое загружает все посты в память и считает их в PHP; второе выполняет <code>SELECT COUNT(*)</code> в базе. Разница — одна пара скобок и вся выборка в памяти.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое N+1 и как его найти?</b><br>Один запрос за списком и по запросу за связью на каждый элемент. Находится профайлером (Telescope, Debugbar, лог запросов), а лучше — включённым запретом ленивой загрузки вне прода, тогда он падает тестом. Лечится жадной загрузкой <code>with()</code>, агрегатами <code>withCount()</code>/<code>withSum()</code> или переписыванием на джоин.</div>
+    <div class="box task"><span class="lbl">Практика</span>Включите запрет ленивой загрузки и прогоните тесты — они начнут падать в местах с N+1. Исправьте их, затем замерьте число запросов на главной странице до и после (например, счётчиком в тесте).</div>
+  </article>
+
+  <!-- M3 -->
+  <article class="card" id="queries">
+    <p class="path">middle / данные / запросы</p>
+    <div class="card-top"><h3>Запросы, транзакции и большие объёмы</h3><span class="badge b-2">Инженерия</span></div>
+    <p>Eloquent удобен, но за удобством стоит SQL, и на объёмах это становится заметно. Три темы, которые отличают middle: осознанный выбор между Eloquent и Query Builder, транзакции и обработка данных, не помещающихся в память.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Обработка больших выборок без переполнения памяти</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: 2 млн моделей в памяти — гарантированный memory_limit</span>
+<span class="kw">foreach</span> (Order::<span class="fn">all</span>() <span class="kw">as</span> $order) { <span class="cm">/* ... */</span> }
+
+<span class="cm">// chunkById: пачками по первичному ключу, устойчиво к изменению данных</span>
+Order::<span class="fn">where</span>(<span class="st">'status'</span>, <span class="st">'pending'</span>)-&gt;<span class="fn">chunkById</span>(1000, <span class="kw">function</span> ($orders) {
+    <span class="kw">foreach</span> ($orders <span class="kw">as</span> $order) {
+        $this-&gt;<span class="fn">process</span>($order);
+    }
+});
+
+<span class="cm">// lazy(): удобный синтаксис foreach, под капотом те же чанки</span>
+<span class="kw">foreach</span> (Order::<span class="fn">lazyById</span>(1000) <span class="kw">as</span> $order) {
+    $this-&gt;<span class="fn">process</span>($order);
+}
+
+<span class="cm">// cursor(): один запрос, строки по одной из курсора БД.</span>
+<span class="cm">// Память ниже, но соединение занято на всё время обхода.</span>
+<span class="kw">foreach</span> (Order::<span class="fn">where</span>(<span class="st">'status'</span>, <span class="st">'pending'</span>)-&gt;<span class="fn">cursor</span>() <span class="kw">as</span> $order) {
+    $this-&gt;<span class="fn">process</span>($order);
+}
+
+<span class="cm">// Когда объекты не нужны — вообще не создаём модели</span>
+$ids = Order::<span class="fn">where</span>(<span class="st">'status'</span>, <span class="st">'pending'</span>)-&gt;<span class="fn">pluck</span>(<span class="st">'id'</span>);
+DB::<span class="fn">table</span>(<span class="st">'orders'</span>)-&gt;<span class="fn">whereIn</span>(<span class="st">'id'</span>, $ids)-&gt;<span class="fn">update</span>([<span class="st">'status'</span> =&gt; <span class="st">'archived'</span>]);</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Транзакции и конкурентный доступ</span></div><pre><code>&lt;?php
+<span class="cm">// Транзакция с автоматическим повтором при deadlock (5 попыток)</span>
+$order = DB::<span class="fn">transaction</span>(<span class="kw">function</span> () <span class="kw">use</span> ($user, $items) {
+    <span class="kw">foreach</span> ($items <span class="kw">as</span> $item) {
+        <span class="cm">// Блокируем строку остатка до конца транзакции</span>
+        $stock = Stock::<span class="fn">where</span>(<span class="st">'product_id'</span>, $item[<span class="st">'product_id'</span>])
+            -&gt;<span class="fn">lockForUpdate</span>()
+            -&gt;<span class="fn">firstOrFail</span>();
+
+        <span class="kw">if</span> ($stock-&gt;quantity &lt; $item[<span class="st">'qty'</span>]) {
+            <span class="cm">// Исключение = откат всей транзакции</span>
+            <span class="kw">throw new</span> OutOfStockException($item[<span class="st">'product_id'</span>]);
+        }
+
+        $stock-&gt;<span class="fn">decrement</span>(<span class="st">'quantity'</span>, $item[<span class="st">'qty'</span>]);
+    }
+
+    <span class="kw">return</span> Order::<span class="fn">create</span>([<span class="st">'user_id'</span> =&gt; $user-&gt;id, <span class="st">'total'</span> =&gt; $total]);
+}, attempts: 5);
+
+<span class="cm">// ВАЖНО: побочные эффекты — ПОСЛЕ коммита, а не внутри транзакции.</span>
+<span class="cm">// Письмо, отправленное внутри, уйдёт даже при откате.</span>
+DB::<span class="fn">afterCommit</span>(<span class="kw">fn</span> () =&gt; SendOrderConfirmation::<span class="fn">dispatch</span>($order));</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Внутри транзакции не должно быть обращений к внешним сервисам: HTTP-запросов к платёжному шлюзу, отправки почты, публикации в очередь без отложенной диспетчеризации. Внешний вызов может длиться секунды, всё это время держатся блокировки, а при откате отменить уже отправленное невозможно. Правило: транзакция короткая и только про базу.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Читать значение, менять его в PHP и записывать обратно (<code>$post-&gt;views = $post-&gt;views + 1; $post-&gt;save();</code>). Два параллельных запроса потеряют одно обновление. Правильно — атомарный <code>increment()</code> или условный <code>UPDATE ... WHERE</code>.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как обработать миллион записей, не упав по памяти?</b><br>Пачками: <code>chunkById()</code> или <code>lazyById()</code> — они идут по первичному ключу и устойчивы к изменению данных по ходу обработки. <code>cursor()</code> экономит память ещё сильнее, но держит соединение и курсор на весь проход. Если объекты моделей не нужны, работать через Query Builder и <code>pluck()</code>, а массовые изменения делать одним <code>UPDATE</code>, а не построчно.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сгенерируйте 500 000 записей и напишите команду пересчёта, замерив память и время для трёх вариантов: <code>all()</code>, <code>chunkById()</code>, <code>cursor()</code>. Затем добавьте оформление заказа с блокировкой остатка и проверьте его 50 параллельными запросами.</div>
+  </article>
+
+  <!-- M4 -->
+  <article class="card" id="api">
+    <p class="path">middle / http / api</p>
+    <div class="card-top"><h3>API: ресурсы, пагинация, версии</h3><span class="badge b-2">Прикладное</span></div>
+    <p>Возвращать модели напрямую (<code>return $posts;</code>) — быстро и опасно: в JSON уедет всё, включая поля, которые не предназначены клиенту, а любое изменение схемы БД молча изменит контракт API. <span class="t">API Resource</span> — слой преобразования между моделью и её представлением.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ресурс: явный контракт ответа</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Http\Resources;
+
+<span class="kw">use</span> Illuminate\Http\Resources\Json\JsonResource;
+
+<span class="kw">final class</span> PostResource <span class="kw">extends</span> JsonResource
+{
+    <span class="kw">public function</span> <span class="fn">toArray</span>($request): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [
+            <span class="st">'id'</span>        =&gt; $this-&gt;id,
+            <span class="st">'title'</span>     =&gt; $this-&gt;title,
+            <span class="st">'excerpt'</span>   =&gt; <span class="fn">str</span>($this-&gt;body)-&gt;<span class="fn">limit</span>(200)-&gt;<span class="fn">value</span>(),
+            <span class="st">'status'</span>    =&gt; $this-&gt;status,
+            <span class="st">'published_at'</span> =&gt; $this-&gt;published_at?-&gt;<span class="fn">toIso8601String</span>(),
+
+            <span class="cm">// Связь попадёт в ответ, только если была загружена.</span>
+            <span class="cm">// Это защита от N+1 прямо в слое представления.</span>
+            <span class="st">'author'</span>    =&gt; UserResource::<span class="fn">make</span>($this-&gt;<span class="fn">whenLoaded</span>(<span class="st">'author'</span>)),
+            <span class="st">'comments_count'</span> =&gt; $this-&gt;<span class="fn">whenCounted</span>(<span class="st">'comments'</span>),
+
+            <span class="cm">// Поле только для тех, кто имеет право его видеть</span>
+            <span class="st">'internal_note'</span> =&gt; $this-&gt;<span class="fn">when</span>(
+                $request-&gt;<span class="fn">user</span>()?-&gt;<span class="fn">can</span>(<span class="st">'viewInternal'</span>, $this-&gt;<span class="fn">resource</span>()),
+                <span class="kw">fn</span> () =&gt; $this-&gt;internal_note,
+            ),
+        ];
+    }
+}
+
+<span class="cm">// В контроллере</span>
+<span class="kw">public function</span> <span class="fn">index</span>(Request $request)
+{
+    $posts = Post::<span class="fn">with</span>(<span class="st">'author:id,name'</span>)
+        -&gt;<span class="fn">withCount</span>(<span class="st">'comments'</span>)
+        -&gt;<span class="fn">published</span>()
+        -&gt;<span class="fn">latest</span>()
+        -&gt;<span class="fn">paginate</span>(<span class="fn">min</span>((<span class="kw">int</span>) $request-&gt;<span class="fn">integer</span>(<span class="st">'per_page'</span>, 20), 100));
+
+    <span class="cm">// Пагинация сама добавит meta и links в ответ</span>
+    <span class="kw">return</span> PostResource::<span class="fn">collection</span>($posts);
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 3 · решения по API, которые принимают на старте</caption>
+      <thead><tr><th>Вопрос</th><th>Практика</th></tr></thead>
+      <tbody>
+        <tr><td>Версионирование</td><td>Префикс в URL (<code>/api/v1/</code>) — самый простой и явный вариант; ломающие изменения — только в новой версии</td></tr>
+        <tr><td>Пагинация</td><td><code>paginate()</code> для страниц с номерами; <code>cursorPaginate()</code> для бесконечных лент и больших смещений</td></tr>
+        <tr><td>Лимит размера страницы</td><td>Обязателен: <code>per_page</code> из запроса ограничивается сверху, иначе клиент запросит миллион записей</td></tr>
+        <tr><td>Формат ошибок</td><td>Единый для всех эндпоинтов, задаётся централизованно в обработчике исключений</td></tr>
+        <tr><td>Ограничение частоты</td><td>Middleware <code>throttle</code> с лимитом по пользователю или ключу API</td></tr>
+        <tr><td>Даты</td><td>Всегда ISO 8601 в UTC; конвертация в часовой пояс — на клиенте</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Ресурс не спасает от лишних запросов сам по себе, но <code>whenLoaded()</code> делает проблему видимой: если связь не загружена, поле просто не появится в ответе. Это гораздо лучше, чем молчаливые сто дополнительных запросов при сериализации коллекции.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему нельзя возвращать модель Eloquent напрямую из API?</b><br>Потому что ответ становится зеркалом схемы БД: любое добавление колонки меняет контракт, а служебные поля утекают клиенту. Ресурс задаёт явный контракт, позволяет скрывать поля по правам, форматировать значения и добавлять вычисляемые данные, не трогая модель.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сделайте REST API для сущности с ресурсами, пагинацией с ограничением размера страницы, фильтрами и единым форматом ошибок. Покройте тестами структуру ответа и проверку лимита <code>per_page</code>.</div>
+  </article>
+
+  <!-- M5 -->
+  <article class="card" id="auth">
+    <p class="path">middle / доступ / auth</p>
+    <div class="card-top"><h3>Аутентификация и авторизация</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Два разных вопроса, которые часто путают. <span class="t">Аутентификация</span> — «кто ты» (сессия, токен). <span class="t">Авторизация</span> — «что тебе можно» (гейты и политики). Первое решает пакет, второе пишете вы.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Политика: правила доступа к модели</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Policies;
+
+<span class="kw">final class</span> PostPolicy
+{
+    <span class="kw">public function</span> <span class="fn">view</span>(?User $user, Post $post): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> $post-&gt;status === <span class="st">'published'</span> || $user?-&gt;id === $post-&gt;user_id;
+    }
+
+    <span class="kw">public function</span> <span class="fn">update</span>(User $user, Post $post): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> $user-&gt;id === $post-&gt;user_id;
+    }
+
+    <span class="kw">public function</span> <span class="fn">delete</span>(User $user, Post $post): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> $user-&gt;id === $post-&gt;user_id
+            &amp;&amp; $post-&gt;created_at-&gt;<span class="fn">gt</span>(<span class="fn">now</span>()-&gt;<span class="fn">subHours</span>(24));
+    }
+}
+
+<span class="cm">// Глобальное правило: администратору можно всё (AppServiceProvider::boot)</span>
+Gate::<span class="fn">before</span>(<span class="kw">fn</span> (User $user) =&gt; $user-&gt;<span class="fn">isAdmin</span>() ? <span class="kw">true</span> : <span class="kw">null</span>);</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Четыре места, где проверяют права</span></div><pre><code>&lt;?php
+<span class="cm">// 1. В контроллере — бросит 403</span>
+<span class="kw">public function</span> <span class="fn">update</span>(UpdatePostRequest $request, Post $post)
+{
+    Gate::<span class="fn">authorize</span>(<span class="st">'update'</span>, $post);
+    <span class="cm">// ...</span>
+}
+
+<span class="cm">// 2. В маршруте — middleware</span>
+Route::<span class="fn">put</span>(<span class="st">'/posts/{post}'</span>, ...)-&gt;<span class="fn">middleware</span>(<span class="st">'can:update,post'</span>);
+
+<span class="cm">// 3. В Form Request — метод authorize()</span>
+<span class="kw">public function</span> <span class="fn">authorize</span>(): <span class="kw">bool</span>
+{
+    <span class="kw">return</span> $this-&gt;<span class="fn">user</span>()-&gt;<span class="fn">can</span>(<span class="st">'update'</span>, $this-&gt;<span class="fn">route</span>(<span class="st">'post'</span>));
+}
+
+<span class="cm">// 4. В шаблоне — скрыть элемент интерфейса</span>
+<span class="cm">// @can('update', $post) ... @endcan</span>
+
+<span class="cm">// Отбор доступных записей на уровне запроса — самое надёжное</span>
+$posts = Post::<span class="fn">where</span>(<span class="st">'user_id'</span>, $request-&gt;<span class="fn">user</span>()-&gt;id)-&gt;<span class="fn">get</span>();</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 4 · чем аутентифицировать</caption>
+      <thead><tr><th>Сценарий</th><th>Механизм</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td>Классическое приложение с Blade</td><td>Сессия (группа <code>web</code>)</td><td>Стартовые наборы дают формы входа и регистрации из коробки</td></tr>
+        <tr><td>SPA на том же домене</td><td>Sanctum, cookie-режим</td><td>Сессионная аутентификация с CSRF, без ручной работы с токенами</td></tr>
+        <tr><td>Мобильное приложение, внешние клиенты</td><td>Sanctum, токены</td><td>Простые персональные токены с областями действия</td></tr>
+        <tr><td>Полноценный OAuth-провайдер</td><td>Passport</td><td>Нужен, когда вы выдаёте доступ сторонним приложениям</td></tr>
+        <tr><td>Сервис-сервис</td><td>Токен или подпись запроса</td><td>Отдельный guard и жёсткий rate limit</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Скрыть кнопку в интерфейсе — не значит закрыть доступ. Проверка в шаблоне только для удобства пользователя; настоящая проверка обязана быть на сервере, на каждом эндпоинте. И самое надёжное — не проверять права после выборки, а сразу выбирать только доступные записи: тогда забытая проверка не приводит к утечке.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Проверка роли вместо проверки права: <code>if ($user-&gt;role === 'manager')</code> по всему коду. Через год ролей станет пять, а условия расползутся по сотне мест. Права описываются политиками и гейтами, роль — лишь один из входов в это решение.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем гейт отличается от политики?</b><br>Гейт — простое замыкание для действия, не привязанного к модели («доступ в админку», «экспорт отчётов»). Политика — класс с методами под конкретную модель (<code>view</code>, <code>update</code>, <code>delete</code>), автоматически связываемый с ней. Практически: политика — для CRUD над сущностью, гейт — для всего остального.</div>
+    <div class="box task"><span class="lbl">Практика</span>Опишите политику для основной сущности проекта и подключите её во всех четырёх местах. Затем напишите тесты: владелец получает 200, чужой — 403, гость — 401, а список содержит только доступные записи.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+
+  <!-- M6 -->
+  <article class="card" id="queues">
+    <p class="path">middle / фон / очереди</p>
+    <div class="card-top"><h3>Очереди и джобы</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Правило: <strong>всё, что дольше пары сотен миллисекунд и не нужно пользователю немедленно, уходит в очередь</strong>. Отправка почты, генерация PDF, обращение к внешнему API, обработка загруженного файла, рассылка уведомлений. Пользователь получает быстрый ответ, а работа выполняется воркером.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Джоб с настройками, которые ставят в проде</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Jobs;
+
+<span class="kw">use</span> Illuminate\Contracts\Queue\ShouldQueue;
+<span class="kw">use</span> Illuminate\Contracts\Queue\ShouldBeUnique;
+<span class="kw">use</span> Illuminate\Foundation\Queue\Queueable;
+
+<span class="kw">final class</span> GenerateInvoice <span class="kw">implements</span> ShouldQueue, ShouldBeUnique
+{
+    <span class="kw">use</span> Queueable;
+
+    <span class="kw">public int</span> $tries = 3;                 <span class="cm">// сколько всего попыток</span>
+    <span class="kw">public int</span> $timeout = 120;             <span class="cm">// секунд на одну попытку</span>
+    <span class="kw">public int</span> $maxExceptions = 2;         <span class="cm">// хватит и двух исключений</span>
+
+    <span class="cm">// Растущая задержка между попытками</span>
+    <span class="kw">public function</span> <span class="fn">backoff</span>(): <span class="kw">array</span> { <span class="kw">return</span> [10, 60, 300]; }
+
+    <span class="cm">// Уникальность: второй такой же джоб не поставится, пока этот в работе</span>
+    <span class="kw">public function</span> <span class="fn">uniqueId</span>(): <span class="kw">string</span> { <span class="kw">return</span> (<span class="kw">string</span>) $this-&gt;order-&gt;id; }
+    <span class="kw">public int</span> $uniqueFor = 600;
+
+    <span class="cm">// Модель сериализуется как id и заново достаётся при выполнении</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly</span> Order $order) {}
+
+    <span class="kw">public function</span> <span class="fn">handle</span>(InvoiceBuilder $builder): <span class="kw">void</span>
+    {
+        <span class="cm">// Идемпотентность: джоб может выполниться повторно после сбоя</span>
+        <span class="kw">if</span> ($this-&gt;order-&gt;<span class="fn">hasInvoice</span>()) {
+            <span class="kw">return</span>;
+        }
+
+        $builder-&gt;<span class="fn">build</span>($this-&gt;order);
+    }
+
+    <span class="cm">// Вызывается, когда все попытки исчерпаны</span>
+    <span class="kw">public function</span> <span class="fn">failed</span>(\Throwable $e): <span class="kw">void</span>
+    {
+        <span class="fn">logger</span>()-&gt;<span class="fn">error</span>(<span class="st">'invoice.failed'</span>, [<span class="st">'order'</span> =&gt; $this-&gt;order-&gt;id, <span class="st">'e'</span> =&gt; $e-&gt;<span class="fn">getMessage</span>()]);
+        $this-&gt;order-&gt;<span class="fn">markInvoiceFailed</span>();
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Диспетчеризация, цепочки и пакеты</span></div><pre><code>&lt;?php
+GenerateInvoice::<span class="fn">dispatch</span>($order);
+GenerateInvoice::<span class="fn">dispatch</span>($order)-&gt;<span class="fn">onQueue</span>(<span class="st">'invoices'</span>)-&gt;<span class="fn">delay</span>(<span class="fn">now</span>()-&gt;<span class="fn">addMinutes</span>(5));
+
+<span class="cm">// Ставить в очередь только после успешного коммита транзакции —</span>
+<span class="cm">// иначе воркер может подхватить джоб раньше, чем данные окажутся в БД</span>
+GenerateInvoice::<span class="fn">dispatch</span>($order)-&gt;<span class="fn">afterCommit</span>();
+
+<span class="cm">// Цепочка: следующий стартует только после успеха предыдущего</span>
+Bus::<span class="fn">chain</span>([
+    <span class="kw">new</span> ChargePayment($order),
+    <span class="kw">new</span> GenerateInvoice($order),
+    <span class="kw">new</span> SendOrderConfirmation($order),
+])-&gt;<span class="fn">dispatch</span>();
+
+<span class="cm">// Пакет: параллельно, с отслеживанием прогресса и общим финалом</span>
+Bus::<span class="fn">batch</span>($chunks-&gt;<span class="fn">map</span>(<span class="kw">fn</span> ($ids) =&gt; <span class="kw">new</span> ReindexProducts($ids)))
+    -&gt;<span class="fn">then</span>(<span class="kw">fn</span> (Batch $b) =&gt; <span class="fn">logger</span>()-&gt;<span class="fn">info</span>(<span class="st">'reindex.done'</span>))
+    -&gt;<span class="fn">catch</span>(<span class="kw">fn</span> (Batch $b, \Throwable $e) =&gt; <span class="fn">logger</span>()-&gt;<span class="fn">error</span>(<span class="st">'reindex.failed'</span>))
+    -&gt;<span class="fn">allowFailures</span>()
+    -&gt;<span class="fn">dispatch</span>();</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 5 · драйверы очередей</caption>
+      <thead><tr><th>Драйвер</th><th>Когда</th><th>Плюсы</th><th>Минусы</th></tr></thead>
+      <tbody>
+        <tr><td><code>sync</code></td><td>Локальная разработка, тесты</td><td>Ничего не нужно запускать</td><td>Выполняется в том же запросе — это не очередь</td></tr>
+        <tr><td><code>database</code></td><td>Небольшая нагрузка, нет Redis</td><td>Ноль инфраструктуры, видно содержимое таблицы</td><td>Нагрузка на основную БД, хуже масштабируется</td></tr>
+        <tr><td><code>redis</code></td><td>Дефолт для прода</td><td>Быстро, отложенные задачи, панель Horizon</td><td>Нужен Redis и присмотр за памятью</td></tr>
+        <tr><td>SQS и подобные</td><td>Облако, большие объёмы</td><td>Управляемый сервис, масштабирование</td><td>Ограничения провайдера, задержка, стоимость</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Джоб обязан быть идемпотентным. Он может выполниться дважды: воркер упал после работы, но до подтверждения; сработал таймаут и джоб вернулся в очередь; кто-то перезапустил упавшие задачи. Проверка «уже сделано?» в начале <code>handle()</code> — обязательный элемент, а не перестраховка.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Забыть про <code>queue:restart</code> при деплое. Воркеры — долгоживущие процессы: они держат в памяти код, загруженный на старте, и после выкатки продолжают выполнять старую версию. Отсюда мистические баги «исправили, а на проде по-старому».</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что произойдёт, если джоб упадёт?</b><br>Он вернётся в очередь и будет повторён до исчерпания <code>$tries</code> (с задержкой из <code>backoff()</code>). После этого попадёт в таблицу проваленных задач, и вызовется метод <code>failed()</code>. Оттуда его можно перезапустить вручную. Поэтому джоб должен быть идемпотентным, а важные сбои — попадать в мониторинг, а не только в таблицу.</div>
+    <div class="box task"><span class="lbl">Практика</span>Вынесите отправку уведомлений в очередь с ретраями, backoff и уникальностью. Сымитируйте падение внешнего сервиса и проследите путь джоба: повторы, попадание в проваленные, перезапуск. Проверьте, что двойное выполнение не создаёт дублей.</div>
+  </article>
+
+  <!-- M7 -->
+  <article class="card" id="events">
+    <p class="path">middle / связность / события</p>
+    <div class="card-top"><h3>События, слушатели и обсерверы</h3><span class="badge b-2">Инженерия</span></div>
+    <p><span class="t">События</span> нужны для одного: развязать «что произошло» и «что должно случиться в ответ». Оформление заказа не обязано знать про письма, аналитику, бонусы и склад — оно сообщает факт, а подписчики реагируют.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Событие и слушатель в очереди</span></div><pre><code>&lt;?php
+<span class="cm">// Событие — простой носитель факта</span>
+<span class="kw">final class</span> OrderPlaced
+{
+    <span class="kw">use</span> Dispatchable, SerializesModels;
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly</span> Order $order) {}
+}
+
+<span class="cm">// Слушатель. ShouldQueue → выполнится в фоне, не задерживая ответ</span>
+<span class="kw">final class</span> SendOrderConfirmation <span class="kw">implements</span> ShouldQueue
+{
+    <span class="kw">public function</span> <span class="fn">handle</span>(OrderPlaced $event): <span class="kw">void</span>
+    {
+        Mail::<span class="fn">to</span>($event-&gt;order-&gt;user)-&gt;<span class="fn">send</span>(<span class="kw">new</span> OrderConfirmation($event-&gt;order));
+    }
+}
+
+<span class="cm">// Публикация факта</span>
+OrderPlaced::<span class="fn">dispatch</span>($order);</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Обсервер: реакция на события модели</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Illuminate\Database\Eloquent\Attributes\ObservedBy;
+
+#[ObservedBy(PostObserver::<span class="kw">class</span>)]
+<span class="kw">final class</span> Post <span class="kw">extends</span> Model { <span class="cm">/* ... */</span> }
+
+<span class="kw">final class</span> PostObserver
+{
+    <span class="kw">public function</span> <span class="fn">saving</span>(Post $post): <span class="kw">void</span>
+    {
+        <span class="cm">// Технические поля — уместно</span>
+        $post-&gt;slug ??= <span class="fn">str</span>($post-&gt;title)-&gt;<span class="fn">slug</span>()-&gt;<span class="fn">value</span>();
+    }
+
+    <span class="kw">public function</span> <span class="fn">deleted</span>(Post $post): <span class="kw">void</span>
+    {
+        Cache::<span class="fn">forget</span>(<span class="st">"post:{$post-&gt;id}"</span>);
+    }
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 6 · чем разносить логику</caption>
+      <thead><tr><th>Механизм</th><th>Для чего</th><th>Осторожно</th></tr></thead>
+      <tbody>
+        <tr><td>Событие + слушатель</td><td>Побочные эффекты, о которых источник знать не должен</td><td>Поток выполнения становится неявным — сложнее читать и отлаживать</td></tr>
+        <tr><td>Джоб</td><td>Конкретная фоновая работа с ретраями</td><td>Ретраи требуют идемпотентности</td></tr>
+        <tr><td>Обсервер</td><td>Реакция на изменение модели: slug, кэш, аудит</td><td>Не место для бизнес-правил: массовые обновления обсерверы не вызывают</td></tr>
+        <tr><td>Прямой вызов сервиса</td><td>Основной сценарий, который обязан выполниться</td><td>Явно и понятно — часто это лучший выбор</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>События модели не срабатывают на массовых операциях: <code>Post::where(...)-&gt;update([...])</code> и <code>delete()</code> по запросу идут прямо в SQL, минуя обсерверы. Если логика обязана выполниться всегда, ей место в явном сервисе или в самой базе (внешние ключи, ограничения, триггеры), а не только в обсервере.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Прятать основной сценарий в цепочку событий: заказ создаётся в обсервере, платёж — в слушателе, письмо — в слушателе слушателя. Через полгода никто не может ответить, что происходит при оформлении заказа. События — для <em>дополнительных</em> эффектов; основной путь должен читаться сверху вниз в одном месте.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда событие, а когда просто вызов метода?</b><br>Событие — когда реакций несколько, они не обязательны для основного сценария и источник не должен о них знать (уведомления, аналитика, интеграции). Прямой вызов — когда действие обязательно, результат нужен здесь и порядок важен. Если «событие» слушает ровно один слушатель и без него сценарий сломан — это замаскированный вызов метода.</div>
+    <div class="box task"><span class="lbl">Практика</span>Разнесите оформление заказа: основной сценарий в сервисе, а уведомление, аналитику и начисление бонусов — в слушателей события. Убедитесь тестом, что при падении слушателя заказ всё равно создаётся.</div>
+  </article>
+
+  <!-- M8 -->
+  <article class="card" id="cache">
+    <p class="path">middle / производительность / кэш</p>
+    <div class="card-top"><h3>Кэш, блокировки и инвалидация</h3><span class="badge b-2">Инженерия</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Основные операции</span></div><pre><code>&lt;?php
+<span class="cm">// Самый частый паттерн: взять из кэша или посчитать и положить</span>
+$categories = Cache::<span class="fn">remember</span>(<span class="st">'categories:tree'</span>, <span class="fn">now</span>()-&gt;<span class="fn">addHour</span>(), <span class="kw">fn</span> () =&gt;
+    Category::<span class="fn">with</span>(<span class="st">'children'</span>)-&gt;<span class="fn">whereNull</span>(<span class="st">'parent_id'</span>)-&gt;<span class="fn">get</span>());
+
+Cache::<span class="fn">put</span>(<span class="st">'key'</span>, $value, <span class="fn">now</span>()-&gt;<span class="fn">addMinutes</span>(10));
+Cache::<span class="fn">get</span>(<span class="st">'key'</span>, $default);
+Cache::<span class="fn">forget</span>(<span class="st">'key'</span>);
+Cache::<span class="fn">rememberForever</span>(<span class="st">'settings'</span>, <span class="kw">fn</span> () =&gt; Setting::<span class="fn">pluck</span>(<span class="st">'value'</span>, <span class="st">'key'</span>));
+
+<span class="cm">// Атомарная блокировка: защита от одновременного выполнения</span>
+$lock = Cache::<span class="fn">lock</span>(<span class="st">'reindex'</span>, 300);
+
+<span class="kw">if</span> ($lock-&gt;<span class="fn">get</span>()) {
+    <span class="kw">try</span> {
+        $this-&gt;<span class="fn">reindexEverything</span>();
+    } <span class="kw">finally</span> {
+        $lock-&gt;<span class="fn">release</span>();
+    }
+}
+
+<span class="cm">// Или короче: ждать блокировку до 10 секунд</span>
+Cache::<span class="fn">lock</span>(<span class="st">'reindex'</span>, 300)-&gt;<span class="fn">block</span>(10, <span class="kw">fn</span> () =&gt; $this-&gt;<span class="fn">reindexEverything</span>());</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 7 · что и как кэшировать</caption>
+      <thead><tr><th>Данные</th><th>TTL</th><th>Инвалидация</th></tr></thead>
+      <tbody>
+        <tr><td>Справочники, дерево категорий, настройки</td><td>Часы</td><td>По событию изменения + короткий TTL как страховка</td></tr>
+        <tr><td>Тяжёлые агрегаты и отчёты</td><td>Минуты</td><td>По TTL: небольшая устареваемость допустима</td></tr>
+        <tr><td>Карточка товара, профиль</td><td>Минуты</td><td>По ключу в обсервере модели</td></tr>
+        <tr><td>Результат внешнего API</td><td>От минут до часов</td><td>По TTL, плюс запасное значение при недоступности</td></tr>
+        <tr><td>Права и роли пользователя</td><td>Минуты</td><td>Сброс при изменении прав — иначе доступ живёт дольше, чем нужно</td></tr>
+        <tr><td>Персональные ленты</td><td>Секунды-минуты</td><td>Ключ с id пользователя; следить за объёмом ключей</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Кэш — это ускорение, а не источник истины. Приложение обязано работать при пустом или упавшем кэше: просто медленнее. Код вида «данные точно в кэше, значит можно не проверять» ломается при первом же перезапуске Redis. И отдельно: теги кэша поддерживают не все драйверы — файловый их не умеет, что часто выясняется уже на проде.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Кэшировать без TTL и без стратегии инвалидации. Через месяц никто не знает, почему в интерфейсе старая цена, а сброс всего кэша становится ритуалом при каждом инциденте. Каждому ключу — понятный срок жизни и явное правило сброса.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как защититься от одновременного пересчёта тяжёлого кэша?</b><br>Атомарной блокировкой: первый запрос захватывает лок и считает, остальные ждут или получают прежнее значение. Без этого при истечении TTL под нагрузкой десятки запросов одновременно бросаются пересчитывать одно и то же и роняют базу. Дополнительно помогает пересчёт по расписанию заранее, до истечения срока.</div>
+    <div class="box task"><span class="lbl">Практика</span>Найдите самый тяжёлый запрос на главной странице, закэшируйте его с TTL и инвалидацией по событию, добавьте блокировку от одновременного пересчёта. Замерьте время ответа до и после и проверьте поведение при выключенном Redis.</div>
+  </article>
+
+  <!-- M9 -->
+  <article class="card" id="testing">
+    <p class="path">middle / качество / тесты</p>
+    <div class="card-top"><h3>Тестирование</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>В Laravel-проектах основную ценность дают <span class="t">feature-тесты</span>: они проходят через маршрут, middleware, валидацию, авторизацию и базу — то есть проверяют поведение, а не реализацию. Unit-тесты остаются для чистой логики: расчёты, правила, преобразования.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Feature-тест: проверяем поведение целиком</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Illuminate\Foundation\Testing\RefreshDatabase;
+
+<span class="kw">final class</span> PostTest <span class="kw">extends</span> TestCase
+{
+    <span class="kw">use</span> RefreshDatabase;   <span class="cm">// чистая БД для каждого теста</span>
+
+    <span class="kw">public function</span> <span class="fn">test_author_can_update_own_post</span>(): <span class="kw">void</span>
+    {
+        $post = Post::<span class="fn">factory</span>()-&gt;<span class="fn">create</span>();
+
+        $this-&gt;<span class="fn">actingAs</span>($post-&gt;author)
+            -&gt;<span class="fn">putJson</span>(<span class="st">"/api/posts/{$post-&gt;id}"</span>, [<span class="st">'title'</span> =&gt; <span class="st">'Новый заголовок'</span>])
+            -&gt;<span class="fn">assertOk</span>()
+            -&gt;<span class="fn">assertJsonPath</span>(<span class="st">'data.title'</span>, <span class="st">'Новый заголовок'</span>);
+
+        $this-&gt;<span class="fn">assertDatabaseHas</span>(<span class="st">'posts'</span>, [
+            <span class="st">'id'</span> =&gt; $post-&gt;id, <span class="st">'title'</span> =&gt; <span class="st">'Новый заголовок'</span>,
+        ]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">test_stranger_cannot_update_post</span>(): <span class="kw">void</span>
+    {
+        $post = Post::<span class="fn">factory</span>()-&gt;<span class="fn">create</span>();
+
+        $this-&gt;<span class="fn">actingAs</span>(User::<span class="fn">factory</span>()-&gt;<span class="fn">create</span>())
+            -&gt;<span class="fn">putJson</span>(<span class="st">"/api/posts/{$post-&gt;id}"</span>, [<span class="st">'title'</span> =&gt; <span class="st">'Взлом'</span>])
+            -&gt;<span class="fn">assertForbidden</span>();
+    }
+
+    <span class="kw">public function</span> <span class="fn">test_validation_errors</span>(): <span class="kw">void</span>
+    {
+        $this-&gt;<span class="fn">actingAs</span>(User::<span class="fn">factory</span>()-&gt;<span class="fn">create</span>())
+            -&gt;<span class="fn">postJson</span>(<span class="st">'/api/posts'</span>, [<span class="st">'title'</span> =&gt; <span class="st">''</span>])
+            -&gt;<span class="fn">assertUnprocessable</span>()
+            -&gt;<span class="fn">assertJsonValidationErrors</span>([<span class="st">'title'</span>, <span class="st">'body'</span>]);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Подмена внешнего мира</span></div><pre><code>&lt;?php
+<span class="cm">// Внешние HTTP-запросы — без реальной сети</span>
+Http::<span class="fn">fake</span>([<span class="st">'api.payment.test/*'</span> =&gt; Http::<span class="fn">response</span>([<span class="st">'status'</span> =&gt; <span class="st">'ok'</span>], 200)]);
+
+<span class="cm">// Очередь: проверяем факт постановки, а не выполнение</span>
+Queue::<span class="fn">fake</span>();
+$this-&gt;<span class="fn">post</span>(<span class="st">'/orders'</span>, $payload);
+Queue::<span class="fn">assertPushed</span>(GenerateInvoice::<span class="kw">class</span>);
+
+<span class="cm">// События, почта, файлы, уведомления</span>
+Event::<span class="fn">fake</span>([OrderPlaced::<span class="kw">class</span>]);
+Mail::<span class="fn">fake</span>();
+Storage::<span class="fn">fake</span>(<span class="st">'public'</span>);
+Notification::<span class="fn">fake</span>();
+
+<span class="cm">// Управление временем</span>
+$this-&gt;<span class="fn">travelTo</span>(<span class="fn">now</span>()-&gt;<span class="fn">addDays</span>(31));
+$this-&gt;<span class="fn">freezeTime</span>();
+
+<span class="cm">// Проверка числа запросов — ловим N+1 тестом</span>
+DB::<span class="fn">enableQueryLog</span>();
+$this-&gt;<span class="fn">get</span>(<span class="st">'/posts'</span>)-&gt;<span class="fn">assertOk</span>();
+$this-&gt;<span class="fn">assertLessThan</span>(10, <span class="fn">count</span>(DB::<span class="fn">getQueryLog</span>()));</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Тесты не должны ходить в интернет. Любой внешний вызов подменяется: иначе набор тестов становится медленным, флаки-нестабильным и зависит от чужого сервиса. Отдельно проверьте, что в тестовом окружении не используется боевая база и боевые ключи — это классическая катастрофа.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Тестировать реализацию вместо поведения: проверять, что вызвался конкретный метод сервиса. Такой тест ломается при любом рефакторинге, ничего не гарантируя. Проверяйте результат: код ответа, содержимое JSON, состояние базы, факт постановки джоба.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что и как вы тестируете в Laravel-приложении?</b><br>Основа — feature-тесты на HTTP-уровне: успешный сценарий, валидация, авторизация, граничные случаи. Unit-тесты — для чистой логики без фреймворка. Внешние сервисы, очереди, почта и файлы подменяются фейками. База поднимается на каждый тест (<code>RefreshDatabase</code>), данные готовятся фабриками. Отдельно полезно проверять число запросов, чтобы N+1 падал в CI.</div>
+    <div class="box task"><span class="lbl">Практика</span>Покройте один ресурс полным набором feature-тестов: список, создание, обновление, удаление, права, валидация. Добавьте проверку числа SQL-запросов и подмену внешнего API. Запустите набор в CI.</div>
+  </article>
+
+  <!-- M10 -->
+  <article class="card" id="layers">
+    <p class="path">middle / архитектура / слои</p>
+    <div class="card-top"><h3>Организация кода: куда класть логику</h3><span class="badge b-2">Инженерия</span></div>
+    <p>Вопрос, на котором ломается большинство проектов на третий год жизни. Laravel не навязывает архитектуру, поэтому решение принимаете вы — и чаще всего слишком поздно.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Эволюция по мере роста</span></div><pre><code>1. КОНТРОЛЛЕР + МОДЕЛЬ            небольшой проект, CRUD
+   Нормально. Не усложняйте раньше времени.
+
+2. + FORM REQUEST, RESOURCE, POLICY   появились правила и API
+   Валидация, представление и права уехали из контроллера.
+
+3. + ACTION / SERVICE              логика переиспользуется
+   «Оформить заказ» вызывается из контроллера, консоли и джоба —
+   значит, это отдельный класс, а не метод контроллера.
+
+4. + DTO, QUERY-ОБЪЕКТЫ, СОБЫТИЯ   логика стала сложной
+   Явные структуры вместо массивов, сложные выборки — отдельно.
+
+5. + МОДУЛИ / ГРАНИЦЫ КОНТЕКСТОВ   большая команда, много доменов
+   См. senior-блок про границы модулей.</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Action: один сценарий — один класс</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> PlaceOrder
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> StockManager $stock,
+        <span class="kw">private readonly</span> PriceCalculator $prices,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">execute</span>(User $user, OrderData $data): Order
+    {
+        $order = DB::<span class="fn">transaction</span>(<span class="kw">function</span> () <span class="kw">use</span> ($user, $data) {
+            $this-&gt;stock-&gt;<span class="fn">reserve</span>($data-&gt;items);
+
+            <span class="kw">return</span> Order::<span class="fn">create</span>([
+                <span class="st">'user_id'</span> =&gt; $user-&gt;id,
+                <span class="st">'total'</span>   =&gt; $this-&gt;prices-&gt;<span class="fn">total</span>($data-&gt;items),
+            ]);
+        });
+
+        <span class="cm">// Побочные эффекты — после коммита и через событие</span>
+        OrderPlaced::<span class="fn">dispatch</span>($order);
+
+        <span class="kw">return</span> $order;
+    }
+}
+
+<span class="cm">// Контроллер снова тонкий</span>
+<span class="kw">public function</span> <span class="fn">store</span>(StoreOrderRequest $request, PlaceOrder $placeOrder)
+{
+    $order = $placeOrder-&gt;<span class="fn">execute</span>($request-&gt;<span class="fn">user</span>(), OrderData::<span class="fn">from</span>($request-&gt;<span class="fn">validated</span>()));
+
+    <span class="kw">return</span> OrderResource::<span class="fn">make</span>($order);
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Отдельно про репозитории. В Laravel Eloquent <em>уже</em> является слоем доступа к данным, и обёртка вокруг него ради «абстракции от БД» обычно приносит только лишние интерфейсы: сменить Eloquent на другой ORM всё равно не выйдет, потому что модели протекают повсюду. Репозиторий оправдан, когда источников данных несколько (БД плюс внешний API), когда нужны сложные переиспользуемые выборки или когда важно подменять доступ к данным в тестах без базы.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Строить многослойную архитектуру с интерфейсами на каждый класс в проекте из десяти таблиц. Абстракция, у которой одна реализация и не предвидится второй, — это не гибкость, а лишний файл и лишний переход при чтении кода. Слои добавляются, когда появляется конкретная боль, а не заранее.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Куда вы кладёте бизнес-логику в Laravel?</b><br>Валидация — в Form Request, права — в политики, представление — в ресурсы и шаблоны. Логика, специфичная для сущности, живёт в модели. Сценарий, затрагивающий несколько сущностей и переиспользуемый из контроллера, консоли и джоба, выносится в action или сервис. Контроллер остаётся адаптером HTTP. Репозитории — только по конкретной необходимости, а не по умолчанию.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите самый большой контроллер в проекте и разложите его: валидацию в Form Request, права в политику, сценарий в action, ответ в ресурс. Убедитесь, что тесты не изменились — они проверяют поведение, а не структуру.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Объясняю контейнер, разницу <code>bind</code> и <code>singleton</code></li>
+        <li>Знаю, чем <code>register()</code> отличается от <code>boot()</code></li>
+        <li>Нахожу и устраняю N+1, включаю запрет ленивой загрузки</li>
+        <li>Использую <code>withCount</code> вместо загрузки связей ради счёта</li>
+        <li>Обрабатываю большие выборки чанками, а не <code>all()</code></li>
+        <li>Пишу транзакции без внешних вызовов внутри</li>
+        <li>Отдаю API через ресурсы, а не модели напрямую</li>
+      </ul>
+      <ul class="check">
+        <li>Разделяю аутентификацию и авторизацию, пишу политики</li>
+        <li>Фильтрую доступные записи в запросе, а не после выборки</li>
+        <li>Выношу долгие операции в очередь и делаю джобы идемпотентными</li>
+        <li>Помню про <code>queue:restart</code> при деплое</li>
+        <li>Использую события для дополнительных эффектов, не для основного пути</li>
+        <li>Кэширую с TTL и понятной инвалидацией, знаю про блокировки</li>
+        <li>Пишу feature-тесты с фейками внешнего мира</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Middle-собеседование по Laravel — это почти всегда разбор задачи: «страница тормозит, что делаете», «как оформить заказ так, чтобы не потерять деньги», «как вынести отправку писем из запроса». Ценится связная картина: где запросы, где транзакция, что в очереди, как протестировано.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · архитектура</p>
+    <h2>Senior Laravel Developer</h2>
+    <p>На этом уровне вопросы «как сделать» уступают место вопросам «во что это обойдётся». Почему приложение держит 200 запросов в секунду, а не 2000; что произойдёт при отказе Redis; как выкатить миграцию на таблицу в 40 миллионов строк; где проходят границы модулей и почему в этом проекте не нужен микросервис; как вы узнаете о проблеме раньше пользователей.</p>
+  </div>
+
+  <!-- S1 -->
+  <article class="card" id="performance">
+    <p class="path">senior / производительность / профилирование</p>
+    <div class="card-top"><h3>Производительность: где на самом деле время</h3><span class="badge b-3">Архитектура</span><span class="badge b-must">Отличает senior</span></div>
+    <p>Оптимизация начинается с измерения, а не с догадок. В типичном Laravel-приложении время распределяется предсказуемо, и порядок разбора почти всегда один и тот же.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Порядок разбора медленной страницы</span></div><pre><code>1. СКОЛЬКО ЗАПРОСОВ В БД?          ← начинать всегда отсюда
+   200 запросов вместо 5 — это N+1, и никакой кэш это не лечит.
+
+2. КАКИЕ ЭТО ЗАПРОСЫ?
+   EXPLAIN на самом долгом. Нет индекса — добавить.
+   OFFSET на большой глубине — заменить на keyset-пагинацию.
+
+3. СКОЛЬКО ДАННЫХ ТЯНЕМ?
+   SELECT * и загрузка 10 000 моделей ради счётчика — память и время.
+
+4. ЧТО ДЕЛАЕМ СИНХРОННО?
+   Внешние HTTP, почта, генерация файлов — в очередь.
+
+5. ЧТО МОЖНО НЕ ДЕЛАТЬ ВООБЩЕ?
+   Кэш ответа, кэш фрагмента, кэш агрегата.
+
+6. ТОЛЬКО ПОТОМ — инфраструктура:
+   opcache, кэши конфига и роутов, Octane, больше воркеров.</code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Кэши фреймворка: обязательны на проде, вредны локально</span></div><pre><code><span class="cm"># Одна команда собирает всё сразу: конфиг, маршруты, события, шаблоны</span>
+php artisan optimize
+
+<span class="cm"># По отдельности</span>
+php artisan config:cache     <span class="cm"># после этого env() вне config/ вернёт null!</span>
+php artisan route:cache      <span class="cm"># маршруты-замыкания кэшировать нельзя</span>
+php artisan view:cache
+php artisan event:cache
+
+<span class="cm"># Локально — обратная операция, иначе изменения не подхватываются</span>
+php artisan optimize:clear</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 8 · инструменты профилирования</caption>
+      <thead><tr><th>Инструмент</th><th>Что показывает</th><th>Где применять</th></tr></thead>
+      <tbody>
+        <tr><td>Telescope</td><td>Запросы, SQL, джобы, письма, исключения по каждому обращению</td><td>Локально и на стенде; на проде — только с ограничением доступа и выборкой, иначе сам станет нагрузкой</td></tr>
+        <tr><td>Debugbar / Clockwork</td><td>Панель с запросами и таймингами прямо в браузере</td><td>Только локально</td></tr>
+        <tr><td>Horizon</td><td>Очереди: пропускная способность, время ожидания, сбои</td><td>Прод, при драйвере Redis</td></tr>
+        <tr><td>Pulse</td><td>Обзор приложения: медленные запросы, джобы, потребители ресурсов</td><td>Прод</td></tr>
+        <tr><td>Профилировщик уровня PHP</td><td>Дерево вызовов, где реально сгорает CPU</td><td>Когда узкое место не в БД</td></tr>
+        <tr><td>Лог медленных запросов БД</td><td>Реальные тяжёлые запросы под нагрузкой</td><td>Прод, постоянно</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Кэш конфигурации на проде обязателен, но он же ломает <code>env()</code> вне файлов <code>config/</code> — значения станут <code>null</code>. Это самая частая причина «на стенде работает, после деплоя нет». Проверяется мгновенно: собрать кэш конфига локально и прогнать тесты.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Начинать оптимизацию с установки Octane или добавления серверов. Если страница делает 300 запросов в базу, ускорение загрузки фреймворка даст единицы процентов, а стоимость и сложность вырастут заметно. Сначала запросы и данные, потом инфраструктура.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Страница грузится 4 секунды. Ваши действия?</b><br>Сначала измерить, а не гадать: сколько запросов в БД и какие. Обычно находится N+1 или запрос без индекса. Дальше — объём выбираемых данных, вынос синхронных внешних вызовов в очередь, кэш тяжёлых агрегатов. Инфраструктурные меры (кэши фреймворка, opcache, Octane, масштабирование) — в последнюю очередь, и с замером «до и после» на каждом шаге.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите самую медленную страницу проекта и доведите её до целевого времени, фиксируя после каждого шага число запросов, время и потребление памяти. Оформите отчёт «было → стало» с указанием, что дало какой вклад.</div>
+  </article>
+
+  <!-- S2 -->
+  <article class="card" id="scaling">
+    <p class="path">senior / масштабирование / инфраструктура</p>
+    <div class="card-top"><h3>Масштабирование и Octane</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Классическая модель PHP — «процесс на запрос»: всё создаётся заново и умирает после ответа. Это дорого по загрузке фреймворка, но невероятно устойчиво: утечка памяти живёт один запрос. <span class="t">Octane</span> меняет модель — приложение загружается один раз и обслуживает множество запросов в долгоживущем процессе.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Что ломается при переходе на Octane</span></div><pre><code>СОСТОЯНИЕ МЕЖДУ ЗАПРОСАМИ — главный источник багов:
+
+  • статические свойства классов живут между запросами;
+  • синглтоны, в которые положили текущего пользователя или Request,
+    начнут отдавать чужие данные другим пользователям;
+  • «глобальные» настройки, выставленные по ходу запроса
+    (локаль, часовой пояс, конфиг), протекают дальше;
+  • утечка памяти больше не лечится концом запроса —
+    процесс постепенно распухает.
+
+ЧТО ДЕЛАТЬ:
+  • не хранить данные запроса в синглтонах и статике;
+  • зависимости, привязанные к запросу, разрешать через контейнер
+    в момент обработки, а не сохранять в свойствах;
+  • ограничивать число обработанных запросов на воркер (перезапуск);
+  • нагрузочно тестировать долгий прогон, а не один запрос.
+
+КОГДА ОКУПАЕТСЯ: когда узкое место — загрузка фреймворка,
+а не база. Если 80% времени — SQL, выигрыш будет скромным.</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 9 · что нужно сделать stateless, чтобы масштабироваться горизонтально</caption>
+      <thead><tr><th>Компонент</th><th>Проблема при нескольких серверах</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>Сессии</td><td>Файловый драйвер = сессия только на одном сервере</td><td>Redis или БД как хранилище сессий</td></tr>
+        <tr><td>Кэш</td><td>Файловый и <code>array</code> — локальны</td><td>Общий Redis; помнить, что теги поддерживают не все драйверы</td></tr>
+        <tr><td>Загруженные файлы</td><td>Лежат на одном сервере</td><td>Объектное хранилище через файловую абстракцию</td></tr>
+        <tr><td>Очереди</td><td>Драйвер <code>database</code> упирается в основную БД</td><td>Redis + Horizon, отдельные очереди по приоритетам</td></tr>
+        <tr><td>Планировщик</td><td>Cron на каждом сервере запустит задачу N раз</td><td><code>onOneServer()</code> и общий кэш-лок</td></tr>
+        <tr><td>Логи</td><td>Разбросаны по машинам</td><td>Централизованный сбор, структурированный формат</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Воркеры очередей в проде</span></div><pre><code><span class="cm"># Долгоживущий процесс под присмотром супервизора.</span>
+<span class="cm"># Ограничения защищают от утечек и распухания памяти:</span>
+php artisan queue:work redis \
+  --queue=high,default,low \   <span class="cm"># приоритеты: high разбирается первой</span>
+  --tries=3 \
+  --max-time=3600 \            <span class="cm"># перезапуск процесса раз в час</span>
+  --max-jobs=1000 \
+  --memory=256
+
+<span class="cm"># После деплоя обязательно — иначе воркеры выполняют старый код</span>
+php artisan queue:restart</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Разделяйте очереди по критичности. Одна общая очередь означает, что ночная переиндексация каталога на 200 000 товаров задержит отправку письма с кодом подтверждения. Минимум: быстрая очередь для пользовательских сценариев и медленная для массовых операций, с разными воркерами.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что нужно изменить, чтобы приложение работало на нескольких серверах?</b><br>Убрать локальное состояние: сессии и кэш — в Redis, загруженные файлы — в объектное хранилище, очереди — в общий брокер, планировщик — с блокировкой на одном сервере, логи — в централизованный сбор. Плюс проверить, что деплой обновляет все узлы согласованно и воркеры перезапускаются.</div>
+    <div class="box task"><span class="lbl">Практика</span>Разверните проект на двух узлах за балансировщиком и найдите всё, что сломается: вход в систему, загрузка аватара, кэш, планировщик. Исправьте и проверьте, что выключение одного узла не ломает сценарии.</div>
+  </article>
+
+  <!-- S3 -->
+  <article class="card" id="dbload">
+    <p class="path">senior / данные / нагрузка</p>
+    <div class="card-top"><h3>База данных под нагрузкой</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Почти всегда именно БД становится первым узким местом. Три темы, которые обязан понимать senior: чтение с реплик, миграции без простоя и работа с большими таблицами.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Разделение чтения и записи</span></div><pre><code>&lt;?php
+<span class="cm">// config/database.php — соединение с репликами для чтения</span>
+<span class="st">'mysql'</span> =&gt; [
+    <span class="st">'read'</span>  =&gt; [<span class="st">'host'</span> =&gt; [<span class="fn">env</span>(<span class="st">'DB_READ_HOST_1'</span>), <span class="fn">env</span>(<span class="st">'DB_READ_HOST_2'</span>)]],
+    <span class="st">'write'</span> =&gt; [<span class="st">'host'</span> =&gt; [<span class="fn">env</span>(<span class="st">'DB_WRITE_HOST'</span>)]],
+    <span class="cm">// sticky: после записи в этом же запросе читаем с мастера,</span>
+    <span class="cm">// иначе пользователь не увидит только что созданную запись</span>
+    <span class="st">'sticky'</span> =&gt; <span class="kw">true</span>,
+    <span class="cm">// ... остальные параметры соединения</span>
+],
+
+<span class="cm">// Принудительно с мастера, когда устаревание недопустимо</span>
+$balance = DB::<span class="fn">connection</span>(<span class="st">'mysql::write'</span>)
+    -&gt;<span class="fn">table</span>(<span class="st">'accounts'</span>)-&gt;<span class="fn">where</span>(<span class="st">'id'</span>, $id)-&gt;<span class="fn">value</span>(<span class="st">'balance'</span>);</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Миграция без простоя: расширить → перенести → сузить</span></div><pre><code>&lt;?php
+<span class="cm">// ЗАДАЧА: переименовать колонку в таблице на 40 млн строк.</span>
+<span class="cm">// Прямое переименование = долгая блокировка = простой.</span>
+
+<span class="cm">// РЕЛИЗ 1: добавить новую колонку (быстро, без блокировки данных)</span>
+Schema::<span class="fn">table</span>(<span class="st">'orders'</span>, <span class="kw">fn</span> (Blueprint $t) =&gt; $t-&gt;<span class="fn">string</span>(<span class="st">'customer_email'</span>)-&gt;<span class="fn">nullable</span>());
+
+<span class="cm">// РЕЛИЗ 1 (код): писать в обе колонки, читать из старой</span>
+
+<span class="cm">// РЕЛИЗ 2 (фон): перенос данных пачками по первичному ключу,</span>
+<span class="cm">// возобновляемо и с паузами, чтобы не положить реплики</span>
+Order::<span class="fn">whereNull</span>(<span class="st">'customer_email'</span>)-&gt;<span class="fn">chunkById</span>(2000, <span class="kw">function</span> ($orders) {
+    <span class="kw">foreach</span> ($orders <span class="kw">as</span> $order) {
+        $order-&gt;<span class="fn">updateQuietly</span>([<span class="st">'customer_email'</span> =&gt; $order-&gt;email]);
+    }
+    <span class="fn">usleep</span>(100_000);
+});
+
+<span class="cm">// РЕЛИЗ 3 (код): читать из новой колонки, писать по-прежнему в обе</span>
+<span class="cm">// РЕЛИЗ 4 (код): перестать писать в старую</span>
+<span class="cm">// РЕЛИЗ 5 (миграция): удалить старую колонку</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Миграция и деплой кода происходят не одновременно. В момент между ними работают одновременно старая и новая версия приложения. Поэтому любое изменение схемы должно быть совместимо в обе стороны: удаление колонки или сужение типа в том же релизе, где меняется код, — гарантированные ошибки на проде во время выкатки.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Ставить <code>php artisan migrate</code> в деплой без разбора, какие миграции блокирующие. Добавление индекса на большую таблицу может заблокировать её на минуты. Тяжёлые операции над схемой выполняются отдельно, вручную или онлайн-инструментами, в согласованное окно и с планом отката.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как переименовать колонку в таблице на 40 млн строк без простоя?</b><br>По схеме «расширить → перенести → сузить»: добавить новую колонку, включить двойную запись, фоновым процессом перенести данные пачками по первичному ключу с контролем лага реплик, переключить чтение, выждать несколько релизов на случай отката и только потом удалить старую колонку. Это несколько релизов, а не одна миграция.</div>
+    <div class="box task"><span class="lbl">Практика</span>Проведите такую миграцию на копии реальной таблицы: команда переноса с чанками и возобновлением, двойная запись, переключение чтения. Замерьте длительность и влияние на время ответа приложения во время переноса. Детали по БД — в <a href="sql.html">отдельном конспекте</a>.</div>
+  </article>
+
+  <!-- S4 -->
+  <article class="card" id="modules">
+    <p class="path">senior / архитектура / границы</p>
+    <div class="card-top"><h3>Границы модулей и когда усложнять</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Через два-три года проект на 300 таблиц и 15 разработчиков упирается не в производительность, а в связность: изменение в биллинге ломает каталог, никто не знает, кто вызывает этот метод, а тесты идут сорок минут. Решение — явные границы внутри монолита.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Модульный монолит</span></div><pre><code>app/                          Modules/
+  Http/                         Catalog/
+  Models/          вместо         Domain/       модели, правила, события
+  Services/        этого          Application/  сценарии (actions)
+  ...                             Infrastructure/ репозитории, интеграции
+                                  Http/         контроллеры, ресурсы, роуты
+                                Billing/
+                                Shipping/
+
+Правила, ради которых всё затевалось:
+  • модуль общается с другим ТОЛЬКО через публичный контракт
+    (сервис-фасад модуля или доменное событие);
+  • нельзя тянуть модель чужого модуля напрямую в свой код;
+  • у каждого модуля свои тесты, их можно гонять отдельно;
+  • нарушения границ ловятся линтером архитектуры в CI,
+    иначе договорённость проживёт ровно до ближайшего дедлайна.</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 10 · когда какая структура</caption>
+      <thead><tr><th>Ситуация</th><th>Структура</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>1–3 разработчика, один домен</td><td>Стандартная структура Laravel</td><td>Модули добавят папок и не решат ни одной проблемы</td></tr>
+        <tr><td>Несколько команд, разные домены</td><td>Модульный монолит</td><td>Границы снижают связность, деплой остаётся одним</td></tr>
+        <tr><td>Разные требования к масштабированию и SLA</td><td>Выделение сервиса</td><td>Оправдано, когда часть системы нужно масштабировать и релизить отдельно</td></tr>
+        <tr><td>«Хотим микросервисы, потому что модно»</td><td>Не делать</td><td>Вы меняете вызов метода на сетевой запрос со всеми его отказами и получаете распределённый монолит</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Границы модулей стоят чего-то, только если их нельзя незаметно нарушить. Договорённость «мы не обращаемся к чужим моделям» без проверки в CI не переживает первый срочный релиз. Правило должно быть исполняемым: тест архитектуры, статический анализ зависимостей, разделение по пакетам.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда стоит распиливать монолит на сервисы?</b><br>Когда есть конкретная причина, которую монолит не решает: часть системы нужно масштабировать независимо, у неё другой цикл релизов или другой стек, либо команды физически мешают друг другу в одном репозитории. Проблемы связности сначала решаются границами внутри монолита — это дешевле и обратимо. Распил ради моды даёт сетевые отказы, распределённые транзакции и общую боль без выигрыша.</div>
+    <div class="box task"><span class="lbl">Практика</span>Выделите в своём проекте один домен в модуль с явным публичным контрактом и запретом на прямое обращение к его моделям снаружи. Добавьте в CI проверку, которая падает при нарушении границы.</div>
+  </article>
+
+  <!-- S5 -->
+  <article class="card" id="security">
+    <p class="path">senior / безопасность / чек-лист</p>
+    <div class="card-top"><h3>Безопасность</h3><span class="badge b-3">Архитектура</span><span class="badge b-must">Отличает senior</span></div>
+    <p>Laravel закрывает многое по умолчанию — но ровно до тех пор, пока защиту не отключают руками. Список ниже — то, что реально находят при аудите Laravel-приложений.</p>
+    <div class="tw"><table>
+      <caption>Таблица 11 · типичные уязвимости и меры</caption>
+      <thead><tr><th>Риск</th><th>Как появляется</th><th>Мера</th></tr></thead>
+      <tbody>
+        <tr><td>Небезопасный прямой доступ к объекту</td><td>Привязка модели без проверки прав: чужой id в URL</td><td>Политики на каждом эндпоинте; выборка сразу с фильтром по владельцу</td></tr>
+        <tr><td>Mass assignment</td><td><code>$guarded = []</code> плюс <code>$request-&gt;all()</code></td><td>Явный <code>$fillable</code>, только <code>validated()</code></td></tr>
+        <tr><td>SQL-инъекция</td><td>Подстановка пользовательского ввода в <code>DB::raw</code>, <code>whereRaw</code>, <code>orderByRaw</code></td><td>Параметры вместо конкатенации; сортировка — по белому списку колонок</td></tr>
+        <tr><td>XSS</td><td><code>{!! !!}</code> с пользовательским контентом</td><td>Экранирование по умолчанию; HTML-санитайзер, если разметка нужна</td></tr>
+        <tr><td>Отключённый CSRF</td><td>Маршрут вынесен из группы <code>web</code> или добавлен в исключения</td><td>Исключения только для вебхуков с проверкой подписи</td></tr>
+        <tr><td>Утечка данных через API</td><td>Возврат модели напрямую</td><td>Ресурсы с явным списком полей; скрытые поля в модели</td></tr>
+        <tr><td>Перебор паролей и кодов</td><td>Нет ограничения частоты</td><td><code>throttle</code> на вход и восстановление, лимиты по пользователю и IP</td></tr>
+        <tr><td>Небезопасная загрузка файлов</td><td>Доверие расширению и имени файла</td><td>Проверка MIME и размера, генерация имени, хранение вне корня сайта</td></tr>
+        <tr><td>Раскрытие ошибок</td><td><code>APP_DEBUG=true</code> на проде</td><td>Отладка выключена; трассировки — только в лог и трекер ошибок</td></tr>
+        <tr><td>Утечка секретов</td><td><code>.env</code> в репозитории, ключи в коде, логирование запросов с токенами</td><td>Секреты в хранилище окружения, маскирование в логах, ротация при подозрении</td></tr>
+        <tr><td>Уязвимые зависимости</td><td>Composer-пакеты годами без обновления</td><td>Регулярный аудит зависимостей в CI, обновления по расписанию</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Три места, где ошибаются чаще всего</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Сортировка по полю из запроса — инъекция через orderByRaw</span>
+<span class="cm">// ПЛОХО</span>
+$q-&gt;<span class="fn">orderByRaw</span>($request-&gt;<span class="fn">input</span>(<span class="st">'sort'</span>));
+<span class="cm">// ХОРОШО: белый список</span>
+$allowed = [<span class="st">'created_at'</span>, <span class="st">'title'</span>, <span class="st">'price'</span>];
+$sort = <span class="fn">in_array</span>($request-&gt;<span class="fn">input</span>(<span class="st">'sort'</span>), $allowed, <span class="kw">true</span>)
+    ? $request-&gt;<span class="fn">input</span>(<span class="st">'sort'</span>) : <span class="st">'created_at'</span>;
+$q-&gt;<span class="fn">orderBy</span>($sort, $request-&gt;<span class="fn">input</span>(<span class="st">'dir'</span>) === <span class="st">'asc'</span> ? <span class="st">'asc'</span> : <span class="st">'desc'</span>);
+
+<span class="cm">// 2. Ссылка с ограниченным сроком вместо самодельных токенов</span>
+$url = URL::<span class="fn">temporarySignedRoute</span>(<span class="st">'invoice.download'</span>, <span class="fn">now</span>()-&gt;<span class="fn">addMinutes</span>(30), [<span class="st">'invoice'</span> =&gt; $id]);
+<span class="cm">// в маршруте — middleware 'signed'</span>
+
+<span class="cm">// 3. Чувствительные поля: шифрование и скрытие из выдачи</span>
+<span class="kw">protected function</span> <span class="fn">casts</span>(): <span class="kw">array</span>
+{
+    <span class="kw">return</span> [<span class="st">'passport_number'</span> =&gt; <span class="st">'encrypted'</span>, <span class="st">'settings'</span> =&gt; <span class="st">'encrypted:array'</span>];
+}
+<span class="kw">protected</span> $hidden = [<span class="st">'password'</span>, <span class="st">'remember_token'</span>, <span class="st">'passport_number'</span>];</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Самая частая реальная уязвимость Laravel-приложений — не экзотика, а забытая проверка прав на одном из эндпоинтов. Защита системная: писать выборки сразу с ограничением по владельцу и иметь тест «чужой пользователь получает 403» для каждого ресурса. Одиночные проверки в контроллерах рано или поздно где-то забудут.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>От чего Laravel защищает по умолчанию, а от чего нет?</b><br>По умолчанию есть: экранирование в Blade, CSRF в группе <code>web</code>, подготовленные выражения в построителе запросов, хеширование паролей, защита от массового заполнения при заданном <code>$fillable</code>. Не защищает от: отсутствующей авторизации, инъекций в «сырых» выражениях, XSS при <code>{!! !!}</code>, небезопасной загрузки файлов, включённой отладки на проде и уязвимых зависимостей.</div>
+    <div class="box task"><span class="lbl">Практика</span>Пройдите по таблице выше и проверьте свой проект по каждому пункту. На каждую найденную проблему напишите тест, фиксирующий правильное поведение, — чтобы она не вернулась.</div>
+  </article>
+
+  <!-- S6 -->
+  <article class="card" id="observability">
+    <p class="path">senior / эксплуатация / наблюдаемость</p>
+    <div class="card-top"><h3>Наблюдаемость: узнавать раньше пользователей</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Структурированные логи с контекстом</span></div><pre><code>&lt;?php
+<span class="cm">// Плохо: строка, по которой ничего не найти</span>
+Log::<span class="fn">info</span>(<span class="st">"Заказ {$order-&gt;id} оплачен пользователем {$user-&gt;id}"</span>);
+
+<span class="cm">// Хорошо: событие + структурированный контекст</span>
+Log::<span class="fn">info</span>(<span class="st">'order.paid'</span>, [
+    <span class="st">'order_id'</span>   =&gt; $order-&gt;id,
+    <span class="st">'user_id'</span>    =&gt; $user-&gt;id,
+    <span class="st">'amount'</span>     =&gt; $order-&gt;total,
+    <span class="st">'gateway'</span>    =&gt; <span class="st">'stripe'</span>,
+    <span class="st">'duration_ms'</span> =&gt; $ms,
+]);
+
+<span class="cm">// Сквозной идентификатор запроса во всех записях — через middleware</span>
+Log::<span class="fn">withContext</span>([<span class="st">'request_id'</span> =&gt; $requestId, <span class="st">'user_id'</span> =&gt; <span class="fn">auth</span>()-&gt;<span class="fn">id</span>()]);</code></pre></div>
+    <p>Минимальный набор, который должен быть на проде:</p>
+    <ul>
+      <li><strong>Трекер ошибок</strong> с группировкой и оповещением. Логи в файле, которые никто не читает, — это не мониторинг.</li>
+      <li><strong>Метрики приложения:</strong> время ответа по перцентилям, частота ошибок, число запросов в БД на обращение.</li>
+      <li><strong>Метрики очередей:</strong> длина, время ожидания, доля проваленных, возраст самой старой задачи. Растущая очередь — предвестник инцидента.</li>
+      <li><strong>Метрики БД:</strong> медленные запросы, соединения, лаг реплик.</li>
+      <li><strong>Health-check</strong> для оркестратора и внешнего мониторинга.</li>
+      <li><strong>Алерты по симптомам</strong>, а не по всему подряд: рост ошибок, деградация p95, очередь выше порога, свободное место на диске.</li>
+    </ul>
+    <div class="box imp"><span class="lbl">Важно</span>Логи не должны содержать секретов и персональных данных сверх необходимого: токены, пароли, номера карт, содержимое запросов с ПДн. Маскирование настраивается один раз в форматтере, иначе через год у вас база персональных данных в файлах логов, о которой никто не помнит.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы узнаете, что на проде что-то сломалось?</b><br>Из алертов, а не от пользователей: рост доли ошибок и p95 времени ответа, всплеск проваленных джобов, рост длины и возраста очереди, ошибки в трекере с группировкой по типу. Дальше — по сквозному идентификатору запроса собрать полную картину в логах. Если единственный сигнал «пользователь написал в поддержку» — наблюдаемости нет.</div>
+    <div class="box task"><span class="lbl">Практика</span>Добавьте сквозной идентификатор запроса во все логи и во внешние вызовы, переведите три ключевых места на структурированные события и настройте один алерт на рост доли ошибок. Проверьте срабатывание, намеренно сломав фичу на стенде.</div>
+  </article>
+
+  <!-- S7 -->
+  <article class="card" id="deploy">
+    <p class="path">senior / эксплуатация / деплой</p>
+    <div class="card-top"><h3>Деплой без простоя</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Порядок шагов и почему именно такой</span></div><pre><code><span class="cm"># 1. Собрать новый релиз в отдельной директории (старая продолжает работать)</span>
+composer install --no-dev --optimize-autoloader
+npm ci &amp;&amp; npm run build
+
+<span class="cm"># 2. Совместимые миграции — ДО переключения кода.</span>
+<span class="cm">#    Только расширяющие: новые колонки/таблицы, ничего не удаляем.</span>
+php artisan migrate --force
+
+<span class="cm"># 3. Собрать кэши уже для нового релиза</span>
+php artisan optimize
+
+<span class="cm"># 4. Атомарно переключить симлинк на новый релиз</span>
+ln -sfn /releases/2026-07-26 /var/www/current
+
+<span class="cm"># 5. Перечитать процессы: FPM подхватит новый код, opcache сбросится</span>
+sudo systemctl reload php8.4-fpm
+
+<span class="cm"># 6. Перезапустить воркеры — иначе они останутся на старом коде</span>
+php artisan queue:restart
+
+<span class="cm"># 7. Проверка: health-check, ключевые сценарии, метрики ошибок</span>
+<span class="cm">#    Откат = переключить симлинк обратно и снова queue:restart</span></code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 12 · грабли деплоя</caption>
+      <thead><tr><th>Симптом</th><th>Причина</th></tr></thead>
+      <tbody>
+        <tr><td>После выката работает старый код</td><td>Не сброшен opcache, не перезапущен FPM или воркеры</td></tr>
+        <tr><td>Джобы падают на неизвестных полях</td><td>Воркеры не перезапущены и работают со старой версией кода</td></tr>
+        <tr><td>Ошибки в течение минуты после деплоя</td><td>Разрушающая миграция выкачена вместе с кодом; старая и новая версии работали одновременно</td></tr>
+        <tr><td><code>null</code> вместо значений конфигурации</td><td><code>env()</code> вызывается вне <code>config/</code>, а конфиг закэширован</td></tr>
+        <tr><td>Пользователи видят страницу обслуживания дольше нужного</td><td>Долгая миграция внутри окна простоя вместо фонового переноса</td></tr>
+        <tr><td>Не работает загрузка файлов</td><td>Симлинк <code>storage</code> не создан в новом релизе</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Режим обслуживания поддерживает секретный обход — это позволяет команде проверить релиз до открытия трафика. Но само по себе окно обслуживания не должно быть частью нормального деплоя: если каждая выкатка требует остановки, значит миграции и код не разделены на совместимые шаги.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Опишите деплой Laravel-приложения без простоя.</b><br>Сборка релиза в отдельной директории; применение только совместимых миграций до переключения; сборка кэшей; атомарное переключение симлинка; перезагрузка FPM и перезапуск воркеров очередей; проверка health-check и метрик. Откат — обратное переключение симлинка. Разрушающие изменения схемы выносятся в отдельные более поздние релизы.</div>
+    <div class="box task"><span class="lbl">Практика</span>Опишите деплой проекта в виде скрипта или пайплайна с шагами выше и явной процедурой отката. Проведите учебный откат релиза и замерьте, сколько времени он занимает.</div>
+  </article>
+
+  <!-- S8 -->
+  <article class="card" id="upgrade">
+    <p class="path">senior / поддержка / версии</p>
+    <div class="card-top"><h3>Обновление версий и жизнь с легаси</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Мажорные версии Laravel выходят регулярно, а окно поддержки исправлений и безопасности у каждой ограничено. Проект, который «пока не до обновлений», через три года оказывается на неподдерживаемой версии фреймворка и старом PHP, а обновление превращается в отдельный квартальный проект.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Стратегия, которая работает</span></div><pre><code>ПОСТОЯННО
+  • обновлять минорные версии и зависимости регулярно (раз в спринт),
+    а не копить на год;
+  • держать тесты зелёными — это единственная реальная страховка
+    при обновлении фреймворка;
+  • следить за предупреждениями об устаревании в логах.
+
+ПРИ МАЖОРНОМ ОБНОВЛЕНИИ
+  1. Прочитать руководство по обновлению целиком — там перечислены
+     ломающие изменения, а не только новинки.
+  2. Поднять PHP до требуемой версии отдельным шагом, до фреймворка.
+  3. Обновлять в ветке, прогонять полный набор тестов.
+  4. Разобраться с пакетами: часть может не поддерживать новую версию —
+     это обычная причина застрять.
+  5. Выкатывать отдельным релизом, без функциональных изменений,
+     чтобы при проблемах было понятно, что откатывать.
+
+ЕСЛИ ПРОЕКТ СИЛЬНО ОТСТАЛ
+  Идти по версиям последовательно, а не прыгать через две-три:
+  каждый шаг проверяется тестами и выкатывается отдельно.</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Главный технический долг при обновлении — не сам фреймворк, а сторонние пакеты и код, который лезет во внутренности. Чем больше вы полагаетесь на недокументированное поведение и заброшенные пакеты, тем дороже каждое обновление. При выборе пакета смотрите на активность репозитория и число зависимостей — это решение на годы.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы обновляете мажорную версию фреймворка на большом проекте?</b><br>Сначала убеждаюсь, что есть покрытие тестами ключевых сценариев — без него обновление вслепую. Затем читаю руководство по обновлению, поднимаю версию PHP отдельным шагом, обновляю в отдельной ветке, разбираюсь с несовместимыми пакетами и выкатываю отдельным релизом без функциональных изменений. Если проект отстал на несколько версий — иду последовательно, а не одним прыжком.</div>
+    <div class="box task"><span class="lbl">Практика</span>Проверьте, на какой версии фреймворка и PHP работает ваш проект и в каком состоянии её поддержка. Составьте план обновления с оценкой: какие пакеты мешают, какие тесты нужно дописать заранее, сколько релизов потребуется.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Начинаю оптимизацию с измерения, а не с инфраструктуры</li>
+        <li>Знаю, что кэш конфига ломает <code>env()</code> вне config</li>
+        <li>Понимаю риски состояния между запросами в Octane</li>
+        <li>Делаю приложение stateless для горизонтального масштабирования</li>
+        <li>Разделяю очереди по критичности</li>
+        <li>Пишу совместимые миграции и переношу данные фоном</li>
+      </ul>
+      <ul class="check">
+        <li>Выделяю границы модулей и проверяю их в CI</li>
+        <li>Знаю, когда распил на сервисы не нужен</li>
+        <li>Прохожу по чек-листу безопасности и покрываю находки тестами</li>
+        <li>Пишу структурированные логи со сквозным идентификатором</li>
+        <li>Настраиваю алерты по симптомам и знаю о поломке первым</li>
+        <li>Умею выкатить и откатить релиз без простоя</li>
+        <li>Обновляю версии регулярно, а не раз в три года</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-собеседование по Laravel — это разбор реальных ситуаций: «страница тормозит», «нужно выкатить миграцию на большой таблице», «как разнести код между командами», «что будет при отказе Redis». Ценится не знание API, а порядок действий, цифры и понимание, чем вы платите за каждое решение.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения перед собеседованием. Первая таблица переводит задачу в инструмент фреймворка, последняя показывает, что ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Задача → инструмент Laravel</h3><span class="badge b-tag">Таблица 13</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 13 · где решается типовая задача</caption>
+      <thead><tr><th>Задача</th><th>Инструмент</th><th>Замечание</th></tr></thead>
+      <tbody>
+        <tr><td>Проверить входные данные</td><td>Form Request</td><td>Брать <code>validated()</code>, не <code>all()</code></td></tr>
+        <tr><td>Проверить права на действие</td><td>Политика, гейт, middleware <code>can</code></td><td>Плюс фильтрация выборки по владельцу</td></tr>
+        <tr><td>Найти модель по параметру URL</td><td>Route Model Binding</td><td>Даёт 404, но не проверяет права</td></tr>
+        <tr><td>Отдать JSON</td><td>API Resource</td><td>Модель напрямую отдавать нельзя</td></tr>
+        <tr><td>Сделать что-то долгое</td><td>Джоб в очереди</td><td>Идемпотентность обязательна</td></tr>
+        <tr><td>Отреагировать на факт несколькими способами</td><td>Событие + слушатели</td><td>Основной сценарий держать явным</td></tr>
+        <tr><td>Заполнить slug, сбросить кэш при изменении</td><td>Обсервер модели</td><td>Не срабатывает на массовых операциях</td></tr>
+        <tr><td>Выполнять по расписанию</td><td><code>routes/console.php</code> + системный cron</td><td><code>withoutOverlapping</code>, <code>onOneServer</code></td></tr>
+        <tr><td>Не пересчитывать тяжёлое</td><td><code>Cache::remember</code></td><td>TTL и правило инвалидации обязательны</td></tr>
+        <tr><td>Не дать выполнить операцию дважды</td><td><code>Cache::lock</code>, <code>ShouldBeUnique</code></td><td>Плюс идемпотентный ключ в БД</td></tr>
+        <tr><td>Ограничить частоту обращений</td><td>Middleware <code>throttle</code>, <code>RateLimiter</code></td><td>Лимит по пользователю или ключу, не только по IP</td></tr>
+        <tr><td>Временная ссылка на файл</td><td>Подписанные маршруты</td><td>Не изобретать свои токены</td></tr>
+        <tr><td>Переиспользовать сценарий из HTTP и консоли</td><td>Action / сервис</td><td>Признак: вызывается из двух и более мест</td></tr>
+        <tr><td>Обработать миллион строк</td><td><code>chunkById</code> / <code>lazyById</code></td><td><code>all()</code> — путь к memory_limit</td></tr>
+        <tr><td>Подменить внешний сервис в тесте</td><td><code>Http::fake()</code>, привязка в контейнере</td><td>Тесты не ходят в сеть</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Eloquent, Query Builder или чистый SQL</h3><span class="badge b-tag">Таблица 14</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 14 · чем платим за удобство</caption>
+      <thead><tr><th>Критерий</th><th>Eloquent</th><th>Query Builder</th><th>Чистый SQL</th></tr></thead>
+      <tbody>
+        <tr><td>Скорость разработки CRUD</td><td>Максимальная</td><td>Высокая</td><td>Низкая</td></tr>
+        <tr><td>Контроль над запросом</td><td>Низкий</td><td>Средний</td><td>Полный</td></tr>
+        <tr><td>Память на большой выборке</td><td>Высокая: объекты моделей</td><td>Ниже: массивы</td><td>Минимальная</td></tr>
+        <tr><td>События модели и обсерверы</td><td>Работают</td><td>Не работают</td><td>Не работают</td></tr>
+        <tr><td>Сложная аналитика, оконные функции</td><td>Неудобно</td><td>Средне</td><td>Естественно</td></tr>
+        <tr><td>Массовые операции</td><td>Плохо построчно</td><td>Хорошо</td><td>Отлично</td></tr>
+        <tr><td>Риск N+1</td><td>Высокий</td><td>Отсутствует</td><td>Отсутствует</td></tr>
+        <tr><td>Где применять</td><td>Доменная логика, CRUD, связи</td><td>Списки, фильтры, отчёты, массовые обновления</td><td>Тяжёлая аналитика, миграции данных</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box good"><span class="lbl">Практический вывод</span>Здоровый проект использует всё три: Eloquent для доменной логики и записи, Query Builder для списков и массовых операций, чистый SQL в отдельных классах-запросах для тяжёлых отчётов. Догматичное «только Eloquent» приводит к падениям по памяти, догматичное «только SQL» — к потере всех преимуществ фреймворка.</div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Чек-лист готовности к проду</h3><span class="badge b-tag">Таблица 15</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 15 · что должно быть сделано до запуска</caption>
+      <thead><tr><th>Область</th><th>Пункт</th></tr></thead>
+      <tbody>
+        <tr><td>Конфигурация</td><td><code>APP_DEBUG=false</code>, корректный <code>APP_ENV</code>, задан ключ приложения, секреты не в репозитории</td></tr>
+        <tr><td>Конфигурация</td><td><code>php artisan optimize</code> в деплое; ни одного <code>env()</code> вне <code>config/</code></td></tr>
+        <tr><td>База</td><td>Индексы под реальные запросы; миграции совместимы; есть бэкапы и проверенное восстановление</td></tr>
+        <tr><td>Производительность</td><td>Нет N+1 на ключевых страницах; запрет ленивой загрузки включён вне прода</td></tr>
+        <tr><td>Очереди</td><td>Драйвер не <code>sync</code>; воркеры под супервизором; <code>queue:restart</code> в деплое; мониторинг проваленных</td></tr>
+        <tr><td>Планировщик</td><td>Системный cron настроен; задачи защищены от наложения и дублей на кластере</td></tr>
+        <tr><td>Хранилище</td><td>Файлы не на локальном диске при нескольких серверах; symlink создан</td></tr>
+        <tr><td>Безопасность</td><td>Права проверяются на каждом эндпоинте; лимиты частоты на вход и API; загрузки валидируются</td></tr>
+        <tr><td>Наблюдаемость</td><td>Трекер ошибок, структурированные логи, метрики очередей и БД, health-check, алерты</td></tr>
+        <tr><td>Тесты</td><td>Ключевые сценарии покрыты; тесты идут в CI; внешние сервисы замоканы</td></tr>
+        <tr><td>Деплой</td><td>Атомарное переключение, план отката, проверка после выката</td></tr>
+        <tr><td>Поддержка</td><td>Версии фреймворка и PHP поддерживаются; зависимости обновляются регулярно</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 16</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 16 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Ядро</td><td>Знает путь запроса и middleware</td><td>Понимает контейнер, провайдеры, фасады</td><td>Осознаёт цену абстракций и поведение в долгоживущих процессах</td></tr>
+        <tr><td>Данные</td><td>CRUD, связи, миграции</td><td>N+1, транзакции, чанки, выбор между Eloquent и Query Builder</td><td>Реплики, миграции без простоя, поведение под нагрузкой</td></tr>
+        <tr><td>HTTP</td><td>Маршруты, валидация, Blade</td><td>Ресурсы, политики, ограничение частоты</td><td>Контракты API, версионирование, деградация</td></tr>
+        <tr><td>Фон</td><td>Знает, что очереди есть</td><td>Пишет идемпотентные джобы с ретраями</td><td>Разделяет очереди, мониторит, планирует отказ</td></tr>
+        <tr><td>Архитектура</td><td>Контроллер и модель</td><td>Actions, ресурсы, политики, события</td><td>Границы модулей, обоснование сложности, отказ от неё</td></tr>
+        <tr><td>Качество</td><td>Пишет отдельные тесты</td><td>Держит feature-покрытие и фейки</td><td>Ставит процесс: CI, проверки архитектуры, регрессии</td></tr>
+        <tr><td>Эксплуатация</td><td>Запускает локально</td><td>Понимает деплой и кэши</td><td>Отвечает за релиз, откат, наблюдаемость и обновления</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и применение</td><td>Компромиссы, цифры, план на отказ</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · инструменты</p>
+    <h2>Artisan и хелперы</h2>
+    <p>То, что набирают руками каждый день. Сгруппировано по ситуации, а не по алфавиту.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Команды по ситуациям</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Разработка</span></div><pre><code>php artisan make:model Order -mfsc     <span class="cm"># модель + миграция + фабрика + сидер + контроллер</span>
+php artisan make:controller OrderController --api --model=Order
+php artisan make:request StoreOrderRequest
+php artisan make:policy OrderPolicy --model=Order
+php artisan make:resource OrderResource
+php artisan make:job ProcessOrder
+php artisan make:event OrderPlaced
+php artisan make:listener SendOrderConfirmation --event=OrderPlaced
+php artisan make:observer OrderObserver --model=Order
+php artisan make:command ReindexProducts
+php artisan make:test OrderTest            <span class="cm"># --unit для unit-теста</span>
+
+php artisan tinker                         <span class="cm"># REPL: быстро проверить запрос или метод</span>
+php artisan route:list --path=api --method=POST
+php artisan db:show &amp;&amp; php artisan db:table orders
+php artisan about                          <span class="cm"># версии, драйверы, кэши</span></code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">База и эксплуатация</span></div><pre><code>php artisan migrate                        <span class="cm"># на проде — с --force</span>
+php artisan migrate:status
+php artisan migrate:rollback --step=1
+php artisan migrate:fresh --seed           <span class="cm"># ТОЛЬКО локально: удаляет все таблицы</span>
+
+php artisan queue:work redis --queue=high,default --tries=3 --max-time=3600
+php artisan queue:failed &amp;&amp; php artisan queue:retry all
+php artisan queue:restart                  <span class="cm"># обязательный шаг деплоя</span>
+php artisan schedule:list &amp;&amp; php artisan schedule:work
+
+php artisan optimize                       <span class="cm"># кэш конфига, роутов, событий, шаблонов</span>
+php artisan optimize:clear                 <span class="cm"># сбросить всё</span>
+php artisan down --secret=deploy-2026      <span class="cm"># режим обслуживания с обходом</span>
+php artisan up</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Хелперы, которые экономят время</span></div><pre><code>&lt;?php
+<span class="cm">// Строки и работа с текстом</span>
+<span class="fn">str</span>($title)-&gt;<span class="fn">slug</span>()-&gt;<span class="fn">value</span>();
+<span class="fn">str</span>($body)-&gt;<span class="fn">limit</span>(200)-&gt;<span class="fn">value</span>();
+Str::<span class="fn">uuid</span>(); Str::<span class="fn">random</span>(32);
+
+<span class="cm">// Даты (Carbon)</span>
+<span class="fn">now</span>()-&gt;<span class="fn">addDays</span>(7); <span class="fn">now</span>()-&gt;<span class="fn">startOfMonth</span>(); $date-&gt;<span class="fn">diffForHumans</span>();
+
+<span class="cm">// Коллекции — половина логики без циклов</span>
+$orders-&gt;<span class="fn">groupBy</span>(<span class="st">'status'</span>)-&gt;<span class="fn">map</span>-&gt;<span class="fn">count</span>();
+$orders-&gt;<span class="fn">sum</span>(<span class="st">'total'</span>);
+$orders-&gt;<span class="fn">filter</span>(<span class="kw">fn</span> ($o) =&gt; $o-&gt;isPaid)-&gt;<span class="fn">pluck</span>(<span class="st">'id'</span>);
+$items-&gt;<span class="fn">chunk</span>(100);
+$rows-&gt;<span class="fn">keyBy</span>(<span class="st">'id'</span>);                <span class="cm">// индекс по ключу — O(1) доступ</span>
+
+<span class="cm">// Отладка</span>
+<span class="fn">dd</span>($value); <span class="fn">dump</span>($value); <span class="fn">ray</span>($value);
+DB::<span class="fn">listen</span>(<span class="kw">fn</span> ($q) =&gt; <span class="fn">logger</span>()-&gt;<span class="fn">debug</span>($q-&gt;sql, $q-&gt;bindings));
+$query-&gt;<span class="fn">toSql</span>(); $query-&gt;<span class="fn">dd</span>();
+
+<span class="cm">// Прочее</span>
+<span class="fn">retry</span>(3, <span class="kw">fn</span> () =&gt; $api-&gt;<span class="fn">call</span>(), 100);   <span class="cm">// повтор с задержкой</span>
+<span class="fn">rescue</span>(<span class="kw">fn</span> () =&gt; $risky(), <span class="kw">null</span>);          <span class="cm">// выполнить, при ошибке — значение по умолчанию</span>
+<span class="fn">throw_if</span>($order-&gt;isPaid, AlreadyPaidException::<span class="kw">class</span>);</code></pre></div>
+    <div class="box good"><span class="lbl">Практический вывод</span>Коллекции Laravel закрывают большую часть работы с массивами, но у них есть цена: каждый вызов создаёт новую коллекцию, а цепочка из десяти методов по миллиону элементов — это десять проходов и много памяти. На больших объёмах смотрите в сторону ленивых коллекций и обработки пачками — подробности про сложность операций в <a href="data-structures.html">конспекте по структурам данных</a>.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы намеренно короткие — это каркас, а не пересказ документации. Структура сильного ответа: определение → как работает → пример из практики → компромисс.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что происходит от запроса пользователя до ответа?</span><span class="aa">Веб-сервер направляет всё в единую точку входа, подключается автозагрузка, собирается приложение. Запрос проходит глобальные middleware, маршрутизацию, middleware группы и маршрута, попадает в контроллер с внедрёнными зависимостями и возвращается ответом через те же слои в обратном порядке.</span></li>
+      <li><span class="qq">Что такое middleware и зачем оно?</span><span class="aa">Слой вокруг обработчика, который может отклонить запрос, изменить его или подправить ответ. Аутентификация, CSRF, ограничение частоты, локаль, логирование — типичные примеры. Позволяет не дублировать эти проверки в каждом контроллере.</span></li>
+      <li><span class="qq">Чем группа <code>web</code> отличается от <code>api</code>?</span><span class="aa"><code>web</code> включает сессии, куки и CSRF-защиту, <code>api</code> — без состояния, обычно с ограничением частоты и аутентификацией по токену. Отсюда типичная ошибка: ожидать работы сессии в API-маршруте.</span></li>
+      <li><span class="qq">Чем <code>config()</code> отличается от <code>env()</code>?</span><span class="aa"><code>env()</code> допустима только в файлах конфигурации; в коде читают <code>config()</code>. После кэширования конфигурации на проде <code>env()</code> вне <code>config/</code> вернёт <code>null</code>. Это самая частая причина «локально работает, на проде нет».</span></li>
+      <li><span class="qq">Что такое Route Model Binding?</span><span class="aa">Автоматический поиск модели по параметру маршрута: в метод приходит уже найденный объект, при отсутствии — 404. Можно искать по другому полю и ограничивать вложенные привязки. Прав доступа не проверяет.</span></li>
+      <li><span class="qq">Как работает валидация и что возвращается при ошибке?</span><span class="aa">Правила проверяются до тела метода. Для обычных запросов — редирект назад с ошибками и старым вводом; для JSON-запросов — статус 422 с перечнем ошибок по полям.</span></li>
+      <li><span class="qq">Зачем Form Request, если есть <code>$request-&gt;validate()</code>?</span><span class="aa">Он выносит правила и авторизацию в отдельный тестируемый класс, переиспользуется между методами, даёт место для нормализации входа и своих сообщений, и гарантирует, что метод контроллера не выполнится при неверных данных.</span></li>
+      <li><span class="qq">Почему нужно брать <code>validated()</code>, а не <code>all()</code>?</span><span class="aa">Потому что <code>all()</code> вернёт всё, что прислал клиент, включая поля вне правил. В связке с массовым заполнением это позволяет дописать в форму служебное поле и сохранить его.</span></li>
+      <li><span class="qq">Что такое mass assignment и как защититься?</span><span class="aa">Заполнение модели массивом. Защита — явный список разрешённых полей в <code>$fillable</code> и передача только проверенных данных. Пустой <code>$guarded</code> вместе с <code>all()</code> — прямой путь к уязвимости.</span></li>
+      <li><span class="qq">Какие типы связей вы знаете?</span><span class="aa">Один к одному, один ко многим и обратные к ним, многие ко многим через промежуточную таблицу, связь через посредника и полиморфные связи. Отличаются тем, где лежит внешний ключ.</span></li>
+      <li><span class="qq">Что делает <code>casts()</code> в модели?</span><span class="aa">Приводит атрибуты к нужным типам при чтении и записи: даты в объекты, JSON-колонки в массивы, флаги в булевы значения, деньги в десятичные. Из базы всё приходит строками, приведение избавляет от ручных преобразований.</span></li>
+      <li><span class="qq">Чем <code>find()</code> отличается от <code>findOrFail()</code>?</span><span class="aa">Первый вернёт <code>null</code>, второй бросит исключение, которое превращается в 404. В контроллерах обычно нужен второй вариант или привязка модели.</span></li>
+      <li><span class="qq">Что такое скоуп модели?</span><span class="aa">Переиспользуемый кусок условия запроса, оформленный методом модели: <code>Post::published()</code>. Избавляет от копирования одних и тех же <code>where</code> по всему коду.</span></li>
+      <li><span class="qq">Зачем нужны миграции?</span><span class="aa">Чтобы схема БД версионировалась вместе с кодом и одинаково разворачивалась у всех. Схема воспроизводится с нуля одной командой, изменения проходят ревью, релиз можно откатить.</span></li>
+      <li><span class="qq">Почему нельзя менять уже применённую миграцию?</span><span class="aa">Она отмечена как выполненная на всех стендах и повторно не запустится, поэтому схемы разойдутся. Любое изменение оформляется новой миграцией.</span></li>
+      <li><span class="qq">Зачем фабрики и сидеры?</span><span class="aa">Фабрики создают правдоподобные объекты для тестов и разработки, включая связанные сущности и именованные состояния. Сидеры наполняют базу набором данных. Вместе дают воспроизводимое окружение одной командой.</span></li>
+      <li><span class="qq">Чем <code>{{ }}</code> отличается от <code>{!! !!}</code> в Blade?</span><span class="aa">Первое экранирует HTML и защищает от XSS, второе выводит как есть. Второе допустимо только для разметки, которую вы сформировали сами и в которой уверены.</span></li>
+      <li><span class="qq">Зачем в форме <code>@csrf</code>?</span><span class="aa">Это скрытое поле с токеном, подтверждающим, что форма отправлена с вашего сайта. Без него middleware отклонит запрос. Защита от того, что сторонняя страница отправит запрос от имени залогиненного пользователя.</span></li>
+      <li><span class="qq">Как в Laravel устроены задачи по расписанию?</span><span class="aa">Расписание описывается в коде, а система раз в минуту запускает одну команду планировщика, которая решает, что пора выполнить. Есть защита от наложений и запуск только на одном сервере в кластере.</span></li>
+      <li><span class="qq">Что такое Artisan и какие команды вы используете чаще всего?</span><span class="aa">Консольный интерфейс приложения: генерация классов, миграции, запуск воркеров и планировщика, кэши, диагностика. Ежедневно — генераторы, <code>migrate</code>, <code>route:list</code>, <code>tinker</code>, <code>optimize:clear</code>.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое Service Container?</span><span class="aa">Механизм создания объектов с автоматическим разрешением зависимостей по типам аргументов. Позволяет писать код против интерфейсов, а выбор реализации держать в одном месте — провайдере.</span></li>
+      <li><span class="qq">Чем <code>bind</code> отличается от <code>singleton</code>?</span><span class="aa"><code>bind</code> создаёт новый объект на каждое разрешение, <code>singleton</code> — один на весь жизненный цикл приложения. В обычном запросе разница невелика, а в долгоживущем процессе синглтон с состоянием запроса приводит к утечке данных между запросами.</span></li>
+      <li><span class="qq">Чем <code>register()</code> отличается от <code>boot()</code> в провайдере?</span><span class="aa">В <code>register()</code> только регистрируют привязки — в этот момент другие сервисы могут быть ещё не зарегистрированы. <code>boot()</code> выполняется после регистрации всех провайдеров, туда идёт остальная загрузочная логика.</span></li>
+      <li><span class="qq">Что такое фасад и мешает ли он тестированию?</span><span class="aa">Статический прокси к объекту в контейнере: вызов уходит в обычный метод реального сервиса. Тестированию не мешает — фасады подменяются фейками. Проблема не в фасадах, а в скрытых зависимостях, когда по сигнатуре класса непонятно, чем он пользуется.</span></li>
+      <li><span class="qq">Что такое N+1 и как его находить?</span><span class="aa">Один запрос за списком плюс по запросу за связью на каждый элемент. Находится профайлером или логом запросов, а надёжнее — включённым запретом ленивой загрузки вне прода: тогда проблема падает тестом, а не всплывает в инциденте.</span></li>
+      <li><span class="qq">Чем <code>with()</code> отличается от <code>load()</code>?</span><span class="aa"><code>with()</code> задаёт жадную загрузку до выполнения запроса, <code>load()</code> догружает связь для уже полученных моделей. Есть также <code>loadMissing()</code>, который не перезагружает то, что уже загружено.</span></li>
+      <li><span class="qq">Как посчитать связанные записи, не загружая их?</span><span class="aa"><code>withCount()</code> — счётчик приходит подзапросом. Для одной модели — <code>$model-&gt;relation()-&gt;count()</code> со скобками: это <code>SELECT COUNT(*)</code>. Без скобок коллекция загрузится в память целиком.</span></li>
+      <li><span class="qq">Как обработать миллион записей?</span><span class="aa">Пачками через <code>chunkById()</code> или <code>lazyById()</code> — по первичному ключу, устойчиво к изменению данных. <code>cursor()</code> экономит память сильнее, но держит соединение. Если объекты не нужны — Query Builder и массовые операции одним запросом.</span></li>
+      <li><span class="qq">Когда нужна транзакция и что нельзя делать внутри?</span><span class="aa">Когда несколько изменений должны примениться вместе. Внутри нельзя обращаться к внешним сервисам: HTTP, почта, публикация в очередь без отложенной отправки. Внешний вызов держит блокировки и не откатывается вместе с транзакцией.</span></li>
+      <li><span class="qq">Как избежать потерянного обновления при конкурентном доступе?</span><span class="aa">Не читать-менять-писать, а выполнять атомарный <code>UPDATE</code> (<code>increment</code>, условный <code>where</code>) либо блокировать строку на время транзакции. Уровень изоляции сам по себе от этого не спасает.</span></li>
+      <li><span class="qq">Почему нельзя возвращать модель напрямую из API?</span><span class="aa">Ответ становится зеркалом схемы БД: любое изменение колонок меняет контракт, служебные поля утекают клиенту. Ресурс задаёт явный список полей, позволяет скрывать данные по правам и форматировать значения.</span></li>
+      <li><span class="qq">Чем гейт отличается от политики?</span><span class="aa">Гейт — замыкание для действия, не привязанного к модели. Политика — класс с методами под конкретную модель, автоматически связываемый с ней. CRUD над сущностью — политика, всё остальное — гейт.</span></li>
+      <li><span class="qq">Где проверять права доступа?</span><span class="aa">На сервере, на каждом эндпоинте: в контроллере, middleware маршрута или в Form Request. В шаблоне — только чтобы скрыть элемент интерфейса. Самое надёжное — сразу выбирать только доступные пользователю записи.</span></li>
+      <li><span class="qq">Что должно уходить в очередь?</span><span class="aa">Всё, что долго и не нужно пользователю немедленно: письма, отчёты, обращения к внешним API, обработка файлов, массовые операции. Пользователь получает быстрый ответ, а работа выполняется воркером с ретраями.</span></li>
+      <li><span class="qq">Что произойдёт, если джоб упадёт?</span><span class="aa">Он повторится до исчерпания числа попыток с задержкой из <code>backoff</code>, затем попадёт в проваленные и вызовется его метод <code>failed()</code>. Оттуда возможен ручной перезапуск. Поэтому джоб обязан быть идемпотентным.</span></li>
+      <li><span class="qq">Почему после деплоя воркеры выполняют старый код?</span><span class="aa">Потому что это долгоживущие процессы, загрузившие код при старте. Нужен <code>queue:restart</code> в деплое, чтобы они корректно завершили текущую задачу и перезапустились с новой версией.</span></li>
+      <li><span class="qq">Когда событие, а когда прямой вызов?</span><span class="aa">Событие — когда реакций несколько, они не обязательны для основного сценария и источник не должен о них знать. Прямой вызов — когда действие обязательно и важен порядок. Событие с единственным слушателем, без которого сценарий сломан, — замаскированный вызов метода.</span></li>
+      <li><span class="qq">В чём ограничение обсерверов?</span><span class="aa">События модели не срабатывают на массовых операциях через построитель запросов: обновление и удаление по условию идут прямо в SQL. Логика, обязанная выполняться всегда, должна жить в явном сервисе или в самой базе.</span></li>
+      <li><span class="qq">Как защититься от одновременного пересчёта тяжёлого кэша?</span><span class="aa">Атомарной блокировкой: первый запрос считает, остальные ждут или получают старое значение. Иначе при истечении TTL под нагрузкой десятки запросов одновременно бросаются пересчитывать одно и то же.</span></li>
+      <li><span class="qq">Что и как вы тестируете?</span><span class="aa">Основа — feature-тесты через HTTP: успех, валидация, права, граничные случаи. Unit — для чистой логики. Внешние сервисы, очереди, почта и файлы подменяются фейками, база пересоздаётся, данные готовят фабрики. Полезно проверять и число SQL-запросов.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Страница отвечает 4 секунды. Порядок действий?</span><span class="aa">Измерить: сколько запросов в БД и какие. Обычно N+1 или отсутствующий индекс. Дальше — объём выбираемых данных, вынос синхронных внешних вызовов в очередь, кэш тяжёлых агрегатов. Инфраструктура — в последнюю очередь, с замером на каждом шаге.</span></li>
+      <li><span class="qq">Что даёт <code>php artisan optimize</code> и чем он опасен?</span><span class="aa">Кэширует конфигурацию, маршруты, события и шаблоны — заметно ускоряет старт приложения. Опасность в том, что после кэширования конфигурации <code>env()</code> вне <code>config/</code> возвращает <code>null</code>, а маршруты-замыкания кэшировать нельзя.</span></li>
+      <li><span class="qq">Что ломается при переходе на Octane?</span><span class="aa">Состояние между запросами: статические свойства, синглтоны с данными запроса, глобально выставленные настройки, утечки памяти. Приложение перестаёт «обнуляться» после ответа, поэтому данные одного пользователя могут утечь другому.</span></li>
+      <li><span class="qq">Что нужно, чтобы приложение работало на нескольких серверах?</span><span class="aa">Убрать локальное состояние: сессии и кэш в Redis, файлы в объектное хранилище, очереди в общий брокер, планировщик с блокировкой на одном сервере, логи в централизованный сбор. Плюс согласованный деплой всех узлов.</span></li>
+      <li><span class="qq">Зачем разделять очереди?</span><span class="aa">Чтобы массовая фоновая работа не задерживала пользовательские сценарии. Минимум — быстрая очередь для писем и уведомлений и медленная для пересчётов, с отдельными воркерами и приоритетами.</span></li>
+      <li><span class="qq">Как настроить чтение с реплик?</span><span class="aa">В конфигурации соединения задаются отдельные хосты для чтения и записи. Важен режим «липкости»: после записи в рамках того же запроса читать нужно с мастера, иначе пользователь не увидит только что сохранённые данные из-за задержки репликации.</span></li>
+      <li><span class="qq">Как выкатить миграцию на таблице в 40 млн строк?</span><span class="aa">По схеме «расширить → перенести → сузить»: добавить новое, включить двойную запись, перенести данные фоном пачками по ключу с контролем лага, переключить чтение, выждать несколько релизов и только потом удалить старое. Это несколько релизов, а не одна миграция.</span></li>
+      <li><span class="qq">Почему разрушающая миграция в одном релизе с кодом опасна?</span><span class="aa">Потому что во время выкатки одновременно работают старая и новая версии приложения. Удалённая колонка ломает старые процессы, а откат релиза становится невозможным без потери данных.</span></li>
+      <li><span class="qq">Когда выделять модули, а когда сервисы?</span><span class="aa">Модули внутри монолита — когда мешает связность: команды правят одни и те же файлы, изменения расходятся волной. Отдельный сервис — когда нужны независимое масштабирование, свой цикл релизов или другой стек. Распил без такой причины даёт распределённый монолит.</span></li>
+      <li><span class="qq">Как удержать границы модулей?</span><span class="aa">Сделать их нарушение невозможным незаметно: публичные контракты модулей, запрет обращаться к чужим моделям и проверка зависимостей в CI. Договорённость без автоматической проверки не переживает первый срочный релиз.</span></li>
+      <li><span class="qq">Какие уязвимости чаще всего находят в Laravel-проектах?</span><span class="aa">Забытая проверка прав на эндпоинте (доступ по чужому id), массовое заполнение с пустым <code>$guarded</code>, инъекции в «сырых» выражениях и сортировке по полю из запроса, XSS через невыключенное экранирование, включённая отладка на проде и устаревшие зависимости.</span></li>
+      <li><span class="qq">Как безопасно сортировать по полю из запроса?</span><span class="aa">Только по белому списку допустимых колонок и направлений. Передача значения из запроса в «сырое» выражение сортировки — это SQL-инъекция, которую не закрывают подготовленные выражения.</span></li>
+      <li><span class="qq">Как дать временный доступ к файлу без авторизации?</span><span class="aa">Подписанной ссылкой с ограниченным сроком: маршрут проверяет подпись middleware. Самодельные токены в базе обычно приводят к тому, что их забывают инвалидировать.</span></li>
+      <li><span class="qq">Что должно быть в логах и чего в них быть не должно?</span><span class="aa">Должно: имя события, идентификаторы сущностей и пользователя, длительность, сквозной идентификатор запроса — в структурированном виде. Не должно: паролей, токенов, номеров карт и лишних персональных данных. Маскирование настраивается один раз централизованно.</span></li>
+      <li><span class="qq">Как вы узнаете о поломке на проде?</span><span class="aa">Из алертов: рост доли ошибок, деградация p95, всплеск проваленных джобов, рост длины и возраста очереди. Дальше — сборка картины по сквозному идентификатору запроса. Если единственный источник — обращения пользователей, наблюдаемости нет.</span></li>
+      <li><span class="qq">Опишите деплой без простоя.</span><span class="aa">Сборка релиза отдельно, применение только совместимых миграций, сборка кэшей, атомарное переключение симлинка, перезагрузка FPM, перезапуск воркеров, проверка health-check и метрик. Откат — переключение симлинка обратно.</span></li>
+      <li><span class="qq">Что делать, если после деплоя работает старый код?</span><span class="aa">Проверить три вещи: перезагружен ли FPM (и сброшен ли opcache), перезапущены ли воркеры очередей, пересобраны ли кэши конфигурации и маршрутов для нового релиза. Почти всегда причина в одном из них.</span></li>
+      <li><span class="qq">Как обновляете мажорную версию фреймворка?</span><span class="aa">Сначала обеспечиваю покрытие тестами ключевых сценариев, затем читаю руководство по обновлению, поднимаю версию PHP отдельным шагом, обновляю в ветке, разбираюсь с несовместимыми пакетами и выкатываю отдельным релизом без функциональных изменений.</span></li>
+      <li><span class="qq">Нужны ли репозитории поверх Eloquent?</span><span class="aa">По умолчанию нет: Eloquent сам является слоем доступа к данным, а «абстракция от БД» обычно иллюзорна — модели протекают повсюду. Репозиторий оправдан при нескольких источниках данных, сложных переиспользуемых выборках или необходимости подменять доступ в тестах без базы.</span></li>
+      <li><span class="qq">Спроектируйте систему заказов под 5000 запросов в секунду на чтение.</span><span class="aa">Ожидается разговор о компромиссах: индексы под горячие запросы и денормализация после измерения; чтение с реплик с осознанным решением по устареванию; кэш карточек и агрегатов с блокировкой от одновременного пересчёта; очереди с разделением по критичности; идемпотентность оформления заказа; лимиты частоты; наблюдаемость и алерты; план деградации при отказе Redis и реплик.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Каждое задание даёт артефакт, который можно показать на собеседовании: работающую функциональность, тесты, замеры «до и после» или документ с обоснованием решений.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Блог с нуля</h4>
+    <p>Модели, связи, миграции с индексами, фабрики, сидер. Ресурсный контроллер, Blade-шаблоны со списком и карточкой, пагинация. Проект должен подниматься с нуля одной командой.</p>
+    <div class="box task"><span class="lbl">Результат</span>Работающее приложение и файл <code>README</code> с одной командой запуска.</div>
+
+    <h4>2. Формы и валидация</h4>
+    <p>Создание и редактирование записи через Form Request: правила, свои сообщения, нормализация входа, вывод ошибок и сохранение введённых значений при возврате на форму.</p>
+    <div class="box task"><span class="lbl">Результат</span>Три теста: успех, ошибка валидации (422), отсутствие прав (403).</div>
+
+    <h4>3. Middleware и логирование</h4>
+    <p>Своё middleware, добавляющее в ответ идентификатор запроса и время обработки, а в лог — предупреждение о медленных запросах.</p>
+    <div class="box task"><span class="lbl">Результат</span>Заголовки видны в ответе, включая ошибочные; в логе появляются записи о медленных обращениях.</div>
+
+    <h4>4. Консольная команда с расписанием</h4>
+    <p>Команда с флагом «только показать», которая обрабатывает просроченные записи. Постановка в расписание с защитой от наложения.</p>
+    <div class="box task"><span class="lbl">Результат</span>Команда работает локально через планировщик и корректно ведёт себя при параллельном запуске.</div>
+
+    <h4>5. Найти N+1 глазами</h4>
+    <p>Включите логирование SQL и посчитайте запросы на странице списка. Затем добавьте жадную загрузку и счётчики и посчитайте снова.</p>
+    <div class="box task"><span class="lbl">Результат</span>Две цифры «было / стало» — первое настоящее ощущение того, что такое N+1.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. API с ресурсами и правами</h4>
+    <p>REST API для сущности: ресурсы, пагинация с ограничением размера страницы, фильтры и сортировка по белому списку, политики, единый формат ошибок, ограничение частоты.</p>
+    <div class="box task"><span class="lbl">Результат</span>Набор тестов на структуру ответа, права (200/403/401) и лимит размера страницы.</div>
+
+    <h4>7. Оформление заказа с транзакцией</h4>
+    <p>Списание остатка, создание заказа и позиций, применение скидки, запись платежа — в транзакции с блокировкой остатка. Побочные эффекты — после коммита.</p>
+    <div class="box task"><span class="lbl">Результат</span>50 параллельных оформлений последнего товара: ровно один успех, ноль отрицательных остатков.</div>
+
+    <h4>8. Очередь с ретраями</h4>
+    <p>Вынос генерации документа в джоб с числом попыток, backoff, уникальностью и обработчиком окончательного провала. Имитация падения внешнего сервиса.</p>
+    <div class="box task"><span class="lbl">Результат</span>Прослеженный путь: повторы, проваленная задача, ручной перезапуск, отсутствие дублей при повторном выполнении.</div>
+
+    <h4>9. Кэш и блокировки</h4>
+    <p>Кэширование тяжёлого агрегата с TTL, инвалидацией по событию и защитой от одновременного пересчёта.</p>
+    <div class="box task"><span class="lbl">Результат</span>Замер времени ответа до и после; проверка поведения при выключенном Redis.</div>
+
+    <h4>10. Разбор толстого контроллера</h4>
+    <p>Разложить метод на 150 строк: валидация в Form Request, права в политику, сценарий в action, ответ в ресурс, побочные эффекты в события.</p>
+    <div class="box task"><span class="lbl">Результат</span>Тесты не изменились и остались зелёными — доказательство, что рефакторинг не изменил поведение.</div>
+
+    <h4>11. Полное покрытие ресурса тестами</h4>
+    <p>Feature-тесты на весь CRUD: права, валидация, граничные случаи. Подмена внешнего API, очередей и почты. Проверка числа SQL-запросов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Набор в CI, падающий при появлении N+1 или регрессии прав.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Оптимизация тяжёлой страницы</h4>
+    <p>Довести самую медленную страницу до целевого времени, фиксируя после каждого шага число запросов, время ответа и память.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отчёт «было → стало» с разбивкой вклада каждого изменения.</div>
+
+    <h4>13. Миграция без простоя</h4>
+    <p>На копии большой таблицы провести переименование колонки по схеме «расширить → перенести → сузить»: двойная запись, фоновый перенос пачками, переключение чтения.</p>
+    <div class="box task"><span class="lbl">Результат</span>План по релизам, замер длительности переноса и влияния на время ответа приложения.</div>
+
+    <h4>14. Аудит безопасности</h4>
+    <p>Пройти по чек-листу уязвимостей: права на всех эндпоинтах, массовое заполнение, «сырые» выражения, загрузка файлов, отладка и секреты, зависимости.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список находок, исправления и регрессионные тесты на каждую.</div>
+
+    <h4>15. Готовность к проду</h4>
+    <p>Пройти таблицу готовности целиком: деплой с откатом, воркеры под супервизором, планировщик, наблюдаемость и алерты, бэкапы с проверенным восстановлением.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ на 2–3 страницы: что сделано, что осознанно отложено и почему, плюс проведённые учения по откату релиза.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Каждая неделя заканчивается работающим кодом, а не прочитанной документацией: Laravel учится руками, а на собеседовании разница между «читал» и «делал» слышна сразу.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Основы фреймворка</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Жизненный цикл запроса и middleware, структура проекта и сборка приложения, конфигурация и окружение, маршруты и контроллеры, привязка моделей, валидация и Form Request, основы Eloquent и связи, миграции, фабрики, сидеры, Blade, Artisan и расписание.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: блог с нуля, формы с валидацией, своё middleware, команда с расписанием, поиск N+1.</li>
+      <li>Прочитать разделы документации о маршрутизации, валидации и Eloquent целиком, а не по фрагментам из поиска.</li>
+      <li>Разобрать <code>bootstrap/app.php</code> своего проекта и объяснить каждую строку.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Работающее приложение с CRUD, валидацией, правами и сидерами, поднимающееся с нуля одной командой.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что происходит от запроса до ответа?</li>
+      <li>Чем группа <code>web</code> отличается от <code>api</code>?</li>
+      <li>Почему <code>env()</code> вне config ломается на проде?</li>
+      <li>Что делает привязка модели и чего не делает?</li>
+      <li>Почему нужно брать <code>validated()</code>, а не <code>all()</code>?</li>
+      <li>Почему нельзя править применённую миграцию?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Данные и доступ</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Контейнер, провайдеры и фасады, связи и N+1, инструменты жадной загрузки, запрет ленивой загрузки, чанки и курсоры, транзакции и блокировки, API-ресурсы и пагинация, аутентификация и авторизация, политики и гейты.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6–7: API с ресурсами и правами, оформление заказа с транзакцией и параллельной нагрузкой.</li>
+      <li>Включить запрет ленивой загрузки и починить все места, где тесты начнут падать.</li>
+      <li>Сгенерировать 500 000 записей и сравнить <code>all()</code>, <code>chunkById()</code> и <code>cursor()</code> по памяти и времени.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>API с политиками и ресурсами, корректное оформление заказа под конкурентной нагрузкой и таблица замеров по способам обхода больших выборок.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Чем <code>bind</code> отличается от <code>singleton</code>?</li>
+      <li>Чем <code>register()</code> отличается от <code>boot()</code>?</li>
+      <li>Как найти и убрать N+1?</li>
+      <li>Чем <code>with()</code> отличается от <code>load()</code>?</li>
+      <li>Что нельзя делать внутри транзакции?</li>
+      <li>Почему нельзя возвращать модель напрямую из API?</li>
+      <li>Где и как проверять права доступа?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Фон, кэш, качество</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Очереди и джобы, ретраи и идемпотентность, цепочки и пакеты, драйверы очередей, события и слушатели, обсерверы и их ограничения, кэш и стратегии инвалидации, атомарные блокировки, feature- и unit-тесты, фейки, организация кода и actions.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 8–11: очередь с ретраями, кэш с блокировкой, разбор толстого контроллера, полное покрытие ресурса тестами.</li>
+      <li>Поднять Redis и Horizon локально, посмотреть на очередь под нагрузкой.</li>
+      <li>Добавить в CI прогон тестов и проверку числа запросов на ключевых страницах.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Фоновая обработка с ретраями и идемпотентностью, закэшированный тяжёлый участок и зелёный набор feature-тестов в CI.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что уходит в очередь, а что остаётся синхронным?</li>
+      <li>Что произойдёт, если джоб упадёт?</li>
+      <li>Почему джоб должен быть идемпотентным?</li>
+      <li>Когда событие, а когда прямой вызов?</li>
+      <li>В чём ограничение обсерверов?</li>
+      <li>Как защититься от одновременного пересчёта кэша?</li>
+      <li>Что вы тестируете и чем подменяете внешний мир?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Прод: нагрузка, безопасность, релизы</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Профилирование и порядок оптимизации, кэши фреймворка, Octane и состояние между запросами, горизонтальное масштабирование, реплики и миграции без простоя, границы модулей, чек-лист безопасности, наблюдаемость, деплой и откат, обновление версий.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: оптимизация страницы, миграция без простоя, аудит безопасности, готовность к проду.</li>
+      <li>Развернуть проект на двух узлах и найти всё, что зависит от локального состояния.</li>
+      <li>Настроить сквозной идентификатор запроса, структурированные логи и один алерт; проверить его срабатывание.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ со структурой «определение → механизм → пример → компромисс».</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Ускоренная страница с отчётом, проведённая миграция без простоя, закрытые находки аудита, документ готовности к проду и уверенные устные ответы на все 60 вопросов.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>С чего начинать разбор медленной страницы?</li>
+      <li>Чем опасен кэш конфигурации?</li>
+      <li>Что ломается при переходе на Octane?</li>
+      <li>Что нужно для работы на нескольких серверах?</li>
+      <li>Как выкатить миграцию на большой таблице?</li>
+      <li>Какие уязвимости чаще всего находят в Laravel-проектах?</li>
+      <li>Как вы узнаёте о поломке на проде?</li>
+      <li>Опишите деплой без простоя и откат.</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Структура ответа:</strong> определение в одну фразу → как работает внутри → пример из вашей практики → компромисс или ограничение. Последний пункт отличает middle от senior.</li>
+      <li><strong>Говорите про SQL под фреймворком.</strong> Вопрос «как работает <code>with()</code>» на самом деле про то, понимаете ли вы, что происходит в базе. Ответ «загружает связь» слабый; «делает второй запрос с <code>IN</code> и раскладывает результат по моделям» — сильный.</li>
+      <li><strong>Говорите цифрами:</strong> «сократил страницу с 201 запроса до 3», «время ответа с 4,2 с до 180 мс», «очередь разгружалась 40 минут, стало 4». Это запоминается и проверяемо.</li>
+      <li><strong>Не бойтесь сказать «здесь это лишнее».</strong> Отказ от репозиториев, микросервисов или Octane с внятным обоснованием — сильный ответ: он показывает, что вы считаете стоимость сложности.</li>
+      <li><strong>Уточняйте вводные в задачах на проектирование:</strong> объём данных, соотношение чтения и записи, требования к задержке, цена ошибки. Кандидат, который сразу пишет код, проигрывает тому, кто сначала спрашивает.</li>
+      <li><strong>Приносите артефакты:</strong> отчёт по оптимизации, план миграции без простоя, набор тестов, документ готовности к проду. Они превращают рассказ в доказательство.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Laravel для PHP-разработчиков» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

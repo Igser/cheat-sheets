@@ -1,0 +1,1438 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · телеметрия · диагностика прода</p>
+  <h1>Наблюдаемость и мониторинг</h1>
+  <p class="lead">Наблюдаемость — это способность ответить на вопрос о работающей системе, не выкатывая новый код. «Почему у этого клиента вчера в 14:20 не прошла оплата?», «почему p99 вырос вдвое после релиза?», «какой из трёх сервисов тормозит?» — если для ответа приходится добавлять логирование и ждать повторения проблемы, наблюдаемости нет.</p>
+  <p class="lead">Разница с классическим мониторингом принципиальная. Мониторинг отвечает на заранее известные вопросы: жив ли сервер, хватает ли места, не выросла ли доля ошибок. Наблюдаемость нужна для вопросов, которые никто не предвидел, — а именно они и возникают в настоящих инцидентах. Первое строится на порогах и графиках, второе — на достаточно богатом контексте в телеметрии.</p>
+  <p class="lead">Конспект идёт от трёх сигналов к системе: логи, метрики, трассировки и здоровье сервиса → инструментирование PHP-приложения, дашборды, алерты без шума, SLI и SLO, отладка инцидента → конвейер телеметрии, сэмплирование, стоимость и культура дежурства. Смежные темы: <a href="infrastructure.html">инфраструктура</a>, <a href="system-design.html">System Design</a>, <a href="messaging.html">очереди</a>, <a href="php.html">PHP</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Три сигнала и их роль, структурированные логи, типы метрик и кардинальность, трассировки и контекст, health checks.</span></div>
+    <div class="aud m"><b>Middle</b><span>Инструментирование приложения, дашборды RED и USE, алерты без шума, SLI и SLO, отладка инцидента, трекинг ошибок и профилирование.</span></div>
+    <div class="aud s"><b>Senior</b><span>Конвейер телеметрии и сэмплирование, стоимость наблюдаемости, корреляция сигналов, культура дежурства, антипаттерны.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>16</i></span>
+    <span>Блоков кода: <i>19</i></span>
+    <span>Сравнительных таблиц: <i>17</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#why">Зачем наблюдаемость</a></li>
+    <li><span class="tree">├─</span> <a href="#logs">Логи</a></li>
+    <li><span class="tree">├─</span> <a href="#metrics">Метрики</a></li>
+    <li><span class="tree">├─</span> <a href="#traces">Трассировки</a></li>
+    <li><span class="tree">├─</span> <a href="#health">Здоровье сервиса</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#instrument">Инструментирование</a></li>
+    <li><span class="tree">├─</span> <a href="#dashboards">Дашборды</a></li>
+    <li><span class="tree">├─</span> <a href="#alerts">Алерты без шума</a></li>
+    <li><span class="tree">├─</span> <a href="#slo">SLI, SLO, бюджет ошибок</a></li>
+    <li><span class="tree">├─</span> <a href="#debug">Отладка инцидента</a></li>
+    <li><span class="tree">├─</span> <a href="#errors">Ошибки и профилирование</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#pipeline">Конвейер телеметрии</a></li>
+    <li><span class="tree">├─</span> <a href="#cost">Стоимость наблюдаемости</a></li>
+    <li><span class="tree">├─</span> <a href="#correlation">Корреляция сигналов</a></li>
+    <li><span class="tree">├─</span> <a href="#culture">Дежурство и культура</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Антипаттерны</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Запросы и команды</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · три сигнала</p>
+    <h2>Junior: логи, метрики, трассировки</h2>
+    <p>Три вида телеметрии отвечают на разные вопросы, и попытка заменить одно другим — самая частая ошибка. Метрики говорят «что происходит и насколько плохо», логи — «что случилось с этим конкретным запросом», трассировки — «где именно ушло время». Нужны все три, но в разной пропорции.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="why">
+    <p class="path">junior / зачем</p>
+    <div class="card-top"><h3>Зачем наблюдаемость</h3><span class="badge b-1">База</span></div>
+    <p>Простой критерий зрелости: сколько времени занимает переход от «пользователи жалуются» к «мы знаем причину». Если для ответа приходится добавлять логирование и ждать повторения проблемы — наблюдаемости нет, есть только мониторинг заранее известных вещей.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · три сигнала и их роль</caption>
+      <thead><tr><th>Сигнал</th><th>Отвечает на вопрос</th><th>Сильная сторона</th><th>Слабая сторона</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Метрики</strong></td><td>Что происходит и насколько плохо</td><td>Дёшево хранить, годятся для алертов и графиков</td><td>Агрегированы: не покажут конкретный запрос</td></tr>
+        <tr><td><strong>Логи</strong></td><td>Что случилось с этим запросом</td><td>Богатый контекст, произвольные детали</td><td>Дорого хранить и искать в объёме</td></tr>
+        <tr><td><strong>Трассировки</strong></td><td>Где ушло время внутри цепочки</td><td>Видна структура вызовов и узкое место</td><td>Требуют сквозного контекста и сэмплирования</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="flow" role="img" aria-label="Путь от алерта к причине через три сигнала">
+      <div class="node">Алерт<small>метрика вышла за порог</small></div><span class="arr">→</span>
+      <div class="node">Дашборд<small>что и когда началось</small></div><span class="arr">→</span>
+      <div class="node">Трассировка<small>где ушло время</small></div><span class="arr">→</span>
+      <div class="node">Логи<small>что именно случилось</small></div><span class="arr">→</span>
+      <div class="node">Причина<small>конкретное изменение</small></div>
+    </div>
+
+    <p><strong>Вопросы, на которые система должна уметь отвечать.</strong> Хороший способ проверить наблюдаемость — попробовать ответить на пять типовых вопросов, не трогая код: сколько сейчас запросов в секунду и какая доля ошибок; что происходило в момент вчерашнего всплеска; сколько времени занял конкретный запрос пользователя и на что оно ушло; какой из внешних сервисов тормозит; что изменилось в поведении после последнего релиза. Если хотя бы на два вопроса ответа нет — это и есть план работ.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Наблюдаемость — не про количество графиков. Дашборд с шестьюдесятью панелями, на который никто не смотрит, бесполезнее одного экрана с четырьмя показателями, который открывают при каждом инциденте. Ценность телеметрии измеряется не объёмом собранного, а скоростью ответа на вопрос — и по этому критерию её и стоит развивать.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем наблюдаемость отличается от мониторинга?</b><br>Мониторинг отвечает на заранее заданные вопросы: жив ли сервис, не выросла ли доля ошибок, хватает ли места. Наблюдаемость позволяет отвечать на вопросы, которых никто не предвидел, — а в настоящих инцидентах именно такие и возникают. Практический критерий: если для выяснения причины нужно добавить логирование и дождаться повторения, у вас мониторинг, а не наблюдаемость.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="logs">
+    <p class="path">junior / логи</p>
+    <div class="card-top"><h3>Логи</h3><span class="badge b-1">База</span></div>
+    <p>Лог — это запись о событии с контекстом. Ключевое слово «структурированный»: строка вида «Ошибка при обработке заказа» бесполезна, потому что по ней нельзя ни отфильтровать, ни сгруппировать, ни построить график.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Неструктурированный лог против структурированного</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: всё в текст. Найти все ошибки этого клиента невозможно,</span>
+<span class="cm">// посчитать частоту — тоже. Разбирать регулярками — тупик.</span>
+$logger-&gt;<span class="fn">error</span>(<span class="st">"Ошибка оплаты заказа {$orderId} у клиента {$userId}: "</span> . $e-&gt;<span class="fn">getMessage</span>());
+
+<span class="cm">// ХОРОШО: сообщение постоянное, переменное — в контексте.</span>
+<span class="cm">// Теперь можно отфильтровать по user_id, сгруппировать по reason,</span>
+<span class="cm">// построить график по типам ошибок.</span>
+$logger-&gt;<span class="fn">error</span>(<span class="st">'payment.failed'</span>, [
+    <span class="st">'order_id'</span>   =&gt; $orderId,
+    <span class="st">'user_id'</span>    =&gt; $userId,
+    <span class="st">'reason'</span>     =&gt; $e-&gt;<span class="fn">getCode</span>(),
+    <span class="st">'provider'</span>   =&gt; <span class="st">'acquirer-a'</span>,
+    <span class="st">'amount'</span>     =&gt; $order-&gt;total-&gt;<span class="fn">amount</span>(),
+    <span class="st">'duration_ms'</span> =&gt; $stopwatch-&gt;<span class="fn">ms</span>(),
+    <span class="st">'trace_id'</span>   =&gt; <span class="nm">Context</span>::<span class="fn">traceId</span>(),      <span class="cm">// связь с трассировкой</span>
+]);
+
+<span class="cm">// Формат вывода — JSON в stdout: его подхватит любой сборщик,</span>
+<span class="cm">// а файл внутри контейнера исчезнет вместе с ним.</span>
+<span class="cm">// {"level":"error","message":"payment.failed","order_id":"ord_9271", ...}</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · уровни логирования и когда что</caption>
+      <thead><tr><th>Уровень</th><th>Когда использовать</th><th>Кто читает</th></tr></thead>
+      <tbody>
+        <tr><td><code>debug</code></td><td>Подробности для разработки</td><td>Разработчик локально; в проде обычно выключен</td></tr>
+        <tr><td><code>info</code></td><td>Значимые события бизнес-процесса</td><td>При разборе инцидента</td></tr>
+        <tr><td><code>notice</code></td><td>Необычное, но штатное</td><td>Редко; часто не используется</td></tr>
+        <tr><td><code>warning</code></td><td>Проблема, с которой справились: повтор помог</td><td>Разбор трендов, не алерт</td></tr>
+        <tr><td><code>error</code></td><td>Операция не выполнена, нужен разбор</td><td>Дежурный, трекер ошибок</td></tr>
+        <tr><td><code>critical</code> / <code>alert</code></td><td>Затронуты пользователи, нужна реакция сейчас</td><td>Алерт, будит дежурного</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Что не должно попадать в логи:</strong> пароли в любом виде, токены и куки, платёжные реквизиты, персональные данные сверх необходимого, полные тела запросов «на всякий случай». Маскирование делается централизованно на уровне логгера, а не дисциплиной на трёхстах вызовах — подробнее в конспекте по <a href="security.html">безопасности</a>.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Уровень <code>debug</code> в проде. Это одновременно главный источник счетов за хранение логов и способ сделать поиск бесполезным: нужные записи тонут в шуме. Если отладочная информация нужна для конкретного расследования, включают её точечно и на время — по идентификатору пользователя или по проценту трафика, а не глобально.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Каким должен быть лог?</b><br>Структурированным: постоянное сообщение-событие плюс контекст полями, в JSON и в stdout. Тогда по нему можно фильтровать, группировать и строить графики, а не разбирать текст регулярками. Обязательные поля — сквозной идентификатор запроса, идентификаторы сущностей и длительность. Чувствительные данные маскируются централизованно, а уровень <code>debug</code> в проде выключен.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="metrics">
+    <p class="path">junior / метрики</p>
+    <div class="card-top"><h3>Метрики</h3><span class="badge b-1">База</span></div>
+    <p>Метрика — это число во времени. Она дёшево хранится и агрегируется, поэтому именно на метриках строят алерты и графики. Плата за дешевизну — потеря деталей: метрика скажет «доля ошибок 5 %», но не скажет, у кого именно и почему.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · типы метрик</caption>
+      <thead><tr><th>Тип</th><th>Что это</th><th>Пример</th><th>Что с ней делают</th></tr></thead>
+      <tbody>
+        <tr><td>Counter</td><td>Только растёт</td><td>Число запросов, число ошибок</td><td>Считают скорость: приращение в секунду</td></tr>
+        <tr><td>Gauge</td><td>Значение в моменте, растёт и падает</td><td>Глубина очереди, занятые процессы</td><td>Смотрят текущее и максимум</td></tr>
+        <tr><td>Histogram</td><td>Распределение по корзинам</td><td>Время ответа</td><td>Считают перцентили</td></tr>
+        <tr><td>Summary</td><td>Перцентили, посчитанные на клиенте</td><td>Время ответа</td><td>Нельзя корректно агрегировать между узлами</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Что мерить в веб-приложении: минимальный набор</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Запросы: счётчик с метками маршрута, метода и кода ответа</span>
+$counter = $registry-&gt;<span class="fn">getOrRegisterCounter</span>(
+    <span class="st">'app'</span>, <span class="st">'http_requests_total'</span>, <span class="st">'Всего HTTP-запросов'</span>,
+    [<span class="st">'route'</span>, <span class="st">'method'</span>, <span class="st">'status'</span>]
+);
+$counter-&gt;<span class="fn">inc</span>([$route, $method, (<span class="kw">string</span>) $statusCode]);
+
+<span class="cm">// 2. Время ответа: гистограмма с осмысленными границами корзин.</span>
+<span class="cm">// Границы задаются под ваши SLO: если цель p95 &lt; 300 мс, нужна корзина рядом с 300.</span>
+$histogram = $registry-&gt;<span class="fn">getOrRegisterHistogram</span>(
+    <span class="st">'app'</span>, <span class="st">'http_request_duration_seconds'</span>, <span class="st">'Время ответа'</span>,
+    [<span class="st">'route'</span>, <span class="st">'method'</span>],
+    [0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10]
+);
+$histogram-&gt;<span class="fn">observe</span>($durationSeconds, [$route, $method]);
+
+<span class="cm">// 3. Бизнес-метрики — часто ценнее технических:</span>
+<span class="cm">//    заказы в минуту, успешные оплаты, регистрации.</span>
+<span class="cm">//    Падение бизнес-метрики при зелёных технических — самый честный сигнал аварии.</span>
+$orders-&gt;<span class="fn">inc</span>([$paymentMethod, $status]);
+
+<span class="cm">// 4. Ресурсы: занятость пула процессов, глубина очередей, соединения к БД</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Кардинальность — главный риск метрик. Число временных рядов равно произведению количества значений всех меток. Метка <code>user_id</code> с миллионом значений создаёт миллион рядов на каждую метрику и кладёт систему хранения. В метки идут только величины с ограниченным набором значений: маршрут (не URL с идентификатором!), метод, код ответа, имя очереди. Идентификаторы сущностей — в логи и трассировки, но не в метки метрик.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое кардинальность метрик и почему это важно?</b><br>Это число уникальных комбинаций значений меток, то есть число временных рядов. Оно растёт как произведение, поэтому одна метка с высоким разнообразием — идентификатор пользователя, URL с номером заказа — создаёт миллионы рядов и кладёт хранилище. Правило: в метках только величины с ограниченным набором значений, а конкретные идентификаторы — в логах и трассировках.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="traces">
+    <p class="path">junior / трассировки</p>
+    <div class="card-top"><h3>Трассировки</h3><span class="badge b-1">База</span></div>
+    <p>Трассировка показывает путь одного запроса через систему: какие операции выполнялись, сколько заняли и в какой вложенности. Это единственный сигнал, который отвечает на вопрос «куда ушли эти 900 миллисекунд».</p>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Как выглядит трассировка запроса</span></div><pre><code>trace_id: 0f2a5c9d1b   POST /api/v1/orders                      920 мс
+├─ auth.verify_token                                            8 мс
+├─ validate.request                                             3 мс
+├─ db.select  SELECT * FROM products WHERE id IN (...)         14 мс
+├─ http.post  acquirer-a/payments                             640 мс  ← вот оно
+│   └─ retry attempt=2                                        320 мс
+├─ db.insert  INSERT INTO orders                                9 мс
+├─ db.insert  INSERT INTO outbox                                4 мс
+└─ serialize.response                                          12 мс
+
+Каждая строка — спан: имя, длительность, атрибуты, ссылка на родителя.
+Из этой картинки сразу видно: тормозит внешний провайдер, причём была
+повторная попытка. Ни метрики, ни логи не дали бы этого за секунды.
+
+Ключевые понятия:
+  trace_id — идентификатор всего запроса, общий для всех спанов
+  span_id  — идентификатор одной операции
+  parent   — кто её вызвал: из этого строится дерево
+  атрибуты — что именно делали: SQL, URL, код ответа, размер</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Распространение контекста: без него трассировка обрывается</span></div><pre><code>&lt;?php
+<span class="cm">// На входе: берём идентификатор от вызывающего или создаём свой</span>
+$traceId = $request-&gt;<span class="fn">getHeaderLine</span>(<span class="st">'traceparent'</span>) ?: <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(16));
+<span class="nm">Context</span>::<span class="fn">set</span>(<span class="st">'trace_id'</span>, $traceId);
+
+<span class="cm">// Дальше идентификатор должен уехать во ВСЕ исходящие направления,</span>
+<span class="cm">// иначе цепочка обрывается ровно там, где начинается интересное:</span>
+
+<span class="cm">// 1. Внешние HTTP-вызовы — заголовком</span>
+$http-&gt;<span class="fn">request</span>(<span class="st">'POST'</span>, $url, [<span class="st">'headers'</span> =&gt; [<span class="st">'traceparent'</span> =&gt; $traceId]]);
+
+<span class="cm">// 2. Сообщения в очередь — в метаданных сообщения</span>
+$bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> <span class="nm">SendReceipt</span>($orderId), [<span class="kw">new</span> <span class="nm">TraceStamp</span>($traceId)]);
+
+<span class="cm">// 3. Логи — полем контекста</span>
+$logger-&gt;<span class="fn">info</span>(<span class="st">'order.created'</span>, [<span class="st">'trace_id'</span> =&gt; $traceId, <span class="st">'order_id'</span> =&gt; $id]);
+
+<span class="cm">// 4. Ответ клиенту — заголовком, чтобы пользователь мог назвать идентификатор</span>
+$response-&gt;<span class="fn">headers</span>-&gt;<span class="fn">set</span>(<span class="st">'X-Request-Id'</span>, $traceId);
+
+<span class="cm">// Самое частое место обрыва — граница очереди: сообщение уходит без контекста,</span>
+<span class="cm">// и фоновая обработка выглядит как не связанная с запросом активность.</span></code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Даже без полноценной системы трассировки сквозной идентификатор запроса даёт большую часть пользы: он связывает логи приложения, веб-сервера и фоновых задач. Пользователь присылает идентификатор из сообщения об ошибке — и вся история восстанавливается одним поиском. Это самая дешёвая и самая окупаемая мера наблюдаемости из существующих.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужны трассировки, если есть логи?</b><br>Логи отвечают, что случилось, но не показывают структуру и распределение времени. Трассировка выстраивает дерево вызовов с длительностями: сразу видно, что из девятисот миллисекунд шестьсот ушло во внешний сервис, причём с повторной попыткой. Из логов это восстанавливается вручную и долго. Ключевое требование — распространение контекста во все исходящие вызовы и в очереди, иначе цепочка обрывается.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="health">
+    <p class="path">junior / состояние</p>
+    <div class="card-top"><h3>Здоровье сервиса</h3><span class="badge b-1">База</span></div>
+    <p>Проверки здоровья — самый простой уровень наблюдаемости и одновременно место частой ошибки: одна универсальная проверка на все случаи способна превратить отказ второстепенного сервиса в отказ всего кластера.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · виды проверок и их назначение</caption>
+      <thead><tr><th>Проверка</th><th>Отвечает на вопрос</th><th>Что проверять</th><th>Последствие провала</th></tr></thead>
+      <tbody>
+        <tr><td>liveness</td><td>Процесс жив?</td><td>Ничего внешнего</td><td>Перезапуск контейнера</td></tr>
+        <tr><td>readiness</td><td>Готов принимать трафик?</td><td>Только критичные зависимости</td><td>Вывод из балансировки</td></tr>
+        <tr><td>startup</td><td>Ещё запускается?</td><td>Ничего внешнего</td><td>Откладывает liveness</td></tr>
+        <tr><td>Синтетическая проверка</td><td>Работает ли сценарий целиком?</td><td>Реальный путь пользователя снаружи</td><td>Алерт дежурному</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Разделение проверок: критичное и некритичное</span></div><pre><code>&lt;?php
+<span class="cm">// liveness: только «процесс отвечает». Никаких зависимостей —</span>
+<span class="cm">// иначе отказ базы приведёт к перезапуску всех подов сразу.</span>
+$app-&gt;<span class="fn">get</span>(<span class="st">'/health/live'</span>, <span class="kw">fn</span> () =&gt; <span class="kw">new</span> <span class="nm">JsonResponse</span>([<span class="st">'status'</span> =&gt; <span class="st">'ok'</span>]));
+
+<span class="cm">// readiness: критичные зависимости уместны, но важно разделять</span>
+<span class="cm">// «без этого работать нельзя» и «без этого работаем хуже».</span>
+$app-&gt;<span class="fn">get</span>(<span class="st">'/health/ready'</span>, <span class="kw">function</span> () <span class="kw">use</span> ($db, $redis, $search) {
+    $checks = [];
+
+    <span class="kw">try</span> { $db-&gt;<span class="fn">executeQuery</span>(<span class="st">'SELECT 1'</span>); $checks[<span class="st">'db'</span>] = <span class="st">'ok'</span>; }
+    <span class="kw">catch</span> (<span class="nm">Throwable</span>) { $checks[<span class="st">'db'</span>] = <span class="st">'fail'</span>; }        <span class="cm">// критично</span>
+
+    $checks[<span class="st">'cache'</span>]  = $redis-&gt;<span class="fn">isConnected</span>() ? <span class="st">'ok'</span> : <span class="st">'degraded'</span>;   <span class="cm">// некритично</span>
+    $checks[<span class="st">'search'</span>] = $search-&gt;<span class="fn">ping</span>() ? <span class="st">'ok'</span> : <span class="st">'degraded'</span>;         <span class="cm">// некритично</span>
+
+    <span class="cm">// Из ротации выводим только при отказе критичного</span>
+    <span class="kw">return new</span> <span class="nm">JsonResponse</span>($checks, $checks[<span class="st">'db'</span>] === <span class="st">'ok'</span> ? 200 : 503);
+});
+
+<span class="cm">// Синтетическая проверка снаружи — то, чего не покажет ни одна внутренняя:</span>
+<span class="cm">// каждую минуту робот проходит реальный сценарий (вход, добавление в корзину)</span>
+<span class="cm">// и сообщает, работает ли продукт с точки зрения пользователя.</span></code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Проверка всех зависимостей в liveness. Кратковременная недоступность второстепенного сервиса приводит к перезапуску всех экземпляров приложения одновременно — вместо небольшой деградации получается полный отказ. Правило: liveness без внешних зависимостей, readiness только с критичными, всё остальное — метрика и алерт, а не проверка здоровья.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем liveness отличается от readiness?</b><br>Liveness отвечает «процесс жив» и при провале приводит к перезапуску контейнера — поэтому в нём не должно быть внешних зависимостей. Readiness отвечает «готов принимать трафик» и при провале выводит экземпляр из балансировки, здесь критичные зависимости уместны. Смешивать их опасно: проверка базы в liveness превращает отказ базы в перезапуск всего кластера.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Различаю мониторинг и наблюдаемость</li>
+        <li>Знаю, на какой вопрос отвечает каждый из трёх сигналов</li>
+        <li>Пишу структурированные логи с постоянным сообщением и контекстом</li>
+        <li>Вывожу логи в stdout в JSON</li>
+        <li>Осознанно выбираю уровень логирования</li>
+        <li>Не пишу в логи секреты и персональные данные</li>
+      </ul>
+      <ul class="check">
+        <li>Различаю counter, gauge и histogram</li>
+        <li>Понимаю кардинальность и не кладу идентификаторы в метки</li>
+        <li>Знаю минимальный набор метрик веб-приложения</li>
+        <li>Понимаю, что такое спан и trace_id</li>
+        <li>Протягиваю контекст в HTTP-вызовы, очереди и логи</li>
+        <li>Разделяю liveness и readiness</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Самое окупаемое действие на этом уровне — сквозной идентификатор запроса. Он не требует новых систем, ставится за час и мгновенно меняет качество расследований: вместо поиска по времени и догадок — один запрос по идентификатору, возвращающий всю историю, включая фоновую обработку.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · инструментирование</p>
+    <h2>Middle: приборы, дашборды, алерты</h2>
+    <p>Middle отвечает за то, чтобы телеметрия появлялась не случайно: где ставить приборы, что показывать на одном экране, какие алерты будят человека ночью и как от алерта дойти до причины за минуты, а не за часы.</p>
+  </div>
+
+  <!-- 6 -->
+  <article class="card" id="instrument">
+    <p class="path">middle / приборы</p>
+    <div class="card-top"><h3>Инструментирование</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Инструментирование бывает автоматическим и ручным. Автоматическое покрывает границы — входящие запросы, запросы к базе, внешние вызовы — и даёт базовую картину бесплатно. Ручное добавляет доменный смысл, которого инструмент знать не может.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · где ставить приборы</caption>
+      <thead><tr><th>Место</th><th>Что снимать</th><th>Способ</th></tr></thead>
+      <tbody>
+        <tr><td>Вход HTTP</td><td>RPS, доля ошибок, время ответа по маршрутам</td><td>Middleware, автоматически</td></tr>
+        <tr><td>Запросы к базе</td><td>Число, время, медленные запросы</td><td>Слушатель ORM, автоматически</td></tr>
+        <tr><td>Внешние вызовы</td><td>Время, коды, повторы, таймауты</td><td>Обёртка HTTP-клиента</td></tr>
+        <tr><td>Очереди</td><td>Глубина, возраст, время обработки, повторы</td><td>Middleware шины сообщений</td></tr>
+        <tr><td>Кэш</td><td>Попадания и промахи</td><td>Декоратор кэша</td></tr>
+        <tr><td>Бизнес-события</td><td>Заказы, оплаты, регистрации</td><td>Только вручную: смысл знает разработчик</td></tr>
+        <tr><td>Фоновые процессы</td><td>Длительность, успех, объём обработанного</td><td>Вручную в команде</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Middleware: снимаем метрики и контекст в одном месте</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> <span class="nm">TelemetryMiddleware</span>
+{
+    <span class="kw">public function</span> <span class="fn">process</span>(<span class="nm">Request</span> $request, <span class="nm">callable</span> $next): <span class="nm">Response</span>
+    {
+        $traceId = $request-&gt;<span class="fn">headers</span>-&gt;<span class="fn">get</span>(<span class="st">'X-Request-Id'</span>) ?: <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(8));
+        <span class="nm">Context</span>::<span class="fn">set</span>(<span class="st">'trace_id'</span>, $traceId);
+
+        $start = <span class="fn">hrtime</span>(<span class="kw">true</span>);
+
+        <span class="kw">try</span> {
+            $response = $next($request);
+            $status = $response-&gt;<span class="fn">getStatusCode</span>();
+        } <span class="kw">catch</span> (<span class="nm">Throwable</span> $e) {
+            $status = 500;
+            <span class="kw">throw</span> $e;
+        } <span class="kw">finally</span> {
+            $duration = (<span class="fn">hrtime</span>(<span class="kw">true</span>) - $start) / 1e9;
+
+            <span class="cm">// ВАЖНО: маршрут (шаблон), а не URL с идентификаторами —</span>
+            <span class="cm">// иначе кардинальность взорвётся на первом же боевом трафике</span>
+            $route = $request-&gt;<span class="fn">attributes</span>-&gt;<span class="fn">get</span>(<span class="st">'_route'</span>, <span class="st">'unknown'</span>);
+
+            $this-&gt;metrics-&gt;<span class="fn">counter</span>(<span class="st">'http_requests_total'</span>)
+                -&gt;<span class="fn">inc</span>([$route, $request-&gt;<span class="fn">getMethod</span>(), (<span class="kw">string</span>) $status]);
+            $this-&gt;metrics-&gt;<span class="fn">histogram</span>(<span class="st">'http_request_duration_seconds'</span>)
+                -&gt;<span class="fn">observe</span>($duration, [$route, $request-&gt;<span class="fn">getMethod</span>()]);
+
+            <span class="cm">// Один структурированный лог на запрос: этого достаточно для 90 % разборов</span>
+            $this-&gt;logger-&gt;<span class="fn">info</span>(<span class="st">'http.request'</span>, [
+                <span class="st">'trace_id'</span>    =&gt; $traceId,
+                <span class="st">'route'</span>       =&gt; $route,
+                <span class="st">'status'</span>      =&gt; $status,
+                <span class="st">'duration_ms'</span> =&gt; <span class="fn">round</span>($duration * 1000),
+                <span class="st">'db_queries'</span>  =&gt; $this-&gt;dbCounter-&gt;<span class="fn">count</span>(),   <span class="cm">// ловит N+1 без профилировщика</span>
+            ]);
+        }
+
+        <span class="kw">return</span> $response-&gt;<span class="fn">withHeader</span>(<span class="st">'X-Request-Id'</span>, $traceId);
+    }
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ручное инструментирование: доменный смысл</span></div><pre><code>&lt;?php
+<span class="cm">// Технические метрики зелёные, а заказов нет — это самая частая картина</span>
+<span class="cm">// «тихой» аварии. Ловится только бизнес-метриками.</span>
+$this-&gt;metrics-&gt;<span class="fn">counter</span>(<span class="st">'orders_total'</span>)-&gt;<span class="fn">inc</span>([$paymentMethod, $status]);
+$this-&gt;metrics-&gt;<span class="fn">histogram</span>(<span class="st">'order_total_amount'</span>)-&gt;<span class="fn">observe</span>($amount, [$currency]);
+
+<span class="cm">// Спан вокруг значимой операции: в трассировке появится отдельная строка</span>
+$span = $this-&gt;tracer-&gt;<span class="fn">startSpan</span>(<span class="st">'pricing.calculate'</span>);
+$span-&gt;<span class="fn">setAttribute</span>(<span class="st">'items.count'</span>, <span class="fn">count</span>($items));
+$span-&gt;<span class="fn">setAttribute</span>(<span class="st">'promo.applied'</span>, $promo !== <span class="kw">null</span>);
+
+<span class="kw">try</span> {
+    $total = $this-&gt;pricing-&gt;<span class="fn">calculate</span>($items, $promo);
+    $span-&gt;<span class="fn">setAttribute</span>(<span class="st">'total'</span>, $total-&gt;<span class="fn">amount</span>());
+} <span class="kw">catch</span> (<span class="nm">Throwable</span> $e) {
+    $span-&gt;<span class="fn">recordException</span>($e);
+    <span class="kw">throw</span> $e;
+} <span class="kw">finally</span> {
+    $span-&gt;<span class="fn">end</span>();
+}
+
+<span class="cm">// Правило: инструментируем границы и решения, а не каждую функцию.</span>
+<span class="cm">// Спан на каждый вызов метода превращает трассировку в нечитаемую простыню</span>
+<span class="cm">// и заметно замедляет приложение.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Бизнес-метрики ценнее технических. Классическая тихая авария выглядит так: доступность 100 %, ошибок нет, время ответа отличное — а заказов ноль, потому что кнопка оплаты перестала работать после релиза фронтенда. Технический мониторинг такого не увидит никогда. Поэтому график ключевого бизнес-показателя должен висеть на главном дашборде рядом с долей ошибок.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что и где вы инструментируете в приложении?</b><br>Границы — автоматически через middleware и обёртки: входящие запросы с маршрутом и кодом ответа, запросы к базе, внешние вызовы, обработку сообщений, кэш. Домен — вручную: заказы, оплаты, ключевые операции с атрибутами. Обязательно сквозной идентификатор запроса и счётчик запросов к базе в логе — он ловит N+1 без профилировщика. Спаны ставлю на границы и значимые операции, а не на каждый метод.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card" id="dashboards">
+    <p class="path">middle / дашборды</p>
+    <div class="card-top"><h3>Дашборды</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Дашборд нужен, чтобы за десять секунд ответить: всё ли в порядке, а если нет — где именно. Всё, что не служит этой цели, разбавляет сигнал. Шестьдесят панелей «на всякий случай» гарантированно означают, что при инциденте никто не поймёт, куда смотреть.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · два набора показателей</caption>
+      <thead><tr><th>Метод</th><th>К чему применяется</th><th>Показатели</th></tr></thead>
+      <tbody>
+        <tr><td><strong>RED</strong></td><td>К сервисам и эндпоинтам</td><td>Rate — поток, Errors — доля ошибок, Duration — задержка</td></tr>
+        <tr><td><strong>USE</strong></td><td>К ресурсам</td><td>Utilization — загрузка, Saturation — очередь, Errors — отказы</td></tr>
+        <tr><td>Golden signals</td><td>Обобщение первых двух</td><td>Latency, traffic, errors, saturation</td></tr>
+        <tr><td>Бизнес-показатели</td><td>К продукту</td><td>Заказы, оплаты, регистрации в минуту</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Как устроен рабочий набор дашбордов</span></div><pre><code>1. ГЛАВНЫЙ ЭКРАН (один, открывается при любом инциденте)
+   ┌──────────────────┬──────────────────┬──────────────────┐
+   │ Запросы в секунду│ Доля ошибок 5xx  │ p50 / p95 / p99  │
+   ├──────────────────┼──────────────────┼──────────────────┤
+   │ Заказы в минуту  │ Глубина очередей │ Занятость пула   │
+   └──────────────────┴──────────────────┴──────────────────┘
+   Плюс вертикальные отметки релизов на всех графиках —
+   половина инцидентов объясняется совпадением по времени.
+
+2. ЭКРАН СЕРВИСА (по одному на компонент)
+   RED по эндпоинтам, топ медленных, коды ответов, зависимости.
+
+3. ЭКРАН РЕСУРСОВ
+   CPU, память, диск, соединения к базе, лаг реплик.
+
+4. ЭКРАН ПОД КОНКРЕТНЫЙ ВОПРОС (создаётся во время инцидента и сохраняется)
+
+Правила, которые делают дашборд полезным:
+  — одинаковые оси времени на всех панелях: иначе сравнение обманывает
+  — перцентили, а не средние
+  — отметки релизов и деплоев
+  — рядом с графиком ссылка на runbook и на логи с тем же фильтром
+  — то, что никто не открывал полгода, — удалить</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Дашборд как витрина: десятки панелей со всеми доступными метриками, потому что «пусть будет». В инциденте на нём невозможно найти нужное, а средние значения на графиках прячут именно те выбросы, ради которых дашборд открывали. Полезный дашборд отвечает на конкретный вопрос и помещается на один экран без прокрутки.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что должно быть на главном дашборде?</b><br>Шесть-восемь панелей, отвечающих на вопрос «всё ли в порядке»: поток запросов, доля ошибок, перцентили задержки, ключевая бизнес-метрика, глубина очередей, занятость ресурсов. Обязательно отметки релизов — половина инцидентов объясняется совпадением по времени. Всё остальное — на отдельных экранах по компонентам, куда переходят уже с гипотезой.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="alerts">
+    <p class="path">middle / алерты</p>
+    <div class="card-top"><h3>Алерты без шума</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Алерт, который не требует действия, вреден: он приучает игнорировать оповещения, и однажды в этом шуме теряется настоящая авария. Главный принцип — оповещать о симптомах, которые чувствует пользователь, а не о каждом отклонении внутри системы.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · алерты на симптом против алертов на причину</caption>
+      <thead><tr><th>Плохой алерт (причина)</th><th>Хороший алерт (симптом)</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>CPU выше 80 %</td><td>p99 выше 1 с пять минут подряд</td><td>Высокий CPU при нормальном ответе — не проблема</td></tr>
+        <tr><td>Память выше 70 %</td><td>Доля 5xx выше 1 %</td><td>Память может быть занята кэшем штатно</td></tr>
+        <tr><td>Один под перезапустился</td><td>Число готовых подов ниже минимума</td><td>Единичный перезапуск — норма</td></tr>
+        <tr><td>Очередь длиннее 1000</td><td>Возраст сообщения больше 10 минут</td><td>Длина обманчива, возраст — нет</td></tr>
+        <tr><td>Медленный запрос в логе</td><td>Доля запросов дольше SLO выросла</td><td>Единичный медленный запрос — не инцидент</td></tr>
+        <tr><td>Ошибка в приложении</td><td>Всплеск ошибок одного типа</td><td>Единичные ошибки бывают всегда</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Правило алерта: порог, длительность, адресат, runbook</span></div><pre><code>groups:
+  - name: api
+    rules:
+      - alert: HighErrorRate
+        <span class="cm"># Доля ошибок за 5 минут — не мгновенное значение,</span>
+        <span class="cm"># иначе один всплеск в две секунды разбудит дежурного</span>
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          / sum(rate(http_requests_total[5m])) &gt; 0.01
+        for: 5m                          <span class="cm"># условие должно держаться, а не мигнуть</span>
+        labels:
+          severity: page                 <span class="cm"># page — будит; ticket — задача на утро</span>
+        annotations:
+          summary: <span class="st">"Доля 5xx выше 1 % ({{ $value | humanizePercentage }})"</span>
+          runbook: <span class="st">"https://wiki/runbooks/high-error-rate"</span>
+          dashboard: <span class="st">"https://grafana/d/api-overview"</span>
+
+      - alert: QueueAgeTooHigh
+        expr: max(queue_oldest_message_age_seconds) &gt; 600
+        for: 5m
+        labels: { severity: page }
+        annotations:
+          summary: <span class="st">"Сообщения ждут больше 10 минут"</span>
+          runbook: <span class="st">"https://wiki/runbooks/queue-lag"</span>
+
+      - alert: NoConsumers
+        <span class="cm"># Классика: после деплоя воркеры не поднялись, очередь растёт тихо</span>
+        expr: queue_consumers == 0 and queue_messages &gt; 0
+        for: 2m
+        labels: { severity: page }
+
+<span class="cm"># Каждый алерт обязан отвечать на три вопроса:</span>
+<span class="cm">#   1. Что сломано с точки зрения пользователя?</span>
+<span class="cm">#   2. Что делать прямо сейчас? (ссылка на runbook)</span>
+<span class="cm">#   3. Стоит ли будить человека ночью или это задача на утро?</span>
+<span class="cm"># Алерт без ответа хотя бы на один из них — кандидат на удаление.</span></code></pre></div>
+
+    <p><strong>Про усталость от алертов.</strong> Полезная практика — раз в месяц смотреть на список сработавших оповещений и по каждому спрашивать: потребовало ли оно действия. Если нет — порог поднимают, условие уточняют или алерт удаляют. Список, где половина срабатываний была ложной, означает, что команда уже перестала им доверять, даже если формально на них реагируют.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Каким должен быть хороший алерт?</b><br>Он оповещает о симптоме, который чувствует пользователь, а не о внутреннем отклонении: не «CPU 80 %», а «доля ошибок выше процента пять минут подряд». У него есть условие по длительности, чтобы одиночный всплеск не будил человека, уровень срочности (будить или задача на утро), ссылка на runbook и на дашборд. И главное — каждое срабатывание должно требовать действия, иначе алерт учит команду игнорировать оповещения.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="slo">
+    <p class="path">middle / цели</p>
+    <div class="card-top"><h3>SLI, SLO, бюджет ошибок</h3><span class="badge b-2">Ключевое</span></div>
+    <p>SLO переводит разговор о качестве из ощущений в числа. Без него «сайт тормозит» — предмет спора, а с ним — измеримый факт: доля быстрых запросов упала ниже цели, бюджет ошибок израсходован на 80 % за неделю.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · три термина, которые путают</caption>
+      <thead><tr><th>Термин</th><th>Что это</th><th>Пример</th></tr></thead>
+      <tbody>
+        <tr><td>SLI</td><td>Измеряемый показатель</td><td>Доля запросов быстрее 300 мс</td></tr>
+        <tr><td>SLO</td><td>Внутренняя цель по показателю</td><td>99,5 % за 30 дней</td></tr>
+        <tr><td>SLA</td><td>Внешнее обязательство с санкцией</td><td>99 % с компенсацией при нарушении</td></tr>
+        <tr><td>Бюджет ошибок</td><td>Обратная сторона SLO</td><td>0,5 % запросов могут быть медленными</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Как выбрать SLI и посчитать бюджет</span></div><pre><code>ХОРОШИЙ SLI измеряется с точки зрения пользователя и выражается долей:
+
+  Доступность:  успешные запросы / все запросы
+  Скорость:     запросы быстрее 300 мс / все запросы
+  Свежесть:     заказы, обработанные за 5 минут / все заказы
+  Корректность: успешные списания / все попытки списания
+
+ПЛОХОЙ SLI: «средняя загрузка CPU», «аптайм сервера» — пользователю
+безразлично, работает ли сервер, если страница не открывается.
+
+БЮДЖЕТ ОШИБОК за 30 дней при разных целях:
+
+  99,0 %  →  7 ч 18 мин         допустимой «плохой» работы
+  99,5 %  →  3 ч 39 мин
+  99,9 %  →  43 мин
+  99,95 % →  21 мин
+  99,99 % →  4 мин 20 с          человек не успеет отреагировать вручную
+
+СКОРОСТЬ РАСХОДА — самый практичный вид алерта по SLO:
+  «за последний час потрачено 5 % месячного бюджета» — это значит,
+  что при таком темпе бюджет кончится за 20 часов. Такой алерт
+  срабатывает быстро при серьёзной аварии и молчит при мелких всплесках,
+  в отличие от простого порога по доле ошибок.</code></pre></div>
+
+    <p><strong>Как SLO меняет работу команды.</strong> Пока бюджет не израсходован, команда свободно выкатывает изменения — риск оплачен заранее. Когда бюджет исчерпан, приоритет автоматически смещается на надёжность: сначала чиним, потом новые функции. Это превращает вечный спор «фичи или стабильность» в арифметику и снимает его с уровня личных мнений.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>SLO должен быть достижимым и осмысленным. Цель 99,99 % для внутреннего отчётного сервиса — не амбиция, а способ гарантированно нарушать собственные обещания и приучить команду не относиться к ним всерьёз. Начинают обычно с измерения текущего фактического уровня за пару месяцев и ставят цель чуть выше — так, чтобы её нарушение действительно означало проблему.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как выбрать SLI и SLO для сервиса?</b><br>SLI выбирается с точки зрения пользователя и выражается долей: успешные запросы к общему числу, быстрые к общему числу. Технические показатели вроде загрузки CPU для этого не годятся. SLO ставится по измеренному фактическому уровню за пару месяцев, чуть выше него, — недостижимая цель обесценивает саму практику. А алерт делается не по порогу, а по скорости расхода бюджета ошибок: он быстро реагирует на серьёзное и молчит на мелочи.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="debug">
+    <p class="path">middle / расследование</p>
+    <div class="card-top"><h3>Отладка инцидента</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Наблюдаемость проверяется не наличием графиков, а тем, как быстро вы проходите путь от «что-то не так» до «вот причина». Этот путь имеет повторяемую структуру, и её полезно знать заранее — во время инцидента импровизировать некогда.</p>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Порядок расследования: от симптома к причине</span></div><pre><code>1. ЧТО ИМЕННО СЛОМАНО
+   Какой сценарий не работает, с какого момента, у всех или у части.
+   Смотрим: доля ошибок и задержка по эндпоинтам, бизнес-метрика.
+   Вопрос: это все пользователи или один арендатор? весь трафик или маршрут?
+
+2. КОГДА НАЧАЛОСЬ
+   Точное время старта — половина ответа. Сопоставляем с отметками
+   релизов, миграций, изменений конфигурации, включения флагов.
+   Совпадение по времени объясняет большинство инцидентов.
+
+3. ГДЕ ИМЕННО
+   Трассировка медленного или упавшего запроса: своё приложение,
+   база, внешний сервис, очередь. Это отсекает три четверти гипотез.
+
+4. ЧТО КОНКРЕТНО
+   Логи по trace_id найденного запроса: сообщение об ошибке, параметры,
+   на каком шаге упало. Здесь появляется конкретика.
+
+5. ПОЧЕМУ ЭТО ВОЗМОЖНО
+   Уже после восстановления: какое изменение или условие привело к этому
+   и почему не было замечено раньше.
+
+ЧАСТАЯ ОШИБКА — начинать с пункта 5 и гадать о причинах, глядя
+на дашборд. Пункты 1–2 занимают минуту и резко сужают поиск.</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · симптом и первая гипотеза</caption>
+      <thead><tr><th>Симптом</th><th>Что смотреть первым</th><th>Частая причина</th></tr></thead>
+      <tbody>
+        <tr><td>Выросли 5xx сразу после релиза</td><td>Отметку релиза, логи ошибок по типу</td><td>Изменение кода или конфигурации</td></tr>
+        <tr><td>Выросла задержка, ошибок нет</td><td>Трассировки, время по слоям</td><td>Внешний сервис или база</td></tr>
+        <tr><td>Тормозит только часть запросов</td><td>Разбивку по маршрутам и арендаторам</td><td>Тяжёлые данные конкретного клиента</td></tr>
+        <tr><td>Всё зелёное, заказов нет</td><td>Бизнес-метрику, фронтенд, платёжного провайдера</td><td>Тихая авария вне бэкенда</td></tr>
+        <tr><td>Растёт очередь</td><td>Число потребителей и возраст сообщений</td><td>Воркеры не поднялись после деплоя</td></tr>
+        <tr><td>Периодические всплески</td><td>График с большим окном, cron и регламентные задачи</td><td>Тяжёлая фоновая задача по расписанию</td></tr>
+        <tr><td>Медленно у одного клиента</td><td>Трассировку его запроса, объём его данных</td><td>Отсутствие пагинации или индекса</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Три вопроса, которые стоит задать в первую минуту любого инцидента: что изменилось (релиз, конфигурация, флаг, миграция), у всех или у части, и когда точно началось. Ответы на них занимают минуту и в большинстве случаев сразу указывают направление. Гадание о причинах без этих ответов растягивает расследование на часы.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Пользователи жалуются, что сайт медленный. Ваши действия?</b><br>Сначала уточняю симптом по метрикам: выросла ли задержка на самом деле, у всех или на отдельных маршрутах, с какого момента. Сопоставляю время начала с релизами и изменениями конфигурации. Затем смотрю трассировку медленного запроса — это сразу показывает, где ушло время: своё приложение, база или внешний сервис. И только потом иду в логи по идентификатору конкретного запроса за деталями.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="errors">
+    <p class="path">middle / ошибки</p>
+    <div class="card-top"><h3>Ошибки и профилирование</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Два инструмента, дополняющих три основных сигнала: трекер ошибок отвечает на вопрос «что и как часто падает», профилировщик — «на что уходит процессорное время внутри запроса». Оба нужны в проде, а не только локально.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Трекер ошибок: контекст важнее самой трассировки</span></div><pre><code>&lt;?php
+<span class="cm">// Трекер группирует одинаковые исключения, показывает частоту и динамику.</span>
+<span class="cm">// Ценность появляется только с контекстом: без него «TypeError в Order.php:142»</span>
+<span class="cm">// невозможно ни воспроизвести, ни оценить по важности.</span>
+
+$errorTracker-&gt;<span class="fn">configureScope</span>(<span class="kw">function</span> (<span class="nm">Scope</span> $scope) <span class="kw">use</span> ($request) {
+    $scope-&gt;<span class="fn">setTag</span>(<span class="st">'route'</span>, $request-&gt;<span class="fn">attributes</span>-&gt;<span class="fn">get</span>(<span class="st">'_route'</span>));
+    $scope-&gt;<span class="fn">setTag</span>(<span class="st">'release'</span>, $_ENV[<span class="st">'APP_VERSION'</span>]);        <span class="cm">// связь с релизом</span>
+    $scope-&gt;<span class="fn">setTag</span>(<span class="st">'tenant'</span>, $this-&gt;context-&gt;<span class="fn">tenantId</span>());
+    $scope-&gt;<span class="fn">setUser</span>([<span class="st">'id'</span> =&gt; $userId]);                     <span class="cm">// без ПДн, только идентификатор</span>
+    $scope-&gt;<span class="fn">setContext</span>(<span class="st">'trace'</span>, [<span class="st">'trace_id'</span> =&gt; <span class="nm">Context</span>::<span class="fn">traceId</span>()]);
+});
+
+<span class="cm">// Что даёт правильно настроенный трекер:</span>
+<span class="cm">//   — группировку: 4000 однотипных ошибок = одна запись с счётчиком</span>
+<span class="cm">//   — динамику: «появилось в релизе 2.4.1» с точной привязкой</span>
+<span class="cm">//   — охват: сколько пользователей затронуто (это и есть приоритет)</span>
+<span class="cm">//   — переход в логи и трассировку по trace_id</span>
+
+<span class="cm">// Что НЕ должно попадать: пароли, токены, тела запросов целиком,</span>
+<span class="cm">// персональные данные. Фильтрация настраивается до отправки.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Профилирование в проде: сэмплирование вместо полного профиля</span></div><pre><code><span class="cm"># Локальный профилировщик (Xdebug) замедляет в разы — в проде неприменим.</span>
+<span class="cm"># Профилировщики с сэмплированием снимают стек несколько сотен раз в секунду</span>
+<span class="cm"># и дают накладные расходы в единицы процентов.</span>
+
+<span class="cm"># Профилируем не всё подряд, а долю запросов</span>
+<span class="cm">#   profiler.sample_rate = 0.01     # один процент трафика</span>
+
+<span class="cm"># Что обычно показывает профиль боевого PHP-приложения по убыванию:</span>
+<span class="cm">#   1. ожидание базы (это не CPU — ищите в трассировке, а не в профиле)</span>
+<span class="cm">#   2. сериализация и гидрация ORM</span>
+<span class="cm">#   3. шаблонизация</span>
+<span class="cm">#   4. собственно бизнес-логика — обычно проценты</span>
+
+<span class="cm"># Порядок оптимизации от этого не меняется:</span>
+<span class="cm">#   сначала число запросов к базе → объём данных → круговые поездки →</span>
+<span class="cm">#   и только потом профиль CPU. Профилировщик нужен, когда после</span>
+<span class="cm">#   первых трёх шагов время всё ещё внутри PHP.</span>
+
+<span class="cm"># Быстрая проверка без профилировщика: счётчик запросов к базе</span>
+<span class="cm"># в логе каждого запроса. Скачок с 3 до 200 — это N+1, и виден он сразу.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужен трекер ошибок, если есть логи?</b><br>Он группирует одинаковые исключения и показывает то, чего нет в логах: частоту, динамику, привязку к релизу и число затронутых пользователей — то есть приоритет. В логах четыре тысячи одинаковых записей выглядят как шум, а в трекере это одна запись со счётчиком и графиком появления. Плюс он оповещает о новых типах ошибок, а не только о превышении порогов.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Инструментирую границы автоматически, домен — вручную</li>
+        <li>Использую шаблон маршрута в метках, а не URL с идентификаторами</li>
+        <li>Пишу счётчик запросов к базе в лог каждого запроса</li>
+        <li>Имею бизнес-метрику на главном дашборде</li>
+        <li>Держу главный дашборд на одном экране с отметками релизов</li>
+        <li>Использую перцентили вместо средних</li>
+        <li>Оповещаю о симптомах, а не о причинах</li>
+      </ul>
+      <ul class="check">
+        <li>Ставлю условие по длительности, чтобы всплеск не будил дежурного</li>
+        <li>Даю в алерте ссылку на runbook и дашборд</li>
+        <li>Регулярно чищу алерты, не требующие действия</li>
+        <li>Выбираю SLI с точки зрения пользователя и ставлю достижимый SLO</li>
+        <li>Понимаю бюджет ошибок и алерт по скорости его расхода</li>
+        <li>Иду по порядку: что, когда, где, что конкретно, почему</li>
+        <li>Настраиваю трекер ошибок с контекстом и привязкой к релизу</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Проверка уровня одним упражнением: возьмите вчерашний инцидент или всплеск на графике и попробуйте объяснить его, пользуясь только уже имеющейся телеметрией. Всё, чего не хватило, — это конкретный список задач по наблюдаемости, гораздо более полезный, чем абстрактное «надо бы добавить метрик».</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · система наблюдаемости</p>
+    <h2>Senior: конвейер, стоимость, культура</h2>
+    <p>На senior-уровне наблюдаемость сама становится системой, которую нужно проектировать и содержать: у неё есть конвейер сбора, стоимость хранения, владельцы и режим работы дежурных. И у неё есть предел разумного: телеметрия, которая стоит дороже сервиса, — тоже инженерная ошибка.</p>
+  </div>
+
+  <!-- 12 -->
+  <article class="card" id="pipeline">
+    <p class="path">senior / конвейер</p>
+    <div class="card-top"><h3>Конвейер телеметрии</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Между приложением и дашбордом лежит цепочка: сбор, буферизация, обогащение, отправка, хранение. Каждое звено может стать узким местом или точкой отказа — и телеметрия имеет неприятное свойство ломаться ровно тогда, когда она нужнее всего.</p>
+
+    <div class="flow" role="img" aria-label="Путь телеметрии от приложения до хранилища">
+      <div class="node">Приложение<small>метрики, логи, спаны</small></div><span class="arr">→</span>
+      <div class="node">Агент<small>сбор и буфер</small></div><span class="arr">→</span>
+      <div class="node">Коллектор<small>обогащение, сэмплирование</small></div><span class="arr">→</span>
+      <div class="node">Хранилище<small>метрики, логи, трейсы</small></div><span class="arr">→</span>
+      <div class="node">Интерфейс<small>дашборды, алерты</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · требования к конвейеру</caption>
+      <thead><tr><th>Требование</th><th>Почему</th><th>Как обеспечить</th></tr></thead>
+      <tbody>
+        <tr><td>Не влияет на приложение</td><td>Телеметрия не должна ронять сервис</td><td>Асинхронная отправка, таймауты, отбрасывание при переполнении</td></tr>
+        <tr><td>Переживает недоступность хранилища</td><td>Иначе теряется картина именно в аварии</td><td>Буфер в агенте с ограничением размера</td></tr>
+        <tr><td>Не зависит от отказавшего сервиса</td><td>Мониторинг внутри падающего кластера бесполезен</td><td>Хранилище и алерты вне контура наблюдаемого</td></tr>
+        <tr><td>Единый формат</td><td>Иначе корреляция невозможна</td><td>Общий стандарт и общие имена атрибутов</td></tr>
+        <tr><td>Обогащение контекстом</td><td>Нужны версия, окружение, узел</td><td>Добавляется коллектором, а не в коде</td></tr>
+        <tr><td>Предсказуемая стоимость</td><td>Объём телеметрии растёт быстрее трафика</td><td>Сэмплирование, лимиты кардинальности, retention</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Сэмплирование: как хранить не всё, но не потерять важное</span></div><pre><code>Полное хранение трассировок при заметном трафике невозможно
+по стоимости. Есть три стратегии, и выбор между ними — это выбор,
+что вы готовы потерять.
+
+1. HEAD-БАЗИРОВАННОЕ (решение в начале запроса)
+   Дёшево, просто, работает на любом объёме.
+   Минус: решение принимается ДО того, как стало известно,
+   что запрос упал или был медленным. Ошибки теряются вместе со всем.
+
+2. TAIL-БАЗИРОВАННОЕ (решение после завершения)
+   Коллектор ждёт окончания трассировки и решает по результату:
+       все запросы с ошибкой          → сохранить 100 %
+       все медленнее SLO              → сохранить 100 %
+       редкие маршруты                → сохранить больше
+       обычные быстрые успешные       → сохранить 1 %
+   Именно то, что нужно: интересное сохраняется целиком.
+   Минус: коллектор должен буферизовать трассировки — это память и сложность.
+
+3. АДАПТИВНОЕ
+   Доля подстраивается под текущий поток, чтобы держать заданный бюджет.
+
+ПРАВИЛО СОГЛАСОВАННОСТИ: решение о сэмплировании принимается один раз
+на всю трассировку и передаётся по цепочке. Иначе получаются обрывки:
+начало запроса сохранено, продолжение в соседнем сервисе — нет.
+
+Метрики при этом НЕ сэмплируются: они уже агрегированы и дёшевы.
+Логи — обычно да, кроме ошибок и событий безопасности.</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Система наблюдаемости не должна зависеть от наблюдаемой системы. Если алерты приходят через ту же инфраструктуру, которая упала, вы узнаете об аварии от пользователей. Практический минимум: хранилище метрик и отправка оповещений вне основного кластера, а также независимая внешняя проверка, которая раз в минуту дёргает продукт снаружи и умеет сообщить, даже если внутри всё легло.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как устроено сэмплирование трассировок?</b><br>Хранить все трассировки при заметном трафике невыгодно, поэтому сохраняется доля. Простой вариант — решение в начале запроса: дёшево, но теряет как раз ошибки и медленные запросы. Практичнее решение по результату: сохранять сто процентов упавших и медленных, редкие маршруты чаще, обычные успешные — процент. Ключевое требование — согласованность: решение принимается один раз на трассировку и передаётся по цепочке, иначе остаются обрывки.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="cost">
+    <p class="path">senior / стоимость</p>
+    <div class="card-top"><h3>Стоимость наблюдаемости</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Счёт за телеметрию имеет свойство расти быстрее самой системы — и в какой-то момент обнаруживается, что хранение логов стоит дороже серверов приложения. Это не повод отказываться от наблюдаемости, но повод управлять ею как ресурсом.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · где растут расходы и что делать</caption>
+      <thead><tr><th>Источник</th><th>Почему растёт</th><th>Мера</th></tr></thead>
+      <tbody>
+        <tr><td>Кардинальность метрик</td><td>Метка с идентификатором создаёт миллионы рядов</td><td>Лимит меток, аудит рядов, запрет идентификаторов</td></tr>
+        <tr><td>Уровень debug в проде</td><td>Объём вырастает в десятки раз</td><td>Info по умолчанию, debug точечно и на время</td></tr>
+        <tr><td>Логирование каждого шага</td><td>Десять записей на запрос вместо одной</td><td>Один структурированный лог на запрос плюс события</td></tr>
+        <tr><td>Тела запросов в логах</td><td>Килобайты на запись</td><td>Только размеры и ключевые поля</td></tr>
+        <tr><td>Длинный срок хранения</td><td>Хранение линейно по времени</td><td>Разные сроки: метрики дольше, логи короче</td></tr>
+        <tr><td>Полные трассировки</td><td>Объём пропорционален трафику</td><td>Сэмплирование по результату</td></tr>
+        <tr><td>Дублирование систем</td><td>Три инструмента делают одно и то же</td><td>Ревизия и консолидация</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="formula">Полезность ≈ как часто на это смотрят × насколько сокращает время расследования<span>Всё, что не открывали полгода и что не сокращает расследование, — кандидат на удаление</span></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Ревизия телеметрии: что обычно находится</span></div><pre><code>Практика, которую стоит проводить раз в квартал:
+
+1. МЕТРИКИ
+   — сколько временных рядов всего и какие метрики дают больше всего
+   — есть ли метки с высоким разнообразием (идентификаторы, URL)
+   — какие метрики не используются ни в одном дашборде и ни в одном алерте
+   Типичная находка: одна метка съедает половину хранилища.
+
+2. ЛОГИ
+   — топ-10 самых частых сообщений: обычно 60–80 % объёма дают две-три строки
+   — их обычно никто никогда не читал
+   Типичная находка: отладочная запись, оставленная год назад.
+
+3. ДАШБОРДЫ
+   — когда каждый открывали в последний раз
+   Типичная находка: половина не открывалась ни разу за полгода.
+
+4. АЛЕРТЫ
+   — сколько раз срабатывал каждый и сколько раз потребовал действия
+   Типичная находка: алерт, сработавший 300 раз без единого действия.
+
+5. СРОКИ ХРАНЕНИЯ
+   — метрики: год и более (они дёшевы и нужны для трендов)
+   — трассировки: дни или недели
+   — логи приложения: недели
+   — логи безопасности и аудит: по требованиям, отдельно и дольше</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Разные сроки хранения для разных сигналов — самый простой способ снизить стоимость без потери качества. Метрики агрегированы и дёшевы, их держат долго: годовой тренд отвечает на вопросы, которые не решить никак иначе. Логи и трассировки дороги и нужны в основном по горячим следам: недели обычно достаточно. Единый срок для всего — либо переплата, либо потеря истории.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Счёт за логи вырос вдвое. Что делаете?</b><br>Сначала смотрю топ самых частых сообщений: обычно две-три строки дают большую часть объёма, и почти всегда это отладочная запись, которую никто не читал. Проверяю уровень логирования в проде и наличие тел запросов в записях. Дальше — сроки хранения: логи редко нужны дольше нескольких недель, в отличие от метрик. И отдельно смотрю кардинальность метрик: одна метка с идентификатором способна съесть половину хранилища.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="correlation">
+    <p class="path">senior / связность</p>
+    <div class="card-top"><h3>Корреляция сигналов</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Три сигнала дают ценность в разы большую, когда связаны между собой: от графика можно перейти к конкретным трассировкам, от трассировки — к логам, от лога — к релизу. Без связок каждый инструмент приходится открывать заново и искать по времени вручную.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · связки между сигналами</caption>
+      <thead><tr><th>Переход</th><th>Что связывает</th><th>Что даёт</th></tr></thead>
+      <tbody>
+        <tr><td>Метрика → трассировка</td><td>Примеры (exemplars) в гистограмме</td><td>С графика p99 сразу в конкретный медленный запрос</td></tr>
+        <tr><td>Трассировка → логи</td><td><code>trace_id</code> в каждой записи</td><td>Все детали по этому запросу одним фильтром</td></tr>
+        <tr><td>Лог → трассировка</td><td>Тот же идентификатор</td><td>Увидеть структуру и время вокруг ошибки</td></tr>
+        <tr><td>Ошибка → релиз</td><td>Версия в атрибутах</td><td>«Появилось в 2.4.1» без ручного сопоставления</td></tr>
+        <tr><td>Пользователь → всё</td><td>Идентификатор в ответе и в телеметрии</td><td>Поддержка находит историю по обращению</td></tr>
+        <tr><td>Очередь → исходный запрос</td><td>Контекст в сообщении</td><td>Видно, из какого запроса выросла фоновая работа</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Единые соглашения: без них корреляция не работает</span></div><pre><code>Общие имена атрибутов во всех сигналах и во всех сервисах:
+
+  trace_id      — сквозной идентификатор запроса (везде одинаково!)
+  service.name  — имя сервиса
+  service.version — версия релиза
+  deployment.environment — prod / staging
+  tenant.id     — арендатор (без персональных данных)
+  user.id       — идентификатор, не почта и не имя
+  http.route    — шаблон маршрута, не URL
+
+Типичная проблема больших систем: один сервис пишет request_id,
+второй — traceId, третий — correlation_id. Формально контекст есть,
+а связать сигналы невозможно, и корреляция делается глазами по времени.
+
+Договорённость об именах — самая дешёвая и самая недооценённая
+часть наблюдаемости. Её стоит зафиксировать письменно и проверять
+на ревью, иначе расхождение накапливается незаметно.
+
+Отдельно: идентификатор запроса должен возвращаться пользователю
+в заголовке ответа и показываться на странице ошибки. Тогда обращение
+в поддержку начинается с готового ключа поиска, а не с «вчера днём
+что-то не работало».</code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как связать метрики, логи и трассировки?</b><br>Сквозным идентификатором и общими именами атрибутов во всех сервисах. Из гистограммы задержки должен быть переход в конкретные медленные трассировки, из трассировки — в логи по идентификатору, у ошибок — привязка к версии релиза. Самая частая проблема в больших системах не техническая, а договорная: сервисы называют идентификатор по-разному, и связать сигналы невозможно. Поэтому соглашение об именах фиксируется письменно и проверяется на ревью.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="culture">
+    <p class="path">senior / процесс</p>
+    <div class="card-top"><h3>Дежурство и культура</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Наблюдаемость работает только вместе с процессом: кто-то должен смотреть на алерты, кто-то — отвечать за качество телеметрии, и кто-то — делать выводы после инцидентов. Без этого система деградирует до набора графиков, которые никто не открывает.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · практики, поддерживающие наблюдаемость</caption>
+      <thead><tr><th>Практика</th><th>Что предотвращает</th></tr></thead>
+      <tbody>
+        <tr><td>Разработчики дежурят по своему коду</td><td>Разрыв между «написал» и «эксплуатирую»: ночной алерт быстро мотивирует улучшить телеметрию</td></tr>
+        <tr><td>Каждый алерт с runbook</td><td>Дежурный в три часа ночи не должен исследовать систему с нуля</td></tr>
+        <tr><td>Разбор инцидентов без поиска виноватых</td><td>Замалчивание проблем и потерю выводов</td></tr>
+        <tr><td>Вопрос «почему заметили не сразу» в каждом разборе</td><td>Повторение слепых зон</td></tr>
+        <tr><td>Наблюдаемость в определении готовности</td><td>Функции, выкатанные без метрик и логов</td></tr>
+        <tr><td>Регулярная ревизия алертов и дашбордов</td><td>Накопление шума и мёртвых панелей</td></tr>
+        <tr><td>Учения: искусственная поломка на стенде</td><td>Обнаружение, что алерты не работают, в момент настоящей аварии</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Главный вопрос любого разбора инцидента</strong> — не «кто виноват» и даже не «какова причина», а «почему мы узнали об этом от пользователей». Причину обычно находят быстро; слепое пятно в наблюдаемости остаётся и приводит к следующему такому же инциденту. Поэтому в списке действий после разбора почти всегда должен быть пункт про телеметрию: метрика, алерт или контекст в логах, которых не хватило.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Наблюдаемость новой функции — часть работы над ней, а не отдельная задача «когда-нибудь потом». Практичный минимум в определении готовности: есть метрика ключевого действия, ошибки видны в трекере с контекстом, в логах есть сквозной идентификатор, и известно, какой алерт сработает, если функция сломается. Всё это добавляется за час при разработке и не добавляется никогда, если отложено.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как понять, что наблюдаемости в проекте достаточно?</b><br>По двум числам: сколько времени проходит от возникновения проблемы до её обнаружения и сколько — от обнаружения до нахождения причины. Если о проблемах узнаём от пользователей, не хватает алертов и бизнес-метрик; если причину ищем часами — не хватает контекста, трассировок и связок между сигналами. И отдельный признак — приходится ли добавлять логирование и ждать повторения проблемы: это означает, что наблюдаемости нет.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / границы</p>
+    <div class="card-top"><h3>Антипаттерны</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Наблюдаемость легко довести до состояния, когда она стоит дорого, шумит и при этом не помогает. Все перечисленные ошибки встречаются постоянно и обычно накапливаются постепенно, а не появляются сразу.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · антипаттерны и что вместо</caption>
+      <thead><tr><th>Антипаттерн</th><th>Чем плохо</th><th>Как правильно</th></tr></thead>
+      <tbody>
+        <tr><td>Логировать всё «на всякий случай»</td><td>Дорого, шумно, поиск бесполезен, риск утечек</td><td>Событие на решение, а не запись на строку кода</td></tr>
+        <tr><td>Идентификаторы в метках метрик</td><td>Взрыв кардинальности и падение хранилища</td><td>Идентификаторы — в логи и трассировки</td></tr>
+        <tr><td>Алерт на каждое отклонение</td><td>Усталость: настоящую аварию пропустят</td><td>Алерт на симптом, требующий действия</td></tr>
+        <tr><td>Средние значения на графиках</td><td>Прячут именно те выбросы, которые ищут</td><td>Перцентили</td></tr>
+        <tr><td>Дашборд на шестьдесят панелей</td><td>В инциденте невозможно найти нужное</td><td>Один экран на вопрос «всё ли в порядке»</td></tr>
+        <tr><td>Мониторинг внутри наблюдаемой системы</td><td>Падает вместе с ней</td><td>Хранилище и алерты вне контура</td></tr>
+        <tr><td>Только технические метрики</td><td>Тихая авария не видна</td><td>Бизнес-метрика на главном экране</td></tr>
+        <tr><td>Телеметрия синхронно в критическом пути</td><td>Отказ хранилища роняет приложение</td><td>Асинхронная отправка с таймаутом и отбрасыванием</td></tr>
+        <tr><td>Наблюдаемость «потом»</td><td>Не добавляется никогда</td><td>Часть определения готовности функции</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Отправка телеметрии синхронно в обработке запроса. Медленное или недоступное хранилище логов начинает замедлять, а затем ронять само приложение — авария наблюдаемости превращается в аварию сервиса. Отправка всегда асинхронна, с ограниченным буфером и жёстким правилом: при переполнении телеметрия отбрасывается, а приложение продолжает работать.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какие ошибки в наблюдаемости встречаются чаще всего?</b><br>Логирование всего подряд, из-за чего поиск бесполезен, а счёт огромен. Идентификаторы в метках метрик и взрыв кардинальности. Алерты на каждое отклонение вместо симптомов — и, как следствие, усталость и пропущенные аварии. Средние вместо перцентилей. Отсутствие бизнес-метрик, из-за чего тихая авария не видна. И самая опасная — синхронная отправка телеметрии, при которой отказ хранилища логов роняет само приложение.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Проектирую конвейер телеметрии как систему с отказами</li>
+        <li>Отправляю телеметрию асинхронно и отбрасываю при переполнении</li>
+        <li>Держу мониторинг вне наблюдаемого контура</li>
+        <li>Имею внешнюю проверку продукта снаружи</li>
+        <li>Применяю сэмплирование по результату, сохраняя ошибки целиком</li>
+        <li>Согласую решение о сэмплировании по всей трассировке</li>
+      </ul>
+      <ul class="check">
+        <li>Управляю стоимостью: кардинальность, уровни, сроки хранения</li>
+        <li>Провожу ревизию метрик, логов, дашбордов и алертов</li>
+        <li>Задаю разные сроки хранения для разных сигналов</li>
+        <li>Обеспечиваю переходы между сигналами по общему идентификатору</li>
+        <li>Фиксирую соглашение об именах атрибутов письменно</li>
+        <li>Возвращаю идентификатор запроса пользователю</li>
+        <li>Спрашиваю в каждом разборе «почему заметили не сразу»</li>
+        <li>Включаю наблюдаемость в определение готовности функции</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ по наблюдаемости состоит из чисел и решений: «SLO по доступности 99,9 %, алерт по скорости расхода бюджета; трассировки сэмплируем по результату — ошибки и медленные сохраняем полностью, остальное процент; логи храним три недели, метрики год; после каждого инцидента в разборе обязателен пункт о том, чего не хватило в телеметрии». Перечисление названий инструментов без этого не значит почти ничего.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения: какой вопрос каким сигналом отвечается, что проверить в своём проекте и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Вопрос → сигнал</h3><span class="badge b-tag">Таблица 15</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 15 · чем отвечать на типовые вопросы</caption>
+      <thead><tr><th>Вопрос</th><th>Сигнал</th><th>Конкретно</th></tr></thead>
+      <tbody>
+        <tr><td>Всё ли сейчас в порядке?</td><td>Метрики</td><td>Доля ошибок, перцентили, бизнес-показатель</td></tr>
+        <tr><td>Когда началось?</td><td>Метрики</td><td>График с отметками релизов</td></tr>
+        <tr><td>Где ушло время?</td><td>Трассировки</td><td>Дерево спанов одного запроса</td></tr>
+        <tr><td>Что случилось с этим запросом?</td><td>Логи</td><td>Фильтр по <code>trace_id</code></td></tr>
+        <tr><td>Что и как часто падает?</td><td>Трекер ошибок</td><td>Группировка с частотой и охватом</td></tr>
+        <tr><td>Появилось ли это в новом релизе?</td><td>Трекер + метрики</td><td>Версия в атрибутах, отметки деплоя</td></tr>
+        <tr><td>У всех или у одного клиента?</td><td>Логи и метрики</td><td>Разбивка по арендатору</td></tr>
+        <tr><td>На что уходит процессор?</td><td>Профилировщик</td><td>Сэмплирующий профиль в проде</td></tr>
+        <tr><td>Работает ли продукт для пользователя?</td><td>Синтетическая проверка</td><td>Робот проходит сценарий снаружи</td></tr>
+        <tr><td>Успеваем ли обрабатывать фон?</td><td>Метрики очередей</td><td>Возраст старейшего сообщения</td></tr>
+        <tr><td>Не деградируем ли месяц к месяцу?</td><td>Метрики</td><td>Долгий тренд перцентилей</td></tr>
+        <tr><td>Укладываемся ли в обещания?</td><td>SLO</td><td>Остаток бюджета ошибок</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Чек-лист наблюдаемости сервиса</h3><span class="badge b-tag">Таблица 16</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 16 · что проверить в своём проекте</caption>
+      <thead><tr><th>Область</th><th>Вопрос, на который нужен ответ</th></tr></thead>
+      <tbody>
+        <tr><td>Логи</td><td>Структурированные, в stdout, с идентификатором запроса?</td></tr>
+        <tr><td>Чувствительные данные</td><td>Маскируются централизованно?</td></tr>
+        <tr><td>Метрики</td><td>Есть RED по эндпоинтам и ключевая бизнес-метрика?</td></tr>
+        <tr><td>Кардинальность</td><td>Нет ли идентификаторов и URL в метках?</td></tr>
+        <tr><td>Трассировки</td><td>Контекст протянут в очереди и внешние вызовы?</td></tr>
+        <tr><td>Здоровье</td><td>Разделены liveness и readiness?</td></tr>
+        <tr><td>Дашборд</td><td>Есть один экран, отвечающий «всё ли в порядке»?</td></tr>
+        <tr><td>Отметки релизов</td><td>Видны ли деплои на графиках?</td></tr>
+        <tr><td>Алерты</td><td>Каждый требует действия и имеет runbook?</td></tr>
+        <tr><td>SLO</td><td>Определены SLI и цель, считается ли бюджет?</td></tr>
+        <tr><td>Ошибки</td><td>Есть трекер с контекстом и привязкой к релизу?</td></tr>
+        <tr><td>N+1</td><td>Пишется ли число запросов к базе в лог запроса?</td></tr>
+        <tr><td>Независимость</td><td>Мониторинг переживёт падение основного кластера?</td></tr>
+        <tr><td>Стоимость</td><td>Известны объёмы и сроки хранения по сигналам?</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 17</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 17 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Логи</td><td>Пишет структурированно с контекстом</td><td>Выстраивает единый формат и маскирование</td><td>Управляет объёмом и сроками хранения</td></tr>
+        <tr><td>Метрики</td><td>Знает типы и кардинальность</td><td>Инструментирует границы и домен</td><td>Проводит ревизию рядов и стоимости</td></tr>
+        <tr><td>Трассировки</td><td>Понимает спаны и контекст</td><td>Протягивает контекст через очереди</td><td>Настраивает сэмплирование по результату</td></tr>
+        <tr><td>Дашборды</td><td>Умеет читать</td><td>Строит по RED и USE</td><td>Определяет, что нужно и что удалить</td></tr>
+        <tr><td>Алерты</td><td>Реагирует</td><td>Настраивает на симптомы с runbook</td><td>Борется с шумом и владеет процессом</td></tr>
+        <tr><td>Цели</td><td>Слышал про SLA</td><td>Считает SLI и SLO</td><td>Вводит бюджет ошибок в приоритизацию</td></tr>
+        <tr><td>Инцидент</td><td>Собирает данные</td><td>Проходит путь от симптома к причине</td><td>Устраняет слепые зоны после разбора</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и цена</td><td>Числа, компромиссы, отказ от лишнего</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Запросы и команды</h2>
+    <p>То, что нужно во время инцидента: типовые запросы к метрикам и логам и быстрые проверки на сервере.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Запросы к метрикам</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>promql</span><span class="r">Типовые выражения, которые нужны постоянно</span></div><pre><code><span class="cm"># Поток запросов в секунду по маршрутам</span>
+sum by (route) (rate(http_requests_total[5m]))
+
+<span class="cm"># Доля ошибок — главная метрика здоровья</span>
+sum(rate(http_requests_total{status=~"5.."}[5m]))
+  / sum(rate(http_requests_total[5m]))
+
+<span class="cm"># Перцентиль задержки из гистограммы</span>
+histogram_quantile(0.99,
+  sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))
+
+<span class="cm"># Топ самых медленных маршрутов</span>
+topk(5, histogram_quantile(0.95,
+  sum by (le, route) (rate(http_request_duration_seconds_bucket[5m]))))
+
+<span class="cm"># Доля запросов быстрее SLO (это и есть SLI по скорости)</span>
+sum(rate(http_request_duration_seconds_bucket{le="0.3"}[5m]))
+  / sum(rate(http_request_duration_seconds_count[5m]))
+
+<span class="cm"># Насыщение: занятость пула процессов</span>
+avg(phpfpm_active_processes / phpfpm_max_children)
+
+<span class="cm"># Очереди: возраст старейшего сообщения — важнее длины</span>
+max by (queue) (queue_oldest_message_age_seconds)
+
+<span class="cm"># Сравнение с прошлой неделей: помогает отличить аварию от сезонности</span>
+sum(rate(http_requests_total[5m]))
+  / sum(rate(http_requests_total[5m] offset 7d))
+
+<span class="cm"># Сколько временных рядов даёт метрика (диагностика кардинальности)</span>
+count by (__name__)({__name__=~"app_.*"})</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Поиск по логам</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash + logql</span><span class="r">От идентификатора к картине</span></div><pre><code><span class="cm"># Вся история одного запроса, включая фоновую обработку</span>
+{app="api"} |= "0f2a5c9d1b"
+{app=~"api|worker"} | json | trace_id="0f2a5c9d1b"
+
+<span class="cm"># Ошибки по типам за час: что именно сломалось</span>
+sum by (message) (count_over_time({app="api"} | json | level="error" [1h]))
+
+<span class="cm"># Медленные запросы: фильтр по числовому полю</span>
+{app="api"} | json | duration_ms &gt; 1000 | line_format "{{.route}} {{.duration_ms}}"
+
+<span class="cm"># Подозрение на N+1: запросы с большим числом обращений к базе</span>
+{app="api"} | json | db_queries &gt; 50
+
+<span class="cm"># Проблема у конкретного арендатора</span>
+{app="api"} | json | tenant="acme" | level="error"
+
+<span class="cm"># --- Быстрые проверки прямо на сервере ---</span>
+
+<span class="cm"># Топ сообщений в логе: обычно 2–3 строки дают большую часть объёма</span>
+tail -100000 app.log | jq -r .message | sort | uniq -c | sort -rn | head
+
+<span class="cm"># Распределение кодов ответа за последние записи</span>
+tail -100000 app.log | jq -r .status | sort | uniq -c | sort -rn
+
+<span class="cm"># Самые медленные запросы</span>
+tail -100000 app.log | jq -r <span class="st">'[.duration_ms, .route] | @tsv'</span> | sort -rn | head
+
+<span class="cm"># Сколько логов в сутки — оценка стоимости хранения</span>
+ls -l --block-size=M app.log</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Быстрая диагностика на сервере</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Когда телеметрии не хватает</span></div><pre><code><span class="cm"># Занятость пула PHP-FPM: главный индикатор веб-слоя</span>
+curl -s localhost/fpm-status | grep -E <span class="st">'active|listen queue|slow requests'</span>
+<span class="cm"># listen queue &gt; 0 постоянно — процессов не хватает</span>
+
+<span class="cm"># Медленные запросы PHP: трассировка того, что не укладывается в лимит</span>
+tail -f /var/log/php/slow.log
+
+<span class="cm"># Что делает база прямо сейчас</span>
+psql -c <span class="st">"SELECT pid, now()-query_start AS dur, state, left(query,80)
+        FROM pg_stat_activity WHERE state &lt;&gt; 'idle' ORDER BY dur DESC LIMIT 10"</span>
+mysql -e <span class="st">"SHOW FULL PROCESSLIST"</span> | grep -v Sleep
+
+<span class="cm"># Внешние вызовы: сколько на самом деле отвечает партнёр</span>
+curl -w <span class="st">'dns %{time_namelookup} connect %{time_connect} tls %{time_appconnect} total %{time_total}\n'</span> \
+     -o /dev/null -s https://api.partner.com/health
+
+<span class="cm"># Ресурсы узла</span>
+top -o %CPU
+free -m
+df -h &amp;&amp; df -i
+ss -s
+
+<span class="cm"># Кого убило ядро по памяти — объясняет «процессы исчезают без ошибок»</span>
+dmesg -T | grep -i <span class="st">'killed process'</span></code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Если во время инцидента приходится подключаться по SSH и смотреть <code>top</code>, это само по себе сигнал: телеметрия не отвечает на вопрос, который возник. Такие случаи стоит записывать — из них получается точный список того, чего не хватает в дашбордах и логах, гораздо более полезный, чем догадки в спокойное время.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас. Вопросы про наблюдаемость почти всегда сводятся к одному: как быстро вы узнаете о проблеме и как быстро найдёте причину. Сильный ответ всегда содержит порядок действий, а не список инструментов.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Чем наблюдаемость отличается от мониторинга?</span><span class="aa">Мониторинг отвечает на заранее известные вопросы: жив ли сервис, не выросла ли доля ошибок. Наблюдаемость позволяет отвечать на непредвиденные вопросы, а в настоящих инцидентах возникают именно такие. Критерий простой: если для выяснения причины нужно добавить логирование и ждать повторения, наблюдаемости нет.</span></li>
+      <li><span class="qq">Какие три сигнала телеметрии и на что отвечает каждый?</span><span class="aa">Метрики — что происходит и насколько плохо: дёшевы, годятся для алертов и графиков, но агрегированы. Логи — что случилось с конкретным запросом: богатый контекст, дорогое хранение. Трассировки — где ушло время внутри цепочки. Заменить один сигнал другим не получается: они отвечают на разные вопросы.</span></li>
+      <li><span class="qq">Что такое структурированный лог?</span><span class="aa">Запись с постоянным сообщением-событием и переменными данными в отдельных полях, обычно в JSON. По такому логу можно фильтровать, группировать и строить графики. Строка с подставленными значениями внутри текста бесполезна: её приходится разбирать регулярками, и любое изменение формулировки всё ломает.</span></li>
+      <li><span class="qq">Почему логи пишут в stdout?</span><span class="aa">Потому что файл внутри контейнера исчезает вместе с ним и не виден сборщику. Поток подхватывает платформа и отправляет в общее хранилище. Плюс это снимает вопросы ротации и прав доступа к файлам — за них отвечает инфраструктура, а не приложение.</span></li>
+      <li><span class="qq">Какие бывают уровни логирования?</span><span class="aa">От debug для разработки до critical, требующего немедленной реакции. Практически важны три: info для значимых событий, warning для проблем, с которыми справились, error для невыполненных операций. Уровень определяет не только фильтрацию, но и то, будят ли по нему человека.</span></li>
+      <li><span class="qq">Что не должно попадать в логи?</span><span class="aa">Пароли в любом виде, токены и куки, платёжные реквизиты, персональные данные сверх необходимого и полные тела запросов. Маскирование настраивается централизованно на уровне логгера: полагаться на дисциплину при каждом вызове нельзя, однажды забудут.</span></li>
+      <li><span class="qq">Чем опасен уровень debug в проде?</span><span class="aa">Он увеличивает объём логов в десятки раз, делая хранение дорогим, а поиск бесполезным: нужные записи тонут в шуме. Если отладочные данные нужны для расследования, их включают точечно и на время — для конкретного пользователя или процента трафика, а не глобально.</span></li>
+      <li><span class="qq">Какие бывают типы метрик?</span><span class="aa">Counter только растёт и используется для подсчёта событий — из него считают скорость. Gauge показывает значение в моменте: глубина очереди, занятые процессы. Histogram распределяет значения по корзинам и позволяет считать перцентили. Summary считает перцентили на клиенте и плохо агрегируется между узлами.</span></li>
+      <li><span class="qq">Что такое кардинальность и почему она важна?</span><span class="aa">Число уникальных комбинаций значений меток, то есть число временных рядов. Оно растёт как произведение, поэтому одна метка с высоким разнообразием — идентификатор пользователя или URL с номером заказа — создаёт миллионы рядов и кладёт хранилище. В метки идут только величины с ограниченным набором значений.</span></li>
+      <li><span class="qq">Почему перцентили лучше средних?</span><span class="aa">Среднее прячет хвост: при среднем 80 мс каждый сотый пользователь может ждать четыре секунды, и на графике это незаметно. Пользователь чувствует именно хвост, поэтому смотрят p95 и p99, а SLO формулируют в перцентилях, а не в средних.</span></li>
+      <li><span class="qq">Какой минимальный набор метрик нужен веб-приложению?</span><span class="aa">Поток запросов, доля ошибок и время ответа с разбивкой по маршрутам — это RED. Плюс насыщение ресурсов: занятость пула процессов, соединения к базе, глубина очередей. И обязательно хотя бы одна бизнес-метрика: заказы или оплаты в минуту.</span></li>
+      <li><span class="qq">Что такое трассировка и спан?</span><span class="aa">Трассировка — путь одного запроса через систему, спан — одна операция внутри неё с длительностью, атрибутами и ссылкой на родителя. Из спанов строится дерево, по которому сразу видно, куда ушло время: в своё приложение, в базу или во внешний сервис.</span></li>
+      <li><span class="qq">Зачем нужен сквозной идентификатор запроса?</span><span class="aa">Чтобы связать записи в логах приложения, веб-сервера, фоновых задач и внешних вызовов. Пользователь называет идентификатор из сообщения об ошибке — и вся история восстанавливается одним поиском. Это самая дешёвая мера наблюдаемости и обычно самая окупаемая.</span></li>
+      <li><span class="qq">Где чаще всего обрывается трассировка?</span><span class="aa">На границе очереди: сообщение публикуется без контекста, и фоновая обработка выглядит не связанной с исходным запросом. Второе типичное место — внешние вызовы без передачи заголовка. Контекст нужно протягивать во все исходящие направления явно.</span></li>
+      <li><span class="qq">Чем liveness отличается от readiness?</span><span class="aa">Liveness отвечает «процесс жив» и при провале перезапускает контейнер — поэтому в нём не должно быть внешних зависимостей. Readiness отвечает «готов принимать трафик» и при провале выводит экземпляр из балансировки; здесь критичные зависимости уместны. Проверка базы в liveness превращает отказ базы в перезапуск всего кластера.</span></li>
+      <li><span class="qq">Что такое синтетическая проверка?</span><span class="aa">Внешний робот, который регулярно проходит реальный пользовательский сценарий и сообщает, работает ли продукт снаружи. Она ловит то, чего не видит внутренний мониторинг: сломанный фронтенд, проблему с сертификатом, отказ у провайдера DNS — всё, при чём сервер отвечает, а пользователь не может работать.</span></li>
+      <li><span class="qq">Что показывает время ответа, а что — доля ошибок?</span><span class="aa">Это две независимые оси качества. Сервис может отвечать быстро и с ошибками либо медленно, но корректно. Поэтому смотрят обе и отдельно: рост задержки обычно указывает на зависимость или нагрузку, рост ошибок — на изменение в коде или конфигурации.</span></li>
+      <li><span class="qq">Что делать, если метрик нет вообще?</span><span class="aa">Начинать с самого дешёвого и полезного: сквозной идентификатор запроса, один структурированный лог на запрос с маршрутом, кодом ответа, длительностью и числом запросов к базе. Из этих логов уже можно посчитать RED-метрики и найти N+1, не разворачивая систему метрик.</span></li>
+      <li><span class="qq">Как понять, что в приложении N+1?</span><span class="aa">Записывать в лог каждого запроса счётчик обращений к базе. Скачок с трёх до двухсот на одном маршруте виден сразу и без профилировщика. Дополнительно помогает корреляция: число запросов растёт пропорционально размеру страницы или числу элементов в списке.</span></li>
+      <li><span class="qq">Зачем на графиках отметки релизов?</span><span class="aa">Потому что совпадение по времени объясняет большинство инцидентов. Без отметок первые пятнадцать минут расследования уходят на выяснение, что и когда выкатывали. С ними причина часто видна сразу: показатель изменился ровно в момент деплоя.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что и где вы инструментируете?</span><span class="aa">Границы — автоматически через middleware и обёртки: входящие запросы с маршрутом и кодом, запросы к базе, внешние вызовы, обработку сообщений, кэш. Домен — вручную: ключевые бизнес-действия с атрибутами. Спаны ставлю на границы и значимые операции, а не на каждый метод: иначе трассировка нечитаема и приложение замедляется.</span></li>
+      <li><span class="qq">Почему в метках должен быть маршрут, а не URL?</span><span class="aa">Потому что URL содержит идентификаторы, и каждая уникальная ссылка создаёт свой временной ряд. Шаблон маршрута даёт ограниченный набор значений и остаётся полезным для группировки. Это одна из самых частых причин взрыва кардинальности в первый же день боевой эксплуатации.</span></li>
+      <li><span class="qq">Зачем нужны бизнес-метрики, если есть технические?</span><span class="aa">Потому что бывает тихая авария: доступность сто процентов, ошибок нет, задержка отличная — а заказов ноль, потому что после релиза фронтенда сломалась кнопка оплаты. Технический мониторинг такого не увидит никогда. График ключевого бизнес-показателя должен висеть рядом с долей ошибок на главном экране.</span></li>
+      <li><span class="qq">Что такое RED и USE?</span><span class="aa">RED применяется к сервисам: rate — поток, errors — доля ошибок, duration — задержка. USE применяется к ресурсам: utilization — загрузка, saturation — очередь ожидания, errors — отказы. Первый отвечает на вопрос «плохо ли пользователю», второй — «во что мы упёрлись».</span></li>
+      <li><span class="qq">Что должно быть на главном дашборде?</span><span class="aa">Шесть-восемь панелей, отвечающих на вопрос «всё ли в порядке»: поток, доля ошибок, перцентили, ключевая бизнес-метрика, глубина очередей, занятость ресурсов. Обязательно отметки релизов и одинаковые оси времени. Всё остальное — на отдельных экранах, куда переходят уже с гипотезой.</span></li>
+      <li><span class="qq">Чем плох дашборд на шестьдесят панелей?</span><span class="aa">Тем, что в инциденте на нём невозможно найти нужное, а внимание рассеивается. Полезный дашборд отвечает на один конкретный вопрос и помещается на экран без прокрутки. Панели, которые никто не открывал полгода, стоит удалять — они разбавляют сигнал.</span></li>
+      <li><span class="qq">Каким должен быть алерт?</span><span class="aa">На симптом, который чувствует пользователь, а не на внутреннее отклонение: не «CPU 80 %», а «доля ошибок выше процента пять минут подряд». С условием по длительности, с уровнем срочности, со ссылкой на runbook и дашборд. И каждое срабатывание должно требовать действия — иначе алерт учит игнорировать оповещения.</span></li>
+      <li><span class="qq">Почему алерт на загрузку CPU — плохая идея?</span><span class="aa">Потому что высокая загрузка при нормальном времени ответа — это эффективное использование ресурсов, а не проблема. И наоборот: сервис может отвечать ошибками при низком CPU. Алертить нужно на то, что видит пользователь; ресурсные метрики полезны при расследовании, а не как повод разбудить человека.</span></li>
+      <li><span class="qq">Как бороться с усталостью от алертов?</span><span class="aa">Регулярной ревизией: раз в месяц смотреть список сработавших и по каждому спрашивать, потребовал ли он действия. Если нет — поднять порог, уточнить условие или удалить. Плюс разделение на «будит» и «задача на утро». Список, где половина срабатываний ложные, означает, что команда уже перестала доверять оповещениям.</span></li>
+      <li><span class="qq">Чем SLI отличается от SLO и SLA?</span><span class="aa">SLI — измеряемый показатель, например доля запросов быстрее 300 мс. SLO — внутренняя цель по нему, скажем 99,5 % за 30 дней. SLA — внешнее обязательство с санкцией, оно всегда мягче SLO, чтобы был запас. Обратная сторона SLO — бюджет ошибок.</span></li>
+      <li><span class="qq">Как выбрать хороший SLI?</span><span class="aa">С точки зрения пользователя и в виде доли: успешные запросы к общему числу, быстрые к общему числу, заказы, обработанные вовремя. Технические показатели вроде загрузки процессора или аптайма сервера не годятся: пользователю безразлично состояние сервера, если страница не открывается.</span></li>
+      <li><span class="qq">Что такое бюджет ошибок и как им пользоваться?</span><span class="aa">Допустимая доля «плохой» работы, обратная к SLO: при 99,9 % это около 43 минут в месяц. Пока бюджет не израсходован, команда свободно выкатывает изменения; когда исчерпан — приоритет смещается на надёжность. Это превращает спор «фичи или стабильность» в арифметику.</span></li>
+      <li><span class="qq">Что такое алерт по скорости расхода бюджета?</span><span class="aa">Оповещение не по порогу доли ошибок, а по темпу траты бюджета: «за час потрачено 5 % месячного» означает, что при таком темпе он кончится за двадцать часов. Такой алерт быстро реагирует на серьёзную аварию и молчит на мелких всплесках — в отличие от простого порога, который либо шумит, либо срабатывает поздно.</span></li>
+      <li><span class="qq">Как выбрать значение SLO?</span><span class="aa">Измерить фактический уровень за пару месяцев и поставить цель чуть выше. Недостижимая цель обесценивает практику: команда привыкает жить с нарушением. И наоборот, слишком мягкая цель не даёт сигнала. Разные сценарии могут иметь разные SLO: оплата строже, чем экспорт отчётов.</span></li>
+      <li><span class="qq">Пользователи жалуются на медленную работу. Порядок действий?</span><span class="aa">Уточнить симптом по метрикам: выросла ли задержка, у всех или на отдельных маршрутах, с какого момента. Сопоставить начало с релизами и изменениями конфигурации. Посмотреть трассировку медленного запроса — она сразу показывает, где ушло время. И только потом идти в логи по идентификатору за деталями.</span></li>
+      <li><span class="qq">Всё зелёное, а заказов нет. Что это?</span><span class="aa">Классическая тихая авария: бэкенд отвечает корректно, но пользователь не может завершить сценарий. Причина обычно вне бэкенда — фронтенд, платёжный провайдер, внешняя интеграция. Ловится только бизнес-метрикой и синтетической проверкой снаружи; технические сигналы здесь бесполезны.</span></li>
+      <li><span class="qq">Зачем трекер ошибок, если есть логи?</span><span class="aa">Он группирует одинаковые исключения и показывает то, чего нет в логах: частоту, динамику, привязку к релизу и число затронутых пользователей — то есть приоритет. Четыре тысячи одинаковых записей в логах выглядят как шум, а в трекере это одна запись со счётчиком и графиком появления.</span></li>
+      <li><span class="qq">Как профилировать приложение в проде?</span><span class="aa">Профилировщиком с сэмплированием: он снимает стек несколько сотен раз в секунду и добавляет единицы процентов накладных расходов, в отличие от отладочного профилировщика, который замедляет в разы. Профилируют долю трафика. Но обычно сначала надо смотреть число запросов к базе и объём данных — CPU в PHP-приложениях редко бывает главной причиной.</span></li>
+      <li><span class="qq">Что делать, если телеметрии не хватает прямо сейчас?</span><span class="aa">Действовать по горячим следам: снять данные, которые доступны (логи веб-сервера, состояние пула, активные запросы в базе), восстановить систему, а недостающее добавить сразу после — пока помнится, чего именно не хватило. Каждый такой случай стоит записывать: из них получается точный список задач по наблюдаемости.</span></li>
+      <li><span class="qq">Как проверить, что алерты работают?</span><span class="aa">Искусственной поломкой на стенде или в контролируемом окне: отключить зависимость, остановить воркеров, сгенерировать ошибки. Проверяется не только срабатывание, но и время до оповещения и то, кому оно пришло. Алерты, которые никогда не проверяли, регулярно оказываются неработающими именно в момент аварии.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как устроен конвейер телеметрии?</span><span class="aa">Приложение отдаёт сигналы агенту, тот буферизует и передаёт коллектору, коллектор обогащает контекстом и сэмплирует, дальше хранилища по типам сигналов и интерфейс с дашбордами и алертами. Ключевые требования: асинхронность, буфер на случай недоступности хранилища и независимость от наблюдаемой системы.</span></li>
+      <li><span class="qq">Почему телеметрия не должна отправляться синхронно?</span><span class="aa">Потому что медленное или недоступное хранилище начнёт замедлять, а затем ронять само приложение — авария наблюдаемости превратится в аварию сервиса. Отправка всегда асинхронна, с ограниченным буфером и правилом: при переполнении телеметрия отбрасывается, приложение продолжает работать.</span></li>
+      <li><span class="qq">Почему мониторинг должен быть вне наблюдаемого контура?</span><span class="aa">Потому что иначе он падает вместе с системой, и об аварии вы узнаете от пользователей. Хранилище метрик и отправка оповещений размещаются отдельно, плюс нужна независимая внешняя проверка, которая дёргает продукт снаружи и умеет сообщить, даже если внутри всё легло.</span></li>
+      <li><span class="qq">Как устроено сэмплирование трассировок?</span><span class="aa">Хранить всё при заметном трафике невыгодно. Решение в начале запроса дёшево, но теряет как раз ошибки и медленные запросы. Практичнее решение по результату: сохранять сто процентов упавших и медленных, редкие маршруты чаще, обычные успешные — процент. Требование — согласованность: решение принимается один раз на трассировку и передаётся по цепочке.</span></li>
+      <li><span class="qq">Что сэмплировать, а что нет?</span><span class="aa">Метрики не сэмплируются — они уже агрегированы и дёшевы. Трассировки сэмплируются почти всегда. Логи — обычно да, но с исключениями: ошибки, события безопасности и аудит сохраняются полностью, потому что именно они нужны при разборе и по ним могут быть внешние требования.</span></li>
+      <li><span class="qq">Счёт за телеметрию вырос вдвое. Что делаете?</span><span class="aa">Смотрю топ самых частых сообщений в логах: обычно две-три строки дают большую часть объёма, и это забытая отладочная запись. Проверяю уровень логирования и наличие тел запросов. Дальше сроки хранения — логи редко нужны дольше нескольких недель. И отдельно кардинальность метрик: одна метка способна съесть половину хранилища.</span></li>
+      <li><span class="qq">Как задавать сроки хранения по сигналам?</span><span class="aa">Разными. Метрики агрегированы и дёшевы — их держат год и дольше, они нужны для трендов и планирования ёмкости. Трассировки и логи приложения нужны по горячим следам: недели обычно достаточно. Логи безопасности и аудит хранятся отдельно и дольше, по требованиям. Единый срок для всего — либо переплата, либо потеря истории.</span></li>
+      <li><span class="qq">Как проводить ревизию телеметрии?</span><span class="aa">Раз в квартал: сколько временных рядов и какие метрики дают больше всего, есть ли метки с высоким разнообразием, какие метрики не используются ни в дашбордах, ни в алертах; топ сообщений в логах; когда каждый дашборд открывали в последний раз; сколько раз сработал каждый алерт и сколько раз потребовал действия. Находки обычно предсказуемы и существенны.</span></li>
+      <li><span class="qq">Как связать метрики, логи и трассировки?</span><span class="aa">Сквозным идентификатором и общими именами атрибутов во всех сервисах: из гистограммы задержки переход в конкретные медленные трассировки, из трассировки — в логи, у ошибок — привязка к версии релиза. Самая частая проблема не техническая, а договорная: сервисы называют идентификатор по-разному. Поэтому соглашение фиксируется письменно и проверяется на ревью.</span></li>
+      <li><span class="qq">Зачем возвращать идентификатор запроса пользователю?</span><span class="aa">Чтобы обращение в поддержку начиналось с готового ключа поиска. Пользователь называет идентификатор из сообщения об ошибке — и вся история, включая фоновую обработку и внешние вызовы, восстанавливается одним запросом. Без этого расследование начинается с попытки угадать время и найти нужный запрос среди тысяч.</span></li>
+      <li><span class="qq">Почему разработчики должны дежурить по своему коду?</span><span class="aa">Потому что это единственный надёжный способ сделать телеметрию хорошей. Человек, которого ночью разбудил его же непонятный алерт, на следующий день добавит контекст в логи и уточнит порог. Когда эксплуатирует одна команда, а пишет другая, обратная связь не замыкается, и наблюдаемость остаётся на уровне «что успели».</span></li>
+      <li><span class="qq">Какой главный вопрос при разборе инцидента?</span><span class="aa">Не «кто виноват» и даже не «какова причина», а «почему мы узнали об этом от пользователей». Причину обычно находят быстро, а слепое пятно в наблюдаемости остаётся и приводит к следующему такому же инциденту. Поэтому в действиях после разбора почти всегда должен быть пункт про телеметрию.</span></li>
+      <li><span class="qq">Как включить наблюдаемость в процесс разработки?</span><span class="aa">Через определение готовности функции: есть метрика ключевого действия, ошибки видны в трекере с контекстом, в логах есть сквозной идентификатор, известно, какой алерт сработает при поломке. Это добавляется за час при разработке и не добавляется никогда, если отложено «на потом».</span></li>
+      <li><span class="qq">Как понять, что наблюдаемости достаточно?</span><span class="aa">По двум числам: время от возникновения проблемы до обнаружения и от обнаружения до нахождения причины. Если узнаём от пользователей — не хватает алертов и бизнес-метрик. Если ищем причину часами — не хватает контекста, трассировок и связок между сигналами. Отдельный признак — приходится ли добавлять логирование и ждать повторения.</span></li>
+      <li><span class="qq">Какие антипаттерны наблюдаемости встречаются чаще всего?</span><span class="aa">Логирование всего подряд, идентификаторы в метках метрик, алерты на каждое отклонение, средние вместо перцентилей, дашборд на шестьдесят панелей, отсутствие бизнес-метрик и мониторинг внутри наблюдаемой системы. Самый опасный — синхронная отправка телеметрии: отказ хранилища логов роняет приложение.</span></li>
+      <li><span class="qq">Как измерять качество самой наблюдаемости?</span><span class="aa">Долей инцидентов, обнаруженных мониторингом, а не пользователями; средним временем до обнаружения и до нахождения причины; долей алертов, потребовавших действия; числом случаев, когда во время инцидента пришлось подключаться по SSH, потому что телеметрия не отвечала на вопрос. Последнее — самый честный и самый недооценённый показатель.</span></li>
+      <li><span class="qq">Как выстроить наблюдаемость в проекте, где её нет?</span><span class="aa">По порядку окупаемости: сквозной идентификатор и один структурированный лог на запрос; RED-метрики и бизнес-метрика; главный дашборд с отметками релизов; два-три алерта на симптомы с runbook; трекер ошибок; трассировки в последнюю очередь. Каждый шаг даёт пользу сам по себе, поэтому его можно остановить в любой момент.</span></li>
+      <li><span class="qq">Что делать, если алертов слишком много?</span><span class="aa">Не отключать выборочно, а провести ревизию: по каждому посмотреть число срабатываний и число потребовавших действия. Алерты без действий удалить или превратить в задачи на утро. Оставшиеся привязать к симптомам и снабдить runbook. Цель — состояние, когда любое срабатывание воспринимается всерьёз.</span></li>
+      <li><span class="qq">Как проверять, что наблюдаемость работает?</span><span class="aa">Учениями: контролируемая поломка на стенде или в окне — отключить зависимость, остановить воркеров, сгенерировать ошибки — и замер, за сколько сработал алерт, кому пришёл, хватило ли данных для диагностики. Это же выявляет неработающие алерты, которых в любой системе накапливается заметное количество.</span></li>
+      <li><span class="qq">Как выглядит зрелая наблюдаемость?</span><span class="aa">О проблемах узнаём от мониторинга, а не от пользователей. Путь от алерта к причине занимает минуты и идёт по связкам: метрика, трассировка, логи. Алертов немного, и каждый требует действия. Есть SLO с бюджетом ошибок. Стоимость управляема и известна. И в каждом разборе инцидента есть пункт о том, чего не хватило в телеметрии.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Наблюдаемость проверяется не настройкой инструментов, а способностью ответить на вопрос о работающей системе. Почти все задания выполняются на рабочем проекте и сразу окупаются.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Пять вопросов к своей системе</h4>
+    <p>Попробуйте ответить, не трогая код: сколько сейчас запросов в секунду и какая доля ошибок; что было в момент вчерашнего всплеска; сколько занял конкретный запрос и на что; какой внешний сервис тормозит; что изменилось после релиза.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список вопросов без ответа — это и есть точный план работ по наблюдаемости.</div>
+
+    <h4>2. Структурированные логи</h4>
+    <p>Переведите логирование на структурированный формат в stdout: постоянное сообщение, контекст полями, обязательный сквозной идентификатор. Проверьте, что по идентификатору находится вся история запроса.</p>
+    <div class="box task"><span class="lbl">Результат</span>Поиск по идентификатору, возвращающий полную картину одного запроса.</div>
+
+    <h4>3. Один лог на запрос</h4>
+    <p>Добавьте middleware, пишущий на каждый запрос одну запись: маршрут, код ответа, длительность, число запросов к базе, идентификатор пользователя. Найдите по этим данным три самых медленных маршрута и один случай N+1.</p>
+    <div class="box task"><span class="lbl">Результат</span>Найденный N+1 без профилировщика и список медленных маршрутов.</div>
+
+    <h4>4. Первые метрики</h4>
+    <p>Добавьте счётчик запросов с метками маршрута, метода и кода и гистограмму времени ответа с границами под ваши цели. Проверьте кардинальность: сколько временных рядов получилось.</p>
+    <div class="box task"><span class="lbl">Результат</span>RED-метрики и осознанное понимание, сколько рядов создаёт каждая метка.</div>
+
+    <h4>5. Проверки здоровья</h4>
+    <p>Разделите liveness и readiness, вынесите некритичные зависимости в разряд «деградация». Смоделируйте отказ второстепенного сервиса и убедитесь, что приложение не выводится из ротации.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отказ кэша приводит к замедлению, а не к отказу всего сервиса.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Сквозной контекст</h4>
+    <p>Протяните идентификатор запроса через все границы: внешние HTTP-вызовы, сообщения в очередь, фоновые обработчики, ответ клиенту. Проверьте, что по идентификатору видна и фоновая обработка.</p>
+    <div class="box task"><span class="lbl">Результат</span>Полная история запроса, включая то, что произошло через минуты после ответа пользователю.</div>
+
+    <h4>7. Главный дашборд</h4>
+    <p>Соберите один экран из шести-восьми панелей: поток, ошибки, перцентили, бизнес-метрика, очереди, ресурсы. Добавьте отметки релизов и ссылки на логи с тем же фильтром.</p>
+    <div class="box task"><span class="lbl">Результат</span>Экран, по которому за десять секунд видно состояние системы, и проверка на реальном всплеске.</div>
+
+    <h4>8. Ревизия алертов</h4>
+    <p>Выпишите все существующие алерты, для каждого посчитайте число срабатываний за квартал и число потребовавших действия. Удалите или переделайте те, что не требовали действий, остальным добавьте runbook.</p>
+    <div class="box task"><span class="lbl">Результат</span>Сокращённый список алертов, каждому из которых можно доверять.</div>
+
+    <h4>9. SLO и бюджет ошибок</h4>
+    <p>Определите SLI для двух ключевых сценариев, измерьте фактический уровень за 90 дней, поставьте достижимый SLO и настройте алерт по скорости расхода бюджета.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ с целями и работающий алерт, который молчит на мелочах и срабатывает на серьёзном.</div>
+
+    <h4>10. Разбор прошлого инцидента</h4>
+    <p>Возьмите инцидент прошлого квартала и пройдите путь заново по имеющейся телеметрии: что, когда, где, что конкретно. Отметьте, на каком шаге данных не хватило.</p>
+    <div class="box task"><span class="lbl">Результат</span>Конкретный список пробелов — гораздо полезнее абстрактного «надо добавить метрик».</div>
+
+    <h4>11. Трекер ошибок с контекстом</h4>
+    <p>Настройте трекер: маршрут, версия релиза, арендатор, идентификатор пользователя, ссылка на трассировку, фильтрация чувствительных данных. Разберите топ-5 ошибок по числу затронутых пользователей.</p>
+    <div class="box task"><span class="lbl">Результат</span>Приоритизированный список ошибок по реальному влиянию, а не по частоте в логах.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Учения по алертам</h4>
+    <p>В контролируемом окне устройте четыре поломки: отключите зависимость, остановите воркеров, сгенерируйте ошибки, замедлите внешний вызов. Замерьте, за сколько сработал алерт, кому пришёл и хватило ли данных для диагностики.</p>
+    <div class="box task"><span class="lbl">Результат</span>Протокол с временем обнаружения по каждому сценарию и список неработающих алертов.</div>
+
+    <h4>13. Ревизия стоимости</h4>
+    <p>Посчитайте объёмы по сигналам, найдите топ метрик по числу рядов и топ сообщений по объёму логов, проверьте сроки хранения и неиспользуемые дашборды. Сократите объём, не теряя диагностической ценности.</p>
+    <div class="box task"><span class="lbl">Результат</span>Числа до и после плюс понимание, за что именно вы платите.</div>
+
+    <h4>14. Связки между сигналами</h4>
+    <p>Обеспечьте переходы: с графика перцентилей — в конкретные трассировки, из трассировки — в логи, из ошибки — в релиз. Зафиксируйте письменно соглашение об именах атрибутов для всех сервисов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Путь от графика до строки лога за три клика и документ, который держит единообразие.</div>
+
+    <h4>15. Наблюдаемость в определении готовности</h4>
+    <p>Сформулируйте для команды минимум наблюдаемости новой функции и примените его к ближайшей задаче: метрика ключевого действия, ошибки с контекстом, идентификатор в логах, известный алерт на поломку.</p>
+    <div class="box task"><span class="lbl">Результат</span>Пункт в чек-листе готовности и первая функция, выкатанная с телеметрией с первого дня.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Тема прикладная: каждое задание выполняется на рабочем проекте, и почти каждое находит реальную проблему уже в процессе.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Три сигнала</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Наблюдаемость против мониторинга, роли трёх сигналов, структурированные логи и уровни, что не должно попадать в логи, типы метрик и кардинальность, минимальный набор метрик, спаны и сквозной контекст, liveness и readiness.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: пять вопросов к системе, структурированные логи, один лог на запрос, первые метрики, разделение проверок здоровья.</li>
+      <li>Найти в проекте метки метрик с высоким разнообразием и убрать их.</li>
+      <li>Проверить, что чувствительные данные не попадают в логи.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Структурированные логи со сквозным идентификатором, базовые метрики без взрыва кардинальности и найденный N+1.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Чем наблюдаемость отличается от мониторинга?</li>
+      <li>На какой вопрос отвечает каждый из трёх сигналов?</li>
+      <li>Что такое кардинальность и чем она опасна?</li>
+      <li>Почему перцентили лучше средних?</li>
+      <li>Зачем нужен сквозной идентификатор запроса?</li>
+      <li>Чем liveness отличается от readiness?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Приборы и дашборды</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Автоматическое и ручное инструментирование, middleware для метрик и контекста, бизнес-метрики и тихие аварии, RED и USE, устройство набора дашбордов, отметки релизов, антипаттерны панелей.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6 и 7: сквозной контекст через очереди и внешние вызовы, главный дашборд на одном экране.</li>
+      <li>Добавить хотя бы одну бизнес-метрику и вывести её рядом с долей ошибок.</li>
+      <li>Проверить дашборды: когда каждый открывали в последний раз.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Инструментированные границы, работающие связки через очереди и главный экран, отвечающий на вопрос «всё ли в порядке».</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что инструментировать автоматически, а что вручную?</li>
+      <li>Почему в метках маршрут, а не URL?</li>
+      <li>Зачем бизнес-метрики при зелёных технических?</li>
+      <li>Что такое RED и USE?</li>
+      <li>Что должно быть на главном дашборде?</li>
+      <li>Где чаще всего обрывается трассировка?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Алерты, цели, расследование</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Алерты на симптомы против алертов на причины, пороги и длительность, runbook и уровни срочности, усталость от алертов, SLI и SLO, бюджет ошибок и скорость расхода, порядок расследования инцидента, трекер ошибок и профилирование в проде.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 8–11: ревизия алертов, SLO с бюджетом ошибок, разбор прошлого инцидента по телеметрии, трекер ошибок с контекстом.</li>
+      <li>Пройти путь «что, когда, где, что конкретно» на свежем всплеске в графиках.</li>
+      <li>Посчитать, сколько времени занимает переход от алерта к гипотезе о причине.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Сокращённый список алертов с runbook, определённые SLO и найденные пробелы телеметрии по итогам разбора инцидента.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Каким должен быть хороший алерт?</li>
+      <li>Почему алерт на CPU — плохая идея?</li>
+      <li>Как выбрать SLI и значение SLO?</li>
+      <li>Что такое алерт по скорости расхода бюджета?</li>
+      <li>Каков порядок расследования инцидента?</li>
+      <li>Зачем трекер ошибок при наличии логов?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Система, стоимость, культура</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Конвейер телеметрии и его отказы, независимость мониторинга, сэмплирование по результату, стоимость и ревизия, сроки хранения по сигналам, корреляция и соглашения об именах, дежурство и разборы, наблюдаемость в определении готовности, антипаттерны.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: учения по алертам, ревизия стоимости, связки между сигналами, наблюдаемость в определении готовности.</li>
+      <li>Проверить, переживёт ли мониторинг падение основного кластера.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд, с числами и порядком действий.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Протокол учений с временем обнаружения, сокращённая стоимость телеметрии, работающие связки между сигналами и пункт в чек-листе готовности.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как устроен конвейер телеметрии и его требования?</li>
+      <li>Почему телеметрия отправляется асинхронно?</li>
+      <li>Как устроено сэмплирование по результату?</li>
+      <li>Какие сроки хранения задавать разным сигналам?</li>
+      <li>Как связать метрики, логи и трассировки?</li>
+      <li>Какой главный вопрос при разборе инцидента?</li>
+      <li>Как измерять качество самой наблюдаемости?</li>
+      <li>С чего начинать, если наблюдаемости нет вообще?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы про наблюдаемость</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Отвечайте порядком действий, а не списком инструментов.</strong> «У нас Grafana и ELK» — ничего не говорит. «При жалобе на медленную работу смотрю метрики по маршрутам, сопоставляю с релизами, беру трассировку медленного запроса, дальше логи по идентификатору» — это ответ.</li>
+      <li><strong>Называйте числа.</strong> Какое SLO, сколько алертов, за сколько узнаёте о проблеме, сколько занимает поиск причины, сколько стоит хранение. Числа мгновенно отличают эксплуатацию от чтения статей.</li>
+      <li><strong>Говорите о цене.</strong> Наблюдаемость стоит денег и внимания. Умение сказать «отказались от полного хранения трассировок, сэмплируем по результату» показывает, что вы принимали решения, а не только включали инструменты.</li>
+      <li><strong>Помните про бизнес-метрики.</strong> Упоминание тихой аварии — зелёные технические показатели при нулевых заказах — почти всегда производит впечатление, потому что показывает, что вы думаете о продукте, а не только о серверах.</li>
+      <li><strong>Держите наготове историю расследования.</strong> Инцидент, где телеметрия помогла найти причину за минуты, и инцидент, где её не хватило и что вы после этого добавили. Второе даже ценнее.</li>
+      <li><strong>Не защищайте избыточность.</strong> Дашборд на шестьдесят панелей и сто алертов — не достижение. Сильная позиция: немного алертов, каждому из которых доверяют, и один экран, отвечающий на главный вопрос.</li>
+      <li><strong>Приносите артефакты.</strong> Скриншот главного дашборда, документ с SLO, протокол учений по алертам, список пробелов телеметрии после разбора инцидента.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Наблюдаемость и мониторинг» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

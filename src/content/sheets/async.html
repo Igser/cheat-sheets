@@ -1,0 +1,1336 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · воркеры · корутины · реальное время</p>
+  <h1>Асинхронный PHP и реальное время</h1>
+  <p class="lead">Классический PHP устроен предельно просто: процесс рождается на запрос, выполняет код и умирает, ничего после себя не оставляя. Эта модель — причина того, что на PHP легко писать и почти невозможно случайно уронить приложение утечкой памяти: любую грязь убирает смерть процесса. Она же — причина всех ограничений, о которых эта тема: нельзя держать соединение, нельзя ничего накопить между запросами, нельзя делать два дела одновременно.</p>
+  <p class="lead">Выйти за эти рамки можно тремя разными способами, и их постоянно путают. Вынести работу в фоновую задачу — это про то, чтобы пользователь не ждал. Поднять долгоживущий процесс на RoadRunner или Swoole — это про то, чтобы не платить за загрузку фреймворка на каждом запросе. Использовать корутины и конкурентный ввод-вывод — это про то, чтобы ждать несколько внешних сервисов одновременно, а не по очереди. Задачи разные, и решения между собой не заменяются.</p>
+  <p class="lead">Конспект идёт от модели выполнения к эксплуатации: shared-nothing и её цена, фоновые задачи и воркеры, способы доставить данные в браузер → долгоживущие процессы и утечки состояния, Fibers, конкурентные запросы, WebSocket на практике → выбор подхода, масштабирование соединений, надёжность и эксплуатация. Смежные темы: <a href="messaging.html">брокеры сообщений</a>, <a href="performance.html">производительность</a>, <a href="infrastructure.html">инфраструктура</a>, <a href="http-api.html">HTTP и API</a>, <a href="php.html">PHP</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Модель shared-nothing и её цена, фоновые задачи, cron и supervisor, четыре способа доставить данные в браузер.</span></div>
+    <div class="aud m"><b>Middle</b><span>RoadRunner, Swoole и FrankenPHP, утечки состояния между запросами, Fibers и корутины, конкурентные запросы, Centrifugo и Mercure.</span></div>
+    <div class="aud s"><b>Senior</b><span>Когда асинхронность не нужна, масштабирование соединений, переподключения и восстановление состояния, эксплуатация воркеров, антипаттерны.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>15</i></span>
+    <span>Блоков кода: <i>12</i></span>
+    <span>Сравнительных таблиц: <i>26</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#why">Модель выполнения PHP</a></li>
+    <li><span class="tree">├─</span> <a href="#models">Три способа уйти от синхронности</a></li>
+    <li><span class="tree">├─</span> <a href="#background">Фоновые задачи и воркеры</a></li>
+    <li><span class="tree">├─</span> <a href="#delivery">Как данные попадают в браузер</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#runtimes">Долгоживущие процессы</a></li>
+    <li><span class="tree">├─</span> <a href="#state">Утечки состояния</a></li>
+    <li><span class="tree">├─</span> <a href="#fibers">Fibers и корутины</a></li>
+    <li><span class="tree">├─</span> <a href="#concurrent">Конкурентные запросы</a></li>
+    <li><span class="tree">├─</span> <a href="#ws">WebSocket на практике</a></li>
+    <li><span class="tree">├─</span> <a href="#sse">SSE и долгие операции</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#choose">Когда это не нужно</a></li>
+    <li><span class="tree">├─</span> <a href="#scale">Масштабирование соединений</a></li>
+    <li><span class="tree">├─</span> <a href="#reliability">Надёжность реального времени</a></li>
+    <li><span class="tree">├─</span> <a href="#ops">Эксплуатация воркеров</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Антипаттерны</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Команды и шаблоны</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · модель выполнения</p>
+    <h2>Junior: как PHP выполняет запрос и что из этого следует</h2>
+    <p>Почти все особенности темы вытекают из одного факта: обычный процесс PHP живёт ровно один запрос. Понимание этой модели — что она даёт, чего лишает и какими способами её обходят — важнее знания названий конкретных инструментов.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="why">
+    <p class="path">junior / модель</p>
+    <div class="card-top"><h3>Модель выполнения PHP</h3><span class="badge b-1">База</span></div>
+    <p>При каждом запросе PHP-FPM берёт свободный процесс, тот подключает файлы, поднимает контейнер зависимостей, выполняет код, отдаёт ответ и полностью очищает память. Следующий запрос начинается с чистого листа и, скорее всего, попадёт в другой процесс. Такая модель называется shared-nothing — процессы ничего не разделяют между собой.</p>
+
+    <div class="flow" role="img" aria-label="Жизненный цикл обычного запроса PHP">
+      <div class="node">Запрос<small>приходит в FPM</small></div><span class="arr">→</span>
+      <div class="node">Загрузка<small>файлы, контейнер, конфиг</small></div><span class="arr">→</span>
+      <div class="node">Выполнение<small>ваш код</small></div><span class="arr">→</span>
+      <div class="node">Ответ<small>отдан клиенту</small></div><span class="arr">→</span>
+      <div class="node">Смерть<small>вся память очищена</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · что даёт и что отнимает shared-nothing</caption>
+      <thead><tr><th>Свойство</th><th>Следствие в плюс</th><th>Следствие в минус</th></tr></thead>
+      <tbody>
+        <tr><td>Память очищается после запроса</td><td>Утечка живёт миллисекунды и никого не беспокоит</td><td>Ничего нельзя накопить между запросами</td></tr>
+        <tr><td>Процессы изолированы</td><td>Ошибка в одном запросе не влияет на другие</td><td>Нет общего состояния, нужен внешний кэш</td></tr>
+        <tr><td>Фреймворк загружается заново</td><td>Код всегда актуален, деплой прост</td><td>Постоянные накладные расходы на каждый запрос</td></tr>
+        <tr><td>Один процесс — один запрос</td><td>Простая модель, легко отлаживать</td><td>Одновременных запросов ровно столько, сколько процессов</td></tr>
+        <tr><td>Соединения открываются заново</td><td>Нет проблем с их состоянием</td><td>Нельзя держать открытым канал к клиенту</td></tr>
+        <tr><td>Код исполняется до ответа</td><td>Всё предсказуемо и последовательно</td><td>Долгая работа задерживает пользователя</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Простота этой модели — не недостаток, а причина, по которой на PHP можно писать быстро и относительно безопасно. Утечка памяти, циклическая ссылка, забытый ресурс, глобальная переменная — в обычном запросе всё это не имеет последствий, потому что процесс умрёт через сто миллисекунд. Как только вы переходите к долгоживущим процессам, эта страховка исчезает, и код, который годами работал, может начать съедать память.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему PHP считают синхронным языком?</b><br>Дело не в языке, а в типичной модели запуска: FPM даёт один процесс на один запрос, код выполняется последовательно сверху вниз, а любое ожидание — базы, файла, внешнего API — блокирует процесс целиком. Сам язык давно умеет и генераторы, и файберы, и неблокирующий ввод-вывод; ограничение создаёт окружение. При запуске под RoadRunner или Swoole модель меняется, и тот же код начинает жить по другим правилам.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="models">
+    <p class="path">junior / карта</p>
+    <div class="card-top"><h3>Три способа уйти от синхронности</h3><span class="badge b-1">Карта</span></div>
+    <p>Три подхода решают три разные задачи, и путаница между ними — самая частая ошибка в разговорах на эту тему. Прежде чем выбирать инструмент, стоит понять, какая из трёх проблем у вас на самом деле.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · три подхода и их задачи</caption>
+      <thead><tr><th>Подход</th><th>Какую проблему решает</th><th>Чем реализуется</th><th>Чего не решает</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Фоновая обработка</strong></td><td>Пользователь не должен ждать долгую работу</td><td>Очередь и воркеры, cron, отложенные задачи</td><td>Не ускоряет сам запрос, если работа нужна для ответа</td></tr>
+        <tr><td><strong>Долгоживущий процесс</strong></td><td>Не платить за загрузку фреймворка каждый раз</td><td>RoadRunner, Swoole, FrankenPHP</td><td>Не делает ввод-вывод параллельным сам по себе</td></tr>
+        <tr><td><strong>Конкурентный ввод-вывод</strong></td><td>Ждать несколько внешних вызовов одновременно</td><td>Fibers, curl_multi, асинхронные клиенты</td><td>Не ускоряет вычисления, не убирает работу</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="formula">пять вызовов по 200 мс подряд = 1000 мс<span>те же пять вызовов одновременно = около 200 мс — вот что даёт конкурентный ввод-вывод</span></div>
+
+    <p><strong>Практический пример на всех трёх.</strong> Страница оформления заказа: сохраняет заказ, проверяет промокод во внешнем сервисе, запрашивает три варианта доставки у трёх служб, отправляет письмо и обновляет поисковый индекс. Письмо и индекс — фоновая обработка. Три запроса к службам доставки — конкурентный ввод-вывод: 600 мс превращаются в 200. Загрузка фреймворка на каждый такой запрос — долгоживущий процесс. Три инструмента, три разных выигрыша, и ни один не заменяет другой.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · какой подход выбрать по симптому</caption>
+      <thead><tr><th>Симптом</th><th>Подход</th></tr></thead>
+      <tbody>
+        <tr><td>Пользователь ждёт отправки письма или генерации документа</td><td>Фоновая обработка</td></tr>
+        <tr><td>В профиле видно, что 60 мс уходит на загрузку до вашего кода</td><td>Долгоживущий процесс</td></tr>
+        <tr><td>Страница ждёт четыре внешних сервиса по очереди</td><td>Конкурентный ввод-вывод</td></tr>
+        <tr><td>Нужно показать пользователю прогресс длинной операции</td><td>Фоновая обработка плюс канал доставки</td></tr>
+        <tr><td>Нужно мгновенно уведомить тысячи открытых вкладок</td><td>Отдельный сервер реального времени</td></tr>
+        <tr><td>Нужно обработать миллион строк по расписанию</td><td>Фоновая обработка, консольная команда</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Порядок внедрения почти всегда такой: сначала фоновая обработка, потом конкурентный ввод-вывод, и только потом долгоживущие процессы. Первое даёт наибольший выигрыш для пользователя и почти ничего не ломает; последнее даёт меньше всего и требует пересмотра кода на предмет утечек состояния.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="background">
+    <p class="path">junior / фон</p>
+    <div class="card-top"><h3>Фоновые задачи и воркеры</h3><span class="badge b-1">Практика</span></div>
+    <p>Фоновая задача — это работа, которая выполняется после того, как пользователь получил ответ. Запрос кладёт задание в очередь, отдельный процесс-воркер его забирает и выполняет. Воркер здесь — обычная консольная команда PHP, запущенная в цикле и живущая долго.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · способы запустить фоновую работу</caption>
+      <thead><tr><th>Способ</th><th>Когда уместен</th><th>Ограничения</th></tr></thead>
+      <tbody>
+        <tr><td>Очередь и воркер</td><td>Основной способ: письма, индексация, документы</td><td>Нужен брокер и присмотр за воркерами</td></tr>
+        <tr><td>Cron по расписанию</td><td>Регулярная работа: отчёты, очистка, сверки</td><td>Минимальный шаг — минута, наложение запусков</td></tr>
+        <tr><td>Отложенная задача с задержкой</td><td>«Напомнить через час», повторы</td><td>Поддержка задержек нужна от брокера</td></tr>
+        <tr><td>Выполнение после ответа</td><td>Мелочь вроде отправки метрики</td><td>Процесс всё равно занят, при сбое задача теряется</td></tr>
+        <tr><td>Запуск процесса из кода</td><td>Почти никогда</td><td>Нет контроля, нет повторов, легко забить сервер</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Долгоживущий воркер: обязательные детали</span></div><pre><span class="cm">// консольная команда, которая живёт часами — уже не обычный скрипт</span>
+<span class="kw">final class</span> <span class="nm">WorkerCommand</span>
+{
+    <span class="kw">private bool</span> <span class="nm">$shouldStop</span> = <span class="kw">false</span>;
+
+    <span class="kw">public function</span> <span class="fn">run</span>(): <span class="kw">int</span>
+    {
+        <span class="cm">// 1. Мягкая остановка: дорабатываем задачу и выходим,</span>
+        <span class="cm">//    а не умираем посреди обработки</span>
+        <span class="fn">pcntl_async_signals</span>(<span class="kw">true</span>);
+        <span class="fn">pcntl_signal</span>(SIGTERM, <span class="kw">fn</span>() =&gt; <span class="nm">$this</span>-&gt;shouldStop = <span class="kw">true</span>);
+        <span class="fn">pcntl_signal</span>(SIGINT,  <span class="kw">fn</span>() =&gt; <span class="nm">$this</span>-&gt;shouldStop = <span class="kw">true</span>);
+
+        <span class="nm">$processed</span> = 0;
+
+        <span class="kw">while</span> (!<span class="nm">$this</span>-&gt;shouldStop) {
+            <span class="nm">$job</span> = <span class="nm">$this</span>-&gt;queue-&gt;<span class="fn">pop</span>(timeout: 5);
+            <span class="kw">if</span> (<span class="nm">$job</span> === <span class="kw">null</span>) {
+                <span class="kw">continue</span>;
+            }
+
+            <span class="kw">try</span> {
+                <span class="nm">$this</span>-&gt;handler-&gt;<span class="fn">handle</span>(<span class="nm">$job</span>);
+                <span class="nm">$this</span>-&gt;queue-&gt;<span class="fn">ack</span>(<span class="nm">$job</span>);
+            } <span class="kw">catch</span> (<span class="nm">\Throwable</span> <span class="nm">$e</span>) {
+                <span class="nm">$this</span>-&gt;logger-&gt;<span class="fn">error</span>(<span class="st">'job.failed'</span>, [<span class="st">'id'</span> =&gt; <span class="nm">$job</span>-&gt;id, <span class="st">'e'</span> =&gt; <span class="nm">$e</span>]);
+                <span class="nm">$this</span>-&gt;queue-&gt;<span class="fn">retryOrBury</span>(<span class="nm">$job</span>);
+            } <span class="kw">finally</span> {
+                <span class="cm">// 2. Чистим состояние: иначе ORM накопит все сущности</span>
+                <span class="nm">$this</span>-&gt;entityManager-&gt;<span class="fn">clear</span>();
+            }
+
+            <span class="cm">// 3. Плановый перезапуск: страховка от медленных утечек</span>
+            <span class="kw">if</span> (++<span class="nm">$processed</span> &gt;= 500
+                || <span class="fn">memory_get_usage</span>(<span class="kw">true</span>) &gt; 200 * 1024 * 1024) {
+                <span class="kw">break</span>;   <span class="cm">// supervisor поднимет новый процесс</span>
+            }
+        }
+
+        <span class="kw">return</span> 0;
+    }
+}
+</pre></div>
+
+    <p><strong>Три вещи, без которых воркер рано или поздно ломается:</strong> обработка сигнала остановки, очистка состояния между задачами и плановый перезапуск по счётчику или памяти. Первое нужно для деплоя без потерь, второе — против роста памяти, третье — страховка от утечек, которые вы не нашли.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Воркер должен быть под присмотром процесса-надзирателя — supervisor, systemd или планировщик контейнеров. Он перезапускает упавшие процессы, держит нужное количество и корректно останавливает при деплое. Воркер, запущенный вручную через <span class="nm">nohup</span>, обязательно умрёт в пятницу вечером, и никто об этом не узнает до понедельника.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Обработка задачи, не рассчитанная на повтор. Воркер может упасть между выполнением работы и подтверждением задачи, и она придёт снова. Если обработчик отправляет письмо и не проверяет, отправлял ли уже, пользователь получит два письма. Любая фоновая задача должна быть идемпотентной — по ключу, по признаку в базе или по проверке состояния.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="delivery">
+    <p class="path">junior / доставка</p>
+    <div class="card-top"><h3>Как данные попадают в браузер</h3><span class="badge b-1">Транспорт</span></div>
+    <p>Если данные появились на сервере — завершилась фоновая задача, пришло новое сообщение, изменился статус заказа, — их нужно как-то доставить в открытую вкладку. Способов четыре, и выбор между ними определяется не модой, а требованиями к задержке и направлению обмена.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · четыре способа доставки</caption>
+      <thead><tr><th>Способ</th><th>Как работает</th><th>Направление</th><th>Задержка</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Периодический опрос</strong></td><td>Браузер спрашивает раз в N секунд</td><td>Только запрос-ответ</td><td>До N секунд</td></tr>
+        <tr><td><strong>Долгий опрос</strong></td><td>Сервер держит запрос, пока не появится событие</td><td>Только запрос-ответ</td><td>Почти мгновенно</td></tr>
+        <tr><td><strong>SSE</strong></td><td>Один открытый ответ, сервер дописывает события</td><td>Только от сервера</td><td>Мгновенно</td></tr>
+        <tr><td><strong>WebSocket</strong></td><td>Постоянное двустороннее соединение</td><td>В обе стороны</td><td>Мгновенно</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · что выбрать под задачу</caption>
+      <thead><tr><th>Задача</th><th>Разумный выбор</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Статус фоновой задачи или отчёта</td><td>Периодический опрос</td><td>Раз в 2 секунды достаточно, ничего не нужно поднимать</td></tr>
+        <tr><td>Счётчик уведомлений в шапке</td><td>Периодический опрос или SSE</td><td>Задержка в несколько секунд незаметна</td></tr>
+        <tr><td>Лента событий, только чтение</td><td>SSE</td><td>Однонаправленно, работает поверх обычного HTTP</td></tr>
+        <tr><td>Чат, совместное редактирование</td><td>WebSocket</td><td>Нужен обмен в обе стороны с низкой задержкой</td></tr>
+        <tr><td>Онлайн-игра, торги, аукцион</td><td>WebSocket</td><td>Критична задержка и двусторонность</td></tr>
+        <tr><td>Прогресс загрузки файла</td><td>SSE или опрос</td><td>Данные идут только от сервера</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Начинать почти всегда стоит с опроса.</strong> Он не требует ни отдельного сервера, ни изменений в инфраструктуре, ни новых знаний, а для большинства задач задержка в две секунды абсолютно приемлема. WebSocket добавляет постоянные соединения, отдельный процесс, аутентификацию, переподключения и масштабирование — это оправдано, когда задача действительно требует двустороннего обмена, а не когда «хочется по-современному».</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем SSE отличается от WebSocket и когда чего достаточно?</b><br>SSE — это обычный HTTP-ответ, который сервер не закрывает и дописывает в него события. Он однонаправленный (только сервер к клиенту), работает через привычные прокси и балансировщики, автоматически переподключается силами браузера и умеет продолжать с последнего идентификатора события. WebSocket — отдельный протокол после апгрейда соединения, двусторонний, но требует своей инфраструктуры и ручной обработки переподключений. Если клиент только получает данные — уведомления, лента, прогресс — достаточно SSE, и это заметно дешевле в эксплуатации.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card lvl-j" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Проверка</span></div>
+    <p>Что должно быть понятно перед переходом на следующий уровень.</p>
+    <ul class="check">
+      <li>Описать жизненный цикл обычного запроса PHP и объяснить, что такое shared-nothing.</li>
+      <li>Назвать по три следствия этой модели в плюс и в минус.</li>
+      <li>Различать три подхода — фоновую обработку, долгоживущий процесс и конкурентный ввод-вывод — и сказать, какую задачу решает каждый.</li>
+      <li>Разложить сценарий оформления заказа на эти три подхода.</li>
+      <li>Написать воркер с обработкой сигнала остановки, очисткой состояния и плановым перезапуском.</li>
+      <li>Объяснить, почему фоновая задача обязана быть идемпотентной.</li>
+      <li>Назвать четыре способа доставки данных в браузер и выбрать подходящий под задачу.</li>
+      <li>Объяснить, почему для показа статуса фоновой задачи не нужен WebSocket.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · инструменты</p>
+    <h2>Middle: воркеры, корутины и постоянные соединения</h2>
+    <p>Уровень, на котором приходится разбираться, что именно меняется в приложении при переходе на долгоживущий процесс, где в старом коде спрятано состояние, и как поднять реальное время так, чтобы это пережило второй сервер и деплой.</p>
+  </div>
+
+  <!-- 6 -->
+  <article class="card" id="runtimes">
+    <p class="path">middle / рантаймы</p>
+    <div class="card-top"><h3>Долгоживущие процессы</h3><span class="badge b-2">Рантайм</span></div>
+    <p>Идея всех этих инструментов одна: загрузить приложение один раз, а дальше в цикле принимать запросы и отдавать ответы, не пересоздавая контейнер, конфигурацию, маршруты и соединения. Экономия — это то, что в профиле обычно называется «время до вашего кода».</p>
+
+    <div class="code"><div class="bar"><span>Схема</span><span class="r">Что происходит при каждом запросе</span></div><pre><span class="cm"># Классический FPM</span>
+   [загрузка файлов + контейнер + конфиг] + [ваш код] + [очистка]
+   40-80 мс                                  20 мс      ~0
+   ... и так на КАЖДЫЙ запрос
+
+<span class="cm"># Долгоживущий процесс (RoadRunner, Swoole, FrankenPHP)</span>
+   старт: [загрузка файлов + контейнер + конфиг]   40-80 мс — один раз
+   далее: [ваш код] [ваш код] [ваш код] ...        20 мс каждый
+
+<span class="cm"># Выигрыш тем больше, чем тяжелее загрузка приложения</span>
+<span class="cm"># и чем легче сам обработчик. На тяжёлых запросах к базе</span>
+<span class="cm"># разница почти незаметна: там время уходит не на загрузку.</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · чем различаются рантаймы</caption>
+      <thead><tr><th>Признак</th><th>PHP-FPM</th><th>RoadRunner</th><th>Swoole / OpenSwoole</th><th>FrankenPHP</th></tr></thead>
+      <tbody>
+        <tr><td>Что это</td><td>Менеджер процессов</td><td>Сервер на Go, воркеры на PHP</td><td>Расширение PHP</td><td>Сервер на базе Caddy</td></tr>
+        <tr><td>Установка</td><td>Стандарт</td><td>Бинарник, расширение не нужно</td><td>Компиляция расширения</td><td>Бинарник или образ</td></tr>
+        <tr><td>Модель</td><td>Процесс на запрос</td><td>Долгоживущие воркеры</td><td>Корутины и воркеры</td><td>Долгоживущие воркеры</td></tr>
+        <tr><td>Конкурентный ввод-вывод</td><td>Нет</td><td>Через Fibers и клиенты</td><td>Встроен в расширение</td><td>Через Fibers и клиенты</td></tr>
+        <tr><td>WebSocket из коробки</td><td>Нет</td><td>Есть плагин</td><td>Есть</td><td>Есть</td></tr>
+        <tr><td>Порог входа</td><td>Нулевой</td><td>Низкий</td><td>Высокий: другой стиль кода</td><td>Низкий</td></tr>
+        <tr><td>Риск утечек состояния</td><td>Нет</td><td>Есть</td><td>Есть, выше</td><td>Есть</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Насколько это реально ускоряет.</strong> Выигрыш равен времени загрузки приложения — обычно от 20 до 80 мс. Для лёгкого API-эндпоинта, отвечающего за 30 мс, это ускорение в разы. Для страницы, которая 400 мс ждёт базу, — улучшение на десятые доли. Поэтому первый вопрос перед переходом: какую долю времени ответа занимает загрузка, и виден ли этот выигрыш на фоне остального.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · что меняется в приложении при переходе</caption>
+      <thead><tr><th>Область</th><th>Что нужно проверить</th></tr></thead>
+      <tbody>
+        <tr><td>Статические свойства и синглтоны</td><td>Не накапливают ли данные между запросами</td></tr>
+        <tr><td>Суперглобальные массивы</td><td>Читаются из объекта запроса, а не напрямую</td></tr>
+        <tr><td>Соединения к базе</td><td>Переживают простой, переподключаются при обрыве</td></tr>
+        <tr><td>Менеджер сущностей ORM</td><td>Очищается между запросами</td></tr>
+        <tr><td>Функции завершения работы</td><td>Не полагаются на смерть процесса</td></tr>
+        <tr><td>Временные файлы и дескрипторы</td><td>Закрываются явно, а не при выходе</td></tr>
+        <tr><td>Часовой пояс, локаль, настройки ini</td><td>Не меняются глобально в обработчике</td></tr>
+        <tr><td>Библиотеки со скрытым состоянием</td><td>Проверены на пригодность к долгой жизни</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Разумный путь миграции: сначала запустить под новым рантаймом тестовую среду и прогнать полный набор тестов, потом вывести на небольшую долю продового трафика с отдельным мониторингом памяти, и только потом переводить всё. Утечки состояния почти всегда проявляются не сразу, а после нескольких сотен запросов на процессе.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card" id="state">
+    <p class="path">middle / состояние</p>
+    <div class="card-top"><h3>Утечки состояния</h3><span class="badge b-2">Главный риск</span></div>
+    <p>Это самая опасная часть темы, потому что ошибки здесь не падают, а тихо портят данные. Код, который годами работал под FPM, под воркером может начать отдавать одному пользователю данные другого — и обнаружится это не в тестах, а по жалобе.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Классы ошибок при переходе на воркеры</span></div><pre><span class="cm">// 1. СТАТИЧЕСКОЕ СОСТОЯНИЕ — утечка данных между пользователями</span>
+<span class="kw">final class</span> <span class="nm">CurrentUser</span>
+{
+    <span class="kw">private static</span> ?<span class="nm">User</span> <span class="nm">$user</span> = <span class="kw">null</span>;   <span class="cm">// под FPM безобидно</span>
+
+    <span class="kw">public static function</span> <span class="fn">set</span>(<span class="nm">User</span> <span class="nm">$u</span>): <span class="kw">void</span> { <span class="kw">self</span>::<span class="nm">$user</span> = <span class="nm">$u</span>; }
+    <span class="kw">public static function</span> <span class="fn">get</span>(): ?<span class="nm">User</span> { <span class="kw">return</span> <span class="kw">self</span>::<span class="nm">$user</span>; }
+}
+<span class="cm">// В воркере: если следующий запрос анонимный и set() не вызван,</span>
+<span class="cm">// get() вернёт пользователя ПРЕДЫДУЩЕГО запроса. Утечка данных.</span>
+
+<span class="cm">// 2. НАКОПЛЕНИЕ В СЕРВИСЕ — рост памяти</span>
+<span class="kw">final class</span> <span class="nm">PriceCache</span>
+{
+    <span class="kw">private array</span> <span class="nm">$prices</span> = [];   <span class="cm">// сервис живёт вечно</span>
+
+    <span class="kw">public function</span> <span class="fn">get</span>(<span class="kw">int</span> <span class="nm">$id</span>): <span class="kw">int</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;prices[<span class="nm">$id</span>] ??= <span class="nm">$this</span>-&gt;<span class="fn">load</span>(<span class="nm">$id</span>);
+    }
+    <span class="cm">// массив растёт до конца жизни процесса -&gt; утечка памяти</span>
+    <span class="cm">// нужен лимит размера или сброс между запросами</span>
+}
+
+<span class="cm">// 3. КОНФИГУРАЦИЯ, ЗАВИСЯЩАЯ ОТ ЗАПРОСА</span>
+<span class="fn">date_default_timezone_set</span>(<span class="nm">$user</span>-&gt;timezone);  <span class="cm">// глобально!</span>
+<span class="fn">setlocale</span>(LC_ALL, <span class="nm">$user</span>-&gt;locale);            <span class="cm">// глобально!</span>
+<span class="cm">// останется для следующего запроса другого пользователя</span>
+
+<span class="cm">// 4. ЧТЕНИЕ СУПЕРГЛОБАЛЬНЫХ НАПРЯМУЮ</span>
+<span class="nm">$page</span> = <span class="nm">$_GET</span>[<span class="st">'page'</span>] ?? 1;   <span class="cm">// в воркере может быть неактуально</span>
+<span class="cm">// правильно: брать из объекта запроса, который передан обработчику</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · где искать состояние в существующем коде</caption>
+      <thead><tr><th>Что искать</th><th>Чем опасно</th><th>Как чинить</th></tr></thead>
+      <tbody>
+        <tr><td>Статические свойства с данными</td><td>Утечка между пользователями</td><td>Обычные свойства сервиса, сброс между запросами</td></tr>
+        <tr><td>Синглтоны с накоплением</td><td>Рост памяти</td><td>Ограничение размера, очистка по событию запроса</td></tr>
+        <tr><td>Глобальные функции настройки</td><td>Настройка утекает в чужой запрос</td><td>Передавать явно, не менять глобально</td></tr>
+        <tr><td>Прямое чтение суперглобальных</td><td>Неактуальные данные</td><td>Объект запроса</td></tr>
+        <tr><td>Кэш в свойстве сервиса</td><td>Устаревшие данные и рост памяти</td><td>Внешний кэш с TTL</td></tr>
+        <tr><td>Открытые дескрипторы и соединения</td><td>Исчерпание лимитов</td><td>Явное закрытие, пул с проверкой живости</td></tr>
+        <tr><td>Библиотеки с внутренним состоянием</td><td>Непредсказуемое поведение</td><td>Проверять поддержку долгих процессов</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · как обнаружить утечку</caption>
+      <thead><tr><th>Приём</th><th>Что показывает</th></tr></thead>
+      <tbody>
+        <tr><td>График памяти процесса по числу обработанных запросов</td><td>Линейный рост — утечка; пила — норма</td></tr>
+        <tr><td>Прогон одного сценария тысячу раз на одном воркере</td><td>Воспроизводит утечку за минуты</td></tr>
+        <tr><td>Чередование запросов от разных пользователей</td><td>Ловит утечку данных, а не памяти</td></tr>
+        <tr><td>Сравнение ответа на первом и пятисотом запросе процесса</td><td>Различие означает накопленное состояние</td></tr>
+        <tr><td>Плановый перезапуск по числу запросов</td><td>Не лечит, но ограничивает ущерб</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Плановый перезапуск воркера после N запросов — обязательная страховка, но не решение. Он скрывает утечку памяти и совершенно не помогает от утечки данных между пользователями: та проявится на втором запросе, а не на пятисотом. Поэтому проверка на утечку данных — чередование запросов от разных пользователей — должна быть частью тестов, а не только наблюдением за графиком памяти.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="fibers">
+    <p class="path">middle / файберы</p>
+    <div class="card-top"><h3>Fibers и корутины</h3><span class="badge b-2">Механика</span></div>
+    <p>Fibers появились в PHP 8.1 и дают возможность приостановить выполнение функции в произвольном месте и вернуться к нему позже. Сами по себе они ничего не ускоряют: это низкоуровневый механизм, на котором асинхронные библиотеки строят планировщик задач.</p>
+
+    <p><strong>Отличие от генераторов</strong> в том, что генератор может приостановиться только в собственном теле, и всю цепочку вызовов приходится делать генераторами. Fiber приостанавливает весь стек вызовов из любой глубины, поэтому обычный синхронный на вид код может внутри уступать управление.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Fiber: приостановка и возобновление</span></div><pre><span class="nm">$fiber</span> = <span class="kw">new</span> <span class="nm">\Fiber</span>(<span class="kw">function</span> (<span class="kw">string</span> <span class="nm">$url</span>): <span class="kw">string</span> {
+    <span class="nm">$request</span> = <span class="fn">startRequest</span>(<span class="nm">$url</span>);        <span class="cm">// отправили, не ждём</span>
+
+    <span class="cm">// отдаём управление планировщику: он займётся другими задачами</span>
+    <span class="nm">$response</span> = <span class="nm">\Fiber</span>::<span class="fn">suspend</span>(<span class="nm">$request</span>);
+
+    <span class="kw">return</span> <span class="st">'получено: '</span> . <span class="nm">$response</span>;      <span class="cm">// продолжили с того же места</span>
+});
+
+<span class="nm">$pending</span> = <span class="nm">$fiber</span>-&gt;<span class="fn">start</span>(<span class="st">'https://api.example.com/rates'</span>);
+<span class="cm">// здесь планировщик может запустить другие файберы</span>
+
+<span class="nm">$fiber</span>-&gt;<span class="fn">resume</span>(<span class="fn">awaitResult</span>(<span class="nm">$pending</span>));
+<span class="nm">$result</span> = <span class="nm">$fiber</span>-&gt;<span class="fn">getReturn</span>();
+
+<span class="cm">// В реальном коде Fiber напрямую не пишут: этим занимаются</span>
+<span class="cm">// библиотеки (AMPHP, ReactPHP) и рантаймы. Знать нужно принцип:</span>
+<span class="cm">// «ожидание уступает управление, а не блокирует процесс».</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · что даёт и чего не даёт конкурентность на файберах</caption>
+      <thead><tr><th>Утверждение</th><th>Верно?</th><th>Пояснение</th></tr></thead>
+      <tbody>
+        <tr><td>Несколько внешних вызовов идут одновременно</td><td>Да</td><td>Главный и почти единственный выигрыш</td></tr>
+        <tr><td>Вычисления выполняются параллельно</td><td>Нет</td><td>Поток один: пока считаем, всё остальное стоит</td></tr>
+        <tr><td>Задействуется несколько ядер процессора</td><td>Нет</td><td>Для этого нужны процессы или потоки</td></tr>
+        <tr><td>Любой существующий клиент станет неблокирующим</td><td>Нет</td><td>Нужен клиент, умеющий уступать управление</td></tr>
+        <tr><td>Тяжёлый цикл не мешает другим задачам</td><td>Нет</td><td>Он блокирует планировщик целиком</td></tr>
+        <tr><td>Код становится проще, чем на обратных вызовах</td><td>Да</td><td>Выглядит синхронным, читается сверху вниз</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем Fiber отличается от генератора?</b><br>Генератор приостанавливается только в собственном теле: чтобы уступить управление из глубины вызовов, всю цепочку нужно превратить в генераторы и вручную пробрасывать значения. Fiber приостанавливает весь стек из любой точки, поэтому вызываемая функция может уступить управление, а вызывающий код остаётся обычным. Практически это означает, что асинхронность перестаёт «протекать» через сигнатуры всех промежуточных методов.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="concurrent">
+    <p class="path">middle / конкурентность</p>
+    <div class="card-top"><h3>Конкурентные запросы</h3><span class="badge b-2">Выигрыш</span></div>
+    <p>Самый практичный вид асинхронности и единственный, который можно применить в обычном приложении под FPM без смены рантайма: несколько независимых внешних вызовов выполняются одновременно, и общее время равно самому долгому, а не сумме.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Последовательно против одновременно</span></div><pre><span class="cm">// ПЛОХО: три службы доставки по очереди = 600 мс</span>
+<span class="nm">$cdek</span>  = <span class="nm">$this</span>-&gt;http-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, <span class="nm">$cdekUrl</span>)-&gt;<span class="fn">toArray</span>();
+<span class="nm">$post</span>  = <span class="nm">$this</span>-&gt;http-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, <span class="nm">$postUrl</span>)-&gt;<span class="fn">toArray</span>();
+<span class="nm">$boxb</span>  = <span class="nm">$this</span>-&gt;http-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, <span class="nm">$boxUrl</span>)-&gt;<span class="fn">toArray</span>();
+
+<span class="cm">// ХОРОШО: отправляем все три, потом собираем = ~200 мс</span>
+<span class="nm">$responses</span> = [];
+<span class="kw">foreach</span> (<span class="nm">$providers</span> <span class="kw">as</span> <span class="nm">$name</span> =&gt; <span class="nm">$url</span>) {
+    <span class="cm">// request() не блокирует: запрос уходит, ответ не читается</span>
+    <span class="nm">$responses</span>[<span class="nm">$name</span>] = <span class="nm">$this</span>-&gt;http-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, <span class="nm">$url</span>, [
+        <span class="st">'timeout'</span> =&gt; 2.0,
+    ]);
+}
+
+<span class="nm">$rates</span> = [];
+<span class="kw">foreach</span> (<span class="nm">$this</span>-&gt;http-&gt;<span class="fn">stream</span>(<span class="nm">$responses</span>) <span class="kw">as</span> <span class="nm">$response</span> =&gt; <span class="nm">$chunk</span>) {
+    <span class="kw">if</span> (!<span class="nm">$chunk</span>-&gt;<span class="fn">isLast</span>()) {
+        <span class="kw">continue</span>;
+    }
+    <span class="kw">try</span> {
+        <span class="nm">$rates</span>[] = <span class="nm">$response</span>-&gt;<span class="fn">toArray</span>();
+    } <span class="kw">catch</span> (<span class="nm">\Throwable</span> <span class="nm">$e</span>) {
+        <span class="cm">// один провайдер упал — показываем остальные, а не ошибку</span>
+        <span class="nm">$this</span>-&gt;logger-&gt;<span class="fn">warning</span>(<span class="st">'rates.provider_failed'</span>, [<span class="st">'e'</span> =&gt; <span class="nm">$e</span>]);
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · где конкурентные вызовы дают эффект</caption>
+      <thead><tr><th>Сценарий</th><th>Эффект</th><th>Условие применимости</th></tr></thead>
+      <tbody>
+        <tr><td>Несколько независимых внешних API</td><td>Очень высокий</td><td>Вызовы не зависят друг от друга</td></tr>
+        <tr><td>Сбор данных из нескольких сервисов для страницы</td><td>Высокий</td><td>Есть частичная деградация при отказе одного</td></tr>
+        <tr><td>Пакетная отправка вебхуков</td><td>Высокий</td><td>Ограничение на число одновременных</td></tr>
+        <tr><td>Несколько запросов к одной базе</td><td>Низкий</td><td>Обычно упирается в саму базу</td></tr>
+        <tr><td>Цепочка вызовов, где каждый зависит от предыдущего</td><td>Нулевой</td><td>Нечего распараллеливать</td></tr>
+        <tr><td>Тяжёлые вычисления</td><td>Нулевой</td><td>Нужны процессы, а не конкурентность</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>У конкурентных вызовов обязательны две вещи: жёсткий таймаут на каждый и ограничение числа одновременных. Без таймаута страница ждёт самого медленного участника, и весь выигрыш теряется на одном зависшем сервисе. Без ограничения одновременных запросов легко устроить перегрузку и себе, и чужому сервису, особенно если список формируется из данных.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="ws">
+    <p class="path">middle / websocket</p>
+    <div class="card-top"><h3>WebSocket на практике</h3><span class="badge b-2">Реальное время</span></div>
+    <p>Держать десятки тысяч постоянных соединений в PHP-приложении технически возможно, но почти никогда не оправдано. Стандартное решение — отдельный специализированный сервер реального времени, а приложение остаётся обычным: оно только публикует события.</p>
+
+    <div class="flow" role="img" aria-label="Архитектура с отдельным сервером реального времени">
+      <div class="node">Браузер<small>держит соединение</small></div><span class="arr">↔</span>
+      <div class="node">Сервер РВ<small>Centrifugo, Mercure</small></div><span class="arr">←</span>
+      <div class="node">Публикация<small>HTTP или брокер</small></div><span class="arr">←</span>
+      <div class="node">Приложение<small>обычный PHP</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · варианты реализации реального времени</caption>
+      <thead><tr><th>Вариант</th><th>Плюсы</th><th>Минусы</th></tr></thead>
+      <tbody>
+        <tr><td>Centrifugo</td><td>Отдельный сервер, каналы, присутствие, история, масштабирование</td><td>Ещё один компонент в эксплуатации</td></tr>
+        <tr><td>Mercure</td><td>Поверх SSE, простая модель, хорошо ложится на Symfony</td><td>Однонаправленно от сервера</td></tr>
+        <tr><td>Swoole или RoadRunner с плагином</td><td>Всё в одном приложении, общий код</td><td>Соединения и запросы делят ресурсы, сложнее деплой</td></tr>
+        <tr><td>Ratchet и подобные библиотеки</td><td>Чистый PHP, всё под контролем</td><td>Масштабирование и эксплуатация целиком на вас</td></tr>
+        <tr><td>Внешний облачный сервис</td><td>Ничего не эксплуатируем</td><td>Оплата по соединениям, данные вовне</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Аутентификация в реальном времени устроена иначе, чем в HTTP.</strong> Соединение устанавливается один раз и живёт часами, поэтому проверять права на каждое сообщение негде. Стандартная схема: приложение выдаёт клиенту короткоживущий токен с указанием, кто он и к каким каналам допущен; клиент предъявляет токен серверу реального времени при подключении; при истечении токен обновляется без разрыва соединения.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Токен подключения и публикация события</span></div><pre><span class="cm">// 1. Приложение выдаёт токен для подключения (живёт минуты)</span>
+<span class="kw">public function</span> <span class="fn">connectionToken</span>(<span class="nm">User</span> <span class="nm">$user</span>): <span class="kw">string</span>
+{
+    <span class="kw">return</span> <span class="nm">$this</span>-&gt;jwt-&gt;<span class="fn">encode</span>([
+        <span class="st">'sub'</span>      =&gt; (<span class="kw">string</span>) <span class="nm">$user</span>-&gt;<span class="fn">getId</span>(),
+        <span class="st">'exp'</span>      =&gt; <span class="fn">time</span>() + 600,
+        <span class="cm">// какие каналы разрешены именно этому пользователю</span>
+        <span class="st">'channels'</span> =&gt; [
+            <span class="st">'user#'</span> . <span class="nm">$user</span>-&gt;<span class="fn">getId</span>(),
+            <span class="st">'orders#'</span> . <span class="nm">$user</span>-&gt;<span class="fn">getId</span>(),
+        ],
+    ]);
+}
+
+<span class="cm">// 2. Публикация события — обычный HTTP-запрос из приложения</span>
+<span class="kw">public function</span> <span class="fn">publishOrderStatus</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="kw">void</span>
+{
+    <span class="nm">$this</span>-&gt;http-&gt;<span class="fn">request</span>(<span class="st">'POST'</span>, <span class="nm">$this</span>-&gt;realtimeUrl . <span class="st">'/api/publish'</span>, [
+        <span class="st">'headers'</span> =&gt; [<span class="st">'X-API-Key'</span> =&gt; <span class="nm">$this</span>-&gt;apiKey],
+        <span class="st">'json'</span>    =&gt; [
+            <span class="st">'channel'</span> =&gt; <span class="st">'orders#'</span> . <span class="nm">$order</span>-&gt;<span class="fn">getUserId</span>(),
+            <span class="st">'data'</span>    =&gt; [
+                <span class="st">'orderId'</span> =&gt; <span class="nm">$order</span>-&gt;<span class="fn">getId</span>(),
+                <span class="st">'status'</span>  =&gt; <span class="nm">$order</span>-&gt;<span class="fn">getStatus</span>(),
+                <span class="cm">// версия нужна клиенту, чтобы отбросить устаревшее</span>
+                <span class="st">'version'</span> =&gt; <span class="nm">$order</span>-&gt;<span class="fn">getVersion</span>(),
+            ],
+        ],
+        <span class="st">'timeout'</span> =&gt; 1.0,
+    ]);
+    <span class="cm">// публикация не должна ронять основную операцию:</span>
+    <span class="cm">// её место — после коммита, лучше через outbox</span>
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · частые ошибки в реальном времени</caption>
+      <thead><tr><th>Ошибка</th><th>Последствие</th><th>Как правильно</th></tr></thead>
+      <tbody>
+        <tr><td>Публикация внутри транзакции</td><td>Клиент узнал о том, чего ещё нет в базе</td><td>Публиковать после коммита, через outbox</td></tr>
+        <tr><td>Канал без привязки к правам</td><td>Чужие данные у любого подписчика</td><td>Разрешённые каналы в токене подключения</td></tr>
+        <tr><td>Отправка полного объекта в событии</td><td>Утечка полей, большой трафик</td><td>Отправлять идентификатор и минимум, детали дозагружать</td></tr>
+        <tr><td>Клиент верит порядку сообщений</td><td>Устаревшее состояние поверх свежего</td><td>Версия или метка времени в событии</td></tr>
+        <tr><td>Нет обработки переподключения</td><td>Пропущенные события после разрыва</td><td>Восстановление истории с последнего идентификатора</td></tr>
+        <tr><td>Публикация синхронно в горячем пути</td><td>Задержка и падение при недоступности сервера</td><td>Асинхронно, с таймаутом и деградацией</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Реальное время как единственный способ узнать об изменении. Соединение рвётся при потере сети, переходе в спящий режим, обновлении вкладки, перезапуске сервера. Если интерфейс полагается только на события, часть пользователей будет видеть устаревшие данные и не узнает об этом. Правильно: событие — это подсказка «данные изменились», а состояние всегда можно получить обычным запросом.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="sse">
+    <p class="path">middle / sse</p>
+    <div class="card-top"><h3>SSE и долгие операции</h3><span class="badge b-2">Простой путь</span></div>
+    <p>SSE решает большую часть задач реального времени, оставаясь обычным HTTP. Браузерный клиент состоит из трёх строк, переподключение выполняется автоматически, а сервер может продолжить с того места, где клиент оборвался, — по заголовку с последним полученным идентификатором.</p>
+
+    <div class="code"><div class="bar"><span>PHP + JS</span><span class="r">Поток событий и его приём</span></div><pre><span class="cm">// Сервер: поток событий. Под FPM занимает процесс целиком —</span>
+<span class="cm">// поэтому для SSE нужен отдельный пул или отдельный рантайм.</span>
+<span class="kw">public function</span> <span class="fn">stream</span>(<span class="nm">Request</span> <span class="nm">$request</span>): <span class="nm">StreamedResponse</span>
+{
+    <span class="nm">$lastId</span> = (<span class="kw">int</span>) <span class="nm">$request</span>-&gt;headers-&gt;<span class="fn">get</span>(<span class="st">'Last-Event-ID'</span>, <span class="st">'0'</span>);
+
+    <span class="kw">return</span> <span class="kw">new</span> <span class="nm">StreamedResponse</span>(<span class="kw">function</span> () <span class="kw">use</span> (<span class="nm">$lastId</span>) {
+        <span class="nm">$deadline</span> = <span class="fn">time</span>() + 60;   <span class="cm">// живём минуту и просим переподключиться</span>
+
+        <span class="kw">while</span> (<span class="fn">time</span>() &lt; <span class="nm">$deadline</span>) {
+            <span class="kw">foreach</span> (<span class="nm">$this</span>-&gt;events-&gt;<span class="fn">since</span>(<span class="nm">$lastId</span>) <span class="kw">as</span> <span class="nm">$event</span>) {
+                <span class="nm">$lastId</span> = <span class="nm">$event</span>-&gt;id;
+                <span class="cm">// id позволяет клиенту продолжить после обрыва</span>
+                <span class="fn">printf</span>(<span class="st">"id: %d\nevent: %s\ndata: %s\n\n"</span>,
+                    <span class="nm">$event</span>-&gt;id, <span class="nm">$event</span>-&gt;type, <span class="fn">json_encode</span>(<span class="nm">$event</span>-&gt;payload));
+            }
+            <span class="fn">flush</span>();
+            <span class="fn">sleep</span>(1);
+        }
+    }, 200, [
+        <span class="st">'Content-Type'</span>      =&gt; <span class="st">'text/event-stream'</span>,
+        <span class="st">'Cache-Control'</span>     =&gt; <span class="st">'no-cache'</span>,
+        <span class="cm">// критично: иначе прокси будет копить ответ в буфере</span>
+        <span class="st">'X-Accel-Buffering'</span> =&gt; <span class="st">'no'</span>,
+    ]);
+}
+
+<span class="cm">// Клиент: переподключение и Last-Event-ID браузер берёт на себя</span>
+<span class="cm">// const es = new EventSource('/orders/stream');</span>
+<span class="cm">// es.addEventListener('status', e =&gt; render(JSON.parse(e.data)));</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · подводные камни SSE под PHP</caption>
+      <thead><tr><th>Проблема</th><th>Причина</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>События приходят пачкой в конце</td><td>Буферизация на прокси или в PHP</td><td>Отключить буферизацию, вызывать сброс буфера</td></tr>
+        <tr><td>Кончились процессы FPM</td><td>Каждое соединение держит процесс</td><td>Отдельный пул, отдельный рантайм или сервер РВ</td></tr>
+        <tr><td>Соединение рвётся через минуту</td><td>Таймауты прокси и балансировщика</td><td>Короткий цикл и переподключение по плану</td></tr>
+        <tr><td>Пропуск событий при обрыве</td><td>Не используется идентификатор события</td><td>Отдавать id и обрабатывать <span class="nm">Last-Event-ID</span></td></tr>
+        <tr><td>Опрос базы в цикле кладёт её</td><td>Каждое соединение опрашивает раз в секунду</td><td>Подписка на канал брокера вместо опроса</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Для показа прогресса долгой операции почти всегда достаточно опроса раз в секунду по обычному эндпоинту, который читает состояние задачи из Redis. Это работает под FPM, не занимает процессы надолго, переживает перезагрузку страницы и не требует ни одного нового компонента в инфраструктуре. SSE и WebSocket начинают выигрывать, когда открытых вкладок много и опрос становится заметной нагрузкой.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card lvl-m" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Проверка</span></div>
+    <p>Практические навыки уровня.</p>
+    <ul class="check">
+      <li>Объяснить, за счёт чего экономят долгоживущие процессы и когда эта экономия незаметна.</li>
+      <li>Сравнить RoadRunner, Swoole и FrankenPHP по модели, порогу входа и рискам.</li>
+      <li>Найти в существующем коде четыре класса утечек состояния и исправить их.</li>
+      <li>Придумать проверку, которая ловит утечку данных между пользователями, а не только рост памяти.</li>
+      <li>Объяснить разницу между Fiber и генератором и назвать, чего конкурентность на файберах не даёт.</li>
+      <li>Переписать три последовательных внешних вызова на одновременные с таймаутами и деградацией.</li>
+      <li>Описать схему аутентификации в сервере реального времени через короткоживущий токен с каналами.</li>
+      <li>Назвать шесть частых ошибок в реальном времени, включая публикацию внутри транзакции.</li>
+      <li>Реализовать SSE с идентификаторами событий и объяснить, почему под FPM это опасно.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · решения и эксплуатация</p>
+    <h2>Senior: выбирать подход и жить с последствиями</h2>
+    <p>Асинхронность и реальное время — области, где стоимость эксплуатации легко превышает выигрыш. На этом уровне важнее не умение поднять WebSocket, а умение обосновать, почему в этом проекте он не нужен, а если нужен — что произойдёт при втором сервере, при деплое и при обрыве соединения у половины клиентов одновременно.</p>
+  </div>
+
+  <!-- 13 -->
+  <article class="card" id="choose">
+    <p class="path">senior / выбор</p>
+    <div class="card-top"><h3>Когда это не нужно</h3><span class="badge b-3">Критерии</span></div>
+    <p>Формулировка перевёрнута намеренно. Классическая модель FPM закрывает подавляющее большинство задач, и разговор должен начинаться с вопроса, что конкретно в ней не работает и с какими числами.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · частые обоснования и что с ними не так</caption>
+      <thead><tr><th>Аргумент</th><th>Что проверить сначала</th></tr></thead>
+      <tbody>
+        <tr><td>«Нужен WebSocket для уведомлений»</td><td>Устроит ли опрос раз в 5 секунд: обычно да, и это ноль новой инфраструктуры</td></tr>
+        <tr><td>«Перейдём на Swoole, будет быстрее»</td><td>Какую долю времени ответа занимает загрузка приложения — часто единицы процентов</td></tr>
+        <tr><td>«Сделаем всё асинхронным»</td><td>Есть ли вообще независимые внешние вызовы: чаще всего узкое место — одна база</td></tr>
+        <tr><td>«PHP не подходит, перепишем на другом языке»</td><td>Что именно не подходит и померено ли это</td></tr>
+        <tr><td>«Нужны корутины для параллельных вычислений»</td><td>Корутины не дают параллельных вычислений вовсе</td></tr>
+        <tr><td>«Очередь замедляет, сделаем синхронно»</td><td>Требование к согласованности: обычно решается статусом операции, а не синхронностью</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · когда подход действительно оправдан</caption>
+      <thead><tr><th>Подход</th><th>Оправдан, когда</th><th>Цена, которую принимаете</th></tr></thead>
+      <tbody>
+        <tr><td>Фоновая обработка</td><td>Почти всегда: любая работа, не нужная для ответа</td><td>Брокер, воркеры, идемпотентность, наблюдаемость</td></tr>
+        <tr><td>Конкурентный ввод-вывод</td><td>Несколько независимых внешних вызовов на одном пути</td><td>Таймауты, деградация, ограничение одновременных</td></tr>
+        <tr><td>Долгоживущие процессы</td><td>Загрузка приложения — заметная доля лёгкого ответа</td><td>Аудит состояния, новая модель деплоя, риск утечек</td></tr>
+        <tr><td>SSE</td><td>Много вкладок ждут события только от сервера</td><td>Отдельный пул или рантайм, обработка обрывов</td></tr>
+        <tr><td>WebSocket</td><td>Нужен двусторонний обмен с низкой задержкой</td><td>Отдельный сервер, аутентификация, масштабирование, восстановление</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Полезный вопрос перед любым внедрением: сколько людей в команде смогут починить это в три часа ночи. Отдельный сервер реального времени, воркеры на нестандартном рантайме и асинхронный код требуют навыков, которых у команды может не быть. Если ответ — «один человек, и он в отпуске», решение стоит отложить или выбрать вариант попроще, даже если технически он менее изящен.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Стоит ли переводить приложение на Swoole ради производительности?</b><br>Сначала нужно посмотреть, какую долю времени ответа занимает загрузка приложения. Если страница отвечает за 400 мс и 380 из них уходит в базу, переход даст улучшение на проценты ценой аудита всего кода на состояние, новой модели деплоя и риска утечек данных между пользователями. Если же речь о лёгком API, отвечающем за 40 мс, из которых 25 — загрузка, выигрыш реальный. Ответ всегда начинается с профиля, а не с выбора рантайма.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="scale">
+    <p class="path">senior / масштабирование</p>
+    <div class="card-top"><h3>Масштабирование соединений</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Постоянные соединения ведут себя иначе, чем HTTP-запросы: они не заканчиваются, поэтому балансировка по кругу не работает, а перезапуск узла обрывает всех, кто на нём висел. Проблемы начинаются на втором сервере.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · что ломается при масштабировании реального времени</caption>
+      <thead><tr><th>Проблема</th><th>Почему возникает</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>Событие дошло не всем</td><td>Подписчики распределены по узлам, публикация попала на один</td><td>Общая шина между узлами через Redis или брокер</td></tr>
+        <tr><td>Неравномерная нагрузка</td><td>Соединения не перераспределяются после подключения</td><td>Учёт числа соединений при балансировке, плановая ротация</td></tr>
+        <tr><td>Лавина переподключений</td><td>Перезапуск узла разом отправил всех подключаться заново</td><td>Случайная задержка и нарастающий интервал на клиенте</td></tr>
+        <tr><td>Исчерпание дескрипторов и портов</td><td>Каждое соединение — открытый дескриптор</td><td>Лимиты системы, ограничение соединений на узел</td></tr>
+        <tr><td>Медленный клиент тормозит рассылку</td><td>Буфер отправки заполняется и не разгружается</td><td>Ограничение буфера и отключение отстающих</td></tr>
+        <tr><td>Всплеск публикаций забивает канал</td><td>Событий больше, чем клиент способен принять</td><td>Схлопывание событий, отправка «изменилось» вместо каждого изменения</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Схлопывание событий — недооценённый приём.</strong> Если состояние объекта меняется двадцать раз в секунду, не нужно отправлять двадцать сообщений: достаточно отправить одно «объект изменился, версия такая-то» с ограничением частоты. Клиент дозагрузит актуальное состояние сам. Это одновременно снижает трафик, снимает вопрос порядка сообщений и делает систему устойчивой к всплескам.</p>
+
+    <div class="formula">соединений на узел × размер буфера = память, которую вы обязаны иметь<span>50 000 соединений по 64 КБ буфера — это больше 3 ГБ только на буферы</span></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Реальное время должно уметь деградировать. Если сервер событий недоступен, интерфейс обязан продолжать работать: переключиться на периодический опрос, показать данные, полученные обычным запросом, и не показывать пользователю ошибок. Проверяется это учениями — отключением сервера событий в тестовой среде и наблюдением за поведением интерфейса.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="reliability">
+    <p class="path">senior / надёжность</p>
+    <div class="card-top"><h3>Надёжность реального времени</h3><span class="badge b-3">Гарантии</span></div>
+    <p>Постоянное соединение выглядит надёжным, пока не начинаешь считать сценарии обрыва. Клиент теряет сеть, уходит в спящий режим, переключается с Wi-Fi на мобильную сеть, сворачивает вкладку; сервер перезапускается при деплое. Во всех этих случаях часть событий проходит мимо.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 19 · сценарии потери и что делать</caption>
+      <thead><tr><th>Сценарий</th><th>Что теряется</th><th>Механизм восстановления</th></tr></thead>
+      <tbody>
+        <tr><td>Кратковременный обрыв сети</td><td>События за несколько секунд</td><td>История канала и продолжение с последнего идентификатора</td></tr>
+        <tr><td>Вкладка в спящем режиме</td><td>События за минуты и часы</td><td>Полная перезагрузка состояния при возвращении фокуса</td></tr>
+        <tr><td>Перезапуск сервера событий</td><td>Все соединения разом</td><td>Переподключение с задержкой и восстановление состояния</td></tr>
+        <tr><td>Публикация не дошла до шины</td><td>Событие навсегда</td><td>Outbox, повтор, сверка состояния по запросу</td></tr>
+        <tr><td>Клиент получил события не по порядку</td><td>Свежие данные перезаписаны старыми</td><td>Версия в событии, отбрасывание устаревших</td></tr>
+        <tr><td>Клиент обработал событие дважды</td><td>Дублирование в интерфейсе</td><td>Идемпотентная обработка по идентификатору события</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>JS</span><span class="r">Правильный клиент реального времени</span></div><pre><span class="cm">// три обязательные части: переподключение с ростом задержки,</span>
+<span class="cm">// отбрасывание устаревших событий по версии,</span>
+<span class="cm">// полная перезагрузка состояния после длинного разрыва</span>
+
+<span class="kw">let</span> attempt = 0, lastVersion = 0, lastEventAt = <span class="nm">Date</span>.<span class="fn">now</span>();
+
+<span class="kw">function</span> <span class="fn">connect</span>() {
+  <span class="kw">const</span> socket = <span class="kw">new</span> <span class="nm">WebSocket</span>(url);
+
+  socket.onopen = () =&gt; {
+    <span class="cm">// разрыв дольше окна истории — состоянию нельзя доверять</span>
+    <span class="kw">if</span> (<span class="nm">Date</span>.<span class="fn">now</span>() - lastEventAt &gt; 60_000) {
+      <span class="fn">reloadFullState</span>();
+    }
+    attempt = 0;
+  };
+
+  socket.onmessage = (e) =&gt; {
+    <span class="kw">const</span> msg = <span class="nm">JSON</span>.<span class="fn">parse</span>(e.data);
+    lastEventAt = <span class="nm">Date</span>.<span class="fn">now</span>();
+
+    <span class="cm">// порядок не гарантирован — сравниваем версии</span>
+    <span class="kw">if</span> (msg.version &lt;= lastVersion) <span class="kw">return</span>;
+    lastVersion = msg.version;
+
+    <span class="fn">apply</span>(msg);
+  };
+
+  socket.onclose = () =&gt; {
+    <span class="cm">// нарастающая задержка + случайный разброс:</span>
+    <span class="cm">// иначе после перезапуска сервера все придут одновременно</span>
+    <span class="kw">const</span> delay = <span class="nm">Math</span>.<span class="fn">min</span>(30_000, 1000 * 2 ** attempt++)
+                + <span class="nm">Math</span>.<span class="fn">random</span>() * 1000;
+    <span class="fn">setTimeout</span>(connect, delay);
+  };
+}
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Главный принцип: событие — это уведомление об изменении, а не источник истины. Интерфейс, который строит состояние исключительно из потока событий, обязательно рассинхронизируется, и пользователь не узнает об этом. Правильная схема — событие говорит «изменилось, версия N», а состояние всегда можно получить обычным запросом, и оно получается при первом открытии, при возвращении фокуса и после долгого разрыва.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="ops">
+    <p class="path">senior / эксплуатация</p>
+    <div class="card-top"><h3>Эксплуатация воркеров</h3><span class="badge b-3">Прод</span></div>
+    <p>Долгоживущие процессы меняют не только код, но и процедуру выката. Под FPM новый код начинает работать со следующего запроса; воркер продолжит выполнять старый до тех пор, пока его не перезапустят.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 20 · что меняется в эксплуатации</caption>
+      <thead><tr><th>Область</th><th>FPM</th><th>Долгоживущие процессы</th></tr></thead>
+      <tbody>
+        <tr><td>Выкат кода</td><td>Действует со следующего запроса</td><td>Нужен явный мягкий перезапуск</td></tr>
+        <tr><td>Остановка</td><td>Запрос завершается сам</td><td>Нужен сигнал и дообработка текущей задачи</td></tr>
+        <tr><td>Утечка памяти</td><td>Не имеет значения</td><td>Копится, нужен лимит и перезапуск</td></tr>
+        <tr><td>Ошибка в коде</td><td>Затрагивает один запрос</td><td>Может убить процесс и все его соединения</td></tr>
+        <tr><td>Соединения к базе</td><td>Открываются заново</td><td>Живут долго, рвутся по таймауту, нужны проверки</td></tr>
+        <tr><td>Наблюдаемость</td><td>Метрики по запросам</td><td>Плюс возраст процесса, память, число обработанных задач</td></tr>
+        <tr><td>Масштабирование</td><td>Число процессов FPM</td><td>Число воркеров по типам задач</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Мягкая перезагрузка — обязательный механизм.</strong> При выкате новые задачи перестают выдаваться старым процессам, те дорабатывают текущую и завершаются, а поднятые процессы уже с новым кодом принимают работу. Без этого выкат либо обрывает задачи посередине, либо оставляет часть воркеров на старом коде — а это самый неприятный класс инцидентов, потому что поведение системы становится зависящим от того, какой процесс взял задачу.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 21 · что мониторить у воркеров</caption>
+      <thead><tr><th>Показатель</th><th>О чём говорит</th></tr></thead>
+      <tbody>
+        <tr><td>Длина очереди и её тренд</td><td>Воркеры не справляются или упали</td></tr>
+        <tr><td>Возраст самой старой задачи</td><td>Реальная задержка обработки, главный показатель</td></tr>
+        <tr><td>Число живых воркеров</td><td>Часть процессов умерла и не поднялась</td></tr>
+        <tr><td>Память процесса по времени жизни</td><td>Утечка</td></tr>
+        <tr><td>Число обработанных задач на процесс</td><td>Работает ли плановый перезапуск</td></tr>
+        <tr><td>Доля неудачных задач и размер очереди отказов</td><td>Систематическая проблема в обработчике</td></tr>
+        <tr><td>Число открытых соединений реального времени</td><td>Нагрузка и аномалии подключений</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Самый важный показатель у фоновой обработки — не длина очереди, а возраст самой старой необработанной задачи. Очередь из десяти тысяч задач, которая разгребается за минуту, — это норма; очередь из пяти задач, старейшей из которых сорок минут, — это сломанный воркер. Алерт ставят именно на возраст, потому что он напрямую соответствует тому, что чувствует пользователь.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / антипаттерны</p>
+    <div class="card-top"><h3>Антипаттерны</h3><span class="badge b-3">Ошибки</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 22 · антипаттерны асинхронности и реального времени</caption>
+      <thead><tr><th>Антипаттерн</th><th>Чем оборачивается</th><th>Как правильно</th></tr></thead>
+      <tbody>
+        <tr><td>WebSocket там, где хватало опроса</td><td>Новый компонент, новые инциденты, нулевая польза</td><td>Начинать с опроса, усложнять по факту</td></tr>
+        <tr><td>Переход на воркеры без аудита состояния</td><td>Утечка данных между пользователями</td><td>Аудит статики и синглтонов, тесты на чередование пользователей</td></tr>
+        <tr><td>Публикация события внутри транзакции</td><td>Клиент узнал о том, чего нет в базе</td><td>Публикация после коммита через outbox</td></tr>
+        <tr><td>Неидемпотентный обработчик задачи</td><td>Двойные письма, двойные списания</td><td>Ключ идемпотентности, проверка состояния</td></tr>
+        <tr><td>Состояние интерфейса только из событий</td><td>Тихая рассинхронизация у части пользователей</td><td>Событие — подсказка, состояние — запросом</td></tr>
+        <tr><td>Переподключение без разброса задержки</td><td>Лавина после перезапуска сервера</td><td>Нарастающая задержка со случайной добавкой</td></tr>
+        <tr><td>Тяжёлые вычисления в асинхронном цикле</td><td>Блокируют планировщик и все остальные задачи</td><td>Выносить в отдельный процесс</td></tr>
+        <tr><td>Один воркер на все типы задач</td><td>Долгая задача задерживает срочные</td><td>Разделение очередей и пулов по приоритету</td></tr>
+        <tr><td>Выкат без мягкой перезагрузки</td><td>Часть воркеров на старом коде</td><td>Мягкий перезапуск как часть процедуры выката</td></tr>
+        <tr><td>Асинхронность ради строчки в резюме</td><td>Сложность, которую некому поддерживать</td><td>Обоснование числами и вопрос «кто починит ночью»</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Самый дорогой антипаттерн</span>Считать, что фоновая задача выполнится ровно один раз. Гарантии брокеров почти всегда «хотя бы один раз»: воркер может упасть между выполнением работы и подтверждением, и задача придёт снова. Код, написанный в предположении единственного выполнения, ломается редко и дорого — двойным списанием, двойной отгрузкой, двойным письмом. Идемпотентность — не улучшение, а обязательное условие.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card lvl-s" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Проверка</span></div>
+    <p>Что должно быть в арсенале.</p>
+    <ul class="check">
+      <li>Разобрать шесть типовых обоснований асинхронности и показать, что проверить в каждом.</li>
+      <li>Обосновать переход на другой рантайм долей загрузки в профиле, а не свойствами технологии.</li>
+      <li>Назвать цену каждого подхода и задать вопрос «кто починит это ночью».</li>
+      <li>Описать, что ломается в реальном времени при появлении второго сервера, и как это решается.</li>
+      <li>Применить схлопывание событий и объяснить, почему это устойчивее отправки каждого изменения.</li>
+      <li>Перечислить шесть сценариев потери событий и механизм восстановления для каждого.</li>
+      <li>Сформулировать принцип «событие — подсказка, состояние — запросом» и следствия для интерфейса.</li>
+      <li>Настроить мягкую перезагрузку воркеров и объяснить, что происходит без неё.</li>
+      <li>Поставить алерт на возраст старейшей задачи, а не на длину очереди, и объяснить разницу.</li>
+      <li>Обеспечить деградацию интерфейса при недоступности сервера событий и проверить её учениями.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Сводки для повторения перед собеседованием и для разговора о выборе подхода с командой.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Транспорты реального времени</h3><span class="badge b-tag">Таблица 23</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 23 · четыре транспорта по одним признакам</caption>
+      <thead><tr><th>Признак</th><th>Опрос</th><th>Долгий опрос</th><th>SSE</th><th>WebSocket</th></tr></thead>
+      <tbody>
+        <tr><td>Протокол</td><td>Обычный HTTP</td><td>Обычный HTTP</td><td>Обычный HTTP</td><td>Отдельный после апгрейда</td></tr>
+        <tr><td>Направление</td><td>Запрос-ответ</td><td>Запрос-ответ</td><td>Сервер к клиенту</td><td>В обе стороны</td></tr>
+        <tr><td>Задержка</td><td>До интервала опроса</td><td>Мгновенно</td><td>Мгновенно</td><td>Мгновенно</td></tr>
+        <tr><td>Держит процесс PHP</td><td>Нет</td><td>Да, на время ожидания</td><td>Да, на всё время</td><td>Не применимо: отдельный сервер</td></tr>
+        <tr><td>Переподключение</td><td>Не нужно</td><td>Тривиально</td><td>Автоматически в браузере</td><td>Вручную на клиенте</td></tr>
+        <tr><td>Продолжение с места обрыва</td><td>Не нужно</td><td>Вручную</td><td>Через <span class="nm">Last-Event-ID</span></td><td>Вручную или через историю канала</td></tr>
+        <tr><td>Проходит через прокси</td><td>Всегда</td><td>Обычно</td><td>Обычно, если отключена буферизация</td><td>Требует настройки</td></tr>
+        <tr><td>Стоимость внедрения</td><td>Нулевая</td><td>Низкая</td><td>Средняя</td><td>Высокая</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Как этим пользоваться</span>Строка «стоимость внедрения» соответствует порядку, в котором стоит рассматривать варианты. Переход к следующей строке должен быть обоснован конкретным требованием: задержка в секунду недопустима, вкладок слишком много для опроса, нужен обмен в обе стороны. «Так современнее» — не требование.</div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что чем решается</h3><span class="badge b-tag">Таблица 24</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 24 · задача, подход, инструмент</caption>
+      <thead><tr><th>Задача</th><th>Подход</th><th>Типичный инструмент</th></tr></thead>
+      <tbody>
+        <tr><td>Пользователь не должен ждать письма</td><td>Фоновая обработка</td><td>Очередь и воркер</td></tr>
+        <tr><td>Генерация большого документа</td><td>Фоновая обработка со статусом</td><td>Очередь плюс опрос статуса</td></tr>
+        <tr><td>Регулярная сверка по расписанию</td><td>Фоновая обработка</td><td>Cron и консольная команда</td></tr>
+        <tr><td>Четыре внешних сервиса на одной странице</td><td>Конкурентный ввод-вывод</td><td>HTTP-клиент с потоковой обработкой ответов</td></tr>
+        <tr><td>Массовая рассылка вебхуков</td><td>Конкурентный ввод-вывод в воркере</td><td>Ограниченный по числу пул запросов</td></tr>
+        <tr><td>Лёгкий API с тяжёлой загрузкой фреймворка</td><td>Долгоживущий процесс</td><td>RoadRunner, FrankenPHP</td></tr>
+        <tr><td>Уведомления в интерфейсе</td><td>Доставка от сервера</td><td>Опрос или SSE</td></tr>
+        <tr><td>Чат и совместное редактирование</td><td>Двусторонний канал</td><td>Centrifugo, WebSocket</td></tr>
+        <tr><td>Тяжёлые вычисления</td><td>Отдельные процессы</td><td>Несколько воркеров, разделение данных</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Термины, которые путают</h3><span class="badge b-tag">Таблица 25</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 25 · пары понятий и разница между ними</caption>
+      <thead><tr><th>Пара</th><th>Первое</th><th>Второе</th></tr></thead>
+      <tbody>
+        <tr><td>Конкурентность / параллелизм</td><td>Задачи чередуются, ожидание совмещается</td><td>Задачи выполняются одновременно на разных ядрах</td></tr>
+        <tr><td>Асинхронность / фоновая обработка</td><td>Не блокировать процесс во время ожидания</td><td>Выполнить работу после ответа пользователю</td></tr>
+        <tr><td>Fiber / генератор</td><td>Приостанавливает весь стек из любой точки</td><td>Приостанавливается только в своём теле</td></tr>
+        <tr><td>Блокирующий / неблокирующий вызов</td><td>Процесс стоит и ждёт</td><td>Управление уходит планировщику</td></tr>
+        <tr><td>Воркер / долгоживущий рантайм</td><td>Процесс, обрабатывающий задачи из очереди</td><td>Процесс, обрабатывающий HTTP-запросы без перезагрузки</td></tr>
+        <tr><td>SSE / WebSocket</td><td>Однонаправленно, поверх HTTP</td><td>Двусторонне, отдельный протокол</td></tr>
+        <tr><td>Хотя бы один раз / ровно один раз</td><td>Реальная гарантия брокеров</td><td>Достигается идемпотентностью на стороне обработчика</td></tr>
+        <tr><td>Мягкая перезагрузка / перезапуск</td><td>Дорабатывает текущую задачу и выходит</td><td>Обрывает работу немедленно</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Симптом и причина</h3><span class="badge b-tag">Таблица 26</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 26 · диагностика типовых проблем</caption>
+      <thead><tr><th>Симптом</th><th>Вероятная причина</th><th>Что проверить</th></tr></thead>
+      <tbody>
+        <tr><td>Пользователь видит чужие данные после перехода на воркеры</td><td>Статическое состояние между запросами</td><td>Статика, синглтоны, глобальные настройки</td></tr>
+        <tr><td>Память воркера растёт линейно</td><td>Накопление в сервисе или в ORM</td><td>График памяти по числу задач, очистка состояния</td></tr>
+        <tr><td>Задачи выполняются дважды</td><td>Падение между работой и подтверждением</td><td>Идемпотентность обработчика</td></tr>
+        <tr><td>Очередь короткая, но задачи опаздывают</td><td>Часть воркеров умерла или зависла</td><td>Возраст старейшей задачи, число живых процессов</td></tr>
+        <tr><td>События SSE приходят пачкой в конце</td><td>Буферизация на прокси или в PHP</td><td>Заголовок отключения буфера, сброс вывода</td></tr>
+        <tr><td>Кончились процессы FPM после включения SSE</td><td>Каждое соединение держит процесс</td><td>Отдельный пул или другой рантайм</td></tr>
+        <tr><td>Событие дошло не всем подписчикам</td><td>Подписчики на разных узлах, нет общей шины</td><td>Настройка шины между узлами</td></tr>
+        <tr><td>После перезапуска сервера событий всё падает</td><td>Лавина одновременных переподключений</td><td>Разброс задержки на клиенте</td></tr>
+        <tr><td>Интерфейс показывает устаревшее состояние</td><td>Состояние строится только из событий</td><td>Перезагрузка состояния при фокусе и после разрыва</td></tr>
+        <tr><td>Часть выката работает по-старому</td><td>Воркеры не перезапущены</td><td>Мягкая перезагрузка в процедуре деплоя</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Команды и шаблоны</h2>
+    <p>То, что чаще всего нужно под рукой при работе с воркерами и реальным временем.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Присмотр за воркерами</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>supervisor</span><span class="r">Конфигурация и управление</span></div><pre><span class="cm"># /etc/supervisor/conf.d/worker.conf</span>
+[program:app-worker]
+command=php /app/bin/console app:worker --queue=default
+numprocs=8                       <span class="cm">; сколько процессов держать</span>
+process_name=%(program_name)s_%(process_num)02d
+autostart=true
+autorestart=true
+<span class="cm">; сигнал мягкой остановки и время на дообработку задачи</span>
+stopsignal=TERM
+stopwaitsecs=60
+user=www-data
+redirect_stderr=true
+stdout_logfile=/var/log/app-worker.log
+
+<span class="cm"># управление</span>
+supervisorctl reread &amp;&amp; supervisorctl update
+supervisorctl status app-worker:*
+supervisorctl restart app-worker:*      <span class="cm"># мягко: TERM, потом ждём</span>
+
+<span class="cm"># деплой: сначала код, потом мягкий перезапуск воркеров</span>
+<span class="cm"># иначе часть задач будет обработана старым кодом</span>
+
+<span class="cm"># systemd-вариант с тем же смыслом</span>
+<span class="cm">#   KillSignal=SIGTERM</span>
+<span class="cm">#   TimeoutStopSec=60</span>
+<span class="cm">#   Restart=always</span>
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Диагностика процессов</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Что смотреть, когда воркеры ведут себя странно</span></div><pre><span class="cm"># живы ли процессы и сколько памяти держат</span>
+ps -eo pid,etimes,rss,cmd --sort=-rss | grep <span class="st">'app:worker'</span>
+<span class="cm"># etimes — возраст в секундах, rss — память в КБ</span>
+<span class="cm"># растущий rss при растущем etimes = утечка</span>
+
+<span class="cm"># чем занят зависший процесс</span>
+strace -p <span class="nm">PID</span> -f -e trace=network,read,write
+<span class="cm"># висит на read из сокета — ждём внешний сервис без таймаута</span>
+
+<span class="cm"># открытые дескрипторы: соединения, файлы, сокеты</span>
+ls -1 /proc/<span class="nm">PID</span>/fd | wc -l
+cat /proc/<span class="nm">PID</span>/limits | grep <span class="st">'open files'</span>
+
+<span class="cm"># сколько соединений держит сервер реального времени</span>
+ss -tan state established <span class="st">'( sport = :8000 )'</span> | wc -l
+
+<span class="cm"># очередь и её возраст (Redis-вариант)</span>
+redis-cli LLEN queues:default
+redis-cli LINDEX queues:default -1     <span class="cm"># старейшая задача</span>
+
+<span class="cm"># RoadRunner: состояние воркеров</span>
+./rr workers -i
+<span class="cm"># смотреть: память на воркер, число обработанных запросов, статус</span>
+./rr reset                              <span class="cm"># мягкая перезагрузка</span>
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Шаблон идемпотентной задачи</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Обработчик, переживающий повторную доставку</span></div><pre><span class="kw">final class</span> <span class="nm">SendOrderEmailHandler</span>
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">SendOrderEmail</span> <span class="nm">$message</span>): <span class="kw">void</span>
+    {
+        <span class="cm">// 1. Ключ идемпотентности из смысла операции,</span>
+        <span class="cm">//    а не из идентификатора сообщения</span>
+        <span class="nm">$key</span> = <span class="fn">sprintf</span>(<span class="st">'email:order:%d:%s'</span>, <span class="nm">$message</span>-&gt;orderId, <span class="nm">$message</span>-&gt;type);
+
+        <span class="cm">// 2. Атомарная отметка: занял — работаю, не занял — уже сделано</span>
+        <span class="kw">if</span> (!<span class="nm">$this</span>-&gt;redis-&gt;<span class="fn">set</span>(<span class="nm">$key</span>, <span class="st">'1'</span>, [<span class="st">'NX'</span>, <span class="st">'EX'</span> =&gt; 86400])) {
+            <span class="nm">$this</span>-&gt;logger-&gt;<span class="fn">info</span>(<span class="st">'email.skipped_duplicate'</span>, [<span class="st">'key'</span> =&gt; <span class="nm">$key</span>]);
+            <span class="kw">return</span>;
+        }
+
+        <span class="kw">try</span> {
+            <span class="nm">$order</span> = <span class="nm">$this</span>-&gt;orders-&gt;<span class="fn">find</span>(<span class="nm">$message</span>-&gt;orderId);
+            <span class="cm">// 3. Проверка актуальности: состояние могло измениться</span>
+            <span class="kw">if</span> (<span class="nm">$order</span> === <span class="kw">null</span> || <span class="nm">$order</span>-&gt;<span class="fn">isCancelled</span>()) {
+                <span class="kw">return</span>;
+            }
+
+            <span class="nm">$this</span>-&gt;mailer-&gt;<span class="fn">send</span>(<span class="nm">$this</span>-&gt;<span class="fn">build</span>(<span class="nm">$order</span>));
+        } <span class="kw">catch</span> (<span class="nm">\Throwable</span> <span class="nm">$e</span>) {
+            <span class="cm">// 4. Не отправили — снимаем отметку, чтобы повтор сработал</span>
+            <span class="nm">$this</span>-&gt;redis-&gt;<span class="fn">del</span>(<span class="nm">$key</span>);
+            <span class="kw">throw</span> <span class="nm">$e</span>;
+        }
+    }
+}
+</pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Ключ идемпотентности строится из смысла операции, а не из идентификатора сообщения. Если брокер переотправит то же самое сообщение, идентификатор совпадёт и защита сработает; но если задачу поставят повторно из другого места кода, идентификатор будет новым, а письмо уйдёт вторым. Ключ вида «письмо такого-то типа по такому-то заказу» защищает в обоих случаях.</div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Порядок внедрения реального времени</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>протокол</span><span class="r">От требования до эксплуатации</span></div><pre><span class="cm"># 1. Уточнить требование</span>
+   Какая задержка недопустима · сколько одновременных вкладок
+   Направление обмена · что произойдёт при потере события
+
+<span class="cm"># 2. Взять самый простой достаточный транспорт</span>
+   Задержка в секунды приемлема        -&gt; опрос
+   Нужно мгновенно, только от сервера  -&gt; SSE
+   Нужен обмен в обе стороны           -&gt; WebSocket
+
+<span class="cm"># 3. Спроектировать каналы и права</span>
+   Канал на пользователя или на объект · что в токене подключения
+   Короткий срок жизни токена · обновление без разрыва
+
+<span class="cm"># 4. Спроектировать события</span>
+   Минимум данных + версия + идентификатор
+   Событие = «изменилось», состояние = обычным запросом
+   Схлопывание частых изменений
+
+<span class="cm"># 5. Публиковать надёжно</span>
+   После коммита · через outbox · с таймаутом
+   Падение публикации не роняет основную операцию
+
+<span class="cm"># 6. Проработать клиента</span>
+   Переподключение с ростом задержки и разбросом
+   Отбрасывание устаревшего по версии
+   Полная перезагрузка после долгого разрыва и при фокусе
+
+<span class="cm"># 7. Проверить эксплуатацию</span>
+   Второй узел и общая шина · деплой без обрыва всех
+   Метрики соединений · учения на отключение сервера событий
+</pre></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== ИНТЕРВЬЮ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>На этой теме особенно ценится умение отличать три разные задачи друг от друга и называть цену решения, а не только его преимущества.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">База</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что происходит при обычном запросе к PHP-приложению?</span><span class="aa">FPM берёт свободный процесс, тот подключает файлы, поднимает контейнер и конфигурацию, выполняет код, отдаёт ответ и полностью очищает память. Следующий запрос начинается с чистого листа и, скорее всего, попадёт в другой процесс.</span></li>
+      <li><span class="qq">Что такое shared-nothing?</span><span class="aa">Модель, при которой процессы ничего не разделяют между собой: у каждого своя память, своё состояние и своя жизнь длиной в один запрос. Отсюда и простота PHP, и все его ограничения в этой теме.</span></li>
+      <li><span class="qq">Какие плюсы у модели «процесс умирает после запроса»?</span><span class="aa">Утечки памяти и забытые ресурсы не имеют последствий, ошибка в одном запросе не влияет на другие, состояние не может утечь между пользователями, код всегда актуален сразу после выката. Это делает PHP языком, на котором трудно случайно устроить катастрофу.</span></li>
+      <li><span class="qq">Какие минусы у этой модели?</span><span class="aa">Ничего нельзя накопить между запросами, поэтому нужен внешний кэш; фреймворк загружается заново на каждый запрос; нельзя держать открытое соединение с клиентом; одновременных запросов ровно столько, сколько процессов; долгая работа задерживает пользователя.</span></li>
+      <li><span class="qq">Правда ли, что PHP синхронный язык?</span><span class="aa">Ограничение создаёт не язык, а типичное окружение: один процесс на запрос и блокирующие вызовы. Сам язык умеет генераторы, файберы и неблокирующий ввод-вывод, а под другими рантаймами модель выполнения меняется.</span></li>
+      <li><span class="qq">Какие три подхода существуют для ухода от синхронности?</span><span class="aa">Фоновая обработка — чтобы пользователь не ждал; долгоживущий процесс — чтобы не платить за загрузку фреймворка; конкурентный ввод-вывод — чтобы ждать несколько внешних сервисов одновременно. Задачи разные, и подходы не заменяют друг друга.</span></li>
+      <li><span class="qq">Что такое фоновая задача?</span><span class="aa">Работа, выполняемая после того, как пользователь получил ответ: запрос кладёт задание в очередь, отдельный процесс-воркер его забирает и выполняет. Так выносят письма, генерацию документов, индексацию, аналитику и уведомления.</span></li>
+      <li><span class="qq">Что такое воркер?</span><span class="aa">Обычная консольная команда PHP, запущенная в цикле и живущая часами: она берёт задачу из очереди, обрабатывает, подтверждает и берёт следующую. От обычного скрипта отличается тем, что должна корректно останавливаться, чистить состояние и планово перезапускаться.</span></li>
+      <li><span class="qq">Зачем воркеру обработка сигнала остановки?</span><span class="aa">Чтобы при деплое или перезапуске он дорабатывал текущую задачу и завершался, а не умирал посреди обработки. Без этого часть задач будет прерываться на середине, и последствия зависят от того, что успело выполниться.</span></li>
+      <li><span class="qq">Зачем воркер перезапускают по счётчику задач или по памяти?</span><span class="aa">Это страховка от утечек, которые не нашли: процесс живёт долго, и любое накопление превращается в рост памяти. Плановый перезапуск ограничивает ущерб, но не заменяет поиск причины и совершенно не помогает от утечки данных между запросами.</span></li>
+      <li><span class="qq">Почему фоновая задача должна быть идемпотентной?</span><span class="aa">Потому что воркер может упасть между выполнением работы и подтверждением задачи, и она придёт снова. Гарантия брокеров — «хотя бы один раз». Без защиты это означает два письма, два списания, две отгрузки.</span></li>
+      <li><span class="qq">Зачем воркерам нужен процесс-надзиратель?</span><span class="aa">Он перезапускает упавшие процессы, держит нужное количество, корректно останавливает их при деплое и пишет логи. Воркер, запущенный вручную в фоне, однажды умрёт, и об этом никто не узнает, пока не начнут жаловаться пользователи.</span></li>
+      <li><span class="qq">В чём разница между cron и очередью?</span><span class="aa">Cron запускает работу по расписанию с шагом в минуту и не знает о конкретных заданиях; очередь обрабатывает задачи по мере поступления почти мгновенно и умеет повторы, приоритеты и задержки. Cron уместен для регулярной работы, очередь — для реакции на события.</span></li>
+      <li><span class="qq">Какие есть способы доставить данные в браузер?</span><span class="aa">Периодический опрос, долгий опрос, SSE и WebSocket. Они различаются задержкой, направлением обмена и стоимостью внедрения — от нулевой у опроса до высокой у WebSocket.</span></li>
+      <li><span class="qq">Что такое SSE?</span><span class="aa">Поток событий поверх обычного HTTP: сервер не закрывает ответ и дописывает в него события. Однонаправленный, работает через привычную инфраструктуру, переподключается автоматически силами браузера и умеет продолжать с последнего идентификатора события.</span></li>
+      <li><span class="qq">Чем WebSocket отличается от SSE?</span><span class="aa">WebSocket — отдельный протокол после апгрейда соединения, обмен идёт в обе стороны, но требует своей инфраструктуры, настройки прокси и ручной обработки переподключений. SSE проще во всём, но данные идут только от сервера к клиенту.</span></li>
+      <li><span class="qq">Когда достаточно обычного опроса?</span><span class="aa">Когда задержка в несколько секунд приемлема и открытых вкладок не слишком много: статус фоновой задачи, счётчик уведомлений, прогресс генерации отчёта. Опрос не требует ни нового компонента, ни новых знаний и переживает перезагрузку страницы.</span></li>
+      <li><span class="qq">Почему для показа прогресса не нужен WebSocket?</span><span class="aa">Потому что данные идут в одну сторону, задержка в секунду незаметна, а состояние задачи всё равно хранится на сервере и доступно обычным запросом. Опрос простого эндпоинта решает задачу без единого нового компонента в инфраструктуре.</span></li>
+      <li><span class="qq">Что такое долгий опрос?</span><span class="aa">Запрос, который сервер не отвечает сразу, а держит до появления события или до таймаута. Даёт почти мгновенную доставку без нового протокола, но занимает процесс PHP на всё время ожидания — поэтому требует отдельного пула.</span></li>
+      <li><span class="qq">С чего начинать, если нужны «уведомления в реальном времени»?</span><span class="aa">С уточнения требований: какая задержка недопустима, сколько одновременных вкладок ожидается, нужен ли обмен в обе стороны и что произойдёт при потере события. Чаще всего выясняется, что достаточно опроса раз в несколько секунд.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Инструменты</span></div>
+    <ol class="qlist">
+      <li><span class="qq">За счёт чего экономят долгоживущие процессы?</span><span class="aa">Приложение загружается один раз при старте, а дальше воркер в цикле принимает запросы, не пересоздавая контейнер, конфигурацию и маршруты. Экономия равна времени загрузки — обычно от 20 до 80 мс на запрос.</span></li>
+      <li><span class="qq">Когда эта экономия незаметна?</span><span class="aa">Когда время ответа определяется не загрузкой, а ожиданием базы или внешних сервисов. Для страницы, отвечающей за 400 мс с 380 мс в базе, переход даст улучшение на проценты. Для лёгкого API на 40 мс, из которых 25 — загрузка, выигрыш кратный.</span></li>
+      <li><span class="qq">Чем различаются RoadRunner, Swoole и FrankenPHP?</span><span class="aa">RoadRunner — сервер на Go с воркерами на PHP, ставится бинарником, расширение не нужно. Swoole — расширение PHP с корутинами и собственной моделью, самый высокий порог входа и наибольшая переделка кода. FrankenPHP — сервер на базе Caddy с долгоживущими воркерами, простой в установке. Все три требуют аудита кода на состояние.</span></li>
+      <li><span class="qq">Какая главная опасность при переходе на воркеры?</span><span class="aa">Утечка состояния между запросами. Статическое свойство, хранившее текущего пользователя, под FPM безобидно, а в воркере вернёт пользователя предыдущего запроса. Такие ошибки не падают, а тихо отдают одному пользователю данные другого.</span></li>
+      <li><span class="qq">Где искать состояние в существующем коде?</span><span class="aa">Статические свойства с данными, синглтоны с накоплением, глобальные вызовы вроде установки часового пояса и локали, прямое чтение суперглобальных массивов, кэш в свойствах сервисов, открытые дескрипторы и соединения, библиотеки с внутренним состоянием.</span></li>
+      <li><span class="qq">Как обнаружить утечку состояния?</span><span class="aa">Двумя разными проверками. Утечка памяти видна на графике памяти по числу обработанных запросов: линейный рост вместо пилы. Утечка данных ловится чередованием запросов от разных пользователей и сравнением ответа на первом и пятисотом запросе процесса.</span></li>
+      <li><span class="qq">Почему плановый перезапуск не решает проблему?</span><span class="aa">Он скрывает утечку памяти и ограничивает её ущерб, но от утечки данных между пользователями не помогает вовсе: она проявится на втором запросе, а не на пятисотом. Это страховка, а не лечение.</span></li>
+      <li><span class="qq">Что такое Fiber?</span><span class="aa">Механизм, позволяющий приостановить выполнение и вернуться к нему позже, приостановив при этом весь стек вызовов из любой точки. Сам по себе ничего не ускоряет: это низкоуровневая основа, на которой асинхронные библиотеки строят планировщик задач.</span></li>
+      <li><span class="qq">Чем Fiber отличается от генератора?</span><span class="aa">Генератор приостанавливается только в собственном теле, поэтому асинхронность приходится протаскивать через всю цепочку вызовов. Fiber приостанавливает весь стек, и промежуточные функции остаются обычными — код выглядит синхронным, читается сверху вниз.</span></li>
+      <li><span class="qq">Что конкурентность на файберах не даёт?</span><span class="aa">Параллельных вычислений: поток один, и пока считается тяжёлый цикл, все остальные задачи стоят. Не задействует несколько ядер. Не делает неблокирующим произвольный клиент — нужен клиент, умеющий уступать управление. Выигрыш только в совмещении ожиданий.</span></li>
+      <li><span class="qq">Как ускорить страницу, которая ждёт четыре внешних сервиса?</span><span class="aa">Отправить все четыре запроса, не читая ответы, а затем собрать результаты по мере готовности. Общее время станет равно самому долгому вызову вместо суммы. Обязательны таймаут на каждый вызов и деградация: один упавший провайдер не должен ронять страницу.</span></li>
+      <li><span class="qq">Что обязательно при конкурентных внешних вызовах?</span><span class="aa">Жёсткий таймаут на каждый — иначе весь выигрыш съедает один зависший сервис — и ограничение числа одновременных запросов, особенно если список формируется из данных. Плюс частичная деградация вместо ошибки при отказе одного участника.</span></li>
+      <li><span class="qq">Почему WebSocket обычно выносят в отдельный сервер?</span><span class="aa">Потому что десятки тысяч постоянных соединений — не та нагрузка, под которую устроено PHP-приложение: каждое соединение заняло бы процесс. Специализированный сервер держит соединения, а приложение остаётся обычным и только публикует события по HTTP или через брокер.</span></li>
+      <li><span class="qq">Как устроена аутентификация в реальном времени?</span><span class="aa">Приложение выдаёт короткоживущий токен с указанием пользователя и разрешённых каналов; клиент предъявляет его серверу реального времени при подключении; при истечении токен обновляется без разрыва. Проверять права на каждое сообщение негде — соединение живёт часами.</span></li>
+      <li><span class="qq">Почему нельзя публиковать событие внутри транзакции?</span><span class="aa">Потому что подписчик может получить уведомление и запросить данные до того, как транзакция зафиксирована, — или вообще после её отката. Публикация делается после коммита, а надёжнее — через outbox, чтобы событие не потерялось при сбое.</span></li>
+      <li><span class="qq">Что класть в событие?</span><span class="aa">Минимум: идентификатор объекта, тип изменения и версию. Полный объект отправлять не стоит — это утечка полей, лишний трафик и риск показать данные, на которые у подписчика нет прав. Детали клиент дозагружает обычным запросом с обычной проверкой доступа.</span></li>
+      <li><span class="qq">Зачем в событии версия?</span><span class="aa">Потому что порядок доставки не гарантирован, а переподключения приводят к повторам. Версия или метка времени позволяет клиенту отбросить событие, которое старше уже применённого состояния, — иначе устаревшие данные перезапишут свежие.</span></li>
+      <li><span class="qq">Какие подводные камни у SSE в PHP?</span><span class="aa">Буферизация на прокси и в самом PHP, из-за которой события приходят пачкой в конце; занятый на всё время соединения процесс FPM; обрыв по таймауту прокси; потеря событий при обрыве, если не отдавать идентификаторы; опрос базы в цикле каждым соединением.</span></li>
+      <li><span class="qq">Как правильно организовать SSE-поток?</span><span class="aa">Отдавать идентификатор каждому событию и обрабатывать заголовок с последним полученным идентификатором, отключить буферизацию, жить ограниченное время и просить клиента переподключиться, брать события из подписки на канал брокера, а не опросом базы, и вынести это на отдельный пул или рантайм.</span></li>
+      <li><span class="qq">Что проще всего для показа прогресса долгой операции?</span><span class="aa">Опрос раз в секунду обычного эндпоинта, который читает состояние задачи из Redis. Работает под FPM, не занимает процессы надолго, переживает перезагрузку страницы и не требует новых компонентов. SSE и WebSocket выигрывают, когда открытых вкладок становится много.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Решения</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Стоит ли переводить приложение на Swoole ради скорости?</span><span class="aa">Сначала смотрим профиль: какую долю ответа занимает загрузка приложения. Если время уходит в базу, выигрыш будет в проценты ценой аудита всего кода, новой модели деплоя и риска утечек данных. Если речь о лёгком API с тяжёлой загрузкой — выигрыш реальный. Ответ начинается с чисел.</span></li>
+      <li><span class="qq">Как обосновать отказ от WebSocket?</span><span class="aa">Через требования: если данные идут только от сервера и задержка в несколько секунд приемлема, опрос решает задачу без нового компонента, без аутентификации соединений, без масштабирования и без обработки переподключений. Отказ обосновывается стоимостью эксплуатации, а не нелюбовью к технологии.</span></li>
+      <li><span class="qq">Какой вопрос стоит задать перед внедрением любого из этих подходов?</span><span class="aa">Сколько людей в команде смогут починить это в три часа ночи. Отдельный сервер событий, нестандартный рантайм и асинхронный код требуют навыков, которых может не быть. Если чинить умеет один человек, решение либо откладывают, либо выбирают вариант попроще.</span></li>
+      <li><span class="qq">Что ломается в реальном времени при появлении второго сервера?</span><span class="aa">События перестают доходить до всех: подписчики распределены по узлам, а публикация попадает на один. Нужна общая шина между узлами через Redis или брокер. Дополнительно появляются неравномерная нагрузка, лавины переподключений при перезапуске и вопрос, куда подключать нового клиента.</span></li>
+      <li><span class="qq">Что такое схлопывание событий и зачем оно?</span><span class="aa">Если объект меняется двадцать раз в секунду, отправляется не двадцать сообщений, а одно «изменилось, версия такая-то» с ограничением частоты, а состояние клиент дозагружает сам. Это снижает трафик, снимает вопрос порядка сообщений и делает систему устойчивой к всплескам.</span></li>
+      <li><span class="qq">Как считать ресурсы под постоянные соединения?</span><span class="aa">По числу соединений на узел, умноженному на размер буфера отправки, плюс лимиты на дескрипторы и порты. Пятьдесят тысяч соединений с буфером в 64 КБ — это больше трёх гигабайт только на буферы. Отдельно нужен предел на соединения с узла и отключение отстающих клиентов.</span></li>
+      <li><span class="qq">Какие есть сценарии потери событий?</span><span class="aa">Кратковременный обрыв сети, вкладка в спящем режиме, перезапуск сервера событий, недоставленная до шины публикация, доставка не по порядку и повторная доставка. Для каждого нужен свой механизм: история канала, полная перезагрузка состояния, outbox, версии и идемпотентная обработка.</span></li>
+      <li><span class="qq">Сформулируйте главный принцип надёжного реального времени.</span><span class="aa">Событие — это уведомление об изменении, а не источник истины. Интерфейс, строящий состояние исключительно из потока событий, обязательно рассинхронизируется и не узнает об этом. Состояние всегда доступно обычным запросом и перезагружается при первом открытии, при возвращении фокуса и после долгого разрыва.</span></li>
+      <li><span class="qq">Как должен вести себя клиент при обрыве?</span><span class="aa">Переподключаться с нарастающей задержкой и случайным разбросом — иначе после перезапуска сервера все придут одновременно и уронят его повторно. При разрыве дольше окна хранения истории — перезагружать состояние полностью, а не пытаться догнать события.</span></li>
+      <li><span class="qq">Что меняется в эксплуатации при переходе на долгоживущие процессы?</span><span class="aa">Выкат требует явной мягкой перезагрузки, остановка — сигнала и времени на дообработку, утечки памяти начинают иметь значение, ошибка может убить процесс вместе со всеми его соединениями, соединения к базе живут долго и рвутся по таймауту, а в наблюдаемость добавляются возраст процесса и память.</span></li>
+      <li><span class="qq">Что такое мягкая перезагрузка и почему она обязательна?</span><span class="aa">Новые задачи перестают выдаваться старым процессам, те дорабатывают текущую и завершаются, а поднятые процессы уже с новым кодом принимают работу. Без неё выкат либо обрывает задачи посередине, либо оставляет часть воркеров на старом коде — и поведение системы начинает зависеть от того, какой процесс взял задачу.</span></li>
+      <li><span class="qq">На что ставить алерт: на длину очереди или на возраст задачи?</span><span class="aa">На возраст самой старой необработанной задачи. Очередь из десяти тысяч задач, разгребаемая за минуту, — норма; очередь из пяти задач, старейшей из которых сорок минут, — сломанный воркер. Возраст напрямую соответствует тому, что чувствует пользователь.</span></li>
+      <li><span class="qq">Как обеспечить деградацию реального времени?</span><span class="aa">При недоступности сервера событий интерфейс переключается на периодический опрос, показывает данные, полученные обычным запросом, и не показывает ошибок. Проверяется учениями: сервер событий отключают в тестовой среде и смотрят, что происходит с интерфейсом.</span></li>
+      <li><span class="qq">Как разделять воркеры по типам задач?</span><span class="aa">По длительности и по важности: срочные короткие задачи не должны стоять за длинной выгрузкой. Разные очереди с разными пулами воркеров решают это без изменения кода. Отдельно полезно держать очередь для повторов, чтобы отказы не тормозили основной поток.</span></li>
+      <li><span class="qq">Что делать с задачами, которые падают постоянно?</span><span class="aa">Ограничивать число повторов с нарастающей задержкой и переводить в очередь отказов, а не повторять бесконечно. Очередь отказов должна быть под наблюдением: её рост означает системную проблему в обработчике, а не случайный сбой. Разбор и повторная отправка — отдельная процедура.</span></li>
+      <li><span class="qq">Как перевести существующее приложение на долгоживущий рантайм?</span><span class="aa">Поэтапно: сначала прогнать полный набор тестов под новым рантаймом, добавить тест на чередование запросов разных пользователей, затем вывести на небольшую долю продового трафика с отдельным мониторингом памяти, и только потом переводить всё. Утечки проявляются после сотен запросов на процессе, а не сразу.</span></li>
+      <li><span class="qq">Почему тяжёлые вычисления нельзя класть в асинхронный цикл?</span><span class="aa">Потому что они блокируют планировщик целиком: пока считается, ни одна другая корутина не получит управления, и все соединения на этом процессе замирают. Вычисления выносят в отдельные процессы, а асинхронность оставляют для совмещения ожиданий.</span></li>
+      <li><span class="qq">Как связаны эта тема и очереди сообщений?</span><span class="aa">Фоновая обработка целиком построена на брокере: от него зависят гарантии доставки, повторы, задержки, приоритеты и очередь отказов. Реальное время использует брокер как шину между узлами и как источник событий для потоков. Понимание семантики доставки и идемпотентности — общая основа для обеих тем.</span></li>
+      <li><span class="qq">Как объяснить бизнесу отказ от реального времени?</span><span class="aa">Через стоимость и риск: отдельный сервер, его эксплуатация, аутентификация соединений, обработка обрывов, новый класс инцидентов — против выигрыша в две секунды задержки уведомления. Если выигрыш не влияет на продуктовые показатели, разговор заканчивается быстро. Если влияет — обсуждают уже конкретную цену.</span></li>
+      <li><span class="qq">Какой главный признак зрелого решения в этой теме?</span><span class="aa">Названы задача, подход и цена. Инженер, который говорит «сделаем на WebSocket, это современно», и инженер, который говорит «нужен двусторонний обмен с задержкой ниже секунды, берём отдельный сервер, принимаем общую шину между узлами, восстановление после обрыва и деградацию на опрос при его недоступности», решают разные задачи.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Задания устроены так, чтобы столкнуть с реальными эффектами — утечкой состояния, лавиной переподключений, потерей событий — в безопасных условиях.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Основы</span></div>
+    <h4>1. Разложить сценарий на три подхода</h4>
+    <p>Возьмите сценарий оформления заказа в своём проекте и распишите, что относится к фоновой обработке, что к конкурентному вводу-выводу и что выиграло бы от долгоживущего процесса. Оцените выигрыш каждого в миллисекундах.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание, что три подхода решают разные задачи, и приоритет для внедрения.</div>
+    <h4>2. Вынести операцию в фон</h4>
+    <p>Найдите синхронную отправку письма или генерацию документа в запросе, вынесите в очередь и замерьте время ответа до и после.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Пара чисел и первый работающий воркер.</div>
+    <h4>3. Написать правильный воркер</h4>
+    <p>Добавьте в воркер обработку сигнала остановки, очистку состояния между задачами и плановый перезапуск по счётчику и по памяти. Проверьте: отправьте сигнал во время обработки и убедитесь, что задача дорабатывается.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Воркер, который переживает деплой без потери задач.</div>
+    <h4>4. Сломать идемпотентность и починить</h4>
+    <p>Сделайте так, чтобы воркер падал после выполнения работы, но до подтверждения задачи. Посмотрите на дубли. Добавьте ключ идемпотентности и повторите.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Личный опыт двойной отправки — после него об идемпотентности не забывают.</div>
+    <h4>5. Прогресс через опрос</h4>
+    <p>Сделайте показ прогресса долгой задачи: воркер пишет состояние в Redis, эндпоинт отдаёт его, клиент опрашивает раз в секунду. Проверьте, что перезагрузка страницы ничего не ломает.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Рабочее решение задачи, ради которой часто зря поднимают WebSocket.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Инструменты</span></div>
+    <h4>6. Запустить приложение под другим рантаймом</h4>
+    <p>Поднимите приложение под RoadRunner или FrankenPHP на тестовой среде, прогоните тесты и замерьте время ответа лёгкого и тяжёлого эндпоинта. Сравните выигрыш на обоих.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Собственные числа вместо обещаний из документации — и понимание, где выигрыш реален.</div>
+    <h4>7. Найти утечку состояния</h4>
+    <p>Найдите в коде статическое свойство, хранящее данные запроса. Под воркером сделайте два последовательных запроса от разных пользователей и убедитесь, что второй видит данные первого. Исправьте.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Воспроизведённая утечка данных — самое убедительное доказательство необходимости аудита.</div>
+    <h4>8. Тест на чередование пользователей</h4>
+    <p>Напишите тест, который на одном процессе выполняет запросы от разных пользователей вперемешку и проверяет, что ответы не смешиваются. Добавьте его в конвейер.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Автоматическая защита от самого опасного класса ошибок при работе с воркерами.</div>
+    <h4>9. График памяти воркера</h4>
+    <p>Прогоните тысячу задач на одном процессе, снимая память каждые сто задач. Постройте график. Если растёт линейно — найдите, что накапливается.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Навык отличать нормальную «пилу» от утечки и умение локализовать причину.</div>
+    <h4>10. Конкурентные вызовы</h4>
+    <p>Найдите место с несколькими независимыми внешними вызовами подряд, перепишите на одновременные с таймаутами. Замерьте до и после. Отключите один сервис и убедитесь, что страница работает частично.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Кратное ускорение участка и проверенная деградация при отказе провайдера.</div>
+    <h4>11. Поднять реальное время</h4>
+    <p>Поднимите Centrifugo или Mercure, реализуйте токен подключения с ограничением каналов и публикацию события после коммита. Проверьте, что чужой канал недоступен.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Рабочая схема с правами, а не демонстрация, где все подписаны на всё.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Решения</span></div>
+    <h4>12. Устойчивый клиент</h4>
+    <p>Реализуйте клиента с нарастающей задержкой и разбросом при переподключении, отбрасыванием устаревших событий по версии и полной перезагрузкой состояния после долгого разрыва. Проверьте, обрывая соединение вручную.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Интерфейс, который не рассинхронизируется при потере сети и переходе в спящий режим.</div>
+    <h4>13. Учения на отказ</h4>
+    <p>Отключите сервер событий в тестовой среде под нагрузкой и посмотрите, что произойдёт с интерфейсом. Реализуйте деградацию на опрос. Затем перезапустите сервер и посмотрите на лавину переподключений.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Два реальных сценария отказа, отработанных до того, как они случились в проде.</div>
+    <h4>14. Мягкая перезагрузка при деплое</h4>
+    <p>Настройте процедуру выката так, чтобы воркеры перезапускались мягко после обновления кода. Проверьте под нагрузкой: ни одна задача не должна потеряться и ни один воркер не должен остаться на старом коде.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Деплой, который не порождает инцидентов с частично обновлённой системой.</div>
+    <h4>15. Наблюдаемость фоновой обработки</h4>
+    <p>Выведите на дашборд возраст старейшей задачи по каждой очереди, число живых воркеров, память по возрасту процесса и размер очереди отказов. Поставьте алерт на возраст, а не на длину.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Возможность узнать о сломанном воркере раньше пользователей.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час-полтора в будний день и несколько часов в выходные. Порядок соответствует порядку внедрения в реальном проекте.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Модель и фон</h3><span class="badge b-1">База</span></div>
+    <h4>Задачи недели</h4>
+    <p>Разобраться с моделью выполнения и освоить фоновую обработку — подход, который даёт наибольший выигрыш при наименьшем риске.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Проговорить вслух жизненный цикл запроса и следствия shared-nothing в обе стороны.</li>
+      <li>Разложить сценарий своего проекта на три подхода с оценкой выигрыша (задание 1).</li>
+      <li>Вынести синхронную операцию в очередь и замерить эффект (задание 2).</li>
+      <li>Написать воркер с остановкой по сигналу, очисткой и плановым перезапуском (задание 3).</li>
+      <li>Сломать идемпотентность и починить ключом (задание 4).</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Работающая фоновая обработка и понимание, почему «хотя бы один раз» — это норма, а не недостаток.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Рантаймы и состояние</h3><span class="badge b-2">Риски</span></div>
+    <h4>Задачи недели</h4>
+    <p>Понять на практике, что даёт долгоживущий процесс и чем за это платят. Эта неделя обычно отменяет часть планов по переходу.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Запустить приложение под RoadRunner или FrankenPHP и замерить лёгкий и тяжёлый эндпоинт (задание 6).</li>
+      <li>Найти и воспроизвести утечку состояния между пользователями (задание 7).</li>
+      <li>Написать тест на чередование запросов разных пользователей (задание 8).</li>
+      <li>Построить график памяти воркера по числу задач (задание 9).</li>
+      <li>Пройтись по таблице мест, где прячется состояние, и проверить свой код по каждому пункту.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Обоснованный ответ на вопрос, нужен ли проекту другой рантайм, и список мест, которые придётся исправить.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Конкурентность и реальное время</h3><span class="badge b-2">Инструменты</span></div>
+    <h4>Задачи недели</h4>
+    <p>Освоить два инструмента, которые дают самый заметный эффект для пользователя: одновременные внешние вызовы и доставку событий.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Переписать последовательные внешние вызовы на одновременные с таймаутами и деградацией (задание 10).</li>
+      <li>Разобраться с Fibers на минимальном примере и сформулировать, чего они не дают.</li>
+      <li>Сделать SSE-поток с идентификаторами событий и проверить поведение при обрыве.</li>
+      <li>Поднять сервер реального времени с токеном подключения и правами на каналы (задание 11).</li>
+      <li>Проверить, что чужой канал недоступен и что событие не публикуется до коммита.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Работающее реальное время с правами и понимание, где заканчиваются возможности обычного опроса.</p>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Надёжность и эксплуатация</h3><span class="badge b-3">Финиш</span></div>
+    <h4>Задачи недели</h4>
+    <p>Довести до состояния, в котором это можно эксплуатировать: обрывы, деплой, второй узел, наблюдаемость.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Реализовать устойчивого клиента с переподключением, версиями и перезагрузкой состояния (задание 12).</li>
+      <li>Провести учения на отказ сервера событий и на лавину переподключений (задание 13).</li>
+      <li>Настроить мягкую перезагрузку воркеров при выкате и проверить под нагрузкой (задание 14).</li>
+      <li>Вывести на дашборд возраст старейшей задачи и остальные показатели (задание 15).</li>
+      <li>Проговорить вслух, что ломается при появлении второго узла и как это решается.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Готовность отвечать не только «как поднять», но и «как это переживёт деплой, обрыв и второй сервер».</p>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что помогает на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Разделяйте три задачи.</strong> Первое, что стоит сделать в ответе, — уточнить, о чём речь: не заставлять пользователя ждать, не платить за загрузку фреймворка или совместить ожидания. Кандидат, который сразу говорит «возьмём Swoole», отвечает не на тот вопрос.</li>
+      <li><strong>Начинайте с простого варианта.</strong> Умение сказать «здесь хватит опроса раз в две секунды» ценится выше умения поднять WebSocket. Это показывает, что вы считаете стоимость эксплуатации, а не только элегантность.</li>
+      <li><strong>Помните про утечку данных, а не только памяти.</strong> Большинство говорит про рост памяти в воркерах. Упоминание того, что статическое свойство может отдать одному пользователю данные другого, сразу выделяет ответ.</li>
+      <li><strong>Знайте, чего асинхронность не даёт.</strong> Корутины не ускоряют вычисления, не задействуют ядра и не делают неблокирующим произвольный клиент. Эти три факта отличают понимание от пересказа.</li>
+      <li><strong>Говорите про обрывы.</strong> Любой разговор о реальном времени стоит доводить до вопроса «а что при потере соединения»: история, версии, перезагрузка состояния, разброс переподключений. Здесь видно, работали ли вы с этим в проде.</li>
+      <li><strong>Держите наготове историю деплоя.</strong> Случай, когда часть воркеров осталась на старом коде и это дало странное поведение, — узнаваемая и убедительная история, через которую проходят все, кто эксплуатировал фоновую обработку.</li>
+      <li><strong>Приносите артефакты.</strong> График памяти воркера, дашборд с возрастом старейшей задачи, схема каналов и прав, тест на чередование пользователей — всё это делает рассказ проверяемым.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Асинхронный PHP и реальное время» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

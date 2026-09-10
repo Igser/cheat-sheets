@@ -1,0 +1,1569 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · защита приложения · secure coding</p>
+  <h1>Безопасность веб-приложений</h1>
+  <p class="lead">Безопасность — не отдельная фича и не финальный этап перед релизом. Это свойство кода, которое возникает из десятка привычек: считать любой ввод недоверенным, никогда не склеивать данные с кодом, проверять права на конкретный объект, не изобретать криптографию и не хранить в логах то, что нельзя потерять. Ни один сканер не заменит эти привычки — он только находит места, где их забыли.</p>
+  <p class="lead">Практический перекос типичного PHP-проекта известен: SQL-инъекции почти исчезли благодаря подготовленным выражениям и ORM, а первое место уверенно заняла сломанная авторизация — код проверяет, что пользователь вошёл, и не проверяет, что запрошенный объект принадлежит именно ему. Второе место делят между собой XSS в местах, где экранирование отключили ради вёрстки, и утечки через логи, бэкапы и тестовые стенды.</p>
+  <p class="lead">Конспект написан с позиции защиты: как устроен класс уязвимости, как выглядит уязвимый и исправленный код, что проверить в своём проекте и как встроить проверку в процесс. Смежные темы: <a href="php.html">PHP</a>, <a href="http-api.html">HTTP и дизайн API</a>, <a href="sql.html">базы данных</a>, <a href="infrastructure.html">инфраструктура</a>, <a href="system-design.html">System Design</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Модель угроз и границы доверия, инъекции, XSS и экранирование по контексту, CSRF, пароли и сессии, загрузка файлов.</span></div>
+    <div class="aud m"><b>Middle</b><span>Авторизация и IDOR, прикладная криптография, секреты и шифрование данных, SSRF и десериализация, заголовки и CSP, зависимости, логирование.</span></div>
+    <div class="aud s"><b>Senior</b><span>Threat modeling, безопасность в пайплайне, изоляция данных и аудит, реагирование на инциденты, работа с персональными данными.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>18</i></span>
+    <span>Блоков кода: <i>24</i></span>
+    <span>Сравнительных таблиц: <i>20</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#model">Модель угроз и принципы</a></li>
+    <li><span class="tree">├─</span> <a href="#injection">Инъекции</a></li>
+    <li><span class="tree">├─</span> <a href="#xss">XSS и экранирование</a></li>
+    <li><span class="tree">├─</span> <a href="#csrf">CSRF и сессии</a></li>
+    <li><span class="tree">├─</span> <a href="#passwords">Пароли и вход</a></li>
+    <li><span class="tree">├─</span> <a href="#uploads">Файлы и файловая система</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#authz">Авторизация и IDOR</a></li>
+    <li><span class="tree">├─</span> <a href="#crypto">Прикладная криптография</a></li>
+    <li><span class="tree">├─</span> <a href="#secrets">Секреты и данные в покое</a></li>
+    <li><span class="tree">├─</span> <a href="#ssrf">SSRF, XXE, десериализация</a></li>
+    <li><span class="tree">├─</span> <a href="#headers">Заголовки и CSP</a></li>
+    <li><span class="tree">├─</span> <a href="#deps">Зависимости и цепочка поставки</a></li>
+    <li><span class="tree">├─</span> <a href="#logging">Логи, обнаружение, реакция</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#threat">Threat modeling</a></li>
+    <li><span class="tree">├─</span> <a href="#sdlc">Безопасность в процессе</a></li>
+    <li><span class="tree">├─</span> <a href="#isolation">Изоляция данных и аудит</a></li>
+    <li><span class="tree">├─</span> <a href="#incident">Инциденты и утечки</a></li>
+    <li><span class="tree">├─</span> <a href="#privacy">Персональные данные</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Опасные места в PHP</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · базовые классы уязвимостей</p>
+    <h2>Junior: недоверенный ввод и его последствия</h2>
+    <p>Почти все классические уязвимости — одна и та же ошибка в разных декорациях: данные пользователя попали туда, где их интерпретируют как код или как команду. SQL-запрос, HTML-страница, путь к файлу, команда оболочки, шаблон письма — везде механизм одинаков, и защита тоже: разделять данные и код, а не «фильтровать плохое».</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="model">
+    <p class="path">junior / основы</p>
+    <div class="card-top"><h3>Модель угроз и принципы</h3><span class="badge b-1">База</span></div>
+    <p>Прежде чем закрывать уязвимости, полезно понимать, что вы защищаете и от кого. Модель угроз — это ответ на три вопроса: что ценного есть в системе, кто может до него дотянуться и что произойдёт, если получится.</p>
+
+    <div class="flow" role="img" aria-label="Границы доверия: браузер, приложение, база данных, внешние сервисы">
+      <div class="node">Клиент<small>полностью недоверенный</small></div><span class="arr">→</span>
+      <div class="node">Граница<small>валидация, authn/authz</small></div><span class="arr">→</span>
+      <div class="node">Приложение<small>своя логика</small></div><span class="arr">→</span>
+      <div class="node">Граница<small>экранирование по контексту</small></div><span class="arr">→</span>
+      <div class="node">БД / ОС / API<small>исполняют то, что дали</small></div>
+    </div>
+
+    <p>Всё, что приходит извне, — недоверенное. И это не только тело запроса: заголовки, параметры URL, куки, имя загружаемого файла, содержимое файла, ответ стороннего API, данные из очереди, значения из базы, которые туда положил пользователь. Классическая ошибка — считать «внутренние» источники доверенными: строка из базы, попавшая в HTML без экранирования, даёт ровно тот же XSS.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · принципы и что они означают в коде</caption>
+      <thead><tr><th>Принцип</th><th>Что означает практически</th></tr></thead>
+      <tbody>
+        <tr><td>Минимальные привилегии</td><td>Пользователь БД без прав на <code>DROP</code>, токен деплоя без прав администратора, контейнер не от root</td></tr>
+        <tr><td>Эшелонированная защита</td><td>Подготовленные выражения <em>и</em> валидация <em>и</em> ограничение прав: одна дыра не даёт полного доступа</td></tr>
+        <tr><td>Безопасно по умолчанию</td><td>Запрет по умолчанию, явное разрешение; новый эндпоинт закрыт, пока права не заданы</td></tr>
+        <tr><td>Отказ в безопасную сторону</td><td>Упало при проверке прав — отказать, а не пропустить; сломался антифрод — не отключать его молча</td></tr>
+        <tr><td>Минимальная поверхность атаки</td><td>Нет лишних эндпоинтов, отладочных страниц, открытых портов и неиспользуемых зависимостей</td></tr>
+        <tr><td>Не изобретать криптографию</td><td>Стандартные библиотеки и алгоритмы; самописное шифрование ломается всегда</td></tr>
+        <tr><td>Без секретов в секрете</td><td>Безопасность не должна зависеть от того, что злоумышленник не знает устройства системы</td></tr>
+        <tr><td>Полная посредничество</td><td>Права проверяются при каждом обращении, а не один раз при входе в раздел</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Валидация ввода и экранирование вывода — разные вещи, и одно не заменяет другое. Валидация отвечает на вопрос «это вообще похоже на то, что мы ждём» и происходит на границе. Экранирование отвечает на вопрос «как безопасно поместить эти данные в конкретный контекст» и происходит в момент использования — по правилам того места, куда данные попадают: SQL, HTML, shell, JSON, URL.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что значит «недоверенный ввод»?</b><br>Любые данные, происхождение которых вы не контролируете: запрос пользователя целиком, включая заголовки и куки, содержимое и имя загруженных файлов, ответы внешних API, сообщения из очереди и даже строки из собственной базы, если их туда положил пользователь. Такие данные валидируются на границе и экранируются по правилам того контекста, где используются.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="injection">
+    <p class="path">junior / инъекции</p>
+    <div class="card-top"><h3>Инъекции</h3><span class="badge b-1">База</span></div>
+    <p>Инъекция возникает там, где строка с данными пользователя превращается в инструкцию для интерпретатора: SQL, оболочка ОС, путь в файловой системе, шаблонизатор, LDAP, заголовки письма. Механизм всегда один — <strong>данные и код едут по одному каналу</strong>. Отсюда и единственное надёжное решение: передавать их раздельно.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">SQL: параметры вместо склейки, белый список для имён</span></div><pre><code>&lt;?php
+<span class="cm">// Уязвимо: значение становится частью синтаксиса запроса</span>
+$sql = <span class="st">"SELECT * FROM orders WHERE id = "</span> . $_GET[<span class="st">'id'</span>];
+
+<span class="cm">// Правильно: запрос и данные передаются раздельно</span>
+$stmt = $pdo-&gt;<span class="fn">prepare</span>(<span class="st">'SELECT * FROM orders WHERE id = :id AND tenant_id = :t'</span>);
+$stmt-&gt;<span class="fn">execute</span>([<span class="st">'id'</span> =&gt; $id, <span class="st">'t'</span> =&gt; $tenantId]);
+
+<span class="cm">// Подключение должно быть настроено так, чтобы «эмуляция» не превращала</span>
+<span class="cm">// подготовленные выражения обратно в склейку строк</span>
+$pdo = <span class="kw">new</span> <span class="nm">PDO</span>($dsn, $user, $pass, [
+    <span class="nm">PDO</span>::ATTR_EMULATE_PREPARES   =&gt; <span class="kw">false</span>,
+    <span class="nm">PDO</span>::ATTR_ERRMODE            =&gt; <span class="nm">PDO</span>::ERRMODE_EXCEPTION,
+    <span class="nm">PDO</span>::ATTR_DEFAULT_FETCH_MODE =&gt; <span class="nm">PDO</span>::FETCH_ASSOC,
+]);
+
+<span class="cm">// Имена таблиц, колонок и направление сортировки параметрами НЕ передаются.</span>
+<span class="cm">// Единственная защита — белый список с отображением на реальные колонки:</span>
+$allowed = [<span class="st">'created'</span> =&gt; <span class="st">'created_at'</span>, <span class="st">'total'</span> =&gt; <span class="st">'total_amount'</span>];
+$column  = $allowed[$_GET[<span class="st">'sort'</span>] ?? <span class="st">'created'</span>] ?? <span class="st">'created_at'</span>;
+$dir     = ($_GET[<span class="st">'dir'</span> ] ?? <span class="st">''</span>) === <span class="st">'asc'</span> ? <span class="st">'ASC'</span> : <span class="st">'DESC'</span>;
+$sql     = <span class="st">"SELECT * FROM orders ORDER BY {$column} {$dir}"</span>;</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Команды ОС и пути к файлам</span></div><pre><code>&lt;?php
+<span class="cm">// Уязвимо: пользователь дописывает свою команду через ; или |</span>
+<span class="fn">exec</span>(<span class="st">"convert {$_GET['file']} -resize 100x100 out.png"</span>);
+
+<span class="cm">// Лучше: экранирование аргументов — но ещё лучше вообще не вызывать оболочку</span>
+<span class="fn">exec</span>(<span class="st">'convert '</span> . <span class="fn">escapeshellarg</span>($path) . <span class="st">' -resize 100x100 '</span> . <span class="fn">escapeshellarg</span>($out));
+
+<span class="cm">// Правильно: библиотека, передающая аргументы массивом, без интерпретации оболочкой</span>
+(<span class="kw">new</span> <span class="nm">Process</span>([<span class="st">'convert'</span>, $path, <span class="st">'-resize'</span>, <span class="st">'100x100'</span>, $out]))-&gt;<span class="fn">mustRun</span>();
+
+<span class="cm">// Path traversal: ../../ выводит за пределы каталога</span>
+<span class="cm">// Уязвимо: readfile($base . '/' . $_GET['name']);</span>
+$name = <span class="fn">basename</span>((<span class="kw">string</span>) $_GET[<span class="st">'name'</span>]);        <span class="cm">// отбрасываем путь целиком</span>
+$full = <span class="fn">realpath</span>($base . <span class="st">'/'</span> . $name);            <span class="cm">// разрешаем символические ссылки</span>
+
+<span class="cm">// Обязательная проверка: файл действительно внутри разрешённого каталога</span>
+<span class="kw">if</span> ($full === <span class="kw">false</span> || !<span class="fn">str_starts_with</span>($full, <span class="fn">realpath</span>($base) . <span class="nm">DIRECTORY_SEPARATOR</span>)) {
+    <span class="kw">throw new</span> <span class="nm">RuntimeException</span>(<span class="st">'Недопустимый путь'</span>);
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · контекст и безопасный приём</caption>
+      <thead><tr><th>Куда попадают данные</th><th>Правильный приём</th><th>Чего делать нельзя</th></tr></thead>
+      <tbody>
+        <tr><td>SQL-запрос</td><td>Подготовленные выражения; белый список для имён и сортировки</td><td>Склейка строк, «экранирующая» функция вместо параметров</td></tr>
+        <tr><td>Команда ОС</td><td>Передача аргументов массивом, без оболочки</td><td><code>exec</code>/<code>shell_exec</code> со склеенной строкой</td></tr>
+        <tr><td>Путь к файлу</td><td><code>basename</code> + <code>realpath</code> + проверка префикса</td><td>Конкатенация с пользовательским именем</td></tr>
+        <tr><td>HTML</td><td>Экранирование при выводе, автоэкранирование шаблонизатора</td><td>«Очистка на входе» и хранение уже экранированного</td></tr>
+        <tr><td>Шаблон</td><td>Данные как переменные шаблона</td><td>Сборка шаблона из пользовательской строки</td></tr>
+        <tr><td>Заголовки письма</td><td>Библиотека почты, валидация адреса</td><td>Подстановка пользовательского значения в заголовки</td></tr>
+        <tr><td>Заголовки HTTP</td><td>Валидация значения, запрет переводов строк</td><td>Прямая запись пользовательских данных в заголовок</td></tr>
+        <tr><td>Динамический код</td><td>Не использовать вовсе</td><td><code>eval</code>, <code>create_function</code>, включение файла по пользовательскому пути</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Чёрные списки: «вырежем <code>DROP</code>, <code>--</code> и кавычки». Обход находится всегда — другой регистр, другая кодировка, другая конструкция языка. Работают только белые списки (перечень допустимого) и разделение данных с кодом. То же относится к «санитизации на входе»: она портит данные и не решает проблему, потому что правила зависят от контекста вывода, а не ввода.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему подготовленные выражения защищают от SQL-инъекции?</b><br>Потому что запрос и данные передаются раздельно: сервер БД сначала разбирает и планирует запрос с плейсхолдерами, а значения подставляются уже после разбора и не могут стать частью синтаксиса. Важная оговорка: это не работает для имён таблиц, колонок и направления сортировки — их параметром передать нельзя, там нужен белый список. И эмуляцию подготовленных выражений в PDO стоит отключать.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="xss">
+    <p class="path">junior / вывод</p>
+    <div class="card-top"><h3>XSS и экранирование</h3><span class="badge b-1">База</span></div>
+    <p>XSS — это инъекция в HTML: данные пользователя попадают на страницу так, что браузер исполняет их как разметку или скрипт. Последствие — выполнение кода в браузере жертвы от её имени: чтение страницы, отправка запросов, кража токенов из доступных JS хранилищ.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · три вида XSS</caption>
+      <thead><tr><th>Вид</th><th>Как попадает на страницу</th><th>Особенность</th></tr></thead>
+      <tbody>
+        <tr><td>Хранимый (stored)</td><td>Сохраняется в базе и отдаётся всем читателям</td><td>Самый опасный: срабатывает у всех, включая администраторов</td></tr>
+        <tr><td>Отражённый (reflected)</td><td>Приходит в параметре и возвращается в ответе</td><td>Требует, чтобы жертва перешла по ссылке</td></tr>
+        <tr><td>DOM-based</td><td>Не доходит до сервера: JS сам вставляет данные в DOM</td><td>Не виден в серверных логах и тестах бэкенда</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php + twig</span><span class="r">Экранирование зависит от места вставки</span></div><pre><code>&lt;?php
+<span class="cm">// HTML-текст: базовый случай</span>
+<span class="kw">echo</span> <span class="fn">htmlspecialchars</span>($name, <span class="nm">ENT_QUOTES</span> | <span class="nm">ENT_SUBSTITUTE</span>, <span class="st">'UTF-8'</span>);
+
+<span class="cm">// Значение атрибута: обязательно в кавычках + ENT_QUOTES</span>
+<span class="cm">// &lt;input value="&lt;?= htmlspecialchars($v, ENT_QUOTES, 'UTF-8') ?&gt;"&gt;</span>
+
+<span class="cm">// URL в href: сначала проверяем схему — javascript: тоже «ссылка»</span>
+$scheme = <span class="fn">parse_url</span>($url, <span class="nm">PHP_URL_SCHEME</span>);
+<span class="kw">if</span> (!<span class="fn">in_array</span>($scheme, [<span class="st">'http'</span>, <span class="st">'https'</span>], <span class="kw">true</span>)) { $url = <span class="st">'#'</span>; }
+
+<span class="cm">// Данные для JS: только через json_encode с флагами, не через конкатенацию строк</span>
+<span class="kw">echo</span> <span class="st">'&lt;script&gt;const user = '</span>
+   . <span class="fn">json_encode</span>($user, <span class="nm">JSON_HEX_TAG</span> | <span class="nm">JSON_HEX_AMP</span> | <span class="nm">JSON_THROW_ON_ERROR</span>)
+   . <span class="st">';&lt;/script&gt;'</span>;
+
+<span class="cm">// Пользовательский HTML (комментарии, описания) — только через санитайзер</span>
+<span class="cm">// с белым списком тегов и атрибутов. Своими регулярками это не делается.</span>
+$safeHtml = $sanitizer-&gt;<span class="fn">sanitize</span>($userHtml);</code></pre></div>
+
+    <div class="code"><div class="bar"><span>twig</span><span class="r">Автоэкранирование и места, где его отключают</span></div><pre><code>{# Twig экранирует по умолчанию — это правильно #}
+{{ comment.text }}
+
+{# |raw отключает защиту. Каждое такое место — кандидат в инцидент. #}
+{{ comment.text|raw }}          {# ← так делать нельзя без санитайзера #}
+{{ comment.html|sanitize_html }} {# ← так можно #}
+
+{# Экранирование под контекст, если данные идут не в HTML-текст #}
+&lt;a href="{{ url|escape('url') }}"&gt;...&lt;/a&gt;
+&lt;script&gt;var t = {{ title|escape('js') }};&lt;/script&gt;
+
+{# Проверка проекта одной командой: сколько у вас мест с отключённой защитой #}
+{# grep -rn "|raw" templates/ #}</code></pre></div>
+
+    <p><strong>Content Security Policy</strong> — второй эшелон: даже если экранирование где-то пропущено, политика запрещает браузеру исполнять посторонний скрипт. Начинать стоит с режима только для отчётов, собрать нарушения и лишь затем включать блокировку.</p>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">CSP: от отчётов к блокировке</span></div><pre><code><span class="cm"># Шаг 1: наблюдаем, ничего не ломая</span>
+Content-Security-Policy-Report-Only: default-src 'self'; report-uri /csp-report
+
+<span class="cm"># Шаг 2: включаем, когда нарушений не осталось</span>
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' 'nonce-R4nd0mPerRequest';   <span class="cm"># nonce генерируется на каждый ответ</span>
+  style-src  'self';
+  img-src    'self' data: https://cdn.example.com;
+  object-src 'none';
+  base-uri   'self';
+  frame-ancestors 'none';                       <span class="cm"># защита от кликджекинга</span>
+
+<span class="cm"># 'unsafe-inline' в script-src обесценивает всю политику — именно от инлайновых</span>
+<span class="cm"># скриптов она и защищает. Инлайн разрешается точечно через nonce или hash.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как защититься от XSS?</b><br>Экранировать при выводе по правилам конкретного контекста — HTML-текст, значение атрибута, URL, JavaScript — и полагаться на автоэкранирование шаблонизатора, точечно отключая его только вместе с санитайзером по белому списку. Сверху — CSP как второй эшелон и <code>HttpOnly</code> на куке сессии, чтобы XSS не превращался сразу в угон сессии. «Чистка на входе» проблему не решает: правила зависят от места вывода.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="csrf">
+    <p class="path">junior / сессии</p>
+    <div class="card-top"><h3>CSRF и сессии</h3><span class="badge b-1">База</span></div>
+    <p>CSRF использует то, что браузер сам прикладывает куку к любому запросу на ваш домен — даже если запрос инициировал чужой сайт. Пользователь заходит на посторонний ресурс, тот отправляет форму на ваш адрес, и действие выполняется от имени жертвы.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Три уровня защиты, которые работают вместе</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Кука сессии: SameSite отсекает межсайтовые POST-запросы</span>
+<span class="fn">session_set_cookie_params</span>([
+    <span class="st">'secure'</span>   =&gt; <span class="kw">true</span>,
+    <span class="st">'httponly'</span> =&gt; <span class="kw">true</span>,
+    <span class="st">'samesite'</span> =&gt; <span class="st">'Lax'</span>,      <span class="cm">// Strict строже, но ломает переходы по внешним ссылкам</span>
+]);
+<span class="fn">ini_set</span>(<span class="st">'session.use_strict_mode'</span>, <span class="st">'1'</span>);   <span class="cm">// запрет навязать свой идентификатор сессии</span>
+<span class="fn">ini_set</span>(<span class="st">'session.cookie_lifetime'</span>, <span class="st">'0'</span>);
+<span class="fn">session_start</span>();
+
+<span class="cm">// 2. Токен в форме — независимо от поддержки SameSite браузером</span>
+$token = $_SESSION[<span class="st">'csrf'</span>] ??= <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(32));
+<span class="cm">// &lt;input type="hidden" name="_csrf" value="&lt;?= htmlspecialchars($token) ?&gt;"&gt;</span>
+
+<span class="cm">// Проверка — сравнением за постоянное время</span>
+<span class="kw">if</span> (!<span class="fn">hash_equals</span>($_SESSION[<span class="st">'csrf'</span>] ?? <span class="st">''</span>, $_POST[<span class="st">'_csrf'</span>] ?? <span class="st">''</span>)) {
+    <span class="kw">http_response_code</span>(403);
+    <span class="kw">exit</span>;
+}
+
+<span class="cm">// 3. Смена идентификатора при смене уровня доступа — против фиксации сессии</span>
+<span class="fn">session_regenerate_id</span>(<span class="kw">true</span>);       <span class="cm">// после входа и после смены пароля</span>
+
+<span class="cm">// Выход должен уничтожать сессию на сервере, а не только куку у клиента</span>
+$_SESSION = [];
+<span class="fn">session_destroy</span>();</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · атаки на сессию и защита</caption>
+      <thead><tr><th>Атака</th><th>Суть</th><th>Защита</th></tr></thead>
+      <tbody>
+        <tr><td>CSRF</td><td>Чужой сайт инициирует действие от имени пользователя</td><td><code>SameSite</code> + CSRF-токен на изменяющих операциях</td></tr>
+        <tr><td>Угон сессии (XSS)</td><td>Скрипт читает и отправляет идентификатор</td><td><code>HttpOnly</code>, CSP, устранение XSS</td></tr>
+        <tr><td>Перехват в канале</td><td>Кука уходит по HTTP</td><td><code>Secure</code>, HSTS, редирект на HTTPS</td></tr>
+        <tr><td>Фиксация сессии</td><td>Жертве навязывают известный идентификатор</td><td><code>use_strict_mode</code>, <code>session_regenerate_id</code> после входа</td></tr>
+        <tr><td>Вечная сессия</td><td>Украденный идентификатор действует бесконечно</td><td>Срок жизни, продление по активности, список активных сессий</td></tr>
+        <tr><td>Сессия после смены пароля</td><td>Злоумышленник остаётся внутри</td><td>Инвалидация всех сессий пользователя при смене пароля</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>CSRF-токен нужен только на операциях, меняющих состояние. Если у вас <code>GET</code>, который что-то меняет, — проблема не в отсутствии токена, а в методе: такой запрос выполнится при предзагрузке ссылки браузером, при вставке картинки на чужом сайте и при обходе поисковым роботом.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем CSRF отличается от XSS?</b><br>XSS — выполнение чужого кода на вашей странице: атакующий получает доступ ко всему, что доступно странице, включая содержимое DOM и токены. CSRF — выполнение действия от имени пользователя без чтения ответа: атакующий не видит результат, но действие происходит. Защиты разные: от XSS — экранирование и CSP, от CSRF — <code>SameSite</code> и токен. При этом XSS обходит защиту от CSRF, поэтому XSS всегда серьёзнее.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="passwords">
+    <p class="path">junior / аутентификация</p>
+    <div class="card-top"><h3>Пароли и вход</h3><span class="badge b-1">База</span></div>
+    <p>Три вещи, которые проверяют почти на каждом собеседовании: как хранятся пароли, что происходит при переборе и как устроен сброс пароля. Ответы на них короткие, но требуют точности.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Хранение и проверка пароля</span></div><pre><code>&lt;?php
+<span class="cm">// Хеширование: алгоритм и стоимость подбирает сама функция, соль встроена в результат</span>
+$hash = <span class="fn">password_hash</span>($password, <span class="nm">PASSWORD_DEFAULT</span>);
+
+<span class="cm">// Проверка — только через password_verify: сравнение за постоянное время встроено</span>
+<span class="kw">if</span> (!<span class="fn">password_verify</span>($password, $user-&gt;passwordHash)) {
+    $this-&gt;<span class="fn">recordFailedAttempt</span>($login);
+    <span class="kw">throw new</span> <span class="nm">AuthException</span>(<span class="st">'Неверный логин или пароль'</span>);   <span class="cm">// одинаковый текст всегда</span>
+}
+
+<span class="cm">// Прозрачное усиление: параметры со временем меняются, хеш пересчитывается при входе</span>
+<span class="kw">if</span> (<span class="fn">password_needs_rehash</span>($user-&gt;passwordHash, <span class="nm">PASSWORD_DEFAULT</span>)) {
+    $this-&gt;users-&gt;<span class="fn">updateHash</span>($user-&gt;id, <span class="fn">password_hash</span>($password, <span class="nm">PASSWORD_DEFAULT</span>));
+}
+
+<span class="cm">// Чего делать нельзя:</span>
+<span class="cm">//   md5/sha1 — быстрые хеши, перебираются миллиардами в секунду</span>
+<span class="cm">//   своя соль в отдельной колонке — не нужна, password_hash делает это сам</span>
+<span class="cm">//   ограничение длины пароля сверху коротким значением</span>
+<span class="cm">//   запрет спецсимволов «чтобы не ломало запросы»</span>
+<span class="cm">//   отправка пароля пользователю на почту при регистрации</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Перебор и сброс пароля</span></div><pre><code>&lt;?php
+<span class="cm">// Ограничение попыток: по учётной записи И по источнику запроса</span>
+<span class="kw">if</span> ($this-&gt;limiter-&gt;<span class="fn">tooManyAttempts</span>(<span class="st">"login:{$login}"</span>, max: 5, perSeconds: 900)
+ || $this-&gt;limiter-&gt;<span class="fn">tooManyAttempts</span>(<span class="st">"ip:{$ip}"</span>, max: 50, perSeconds: 900)) {
+    <span class="kw">throw new</span> <span class="nm">TooManyAttempts</span>(retryAfter: 900);   <span class="cm">// 429 + Retry-After</span>
+}
+
+<span class="cm">// Сброс пароля: в базе хранится ХЕШ токена, а не сам токен —</span>
+<span class="cm">// утечка таблицы не даёт возможности войти</span>
+$token = <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(32));          <span class="cm">// криптостойкий генератор, не rand()</span>
+$this-&gt;resets-&gt;<span class="fn">create</span>([
+    <span class="st">'user_id'</span>    =&gt; $user-&gt;id,
+    <span class="st">'token_hash'</span> =&gt; <span class="fn">hash</span>(<span class="st">'sha256'</span>, $token),
+    <span class="st">'expires_at'</span> =&gt; <span class="kw">new</span> <span class="nm">DateTimeImmutable</span>(<span class="st">'+30 minutes'</span>),   <span class="cm">// короткий срок</span>
+    <span class="st">'used_at'</span>    =&gt; <span class="kw">null</span>,                              <span class="cm">// одноразовость</span>
+]);
+
+<span class="cm">// Ответ на запрос сброса ВСЕГДА одинаковый — иначе форма превращается</span>
+<span class="cm">// в способ проверить, зарегистрирован ли адрес</span>
+<span class="kw">return</span> <span class="st">'Если аккаунт существует, письмо отправлено'</span>;
+
+<span class="cm">// После успешной смены пароля: инвалидировать все сессии и все токены сброса</span>
+$this-&gt;sessions-&gt;<span class="fn">invalidateAllFor</span>($user-&gt;id);</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · требования к процессу входа</caption>
+      <thead><tr><th>Механизм</th><th>Зачем</th><th>Частая ошибка</th></tr></thead>
+      <tbody>
+        <tr><td>Медленный хеш пароля</td><td>Делает перебор украденной базы экономически невыгодным</td><td>Быстрые хеши или самописная схема с солью</td></tr>
+        <tr><td>Ограничение попыток</td><td>Останавливает подбор пароля</td><td>Лимит только по IP — обходится ботнетом</td></tr>
+        <tr><td>Одинаковые сообщения об ошибке</td><td>Скрывает, существует ли учётная запись</td><td>«Пользователь не найден» против «неверный пароль»</td></tr>
+        <tr><td>Проверка по спискам утечек</td><td>Отсекает пароли, уже известные атакующим</td><td>Требование «спецсимвол и цифра» вместо длины</td></tr>
+        <tr><td>Второй фактор</td><td>Пароль перестаёт быть единственным барьером</td><td>Коды по SMS для критичных операций как единственный вариант</td></tr>
+        <tr><td>Уведомление о входе и смене пароля</td><td>Пользователь замечает компрометацию</td><td>Молчаливая смена почты и пароля</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как правильно хранить пароли?</b><br>Через <code>password_hash</code> с параметрами по умолчанию: современный медленный алгоритм, автоматическая соль, подобранная стоимость. Проверка — <code>password_verify</code>, при входе дополнительно <code>password_needs_rehash</code>, чтобы прозрачно усиливать старые хеши. <code>md5</code> и <code>sha1</code> непригодны: они быстрые, а для паролей нужна намеренная медленность. Отдельно — ограничение попыток входа и одинаковые сообщения об ошибке.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card" id="uploads">
+    <p class="path">junior / файлы</p>
+    <div class="card-top"><h3>Файлы и файловая система</h3><span class="badge b-1">База</span></div>
+    <p>Загрузка файлов — короткий путь от «пользователь прислал аватар» до выполнения чужого кода на сервере. Опасны три вещи: имя файла, его содержимое и место, куда он попадает.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Приём файла: проверяем содержимое, имя генерируем сами</span></div><pre><code>&lt;?php
+$file = $request-&gt;<span class="fn">files</span>-&gt;<span class="fn">get</span>(<span class="st">'avatar'</span>);
+
+<span class="cm">// 1. Размер — до любой обработки (защита и от переполнения диска)</span>
+<span class="kw">if</span> ($file-&gt;<span class="fn">getSize</span>() &gt; 5 * 1024 * 1024) {
+    <span class="kw">throw new</span> <span class="nm">ValidationException</span>(<span class="st">'Файл больше 5 МБ'</span>);
+}
+
+<span class="cm">// 2. Тип — по содержимому, а не по расширению и не по заголовку от клиента</span>
+$mime = (<span class="kw">new</span> \<span class="nm">finfo</span>(<span class="nm">FILEINFO_MIME_TYPE</span>))-&gt;<span class="fn">file</span>($file-&gt;<span class="fn">getPathname</span>());
+$allowed = [<span class="st">'image/jpeg'</span> =&gt; <span class="st">'jpg'</span>, <span class="st">'image/png'</span> =&gt; <span class="st">'png'</span>, <span class="st">'image/webp'</span> =&gt; <span class="st">'webp'</span>];
+
+<span class="kw">if</span> (!<span class="fn">isset</span>($allowed[$mime])) {
+    <span class="kw">throw new</span> <span class="nm">ValidationException</span>(<span class="st">'Недопустимый тип файла'</span>);
+}
+
+<span class="cm">// 3. Для изображений — пересохранение: убивает встроенный код и метаданные</span>
+$image = $this-&gt;imagine-&gt;<span class="fn">open</span>($file-&gt;<span class="fn">getPathname</span>());
+$image-&gt;<span class="fn">strip</span>()-&gt;<span class="fn">save</span>($tmp, [<span class="st">'format'</span> =&gt; $allowed[$mime]]);
+
+<span class="cm">// 4. Имя генерируем сами: пользовательское имя не участвует в пути вообще</span>
+$key = <span class="fn">sprintf</span>(<span class="st">'avatars/%s/%s.%s'</span>, $userId, <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(16)), $allowed[$mime]);
+
+<span class="cm">// 5. Храним вне корня сайта или во внешнем хранилище — там, где ничего не исполняется</span>
+$this-&gt;storage-&gt;<span class="fn">put</span>($key, <span class="fn">file_get_contents</span>($tmp));
+
+<span class="cm">// 6. Отдаём через контроллер с проверкой прав или подписанной ссылкой,</span>
+<span class="cm">//    с явными заголовками — чтобы браузер не «угадал» тип и не выполнил содержимое</span>
+<span class="kw">return new</span> <span class="nm">Response</span>($content, 200, [
+    <span class="st">'Content-Type'</span>           =&gt; $mime,
+    <span class="st">'Content-Disposition'</span>    =&gt; <span class="st">'attachment; filename="avatar.jpg"'</span>,
+    <span class="st">'X-Content-Type-Options'</span> =&gt; <span class="st">'nosniff'</span>,
+]);</code></pre></div>
+
+    <p><strong>Что ещё стоит помнить про файлы:</strong></p>
+    <ul>
+      <li><strong>Каталог загрузок не должен исполнять скрипты.</strong> Это настройка веб-сервера, и она важнее любых проверок в коде: даже при пропущенной валидации файл останется просто файлом.</li>
+      <li><strong>Архивы опасны отдельно:</strong> распаковка пользовательского архива даёт и path traversal через имена внутри, и «архивную бомбу», которая разворачивается в терабайты. Нужны проверка имён, лимит суммарного размера и числа файлов.</li>
+      <li><strong>SVG — это документ, а не картинка:</strong> он может содержать скрипт, поэтому либо запрещается, либо очищается санитайзером, либо отдаётся только как вложение.</li>
+      <li><strong>Загрузка по ссылке</strong> («импортировать файл по URL») — это уже SSRF: адрес выбирает пользователь, и проверять его нужно отдельно.</li>
+    </ul>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как безопасно принимать загрузку файлов?</b><br>Проверять размер, определять тип по содержимому, а не по расширению или заголовку клиента, генерировать имя самостоятельно, хранить вне корня сайта в каталоге без исполнения скриптов и отдавать через контроллер с проверкой прав и явными заголовками. Для изображений дополнительно — пересохранение, которое убирает встроенный код и метаданные.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Считаю недоверенным весь ввод, включая данные из своей базы</li>
+        <li>Различаю валидацию на входе и экранирование при выводе</li>
+        <li>Использую подготовленные выражения и белые списки для имён колонок</li>
+        <li>Не вызываю оболочку со склеенной строкой</li>
+        <li>Проверяю путь через <code>basename</code>, <code>realpath</code> и префикс каталога</li>
+        <li>Экранирую по контексту: HTML, атрибут, URL, JS</li>
+        <li>Знаю три вида XSS и не использую <code>|raw</code> без санитайзера</li>
+      </ul>
+      <ul class="check">
+        <li>Понимаю, что даёт CSP и почему <code>unsafe-inline</code> её обесценивает</li>
+        <li>Ставлю кукам <code>Secure</code>, <code>HttpOnly</code>, <code>SameSite</code></li>
+        <li>Пересоздаю сессию после входа и уничтожаю её при выходе</li>
+        <li>Храню пароли через <code>password_hash</code> и делаю rehash</li>
+        <li>Ограничиваю попытки входа по учётной записи и по источнику</li>
+        <li>Не раскрываю существование учётной записи в ошибках и при сбросе</li>
+        <li>Проверяю загружаемые файлы по содержимому и храню их вне корня</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-секция по безопасности почти всегда состоит из четырёх вопросов: SQL-инъекция, XSS, CSRF и хранение паролей. Этот блок закрывает все четыре — но ценность появляется, когда вы проверите их на своём проекте: обычно находится хотя бы одно место с <code>|raw</code>, один <code>GET</code>, меняющий состояние, и одна форма без ограничения попыток.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · системные механизмы</p>
+    <h2>Middle: авторизация, криптография, зависимости</h2>
+    <p>Junior закрывает уязвимости по одной. Middle делает так, чтобы целый класс уязвимостей стал невозможен по построению: граница арендатора в слое данных, а не в контроллерах; шифрование через проверенную библиотеку, а не через самописную схему; аудит зависимостей в пайплайне, а не раз в год.</p>
+  </div>
+
+  <!-- 7 -->
+  <article class="card" id="authz">
+    <p class="path">middle / права</p>
+    <div class="card-top"><h3>Авторизация и IDOR</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Сломанная авторизация — уязвимость номер один в современных приложениях, и причина системная: аутентификацию делает фреймворк один раз и централизованно, а проверку прав на конкретный объект приходится писать руками в каждом обработчике. Однажды её забывают — и смена идентификатора в URL отдаёт чужие данные.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · виды нарушенной авторизации</caption>
+      <thead><tr><th>Вид</th><th>Как выглядит</th><th>Защита</th></tr></thead>
+      <tbody>
+        <tr><td>Горизонтальная эскалация (IDOR/BOLA)</td><td><code>/orders/9272</code> отдаёт чужой заказ</td><td>Проверка владельца в слое данных</td></tr>
+        <tr><td>Вертикальная эскалация</td><td>Обычный пользователь открывает административный раздел</td><td>Запрет по умолчанию, явные разрешения по ролям</td></tr>
+        <tr><td>Mass assignment</td><td>В теле приходит <code>role</code> или <code>tenant_id</code> и применяется</td><td>Белый список полей, DTO вместо заполнения модели</td></tr>
+        <tr><td>Права только на UI</td><td>Кнопка скрыта, эндпоинт открыт</td><td>Проверка на сервере, интерфейс — только удобство</td></tr>
+        <tr><td>Проверка один раз на входе</td><td>Права проверены при открытии раздела, но не в каждом действии</td><td>Проверка при каждом обращении к объекту</td></tr>
+        <tr><td>Забытые служебные пути</td><td>Отладочные и экспортные эндпоинты без проверок</td><td>Инвентаризация маршрутов и запрет по умолчанию</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Граница в слое данных: забыть проверку становится невозможно</span></div><pre><code>&lt;?php
+<span class="cm">// Ненадёжно: проверка живёт в контроллере и однажды будет пропущена</span>
+$order = $this-&gt;orders-&gt;<span class="fn">find</span>($id);
+<span class="kw">if</span> ($order-&gt;tenantId !== $user-&gt;tenantId) { <span class="kw">throw new</span> <span class="nm">AccessDenied</span>(); }
+
+<span class="cm">// Надёжно: репозиторий физически не умеет отдавать чужое</span>
+<span class="kw">final class</span> <span class="nm">OrderRepository</span>
+{
+    <span class="kw">public function</span> <span class="fn">find</span>(<span class="nm">string</span> $id): ?<span class="nm">Order</span>
+    {
+        <span class="kw">return</span> $this-&gt;db-&gt;<span class="fn">fetchOne</span>(
+            <span class="st">'SELECT * FROM orders WHERE id = :id AND tenant_id = :t'</span>,
+            [<span class="st">'id'</span> =&gt; $id, <span class="st">'t'</span> =&gt; $this-&gt;context-&gt;<span class="fn">tenantId</span>()]   <span class="cm">// из контекста, не из запроса</span>
+        );
+    }
+}
+
+<span class="cm">// Ещё надёжнее — на уровне БД (PostgreSQL Row Level Security):</span>
+<span class="cm">// ALTER TABLE orders ENABLE ROW LEVEL SECURITY;</span>
+<span class="cm">// CREATE POLICY tenant_isolation ON orders</span>
+<span class="cm">//   USING (tenant_id = current_setting('app.tenant_id')::uuid);</span>
+<span class="cm">// Тогда даже забытый фильтр в новом запросе не приведёт к утечке.</span>
+
+<span class="cm">// Права на действие — отдельно от прав на объект, в одном месте</span>
+<span class="kw">final class</span> <span class="nm">OrderVoter</span>
+{
+    <span class="kw">public function</span> <span class="fn">canCancel</span>(<span class="nm">Order</span> $order, <span class="nm">User</span> $user): <span class="nm">bool</span>
+    {
+        <span class="kw">return</span> $order-&gt;tenantId === $user-&gt;tenantId
+            &amp;&amp; ($user-&gt;<span class="fn">hasRole</span>(<span class="st">'manager'</span>) || $order-&gt;createdBy === $user-&gt;id)
+            &amp;&amp; $order-&gt;status === <span class="nm">OrderStatus</span>::New;
+    }
+}</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Непредсказуемые идентификаторы (UUID вместо автоинкремента) — полезный барьер, но не защита: ссылки утекают в логи, историю браузера, письма и скриншоты. Они уменьшают вероятность массового перебора, но не отменяют проверку прав. Полагаться только на «этот номер никто не угадает» — то же самое, что не проверять права вовсе.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как системно защититься от IDOR?</b><br>Перенести границу из контроллеров в слой данных: репозиторий или обёртка соединения, которые всегда фильтруют по владельцу или арендатору, а в PostgreSQL — политика RLS на уровне базы. Тогда забытая проверка в новом коде не приводит к утечке. Сверху — разделение прав на объект и прав на действие в одном месте (voter) и тесты, которые пытаются получить чужой объект.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="crypto">
+    <p class="path">middle / криптография</p>
+    <div class="card-top"><h3>Прикладная криптография</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Главное правило: не изобретать. Прикладному разработчику нужно уметь выбрать правильный инструмент под задачу и не допустить типовых ошибок — использовать предсказуемый генератор, сравнивать секреты обычным равенством, шифровать без проверки целостности.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · задача и инструмент</caption>
+      <thead><tr><th>Задача</th><th>Инструмент</th><th>Чего нельзя</th></tr></thead>
+      <tbody>
+        <tr><td>Хранить пароль</td><td>Медленный хеш: <code>password_hash</code></td><td>Быстрые хеши, самописная соль</td></tr>
+        <tr><td>Проверить целостность данных</td><td>HMAC с секретным ключом</td><td>Просто хеш без ключа — его подделает кто угодно</td></tr>
+        <tr><td>Проверить, что данные не менялись, публично</td><td>Цифровая подпись (асимметричная)</td><td>Симметричный ключ, розданный всем участникам</td></tr>
+        <tr><td>Скрыть данные в хранилище</td><td>Симметричное шифрование с аутентификацией (AEAD)</td><td>Шифрование без проверки целостности</td></tr>
+        <tr><td>Обменяться данными с чужой системой</td><td>TLS; при необходимости — асимметричное шифрование</td><td>Свой протокол поверх HTTP</td></tr>
+        <tr><td>Сгенерировать токен</td><td><code>random_bytes</code></td><td><code>rand</code>, <code>mt_rand</code>, <code>uniqid</code>, время</td></tr>
+        <tr><td>Сравнить секреты</td><td><code>hash_equals</code></td><td><code>===</code>: время сравнения выдаёт совпавший префикс</td></tr>
+        <tr><td>Скрыть данные необратимо</td><td>Хеш с солью или удаление</td><td>«Шифрование» с ключом, лежащим рядом</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Шифрование поля: современная библиотека вместо ручной сборки</span></div><pre><code>&lt;?php
+<span class="cm">// sodium входит в PHP: авторизованное шифрование, безопасные значения по умолчанию.</span>
+<span class="cm">// «Авторизованное» означает, что подмена шифротекста будет обнаружена при расшифровке.</span>
+
+<span class="kw">final class</span> <span class="nm">FieldEncrypter</span>
+{
+    <span class="kw">public function</span> <span class="fn">encrypt</span>(<span class="nm">string</span> $plain, <span class="nm">string</span> $key): <span class="nm">string</span>
+    {
+        <span class="cm">// Nonce уникален для каждого сообщения и хранится рядом — это не секрет</span>
+        $nonce = <span class="fn">random_bytes</span>(<span class="nm">SODIUM_CRYPTO_SECRETBOX_NONCEBYTES</span>);
+        $cipher = <span class="fn">sodium_crypto_secretbox</span>($plain, $nonce, $key);
+
+        <span class="cm">// Версия ключа в префиксе — без неё ротация ключей невозможна</span>
+        <span class="kw">return</span> <span class="st">'v2:'</span> . <span class="fn">base64_encode</span>($nonce . $cipher);
+    }
+
+    <span class="kw">public function</span> <span class="fn">decrypt</span>(<span class="nm">string</span> $stored): <span class="nm">string</span>
+    {
+        [$version, $payload] = <span class="fn">explode</span>(<span class="st">':'</span>, $stored, 2);
+        $raw    = <span class="fn">base64_decode</span>($payload, <span class="kw">true</span>);
+        $nonce  = <span class="fn">substr</span>($raw, 0, <span class="nm">SODIUM_CRYPTO_SECRETBOX_NONCEBYTES</span>);
+        $cipher = <span class="fn">substr</span>($raw, <span class="nm">SODIUM_CRYPTO_SECRETBOX_NONCEBYTES</span>);
+
+        $plain = <span class="fn">sodium_crypto_secretbox_open</span>($cipher, $nonce, $this-&gt;<span class="fn">keyFor</span>($version));
+
+        <span class="cm">// false означает, что данные подменены или ключ не тот</span>
+        <span class="kw">return</span> $plain !== <span class="kw">false</span> ? $plain : <span class="kw">throw new</span> <span class="nm">RuntimeException</span>(<span class="st">'Decryption failed'</span>);
+    }
+}
+
+<span class="cm">// Секреты в памяти стоит затирать после использования</span>
+<span class="fn">sodium_memzero</span>($key);</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Три ошибки, которые встречаются чаще всего</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Предсказуемая случайность в токенах</span>
+$token = <span class="fn">md5</span>(<span class="fn">uniqid</span>((<span class="kw">string</span>) <span class="fn">mt_rand</span>(), <span class="kw">true</span>));   <span class="cm">// восстанавливается по времени</span>
+$token = <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(32));                  <span class="cm">// правильно</span>
+
+<span class="cm">// 2. Сравнение секретов обычным равенством</span>
+<span class="kw">if</span> ($signature === $expected) { }              <span class="cm">// время сравнения зависит от префикса</span>
+<span class="kw">if</span> (<span class="fn">hash_equals</span>($expected, $signature)) { }    <span class="cm">// постоянное время</span>
+
+<span class="cm">// 3. Хеш вместо HMAC при проверке подлинности</span>
+$sig = <span class="fn">hash</span>(<span class="st">'sha256'</span>, $payload);                <span class="cm">// подделает любой: ключа нет</span>
+$sig = <span class="fn">hash_hmac</span>(<span class="st">'sha256'</span>, $payload, $secret);    <span class="cm">// правильно</span>
+
+<span class="cm">// Отдельно: JWT с алгоритмом из самого токена — классическая ошибка.</span>
+<span class="cm">// Список допустимых алгоритмов задаётся кодом, а не приходит от клиента.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем хеширование отличается от шифрования и от подписи?</b><br>Хеширование необратимо и не требует ключа — им проверяют целостность и хранят пароли (медленным алгоритмом). Шифрование обратимо и требует ключа — им скрывают содержимое. Подпись и HMAC подтверждают подлинность и целостность: HMAC — общим секретом между двумя сторонами, цифровая подпись — приватным ключом с публичной проверкой. Частая ошибка — «зашифровать пароль»: пароли не шифруются, а хешируются, иначе утечка ключа раскрывает их все.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="secrets">
+    <p class="path">middle / хранение</p>
+    <div class="card-top"><h3>Секреты и данные в покое</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Секрет — то, что даёт доступ: пароль базы, ключ платёжного провайдера, токен интеграции, ключ шифрования. Задача — обеспечить, чтобы он попадал только туда, где нужен, не оседал в артефактах и мог быть заменён без переписывания кода.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · где секреты утекают чаще всего</caption>
+      <thead><tr><th>Канал утечки</th><th>Как проявляется</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>Репозиторий</td><td>Ключ в коде или в закоммиченном <code>.env</code></td><td>Сканер секретов в CI; при находке — отзыв, а не удаление коммита</td></tr>
+        <tr><td>Слои образа</td><td>Токен, переданный в <code>RUN</code> при сборке</td><td>BuildKit-секреты; проверка <code>docker history</code></td></tr>
+        <tr><td>Логи</td><td>Тело запроса или заголовки пишутся целиком</td><td>Маскирование по списку полей на уровне логгера</td></tr>
+        <tr><td>URL</td><td>Токен в query попадает в логи прокси и <code>Referer</code></td><td>Только заголовок <code>Authorization</code></td></tr>
+        <tr><td>Ответы об ошибках</td><td>Строка подключения в трассировке</td><td>Отключить показ ошибок на проде</td></tr>
+        <tr><td>Тестовые стенды</td><td>Копия боевой базы с реальными данными</td><td>Обезличивание при переносе</td></tr>
+        <tr><td>Бэкапы</td><td>Дамп в общедоступном хранилище</td><td>Шифрование и ограниченный доступ</td></tr>
+        <tr><td>Сторонние сервисы</td><td>Данные уходят в аналитику и трекеры ошибок</td><td>Фильтрация перед отправкой</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Шифрование данных в базе</strong> решает конкретную угрозу — утечку дампа или диска — и не защищает от скомпрометированного приложения: оно всё равно расшифрует то, к чему имеет доступ. Поэтому шифруют не всё подряд, а выбранные чувствительные поля, и всегда с планом ротации ключей.</p>
+
+    <div class="code"><div class="bar"><span>php + sql</span><span class="r">Шифрование поля и поиск по нему</span></div><pre><code><span class="cm">-- Проблема: по зашифрованному полю нельзя искать и нельзя строить индекс.</span>
+<span class="cm">-- Решение: рядом хранится «слепой индекс» — HMAC от нормализованного значения.</span>
+CREATE TABLE customers (
+    id             UUID PRIMARY KEY,
+    email_enc      BYTEA NOT NULL,        <span class="cm">-- шифротекст: расшифровывается только в приложении</span>
+    email_hmac     BYTEA NOT NULL,        <span class="cm">-- HMAC от lower(trim(email)) — для точного поиска</span>
+    key_version    SMALLINT NOT NULL,     <span class="cm">-- без версии ротация ключей невозможна</span>
+    UNIQUE (email_hmac)
+);</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Поиск и ротация</span></div><pre><code>&lt;?php
+<span class="cm">// Поиск: ищем по HMAC, расшифровываем только найденную запись</span>
+$row = $db-&gt;<span class="fn">fetchOne</span>(
+    <span class="st">'SELECT * FROM customers WHERE email_hmac = :h'</span>,
+    [<span class="st">'h'</span> =&gt; <span class="fn">hash_hmac</span>(<span class="st">'sha256'</span>, <span class="fn">mb_strtolower</span>(<span class="fn">trim</span>($email)), $indexKey, <span class="kw">true</span>)]
+);
+
+<span class="cm">// Ротация: новые записи шифруются новым ключом, старые перешифровываются фоново</span>
+<span class="kw">foreach</span> ($this-&gt;customers-&gt;<span class="fn">withKeyVersion</span>(1, batch: 500) <span class="kw">as</span> $customer) {
+    $plain = $this-&gt;encrypter-&gt;<span class="fn">decrypt</span>($customer-&gt;emailEnc);   <span class="cm">// старым ключом</span>
+    $this-&gt;customers-&gt;<span class="fn">update</span>($customer-&gt;id, [
+        <span class="st">'email_enc'</span>   =&gt; $this-&gt;encrypter-&gt;<span class="fn">encrypt</span>($plain, version: 2),
+        <span class="st">'key_version'</span> =&gt; 2,
+    ]);
+}
+
+<span class="cm">// Компрометация ключа означает ротацию. Если ротация не отрепетирована,</span>
+<span class="cm">// шифрование даёт ложное чувство защиты: заменить ключ в инциденте не получится.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Секрет попал в git. Что делаете?</b><br>Считаю его скомпрометированным и первым делом отзываю и перевыпускаю — удаление коммита не помогает, история остаётся в клонах, форках и кэшах хостинга. Дальше — проверяю по логам, использовался ли он посторонними, чищу историю, ставлю сканер секретов в пайплайн и разбираюсь, почему секрет вообще оказался в месте, откуда его можно закоммитить.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="ssrf">
+    <p class="path">middle / разбор данных</p>
+    <div class="card-top"><h3>SSRF, XXE, десериализация</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Три уязвимости, объединённые общей идеей: приложение обрабатывает пользовательские данные компонентом, который умеет слишком много. HTTP-клиент умеет ходить во внутреннюю сеть, XML-парсер — читать файлы, механизм десериализации — создавать объекты и вызывать их методы.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">SSRF: адрес выбирает пользователь — значит, его нужно проверять</span></div><pre><code>&lt;?php
+<span class="cm">// Опасные места: «загрузить по ссылке», вебхуки, импорт, предпросмотр ссылок,</span>
+<span class="cm">// проверка доступности сайта, конвертация HTML в PDF.</span>
+
+<span class="kw">function</span> <span class="fn">assertPublicUrl</span>(<span class="nm">string</span> $url): <span class="nm">void</span>
+{
+    $parts = <span class="fn">parse_url</span>($url);
+
+    <span class="cm">// 1. Только HTTPS: file://, gopher://, dict:// открывают отдельные векторы</span>
+    <span class="kw">if</span> (($parts[<span class="st">'scheme'</span>] ?? <span class="st">''</span>) !== <span class="st">'https'</span>) {
+        <span class="kw">throw new</span> <span class="nm">InvalidArgumentException</span>(<span class="st">'Только https'</span>);
+    }
+
+    <span class="cm">// 2. Проверяем IP после разрешения имени: домен может указывать внутрь сети</span>
+    <span class="kw">foreach</span> (<span class="fn">gethostbynamel</span>($parts[<span class="st">'host'</span>]) ?: [] <span class="kw">as</span> $ip) {
+        <span class="kw">if</span> (!<span class="fn">filter_var</span>($ip, <span class="nm">FILTER_VALIDATE_IP</span>,
+                <span class="nm">FILTER_FLAG_NO_PRIV_RANGE</span> | <span class="nm">FILTER_FLAG_NO_RES_RANGE</span>)) {
+            <span class="kw">throw new</span> <span class="nm">InvalidArgumentException</span>(<span class="st">'Внутренний адрес запрещён'</span>);
+        }
+    }
+}
+
+<span class="cm">// 3. Запрет редиректов: публичный адрес перебросит на внутренний</span>
+$this-&gt;http-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, $url, [
+    <span class="st">'max_redirects'</span> =&gt; 0,
+    <span class="st">'timeout'</span>       =&gt; 5,
+]);
+
+<span class="cm">// Надёжнее всего — выполнять такие запросы из отдельного сетевого сегмента,</span>
+<span class="cm">// из которого внутренние сервисы и метаданные облака просто недоступны.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Разбор XML и десериализация</span></div><pre><code>&lt;?php
+<span class="cm">// XXE: внешние сущности в XML позволяют читать файлы и обращаться в сеть.</span>
+<span class="cm">// В современных версиях PHP они отключены по умолчанию, но подтвердить явно полезно:</span>
+$doc = <span class="kw">new</span> <span class="nm">DOMDocument</span>();
+$doc-&gt;<span class="fn">loadXML</span>($xml, <span class="nm">LIBXML_NONET</span> | <span class="nm">LIBXML_NOENT</span> &amp; ~<span class="nm">LIBXML_NOENT</span>);  <span class="cm">// без сети, без сущностей</span>
+
+<span class="cm">// Небезопасная десериализация: unserialize может создавать объекты произвольных</span>
+<span class="cm">// классов и приводить к выполнению кода через магические методы.</span>
+$data = <span class="fn">unserialize</span>($input);                                   <span class="cm">// нельзя для внешних данных</span>
+$data = <span class="fn">unserialize</span>($input, [<span class="st">'allowed_classes'</span> =&gt; <span class="kw">false</span>]);      <span class="cm">// только скаляры и массивы</span>
+
+<span class="cm">// Правильный формат обмена с внешним миром — JSON: он не создаёт объектов</span>
+$data = <span class="fn">json_decode</span>($input, <span class="kw">true</span>, flags: <span class="nm">JSON_THROW_ON_ERROR</span>);
+
+<span class="cm">// То же относится к любым форматам, умеющим восстанавливать объекты:</span>
+<span class="cm">// YAML с тегами классов, PHP-массивы через include, «умные» кэши сессий.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · компонент делает больше, чем нужно</caption>
+      <thead><tr><th>Компонент</th><th>Скрытая возможность</th><th>Ограничение</th></tr></thead>
+      <tbody>
+        <tr><td>HTTP-клиент</td><td>Ходит в приватную сеть и к метаданным облака</td><td>Белый список, проверка IP, запрет редиректов, отдельный сегмент</td></tr>
+        <tr><td>XML-парсер</td><td>Читает локальные файлы, обращается в сеть</td><td>Отключить внешние сущности и сеть</td></tr>
+        <tr><td><code>unserialize</code></td><td>Создаёт объекты, вызывает магические методы</td><td>JSON вместо него; <code>allowed_classes =&gt; false</code></td></tr>
+        <tr><td>Шаблонизатор с пользовательским шаблоном</td><td>Выполняет выражения</td><td>Не собирать шаблон из пользовательских данных</td></tr>
+        <tr><td>Конвертеры HTML в PDF</td><td>Загружают внешние ресурсы, читают файлы</td><td>Запрет локальных схем и сети, изоляция процесса</td></tr>
+        <tr><td>Обработка архивов</td><td>Path traversal, «архивные бомбы»</td><td>Проверка имён, лимиты размера и числа файлов</td></tr>
+        <tr><td>Разбор изображений</td><td>Уязвимости в кодеках</td><td>Обновлённые библиотеки, лимиты, изоляция</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое SSRF и чем он опасен?</b><br>Приложение по просьбе пользователя обращается по указанному адресу — и этот адрес может указывать внутрь инфраструктуры: на служебные сервисы, метаданные облака с ключами доступа, административные панели без аутентификации. Защита многослойная: только разрешённые схемы, проверка IP после разрешения имени, запрет редиректов, белый список доменов там, где возможен, и выполнение таких запросов из сегмента без доступа к внутренним ресурсам.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="headers">
+    <p class="path">middle / браузер</p>
+    <div class="card-top"><h3>Заголовки и CSP</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Заголовки безопасности — дешёвый слой защиты: они не исправляют уязвимости, но ограничивают то, что злоумышленник может сделать, найдя одну. Настраиваются один раз централизованно и дальше работают для всего приложения.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · заголовки и что они дают</caption>
+      <thead><tr><th>Заголовок</th><th>Что делает</th><th>Что закрывает</th></tr></thead>
+      <tbody>
+        <tr><td><code>Content-Security-Policy</code></td><td>Ограничивает источники скриптов, стилей, кадров</td><td>Существенно снижает эксплуатируемость XSS</td></tr>
+        <tr><td><code>Strict-Transport-Security</code></td><td>Обязывает браузер ходить только по HTTPS</td><td>Понижение до HTTP и перехват</td></tr>
+        <tr><td><code>X-Content-Type-Options: nosniff</code></td><td>Запрещает угадывать тип содержимого</td><td>Исполнение загруженного файла как скрипта</td></tr>
+        <tr><td><code>frame-ancestors</code> в CSP</td><td>Запрещает встраивание в чужие страницы</td><td>Кликджекинг</td></tr>
+        <tr><td><code>Referrer-Policy</code></td><td>Ограничивает передачу адреса при переходах</td><td>Утечку путей и параметров наружу</td></tr>
+        <tr><td><code>Permissions-Policy</code></td><td>Отключает камеру, микрофон, геолокацию</td><td>Злоупотребление API браузера</td></tr>
+        <tr><td><code>Cache-Control: no-store</code></td><td>Запрещает сохранять ответ</td><td>Приватные данные в кэше и на диске</td></tr>
+        <tr><td><code>Cross-Origin-Opener-Policy</code></td><td>Изолирует окно от чужих контекстов</td><td>Часть атак через <code>window.opener</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>CSP внедряется в три шага.</strong> Сначала режим только для отчётов: политика объявляется, нарушения собираются, ничего не ломается. Затем разбор отчётов — обычно выясняется, что половина нарушений от собственных инлайновых скриптов и сторонних виджетов. И только потом включение блокировки, причём с <code>nonce</code> для инлайна вместо <code>unsafe-inline</code>: последний полностью обесценивает политику, потому что именно инлайновые скрипты она и должна останавливать.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Заголовки безопасности — второй эшелон, а не замена исправлениям. CSP снижает эксплуатируемость XSS, но не устраняет её: уязвимость остаётся, а политику можно обойти при неудачной конфигурации. Правильный порядок работы — сначала устранить причину, потом добавить ограничение как страховку.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что даёт CSP и с чего начать её внедрение?</b><br>Она ограничивает, откуда браузеру разрешено загружать и исполнять ресурсы, — то есть даже при пропущенном экранировании посторонний скрипт не выполнится. Начинать нужно с режима только для отчётов на неделю-две, разобрать собранные нарушения, убрать инлайновые скрипты или перевести их на <code>nonce</code>, и только затем включать блокирующий режим. Политика с <code>unsafe-inline</code> в <code>script-src</code> смысла почти не имеет.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="deps">
+    <p class="path">middle / зависимости</p>
+    <div class="card-top"><h3>Зависимости и цепочка поставки</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Типичный PHP-проект — это несколько тысяч строк своего кода и десятки мегабайт чужого. Уязвимость в зависимости даёт ровно те же последствия, что своя, но обнаружить её сложнее: код никто не читал, а обновление откладывается годами.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Минимальная гигиена зависимостей</span></div><pre><code><span class="cm"># Известные уязвимости в установленных версиях — обязательный шаг пайплайна</span>
+composer audit --locked
+
+<span class="cm"># Что вообще установлено и почему: полезно перед добавлением новой зависимости</span>
+composer show --tree | head -40
+composer why some/package            <span class="cm"># кто её тянет</span>
+composer outdated --direct           <span class="cm"># что отстаёт из того, что вы подключали сами</span>
+
+<span class="cm"># Заброшенные пакеты — отдельный риск: исправлений уязвимостей не будет</span>
+composer show --outdated --format=json | grep -i abandoned
+
+<span class="cm"># Воспроизводимость: на проде только установка по lock-файлу</span>
+composer install --no-dev --prefer-dist --no-scripts
+<span class="cm"># --no-scripts важен: скрипты пакета выполняются с правами вашего пользователя</span>
+
+<span class="cm"># Проверка перед добавлением нового пакета — три минуты, которые окупаются:</span>
+<span class="cm">#   когда последний коммит и сколько открытых issue</span>
+<span class="cm">#   сколько у него собственных зависимостей</span>
+<span class="cm">#   похоже ли имя на популярный пакет (опечатка в имени — известный приём атаки)</span>
+<span class="cm">#   нужен ли он вообще или это двадцать строк своего кода</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · риски цепочки поставки</caption>
+      <thead><tr><th>Риск</th><th>Как проявляется</th><th>Мера</th></tr></thead>
+      <tbody>
+        <tr><td>Известная уязвимость</td><td>CVE в установленной версии</td><td>Аудит в CI с блокировкой сборки</td></tr>
+        <tr><td>Заброшенный пакет</td><td>Исправлений не будет</td><td>План замены, отслеживание статуса</td></tr>
+        <tr><td>Компрометация пакета</td><td>Вредоносный код в новой версии</td><td>Lock-файл, ревью обновлений, отложенное обновление</td></tr>
+        <tr><td>Опечатка в имени пакета</td><td>Устанавливается пакет-двойник</td><td>Внимание при добавлении, проверка происхождения</td></tr>
+        <tr><td>Скрипты установки</td><td>Выполняются при <code>composer install</code></td><td><code>--no-scripts</code> на проде, ревью скриптов</td></tr>
+        <tr><td>Транзитивные зависимости</td><td>Тянут за собой десятки чужих пакетов</td><td>Ревизия дерева, отказ от пакетов ради одной функции</td></tr>
+        <tr><td>Скомпрометированный пайплайн</td><td>Артефакт подменяется при сборке</td><td>Минимальные права токенов, фиксация версий действий</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Частые мелкие обновления безопаснее редких больших: чем дольше откладывается обновление, тем выше цена и риск. Автоматические pull request на обновления плюс аудит в пайплайне превращают это в рутину. Отдельно стоит держать список пакетов, блокирующих обновление версии PHP, — обычно именно они определяют, когда проект окажется на неподдерживаемой версии.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы следите за уязвимостями в зависимостях?</b><br><code>composer audit</code> в пайплайне с блокировкой сборки на критичных находках, автоматические PR на обновления, регулярная ревизия дерева зависимостей и отслеживание заброшенных пакетов. На проде — установка строго по lock-файлу и без выполнения скриптов пакетов. Плюс правило при добавлении новой зависимости: посмотреть активность проекта и число собственных зависимостей.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="logging">
+    <p class="path">middle / обнаружение</p>
+    <div class="card-top"><h3>Логи, обнаружение, реакция</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Большинство компрометаций обнаруживают не в момент атаки, а спустя недели — и часто со стороны. Разница между «мы увидели за час» и «мы узнали через месяц от клиента» определяется тем, что и как логируется.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · что логировать и чего в логах быть не должно</caption>
+      <thead><tr><th>Логировать</th><th>Не логировать</th></tr></thead>
+      <tbody>
+        <tr><td>Вход, выход, неудачные попытки входа</td><td>Пароли — в любом виде, включая неудачные попытки</td></tr>
+        <tr><td>Смену пароля, почты, второго фактора</td><td>Токены, ключи API, куки сессий</td></tr>
+        <tr><td>Отказы авторизации с указанием объекта</td><td>Номера карт, CVV, платёжные реквизиты</td></tr>
+        <tr><td>Изменение прав и ролей</td><td>Персональные данные сверх необходимого</td></tr>
+        <tr><td>Административные действия</td><td>Полные тела запросов «на всякий случай»</td></tr>
+        <tr><td>Экспорт и массовое чтение данных</td><td>Содержимое личных сообщений и документов</td></tr>
+        <tr><td>Срабатывания лимитов и защит</td><td>Секреты в строках подключения</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Маскирование на уровне логгера, а не на местах вызова</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> <span class="nm">SensitiveDataProcessor</span>
+{
+    <span class="kw">private const</span> MASK_KEYS = [
+        <span class="st">'password'</span>, <span class="st">'passwd'</span>, <span class="st">'secret'</span>, <span class="st">'token'</span>, <span class="st">'authorization'</span>,
+        <span class="st">'api_key'</span>, <span class="st">'card_number'</span>, <span class="st">'cvv'</span>, <span class="st">'set-cookie'</span>,
+    ];
+
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">array</span> $record): <span class="nm">array</span>
+    {
+        <span class="cm">// Маскирование в одном месте надёжнее, чем дисциплина на 300 вызовах логгера</span>
+        <span class="fn">array_walk_recursive</span>($record[<span class="st">'context'</span>], <span class="kw">function</span> (&amp;$value, $key) {
+            <span class="kw">if</span> (<span class="fn">in_array</span>(<span class="fn">strtolower</span>((<span class="kw">string</span>) $key), <span class="kw">self</span>::MASK_KEYS, <span class="kw">true</span>)) {
+                $value = <span class="st">'[REDACTED]'</span>;
+            }
+        });
+
+        <span class="kw">return</span> $record;
+    }
+}
+
+<span class="cm">// События безопасности пишутся отдельным каналом: другой срок хранения,</span>
+<span class="cm">// другой доступ, отдельные алерты</span>
+$security-&gt;<span class="fn">warning</span>(<span class="st">'authz.denied'</span>, [
+    <span class="st">'user_id'</span>  =&gt; $user-&gt;id,
+    <span class="st">'object'</span>   =&gt; <span class="st">'order:'</span> . $id,
+    <span class="st">'action'</span>   =&gt; <span class="st">'cancel'</span>,
+    <span class="st">'ip'</span>       =&gt; $trustedIp,
+    <span class="st">'trace_id'</span> =&gt; <span class="nm">Context</span>::<span class="fn">traceId</span>(),
+]);</code></pre></div>
+
+    <p><strong>Сигналы, на которые стоит настроить оповещение:</strong> всплеск неудачных входов по многим учётным записям (распыление пароля), серия отказов авторизации у одного пользователя (перебор чужих идентификаторов), массовый экспорт или чтение данных нетипичного объёма, изменение прав вне рабочего процесса, появление новых административных учётных записей, ошибки 5xx с признаками инъекций в параметрах.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Логировать «всё на всякий случай», включая тела запросов и заголовки. Такой лог сам становится целью атаки: в нём оседают токены, персональные данные и пароли, набранные в неверном поле. Плюс он дорогой и в нём невозможно ничего найти. Логируются события, а не потоки данных.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что должно попадать в логи безопасности?</b><br>События, а не данные: входы и неудачные попытки, смена пароля и почты, отказы авторизации с указанием объекта и действия, изменения прав, административные операции, массовые выгрузки, срабатывания лимитов. Всё с идентификатором пользователя, источником и сквозным идентификатором запроса. Пароли, токены, куки и платёжные реквизиты маскируются централизованно на уровне логгера, а не дисциплиной на местах.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Ставлю границу владельца в слое данных, а не в контроллерах</li>
+        <li>Разделяю права на объект и права на действие</li>
+        <li>Не полагаюсь на непредсказуемость идентификаторов</li>
+        <li>Исключаю mass assignment белым списком полей</li>
+        <li>Выбираю между хешем, HMAC, подписью и шифрованием осознанно</li>
+        <li>Генерирую токены через <code>random_bytes</code> и сравниваю через <code>hash_equals</code></li>
+        <li>Использую авторизованное шифрование и версионирую ключи</li>
+      </ul>
+      <ul class="check">
+        <li>Знаю, где утекают секреты, и умею их ротировать</li>
+        <li>Проверяю пользовательские URL против SSRF и запрещаю редиректы</li>
+        <li>Не применяю <code>unserialize</code> к внешним данным</li>
+        <li>Внедряю CSP через режим отчётов и без <code>unsafe-inline</code></li>
+        <li>Держу аудит зависимостей в пайплайне</li>
+        <li>Ставлю на прод установку по lock-файлу без скриптов</li>
+        <li>Логирую события безопасности и маскирую чувствительное централизованно</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Middle-уровень отличается переходом от «исправил уязвимость» к «сделал класс уязвимостей невозможным». Проверка простая: если новый разработчик напишет обычный код, не думая о безопасности, — получится ли у него утечка? Если да, защита держится на внимательности, а не на архитектуре.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · процесс и архитектура</p>
+    <h2>Senior: процесс, изоляция, реагирование</h2>
+    <p>На senior-уровне безопасность перестаёт быть списком уязвимостей и становится свойством процесса: как решается, что защищать; где в пайплайне ловятся ошибки; кто и к каким данным имеет доступ; что происходит в первый час после обнаружения компрометации. Технические меры без процесса деградируют — сканер отключают, потому что он шумит, а правило обходят, потому что горит релиз.</p>
+  </div>
+
+  <!-- 14 -->
+  <article class="card" id="threat">
+    <p class="path">senior / анализ</p>
+    <div class="card-top"><h3>Threat modeling</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Моделирование угроз — способ потратить час до разработки вместо недели после инцидента. Оно отвечает на четыре вопроса: что мы строим, что может пойти не так, что мы с этим сделаем и достаточно ли этого.</p>
+
+    <div class="flow" role="img" aria-label="Процесс моделирования угроз в четыре шага">
+      <div class="node">1 · Схема<small>потоки данных и границы</small></div><span class="arr">→</span>
+      <div class="node">2 · Угрозы<small>что может пойти не так</small></div><span class="arr">→</span>
+      <div class="node">3 · Меры<small>что делаем с каждой</small></div><span class="arr">→</span>
+      <div class="node">4 · Проверка<small>достаточно ли</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · STRIDE: шесть категорий угроз</caption>
+      <thead><tr><th>Категория</th><th>Вопрос</th><th>Типичная мера</th></tr></thead>
+      <tbody>
+        <tr><td>Подмена личности</td><td>Может ли кто-то выдать себя за другого?</td><td>Аутентификация, второй фактор, подпись запросов</td></tr>
+        <tr><td>Подделка данных</td><td>Может ли кто-то изменить данные незаметно?</td><td>Целостность, HMAC, проверка на сервере</td></tr>
+        <tr><td>Отказ от действий</td><td>Сможет ли пользователь отрицать, что сделал это?</td><td>Аудит-лог с неизменяемым хранением</td></tr>
+        <tr><td>Раскрытие информации</td><td>Может ли кто-то увидеть чужое?</td><td>Авторизация, шифрование, минимизация данных</td></tr>
+        <tr><td>Отказ в обслуживании</td><td>Можно ли исчерпать ресурс?</td><td>Лимиты, квоты, ограничение размеров</td></tr>
+        <tr><td>Повышение привилегий</td><td>Можно ли получить больше прав?</td><td>Запрет по умолчанию, изоляция, минимальные права</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Как проводить практически.</strong> Берётся конкретная функция — не «система целиком», а «загрузка документов» или «выплата партнёру». На доске рисуются потоки данных и границы доверия: где данные пересекают границу между недоверенным и доверенным. Для каждого пересечения задаются шесть вопросов STRIDE. Результат — не отчёт, а несколько задач в бэклоге и явный список принятых рисков: «здесь мы сознательно не защищаемся, потому что цена выше ущерба».</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Принятый риск нужно фиксировать письменно, с владельцем и датой пересмотра. Разница между зрелой командой и незрелой не в отсутствии рисков, а в том, что зрелая знает свои и решила по ним осознанно. Незафиксированный риск через год превращается в «никто не знал».</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы подходите к безопасности новой функции?</b><br>Перед разработкой смотрю на потоки данных и границы доверия: что приходит извне, где проверяются права, куда данные попадают дальше. По каждой границе прохожу типовые категории угроз — подмена, подделка, раскрытие, исчерпание ресурсов, повышение привилегий — и по каждой решаю: закрываем сейчас, закрываем позже или принимаем риск осознанно. Занимает час, экономит недели.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="sdlc">
+    <p class="path">senior / процесс</p>
+    <div class="card-top"><h3>Безопасность в процессе</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Проверки, встроенные в пайплайн, работают. Проверки, которые нужно помнить и запускать вручную, не работают — не из-за лени, а потому что при выкатке в пятницу вечером о них никто не вспомнит.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · инструменты и что каждый ловит</caption>
+      <thead><tr><th>Тип</th><th>Что проверяет</th><th>Что ловит</th><th>Чего не ловит</th></tr></thead>
+      <tbody>
+        <tr><td>Сканер секретов</td><td>Исходники и историю</td><td>Ключи и пароли в коде</td><td>Секреты в переменных окружения стендов</td></tr>
+        <tr><td>SCA (аудит зависимостей)</td><td>Lock-файл и образы</td><td>Известные уязвимости пакетов</td><td>Уязвимости в вашем коде</td></tr>
+        <tr><td>SAST (статический анализ)</td><td>Исходный код</td><td>Инъекции, опасные вызовы, утечки</td><td>Логику авторизации: он не знает вашей модели прав</td></tr>
+        <tr><td>DAST (динамический)</td><td>Запущенное приложение</td><td>Заголовки, конфигурацию, часть инъекций</td><td>Уязвимости за аутентификацией и сложные сценарии</td></tr>
+        <tr><td>Ревью кода</td><td>Изменения</td><td>Ошибки авторизации и логики</td><td>То, что не попало в диff</td></tr>
+        <tr><td>Пентест</td><td>Систему целиком</td><td>Цепочки уязвимостей, бизнес-логику</td><td>Регрессии между тестами</td></tr>
+        <tr><td>Bug bounty</td><td>Прод, непрерывно</td><td>То, что пропустили все остальные</td><td>Требует зрелости: поток отчётов нужно обрабатывать</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Проверки в пайплайне: быстрые блокируют, медленные — по расписанию</span></div><pre><code>security:
+  stage: test
+  script:
+    <span class="cm"># Секунды — блокируют мерж</span>
+    - gitleaks detect --no-banner --redact
+    - composer audit --locked
+    - vendor/bin/phpstan analyse --level=8      <span class="cm"># типы и достижимость</span>
+    - vendor/bin/psalm --taint-analysis         <span class="cm"># поток недоверенных данных до опасных мест</span>
+
+    <span class="cm"># Образ: критичные уязвимости базового слоя</span>
+    - trivy image --severity HIGH,CRITICAL --exit-code 1 $IMAGE
+
+  <span class="cm"># Долгие проверки не должны блокировать разработку — они идут ночью</span>
+nightly-dast:
+  rules: [{ if: <span class="st">'$CI_PIPELINE_SOURCE == "schedule"'</span> }]
+  script:
+    - zap-baseline.py -t https://staging.example.com -r report.html
+
+<span class="cm"># Ревью: чек-лист из пяти пунктов вместо «посмотри на безопасность»</span>
+<span class="cm">#   1. Проверяется ли право на конкретный объект, а не только роль?</span>
+<span class="cm">#   2. Все ли пользовательские данные экранируются по контексту вывода?</span>
+<span class="cm">#   3. Нет ли новых полей, попадающих в модель массовым заполнением?</span>
+<span class="cm">#   4. Не появились ли секреты, пути или адреса из пользовательского ввода?</span>
+<span class="cm">#   5. Что попадёт в логи из этого кода?</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Главный враг сканеров — ложные срабатывания. Инструмент, дающий сто предупреждений на каждое реальное, будет отключён через месяц. Практика та же, что со статическим анализом на легаси: зафиксировать текущее состояние как базовую линию, блокировать только новое, и постепенно разбирать накопленное. Лучше три работающие проверки, чем двадцать игнорируемых.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как встроить безопасность в разработку, не убив скорость?</b><br>Быстрые автоматические проверки в пайплайне (секреты, аудит зависимостей, статический анализ) блокируют мерж; медленные (динамическое сканирование) идут по расписанию; ревью использует короткий чек-лист вместо расплывчатого «посмотри на безопасность»; моделирование угроз проводится только для функций, которые работают с деньгами, персональными данными или правами. Всё, что не автоматизировано и не в чек-листе, со временем перестаёт выполняться.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="isolation">
+    <p class="path">senior / изоляция</p>
+    <div class="card-top"><h3>Изоляция данных и аудит</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Два вопроса, которые задаёт любой корпоративный клиент: как вы гарантируете, что мои данные не увидит другой клиент, и кто из ваших сотрудников имеет к ним доступ. Ответ на оба — архитектурный, а не организационный.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · модели изоляции арендаторов</caption>
+      <thead><tr><th>Модель</th><th>Изоляция</th><th>Стоимость</th><th>Риск</th></tr></thead>
+      <tbody>
+        <tr><td>Общие таблицы с <code>tenant_id</code></td><td>Логическая, в коде</td><td>Минимальная</td><td>Забытый фильтр — утечка</td></tr>
+        <tr><td>Общие таблицы + RLS</td><td>На уровне БД</td><td>Низкая</td><td>Ошибка в политике или обход под суперпользователем</td></tr>
+        <tr><td>Схема на арендатора</td><td>Сильнее логической</td><td>Средняя: миграции по всем схемам</td><td>Сложность эксплуатации при тысячах арендаторов</td></tr>
+        <tr><td>База на арендатора</td><td>Сильная</td><td>Высокая</td><td>Дорогие миграции и мониторинг</td></tr>
+        <tr><td>Отдельная инсталляция</td><td>Полная</td><td>Очень высокая</td><td>Фактически отдельный продукт</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>sql</span><span class="r">Аудит-лог: что произошло, кто сделал и над чем</span></div><pre><code><span class="cm">-- Отдельная таблица (лучше — отдельная база) с записью только на вставку</span>
+CREATE TABLE audit_log (
+    id           BIGSERIAL PRIMARY KEY,
+    occurred_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    actor_id     UUID         NOT NULL,          <span class="cm">-- кто</span>
+    actor_type   TEXT         NOT NULL,          <span class="cm">-- user | admin | service | job</span>
+    on_behalf_of UUID         NULL,              <span class="cm">-- вход под пользователем — обязательно фиксировать</span>
+    tenant_id    UUID         NOT NULL,
+    action       TEXT         NOT NULL,          <span class="cm">-- order.cancel, user.role_changed</span>
+    object_type  TEXT         NOT NULL,
+    object_id    TEXT         NOT NULL,
+    changes      JSONB        NULL,              <span class="cm">-- было/стало, БЕЗ чувствительных значений</span>
+    ip           INET         NULL,
+    trace_id     TEXT         NULL
+);
+
+<span class="cm">-- Приложение имеет право только вставлять: изменить историю нельзя</span>
+REVOKE UPDATE, DELETE ON audit_log FROM app_user;
+
+<span class="cm">-- Индексы под реальные вопросы: «что делал этот пользователь»,</span>
+<span class="cm">-- «кто трогал этот объект», «что происходило в этот час»</span>
+CREATE INDEX ON audit_log (tenant_id, occurred_at DESC);
+CREATE INDEX ON audit_log (object_type, object_id, occurred_at DESC);</code></pre></div>
+
+    <p><strong>Доступ сотрудников</strong> — отдельная и часто забытая граница. Разработчик с боевым доступом «на всякий случай» — это учётная запись, которую можно украсть. Практический минимум: доступ по заявке и на время, отдельные персональные учётные записи вместо общих, обязательное журналирование действий администраторов, режим «входа под пользователем» с явной пометкой в аудит-логе, и обезличивание данных при переносе боевой базы на тестовые стенды.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как гарантировать изоляцию данных в multi-tenant системе?</b><br>Не проверками в контроллерах, а границей ниже: репозиторий, который всегда фильтрует по арендатору из контекста, а лучше — политика RLS на уровне базы, тогда даже забытый фильтр в новом запросе не приведёт к утечке. Дополнительно: тесты, которые пытаются получить чужой объект, аудит-лог всех действий и обезличивание данных при переносе на стенды. Более сильная изоляция — схема или база на арендатора — берётся, когда этого требует клиент или регламент, и стоит заметно дороже в эксплуатации.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="incident">
+    <p class="path">senior / реагирование</p>
+    <div class="card-top"><h3>Инциденты и утечки</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Вопрос не в том, случится ли инцидент, а в том, что произойдёт в первый час. План, написанный заранее, отличается от импровизации примерно так же, как отрепетированный откат от ручного восстановления в три ночи.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · фазы реагирования</caption>
+      <thead><tr><th>Фаза</th><th>Задача</th><th>Типичная ошибка</th></tr></thead>
+      <tbody>
+        <tr><td>Обнаружение</td><td>Понять, что это инцидент, и зафиксировать время</td><td>Списать сигнал на «странность в мониторинге»</td></tr>
+        <tr><td>Сдерживание</td><td>Остановить продолжающийся ущерб</td><td>Начать расследование раньше, чем закрыть дыру</td></tr>
+        <tr><td>Сохранение доказательств</td><td>Снять логи и образы до изменений</td><td>Перезапустить сервер и стереть следы</td></tr>
+        <tr><td>Устранение</td><td>Закрыть причину, отозвать секреты, сбросить сессии</td><td>Закрыть дыру, не сменив утёкшие ключи</td></tr>
+        <tr><td>Восстановление</td><td>Вернуть работу и проверить, что доступа больше нет</td><td>Вернуться на бэкап, содержащий закладку</td></tr>
+        <tr><td>Разбор</td><td>Хронология, причины, изменения в процессе</td><td>Поиск виноватого вместо поиска причины</td></tr>
+        <tr><td>Уведомление</td><td>Сообщить затронутым и, где требуется, регуляторам</td><td>Молчать в надежде, что не заметят</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Что должно быть готово заранее:</strong> список контактов и кто принимает решения; способ быстро отозвать все токены и сессии; способ отключить функцию или заблокировать учётную запись без релиза; понимание, где лежат логи и сколько они хранятся; шаблон уведомления. Отдельно — <strong>канал для внешних сообщений об уязвимостях</strong>: если исследователю некуда написать, он напишет в публичный доступ.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Первое действие при подозрении на компрометацию учётных данных — их отзыв, а не расследование. Смена ключей, инвалидация всех сессий, ротация паролей сервисных учётных записей. Расследование ведётся параллельно и на снятых копиях: сохранённые логи и образы дисков нужно снять до перезапусков и очисток, иначе восстановить картину будет невозможно.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Вы обнаружили, что база клиентов утекла. Первые действия?</b><br>Зафиксировать время и признаки, остановить продолжающийся ущерб (закрыть вектор, отозвать ключи, инвалидировать сессии), снять логи и копии до любых изменений, определить объём: какие данные, за какой период, чьи. Параллельно — оповестить ответственных внутри и подготовить уведомление затронутым. Разбор с хронологией и изменениями в процессе — после восстановления, без поиска виноватых, иначе в следующий раз о проблеме просто не сообщат.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card" id="privacy">
+    <p class="path">senior / данные</p>
+    <div class="card-top"><h3>Персональные данные</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Работа с персональными данными регулируется законом, и конкретные требования зависят от юрисдикции — за ними идут к юристам. Но инженерная часть везде одинакова, и её стоит знать: чем меньше данных вы храните, тем меньше можете потерять.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · инженерные принципы работы с персональными данными</caption>
+      <thead><tr><th>Принцип</th><th>Что означает в коде и в схеме</th></tr></thead>
+      <tbody>
+        <tr><td>Минимизация</td><td>Не собирать поля «на будущее»; каждое поле имеет обоснование</td></tr>
+        <tr><td>Ограничение хранения</td><td>У каждой категории данных есть срок и автоматическое удаление</td></tr>
+        <tr><td>Разграничение доступа</td><td>Доступ по роли и по необходимости, с журналированием обращений</td></tr>
+        <tr><td>Возможность удаления</td><td>Известно, где лежат все копии: база, бэкапы, логи, аналитика, письма</td></tr>
+        <tr><td>Возможность выгрузки</td><td>Данные пользователя можно собрать и отдать в машиночитаемом виде</td></tr>
+        <tr><td>Обезличивание</td><td>Тестовые стенды и аналитика работают на обезличенных данных</td></tr>
+        <tr><td>Учёт передачи третьим лицам</td><td>Известно, какие данные уходят в аналитику, трекеры и подрядчикам</td></tr>
+        <tr><td>Защита в покое и в канале</td><td>Шифрование чувствительных полей, TLS, ограничение доступа к бэкапам</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>sql + php</span><span class="r">Удаление, которое действительно удаляет</span></div><pre><code><span class="cm">-- Реестр данных: без него «удалить всё о пользователе» невыполнимо</span>
+<span class="cm">-- Таблица | Поле | Категория | Срок хранения | Как удаляется</span>
+<span class="cm">-- users   | email| контакт   | до удаления   | анонимизация</span>
+<span class="cm">-- orders  | address | адрес  | 5 лет (учёт)  | обезличивание после срока</span>
+<span class="cm">-- logs    | ip    | техданные | 30 дней      | ротация</span>
+
+<span class="cm">-- Обычно нужно не физическое удаление строки (её держат внешние ключи и учёт),</span>
+<span class="cm">-- а обезличивание: связи сохраняются, личность восстановить нельзя</span>
+UPDATE users
+   SET email       = concat(<span class="st">'deleted-'</span>, id, <span class="st">'@invalid'</span>),
+       phone       = NULL,
+       full_name   = <span class="st">'Удалённый пользователь'</span>,
+       deleted_at  = now()
+ WHERE id = :id;</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Что забывают удалить</span></div><pre><code>&lt;?php
+<span class="cm">// Удаление пользователя — это не одна таблица. Полный обход обязателен:</span>
+$this-&gt;users-&gt;<span class="fn">anonymize</span>($id);
+$this-&gt;sessions-&gt;<span class="fn">invalidateAllFor</span>($id);
+$this-&gt;files-&gt;<span class="fn">deleteAllFor</span>($id);          <span class="cm">// объектное хранилище + CDN</span>
+$this-&gt;search-&gt;<span class="fn">removeDocuments</span>($id);       <span class="cm">// поисковый индекс — отдельное хранилище</span>
+$this-&gt;cache-&gt;<span class="fn">forgetTag</span>(<span class="st">"user:{$id}"</span>);      <span class="cm">// кэш живёт своей жизнью</span>
+$this-&gt;analytics-&gt;<span class="fn">requestErasure</span>($id);    <span class="cm">// сторонние сервисы — по их API</span>
+
+<span class="cm">// Бэкапы обычно не редактируются: политика — «данные исчезнут вместе</span>
+<span class="cm">// с истечением срока хранения бэкапа». Этот срок должен быть записан.</span>
+
+<span class="cm">// Логи: персональные данные там не должны появляться изначально —</span>
+<span class="cm">// вычищать их задним числом почти невозможно.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как реализовать «удалить все мои данные»?</b><br>Начинается не с кода, а с реестра: где какие категории данных лежат, включая поисковый индекс, кэш, файловое хранилище, аналитику и логи. Дальше обычно применяется обезличивание, а не физическое удаление: связи и учётные записи должны сохраниться, но восстановить личность нельзя. Отдельно фиксируется политика по бэкапам — они не редактируются, данные исчезают с истечением срока хранения. И главное правило: чем меньше собрано изначально, тем проще всё остальное.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Провожу моделирование угроз для функций с деньгами, данными и правами</li>
+        <li>Фиксирую принятые риски письменно, с владельцем и датой пересмотра</li>
+        <li>Держу быстрые проверки в пайплайне, медленные — по расписанию</li>
+        <li>Борюсь с ложными срабатываниями базовой линией, а не отключением</li>
+        <li>Использую короткий чек-лист безопасности при ревью</li>
+        <li>Выбираю модель изоляции арендаторов осознанно</li>
+      </ul>
+      <ul class="check">
+        <li>Веду аудит-лог с записью только на вставку</li>
+        <li>Ограничиваю доступ сотрудников к боевым данным и журналирую его</li>
+        <li>Обезличиваю данные при переносе на тестовые стенды</li>
+        <li>Имею план реагирования и способ отозвать все токены</li>
+        <li>Знаю, что отзыв секретов идёт раньше расследования</li>
+        <li>Имею канал для внешних сообщений об уязвимостях</li>
+        <li>Веду реестр персональных данных со сроками хранения</li>
+        <li>Умею выполнить удаление данных во всех хранилищах</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ по безопасности отличается тем, что говорит о процессе и о цене: не «мы защищены от XSS», а «автоэкранирование по умолчанию, шесть мест с отключённой защитой закрыты санитайзером, CSP без <code>unsafe-inline</code>, статический анализ в CI; принятый риск — старый административный интерфейс, план миграции до конца квартала». Такой ответ показывает, что вы отвечали за безопасность, а не читали про неё.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения: типовые категории уязвимостей и защита от каждой, что проверить в своём проекте и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Категория уязвимости → защита</h3><span class="badge b-tag">Таблица 18</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 18 · десять типовых категорий и что с ними делать в PHP-проекте</caption>
+      <thead><tr><th>Категория</th><th>Как проявляется</th><th>Основная мера</th></tr></thead>
+      <tbody>
+        <tr><td>Нарушенная авторизация</td><td>Чужой объект по смене идентификатора, доступ к админке</td><td>Граница владельца в слое данных, запрет по умолчанию</td></tr>
+        <tr><td>Ошибки криптографии</td><td>Быстрые хеши паролей, предсказуемые токены, HTTP</td><td><code>password_hash</code>, <code>random_bytes</code>, TLS, готовые библиотеки</td></tr>
+        <tr><td>Инъекции</td><td>SQL, команды ОС, пути, шаблоны, XSS</td><td>Разделение данных и кода, экранирование по контексту</td></tr>
+        <tr><td>Небезопасный дизайн</td><td>Нет лимитов, нет проверок бизнес-правил, слепое доверие клиенту</td><td>Моделирование угроз до разработки</td></tr>
+        <tr><td>Ошибки конфигурации</td><td>Отладка на проде, дефолтные пароли, открытые порты, каталог вместо <code>public/</code></td><td>Чек-лист конфигурации, безопасные значения по умолчанию</td></tr>
+        <tr><td>Уязвимые зависимости</td><td>CVE в пакете, заброшенная библиотека</td><td>Аудит в пайплайне, регулярные обновления</td></tr>
+        <tr><td>Слабая аутентификация</td><td>Перебор, отсутствие лимитов, слабый сброс пароля</td><td>Ограничение попыток, одноразовые токены, второй фактор</td></tr>
+        <tr><td>Нарушение целостности</td><td>Небезопасная десериализация, подмена артефакта сборки</td><td>JSON вместо <code>unserialize</code>, подпись артефактов</td></tr>
+        <tr><td>Недостаток мониторинга</td><td>Компрометацию замечают через месяцы</td><td>События безопасности, алерты, аудит-лог</td></tr>
+        <tr><td>SSRF</td><td>Приложение ходит по адресу от пользователя</td><td>Проверка IP, запрет редиректов, изолированный сегмент</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Чек-лист безопасности проекта</h3><span class="badge b-tag">Таблица 19</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 19 · что проверить в своём проекте сегодня</caption>
+      <thead><tr><th>Область</th><th>Вопрос, на который нужен ответ</th></tr></thead>
+      <tbody>
+        <tr><td>Конфигурация</td><td>Отключён ли показ ошибок, закрыт ли <code>/.env</code>, корень — на <code>public/</code>?</td></tr>
+        <tr><td>Запросы к БД</td><td>Есть ли места со склейкой SQL и подстановкой имён колонок из запроса?</td></tr>
+        <tr><td>Вывод</td><td>Сколько в шаблонах мест с отключённым экранированием и почему?</td></tr>
+        <tr><td>Авторизация</td><td>Можно ли получить чужой объект сменой идентификатора?</td></tr>
+        <tr><td>Массовое заполнение</td><td>Что произойдёт, если в теле придёт <code>role</code> или <code>tenant_id</code>?</td></tr>
+        <tr><td>Вход</td><td>Есть ли ограничение попыток и одинаковые ли сообщения об ошибке?</td></tr>
+        <tr><td>Сессии</td><td>Флаги куки, пересоздание после входа, инвалидация при смене пароля?</td></tr>
+        <tr><td>Файлы</td><td>Проверяется ли содержимое, генерируется ли имя, исполняются ли скрипты в каталоге загрузок?</td></tr>
+        <tr><td>Внешние запросы</td><td>Есть ли места, где адрес приходит от пользователя?</td></tr>
+        <tr><td>Секреты</td><td>Есть ли они в истории git, в образе, в логах, в URL?</td></tr>
+        <tr><td>Зависимости</td><td>Что показывает <code>composer audit</code> прямо сейчас?</td></tr>
+        <tr><td>Логи</td><td>Не попадают ли туда токены, пароли и персональные данные?</td></tr>
+        <tr><td>Обнаружение</td><td>Узнаем ли мы о переборе паролей и о массовой выгрузке данных?</td></tr>
+        <tr><td>Реакция</td><td>Можем ли отозвать все токены и сессии одной операцией?</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 20</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 20 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Ввод и вывод</td><td>Экранирует и использует параметры</td><td>Понимает контексты и белые списки</td><td>Проектирует так, чтобы ошибку было трудно сделать</td></tr>
+        <tr><td>Авторизация</td><td>Знает про проверку прав</td><td>Переносит границу в слой данных</td><td>Выбирает модель изоляции и отвечает за неё</td></tr>
+        <tr><td>Криптография</td><td>Хеширует пароли правильно</td><td>Выбирает инструмент под задачу, знает про ротацию</td><td>Строит схему ключей и план компрометации</td></tr>
+        <tr><td>Зависимости</td><td>Знает про обновления</td><td>Держит аудит в пайплайне</td><td>Управляет риском цепочки поставки</td></tr>
+        <tr><td>Обнаружение</td><td>Читает логи</td><td>Логирует события безопасности</td><td>Определяет, что считается инцидентом и как реагировать</td></tr>
+        <tr><td>Процесс</td><td>—</td><td>Использует чек-лист при ревью</td><td>Встраивает безопасность в разработку целиком</td></tr>
+        <tr><td>Данные</td><td>Не логирует лишнее</td><td>Шифрует чувствительные поля</td><td>Ведёт реестр данных и сроки хранения</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Называет уязвимость и защиту</td><td>Объясняет механизм и границы меры</td><td>Говорит о риске, цене и принятых решениях</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ОПАСНЫЕ МЕСТА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Опасные места в PHP</h2>
+    <p>Конструкции и настройки, которые чаще всего оказываются причиной инцидента, и их безопасные замены. Полезно один раз прогнать поиском по своему проекту.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Функции, требующие внимания</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Опасно → безопасно</span></div><pre><code><span class="cm">// Выполнение кода и включение файлов</span>
+eval($code)                        → не использовать вовсе
+include $_GET[<span class="st">'page'</span>]             → белый список допустимых значений
+<span class="fn">call_user_func</span>($_POST[<span class="st">'fn'</span>])      → явное сопоставление имени с обработчиком
+
+<span class="cm">// Оболочка ОС</span>
+<span class="fn">exec</span>/<span class="fn">shell_exec</span>/<span class="fn">passthru</span>/`...`    → Process с массивом аргументов
+<span class="fn">system</span>(<span class="st">"cmd $var"</span>)                → <span class="fn">escapeshellarg</span> как минимум, лучше без оболочки
+
+<span class="cm">// Данные</span>
+<span class="fn">unserialize</span>($external)            → <span class="fn">json_decode</span> или allowed_classes =&gt; false
+<span class="fn">extract</span>($_POST)                   → явное присваивание полей
+$$variable                         → массив вместо переменных переменных
+
+<span class="cm">// Случайность и сравнение</span>
+<span class="fn">rand</span>/<span class="fn">mt_rand</span>/<span class="fn">uniqid</span>               → <span class="fn">random_bytes</span>/<span class="fn">random_int</span>
+$secret === $input                 → <span class="fn">hash_equals</span>($secret, $input)
+<span class="fn">md5</span>/<span class="fn">sha1</span> для паролей             → <span class="fn">password_hash</span>/<span class="fn">password_verify</span>
+
+<span class="cm">// Сеть и файлы</span>
+<span class="fn">file_get_contents</span>($userUrl)      → проверка схемы и IP, запрет редиректов
+<span class="fn">move_uploaded_file</span> с именем от пользователя → своё имя + каталог вне корня
+<span class="fn">readfile</span>($base . $_GET[<span class="st">'f'</span>])     → <span class="fn">basename</span> + <span class="fn">realpath</span> + проверка префикса
+
+<span class="cm">// Вывод</span>
+<span class="kw">echo</span> $userInput                   → <span class="fn">htmlspecialchars</span>(..., ENT_QUOTES, <span class="st">'UTF-8'</span>)
+{{ value|raw }}                    → санитайзер с белым списком тегов</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Быстрый аудит проекта</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Полчаса, которые обычно что-нибудь находят</span></div><pre><code><span class="cm"># Склейка SQL и переменные в запросах</span>
+grep -rnE <span class="st">'(query|exec|prepare)\(.*\$'</span> src/ | grep -v <span class="st">':[a-z_]'</span>
+
+<span class="cm"># Отключённое экранирование в шаблонах</span>
+grep -rn <span class="st">'|raw\|{!!'</span> templates/ resources/views/ 2&gt;/dev/null | wc -l
+
+<span class="cm"># Опасные вызовы</span>
+grep -rnE <span class="st">'\b(eval|shell_exec|passthru|system|extract|unserialize)\s*\('</span> src/
+
+<span class="cm"># Слабая случайность там, где нужны токены</span>
+grep -rnE <span class="st">'(uniqid|mt_rand|rand)\s*\('</span> src/ | grep -iE <span class="st">'token|secret|key|password|reset'</span>
+
+<span class="cm"># Секреты в истории репозитория</span>
+git log --all --full-history -- <span class="st">'*.env'</span> <span class="st">'*.pem'</span> <span class="st">'*.key'</span>
+gitleaks detect --no-banner --redact
+
+<span class="cm"># Уязвимые зависимости</span>
+composer audit --locked
+
+<span class="cm"># Конфигурация прода</span>
+php -i | grep -E <span class="st">'display_errors|expose_php|allow_url_include|session.cookie'</span>
+curl -sI https://example.com/.env | head -1        <span class="cm"># должно быть 403/404</span>
+curl -sI https://example.com | grep -iE <span class="st">'strict-transport|content-security|x-content-type'</span>
+
+<span class="cm"># Каталог загрузок не должен исполнять скрипты</span>
+curl -sI https://example.com/uploads/test.php | head -1</code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Эти команды не заменяют сканер, но дают быструю картину. Если хотя бы одна что-то находит — это готовая задача в бэклог и одновременно хороший ответ на собеседовании: «пришёл в проект, за полчаса нашёл вот это, закрыл вот так».</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас. Сильный ответ по безопасности всегда содержит границу применимости меры: не «есть CSP», а «CSP снижает эксплуатируемость XSS, но не устраняет её, поэтому экранирование остаётся обязательным».</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что считается недоверенным вводом?</span><span class="aa">Всё, происхождение чего вы не контролируете: тело запроса, параметры, заголовки, куки, имена и содержимое загруженных файлов, ответы внешних API, сообщения из очереди и даже строки из своей базы, если их туда положил пользователь. Последний случай — частый источник «неожиданного» XSS.</span></li>
+      <li><span class="qq">Чем валидация отличается от экранирования?</span><span class="aa">Валидация происходит на границе и отвечает на вопрос «похоже ли это на то, что мы ждём». Экранирование происходит в момент использования и отвечает «как безопасно поместить эти данные в конкретный контекст» — SQL, HTML, shell, URL. Одно не заменяет другое: правила экранирования зависят от места вывода, а не от места ввода.</span></li>
+      <li><span class="qq">Почему подготовленные выражения защищают от SQL-инъекции?</span><span class="aa">Потому что запрос и данные передаются раздельно: сервер разбирает и планирует запрос с плейсхолдерами, а значения подставляются после разбора и не могут стать частью синтаксиса. Оговорки: эмуляцию подготовленных выражений стоит отключать, а имена таблиц и колонок параметром передать нельзя.</span></li>
+      <li><span class="qq">Как безопасно сортировать по колонке, имя которой пришло в запросе?</span><span class="aa">Только белым списком: значение из запроса отображается на реальное имя колонки, всё остальное отвергается. Экранирующие функции здесь не помогают — идентификаторы не являются данными, и подстановка строки прямо в SQL остаётся инъекцией.</span></li>
+      <li><span class="qq">Что такое path traversal и как защититься?</span><span class="aa">Выход за пределы разрешённого каталога через <code>../</code> в пользовательском имени файла. Защита многослойная: отбросить путь через <code>basename</code>, разрешить итоговый путь через <code>realpath</code> и обязательно проверить, что он начинается с разрешённого каталога. Проверка префикса без <code>realpath</code> обходится символическими ссылками.</span></li>
+      <li><span class="qq">Как безопасно вызвать внешнюю программу?</span><span class="aa">Передавая аргументы массивом, без интерпретации оболочкой, — тогда символы вроде <code>;</code> и <code>|</code> остаются обычными данными. Если оболочки не избежать, каждый аргумент оборачивается в <code>escapeshellarg</code>. Склейка строки с пользовательскими данными недопустима.</span></li>
+      <li><span class="qq">Что такое XSS и какие бывают виды?</span><span class="aa">Инъекция в HTML: данные пользователя попадают на страницу и исполняются браузером. Хранимый — сохраняется в базе и срабатывает у всех читателей; отражённый — возвращается из параметра запроса; DOM-based — вообще не доходит до сервера, данные вставляет в DOM клиентский скрипт, поэтому в серверных логах его не видно.</span></li>
+      <li><span class="qq">Как правильно экранировать вывод?</span><span class="aa">По контексту вставки. HTML-текст — <code>htmlspecialchars</code> с <code>ENT_QUOTES</code> и указанием кодировки; значение атрибута — то же, но обязательно в кавычках; URL — с проверкой схемы, потому что <code>javascript:</code> тоже ссылка; данные для JS — через <code>json_encode</code> с флагами. Пользовательский HTML — только через санитайзер с белым списком тегов.</span></li>
+      <li><span class="qq">Что такое CSP и что она даёт?</span><span class="aa">Политика, ограничивающая источники скриптов, стилей и других ресурсов. Даже при пропущенном экранировании браузер не выполнит посторонний скрипт. Внедряется через режим только для отчётов, а <code>unsafe-inline</code> в <code>script-src</code> её обесценивает: именно от инлайновых скриптов она и защищает.</span></li>
+      <li><span class="qq">Чем CSRF отличается от XSS?</span><span class="aa">XSS — выполнение чужого кода на вашей странице: атакующий видит всё, что видит страница. CSRF — выполнение действия от имени пользователя без чтения ответа. Защиты разные, и важно помнить: XSS обходит защиту от CSRF, поэтому он всегда серьёзнее.</span></li>
+      <li><span class="qq">Как защититься от CSRF?</span><span class="aa">Двумя механизмами вместе: <code>SameSite=Lax</code> или <code>Strict</code> на куке сессии и CSRF-токен, проверяемый на изменяющих операциях сравнением за постоянное время. Отдельно нужно убедиться, что состояние не меняется методом <code>GET</code>, — такой запрос выполнится при предзагрузке ссылки или вставке картинки на чужом сайте.</span></li>
+      <li><span class="qq">Зачем куке флаги <code>Secure</code>, <code>HttpOnly</code> и <code>SameSite</code>?</span><span class="aa"><code>Secure</code> не даёт уйти по HTTP, <code>HttpOnly</code> закрывает доступ из JavaScript и резко снижает ущерб от XSS, <code>SameSite</code> отсекает межсайтовые запросы и закрывает CSRF. Каждый флаг закрывает свой вектор, поэтому нужны все три.</span></li>
+      <li><span class="qq">Что такое фиксация сессии?</span><span class="aa">Атакующий заранее навязывает жертве известный ему идентификатор сессии и после её входа пользуется той же сессией. Защита: строгий режим сессий, при котором сервер не принимает неизвестные идентификаторы, и обязательное пересоздание идентификатора после входа и после смены пароля.</span></li>
+      <li><span class="qq">Как правильно хранить пароли?</span><span class="aa">Через <code>password_hash</code> с параметрами по умолчанию: современный медленный алгоритм, автоматическая соль, подобранная стоимость. Проверка — <code>password_verify</code>, при входе дополнительно <code>password_needs_rehash</code>, чтобы прозрачно усиливать старые хеши.</span></li>
+      <li><span class="qq">Почему <code>md5</code> и <code>sha1</code> не подходят для паролей?</span><span class="aa">Они спроектированы быстрыми — миллиарды вычислений в секунду на обычном оборудовании. Для паролей нужна намеренная медленность и настраиваемая стоимость, чтобы перебор украденной базы стал экономически бессмысленным. Добавление своей соли этого не исправляет.</span></li>
+      <li><span class="qq">Как ограничивать попытки входа?</span><span class="aa">Двумя счётчиками одновременно: по учётной записи (защита конкретного пользователя от подбора) и по источнику запроса (защита от массового перебора). Только по IP недостаточно — ботнет обходит; только по учётной записи — тоже, так как распыление одного пароля по тысяче логинов не превышает лимит ни у кого.</span></li>
+      <li><span class="qq">Почему сообщения об ошибке входа должны быть одинаковыми?</span><span class="aa">Иначе форма превращается в способ проверить, зарегистрирован ли адрес: «пользователь не найден» и «неверный пароль» — это уже утечка. То же относится к сбросу пароля и к регистрации, а иногда и ко времени ответа: если для несуществующего пользователя ответ приходит мгновенно, а для существующего — после проверки хеша, разница заметна.</span></li>
+      <li><span class="qq">Как устроен безопасный сброс пароля?</span><span class="aa">Криптостойкий токен, в базе хранится только его хеш, короткий срок жизни, одноразовость. Ответ на запрос одинаковый независимо от существования учётной записи. После успешной смены — инвалидация всех сессий пользователя и всех остальных токенов сброса, плюс уведомление на почту.</span></li>
+      <li><span class="qq">Как безопасно принимать загрузку файлов?</span><span class="aa">Проверить размер, определить тип по содержимому (не по расширению и не по заголовку клиента), сгенерировать имя самостоятельно, сохранить вне корня сайта, изображения пересохранить, отдавать через контроллер с проверкой прав и заголовком <code>nosniff</code>. Пользовательское имя не должно участвовать в формировании пути.</span></li>
+      <li><span class="qq">Почему каталог загрузок не должен исполнять скрипты?</span><span class="aa">Потому что это последний рубеж: если валидация где-то пропущена и в каталог попал PHP-файл, при запрете исполнения он останется просто файлом, а не превратится в веб-шелл. Это настройка веб-сервера, и она надёжнее любых проверок в коде именно потому, что не зависит от них.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое IDOR и как защищаться системно?</span><span class="aa">Обработчик проверяет аутентификацию, но не проверяет, что объект принадлежит пользователю: смена идентификатора отдаёт чужие данные. Точечные проверки ненадёжны — их забывают. Системное решение: фильтрация по владельцу в слое данных (репозиторий, обёртка соединения) или политика RLS на уровне базы, плюс тесты, которые пытаются получить чужой объект.</span></li>
+      <li><span class="qq">Чем горизонтальная эскалация отличается от вертикальной?</span><span class="aa">Горизонтальная — доступ к данным другого пользователя того же уровня прав (классический IDOR). Вертикальная — получение более высоких прав: обычный пользователь выполняет административное действие. Первая лечится проверкой владения, вторая — запретом по умолчанию и явной проверкой роли на каждом действии, а не только скрытием кнопок.</span></li>
+      <li><span class="qq">Что такое mass assignment?</span><span class="aa">Заполнение модели напрямую данными запроса: клиент присылает поле <code>role</code>, <code>tenant_id</code> или <code>status</code>, и оно применяется. Исключается белым списком по построению — явным DTO с перечисленными полями, — а не чёрным списком «запрещённых» полей, который забывают обновлять при добавлении новых.</span></li>
+      <li><span class="qq">Защищают ли UUID вместо автоинкремента?</span><span class="aa">Они мешают массовому перебору, но не заменяют проверку прав: ссылки утекают в логи, историю браузера, письма, скриншоты и заголовок <code>Referer</code>. Это дополнительный барьер, а не мера защиты. Полагаться на «этот идентификатор никто не угадает» — та же ошибка, что безопасность через неизвестность.</span></li>
+      <li><span class="qq">Чем хеш отличается от HMAC, подписи и шифрования?</span><span class="aa">Хеш необратим и не требует ключа — проверка целостности и хранение паролей медленным алгоритмом. HMAC добавляет секретный ключ и подтверждает подлинность между двумя сторонами. Цифровая подпись даёт то же самое, но с публичной проверкой. Шифрование обратимо и скрывает содержимое. Частая ошибка — «зашифровать пароль»: пароли хешируются, иначе утечка ключа раскрывает их все.</span></li>
+      <li><span class="qq">Зачем сравнивать секреты через <code>hash_equals</code>?</span><span class="aa">Обычное сравнение прекращается на первом различии, и время выполнения зависит от длины совпавшего префикса. Это позволяет подбирать значение посимвольно по времени ответа. <code>hash_equals</code> выполняется за постоянное время. Нужно везде, где сравниваются токены, подписи и коды подтверждения.</span></li>
+      <li><span class="qq">Почему нельзя использовать <code>rand</code> и <code>uniqid</code> для токенов?</span><span class="aa">Они не криптостойкие: <code>uniqid</code> построен на времени и предсказуем, <code>mt_rand</code> имеет восстановимое состояние генератора. Для токенов сброса пароля, идентификаторов сессий и ключей нужен <code>random_bytes</code> или <code>random_int</code>, использующие системный источник случайности.</span></li>
+      <li><span class="qq">Зачем нужно аутентифицированное шифрование?</span><span class="aa">Шифрование само по себе скрывает содержимое, но не мешает изменить шифротекст — при некоторых режимах это приводит к предсказуемым изменениям открытого текста. Аутентифицированное шифрование добавляет проверку целостности: подмена обнаруживается при расшифровке. Практически это означает использовать готовые функции библиотеки, а не собирать режим вручную.</span></li>
+      <li><span class="qq">Как организовать ротацию ключей шифрования?</span><span class="aa">Хранить версию ключа рядом с данными: новые записи шифруются актуальным ключом, старые перешифровываются фоновым процессом пачками. Без версии ротация невозможна — придётся останавливать систему. Ротацию нужно отрепетировать заранее: если она не проверена, шифрование даёт ложное чувство защиты, поскольку в инциденте ключ заменить не получится.</span></li>
+      <li><span class="qq">Как искать по зашифрованному полю?</span><span class="aa">Рядом с шифротекстом хранится «слепой индекс» — HMAC от нормализованного значения (нижний регистр, обрезанные пробелы). Поиск идёт по нему, расшифровывается только найденная запись. Такой индекс позволяет точное совпадение и уникальность, но не поиск по подстроке и не сортировку — это цена шифрования.</span></li>
+      <li><span class="qq">Секрет попал в репозиторий. Что делать?</span><span class="aa">Считать скомпрометированным и первым делом отозвать и перевыпустить: удаление коммита не помогает, история остаётся в клонах, форках и кэшах хостинга. Затем проверить по логам, использовался ли он посторонними, почистить историю и поставить сканер секретов в пайплайн, чтобы это не повторилось.</span></li>
+      <li><span class="qq">Где ещё утекают секреты, кроме репозитория?</span><span class="aa">В слоях Docker-образа (видны в истории образа), в логах при записи заголовков и тел запросов, в URL через параметры, в сообщениях об ошибках с трассировкой, в тестовых стендах с копией боевой базы, в бэкапах без ограниченного доступа и в сторонних сервисах — аналитике и трекерах ошибок, куда данные уходят автоматически.</span></li>
+      <li><span class="qq">Что такое SSRF и как защититься?</span><span class="aa">Приложение по просьбе пользователя обращается по указанному адресу, и адрес может указывать внутрь инфраструктуры: служебные сервисы, метаданные облака с ключами, панели без аутентификации. Защита многослойная: разрешённые схемы, проверка IP после разрешения имени, запрет редиректов, белый список доменов и выполнение таких запросов из сегмента без доступа к внутренним ресурсам.</span></li>
+      <li><span class="qq">Чем опасен <code>unserialize</code> для внешних данных?</span><span class="aa">Он создаёт объекты произвольных классов, а их магические методы выполняются автоматически — при неудачном сочетании доступных классов это приводит к выполнению кода. Для обмена с внешним миром используется JSON: он восстанавливает только скаляры и массивы. Если <code>unserialize</code> неизбежен, обязательно ограничение допустимых классов.</span></li>
+      <li><span class="qq">Что такое XXE?</span><span class="aa">Атака через внешние сущности в XML: документ объявляет сущность, ссылающуюся на локальный файл или сетевой адрес, и парсер её подставляет — приложение возвращает содержимое файла или обращается во внутреннюю сеть. Защита: отключение внешних сущностей и сетевого доступа у парсера. В современных версиях PHP это поведение по умолчанию, но при разборе чужого XML лучше задать явно.</span></li>
+      <li><span class="qq">Что дают <code>nosniff</code> и запрет встраивания?</span><span class="aa"><code>X-Content-Type-Options: nosniff</code> запрещает браузеру угадывать тип содержимого — без него загруженный файл может быть интерпретирован как скрипт вопреки заголовку. <code>frame-ancestors</code> в CSP запрещает встраивать страницу в чужие фреймы и закрывает кликджекинг, когда пользователь нажимает на невидимый элемент поверх чужого интерфейса.</span></li>
+      <li><span class="qq">Почему <code>unsafe-inline</code> обесценивает CSP?</span><span class="aa">Потому что основная задача политики — не дать выполниться постороннему скрипту, внедрённому в разметку. Разрешая любой инлайновый скрипт, вы разрешаете ровно то, что внедряет атакующий при XSS. Правильный путь — вынести скрипты в файлы, а необходимый инлайн разрешить точечно через одноразовый <code>nonce</code> или хеш.</span></li>
+      <li><span class="qq">Как следить за уязвимостями в зависимостях?</span><span class="aa"><code>composer audit</code> в пайплайне с блокировкой на критичных находках, автоматические pull request на обновления, регулярная ревизия дерева и отслеживание заброшенных пакетов. Частые мелкие обновления безопаснее редких больших. Отдельно полезно вести список пакетов, блокирующих обновление версии PHP.</span></li>
+      <li><span class="qq">Чем опасны скрипты пакетов при установке?</span><span class="aa">Они выполняются с правами пользователя, запустившего установку, — то есть скомпрометированный пакет получает выполнение кода на машине разработчика или на сборочном агенте. На проде установка делается по lock-файлу и без выполнения скриптов, а обновления зависимостей стоит просматривать так же, как обычный код.</span></li>
+      <li><span class="qq">Что должно попадать в логи безопасности, а что не должно?</span><span class="aa">Попадать: входы и неудачные попытки, смена пароля и почты, отказы авторизации с объектом и действием, изменения прав, административные операции, массовые выгрузки, срабатывания лимитов. Не попадать: пароли в любом виде, токены, куки, платёжные реквизиты, лишние персональные данные и полные тела запросов. Маскирование делается централизованно на уровне логгера, а не дисциплиной на местах вызова.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как вы подходите к безопасности новой функции?</span><span class="aa">До разработки смотрю на потоки данных и границы доверия: что приходит извне, где проверяются права, куда данные попадают дальше и кто ещё их увидит. По каждой границе прохожу типовые категории угроз и по каждой принимаю решение: закрываем сейчас, позже или принимаем риск осознанно. Час работы вместо недели после инцидента.</span></li>
+      <li><span class="qq">Что такое STRIDE?</span><span class="aa">Набор из шести категорий угроз, по которым удобно проходить каждую границу доверия: подмена личности, подделка данных, отказ от совершённых действий, раскрытие информации, отказ в обслуживании и повышение привилегий. Ценность не в аббревиатуре, а в том, что она не даёт забыть целые классы угроз — обычно забывают отказ от действий и исчерпание ресурсов.</span></li>
+      <li><span class="qq">Что делать с рисками, которые вы решили не закрывать?</span><span class="aa">Фиксировать письменно: в чём риск, почему принят, кто владелец, когда пересматриваем. Разница между зрелой командой и незрелой не в отсутствии рисков, а в том, что зрелая знает свои и решила по ним осознанно. Незафиксированный риск через год превращается в «никто не знал».</span></li>
+      <li><span class="qq">Что ловит SAST, а что DAST и SCA?</span><span class="aa">SAST анализирует исходники и находит инъекции, опасные вызовы и потоки недоверенных данных, но не знает вашу модель прав и потому пропускает ошибки авторизации. DAST проверяет запущенное приложение — конфигурацию, заголовки, часть инъекций, — но плохо доходит до логики за аутентификацией. SCA проверяет зависимости на известные уязвимости. Ни один не заменяет ревью и пентест.</span></li>
+      <li><span class="qq">Почему сканеры безопасности часто отключают и что с этим делать?</span><span class="aa">Из-за ложных срабатываний: инструмент со ста предупреждениями на одно настоящее становится шумом и через месяц игнорируется. Практика та же, что со статическим анализом на легаси: зафиксировать текущее состояние как базовую линию, блокировать только новые находки и постепенно разбирать накопленное. Три работающие проверки полезнее двадцати игнорируемых.</span></li>
+      <li><span class="qq">Как выглядит чек-лист безопасности при ревью?</span><span class="aa">Пять коротких вопросов вместо расплывчатого «посмотри на безопасность»: проверяется ли право на конкретный объект, а не только роль; экранируются ли данные по контексту вывода; не появились ли поля, попадающие в модель массовым заполнением; нет ли путей и адресов из пользовательского ввода; что из этого кода попадёт в логи.</span></li>
+      <li><span class="qq">Когда нужен пентест, а когда bug bounty?</span><span class="aa">Пентест — точечная глубокая проверка перед крупным запуском или по требованию клиента: находит цепочки уязвимостей и ошибки бизнес-логики, но это срез на дату. Bug bounty работает непрерывно и находит то, что пропустили все остальные, но требует зрелости: нужен процесс обработки отчётов, иначе исследователи перестают писать. Ни то ни другое не заменяет автоматические проверки в пайплайне.</span></li>
+      <li><span class="qq">Какие есть модели изоляции арендаторов и как выбрать?</span><span class="aa">От общих таблиц с фильтром по арендатору до отдельной инсталляции. Общие таблицы дешевле всего, но забытый фильтр означает утечку — поэтому минимум это RLS на уровне базы. Схема или база на арендатора дают более сильную изоляцию ценой сложных миграций и эксплуатации. Выбор определяется требованиями клиентов и регламентов, а не вкусом.</span></li>
+      <li><span class="qq">Что даёт Row Level Security?</span><span class="aa">Переносит фильтрацию по арендатору с уровня приложения на уровень базы: политика применяется ко всем запросам автоматически, поэтому забытый <code>WHERE</code> в новом коде не приводит к утечке. Ограничения помнить надо: политика не применяется к суперпользователю, требует корректной установки контекста на каждое соединение и усложняет отладку запросов.</span></li>
+      <li><span class="qq">Как ограничивать доступ сотрудников к боевым данным?</span><span class="aa">Персональные учётные записи вместо общих, доступ по заявке и на ограниченное время, обязательное журналирование действий администраторов, явная пометка режима «вход под пользователем» в аудит-логе и обезличивание при переносе боевой базы на стенды. Постоянный доступ «на всякий случай» — это учётная запись, которую можно украсть.</span></li>
+      <li><span class="qq">Каким должен быть аудит-лог?</span><span class="aa">Отдельным хранилищем с правом только на вставку — приложение не должно уметь его изменять. В записи: время, кто совершил действие и от чьего имени, арендатор, действие, тип и идентификатор объекта, изменения без чувствительных значений, источник и сквозной идентификатор запроса. Индексы под реальные вопросы: что делал пользователь, кто трогал объект, что происходило в этот час.</span></li>
+      <li><span class="qq">Зачем обезличивать данные на тестовых стендах?</span><span class="aa">Потому что стенд обычно защищён слабее прода, доступ к нему шире, а данные те же самые. Копия боевой базы на тестовом сервере — один из самых частых источников утечек. Обезличивание выполняется при переносе автоматически, а не «когда-нибудь потом», иначе им никто не занимается.</span></li>
+      <li><span class="qq">Обнаружена утечка данных. Первые действия?</span><span class="aa">Зафиксировать время и признаки, остановить продолжающийся ущерб, снять логи и копии до любых изменений, определить объём: какие данные, за какой период, чьи. Параллельно оповестить ответственных и подготовить уведомление затронутым. Разбор с хронологией — после восстановления и без поиска виноватых, иначе в следующий раз о проблеме просто не сообщат.</span></li>
+      <li><span class="qq">Почему отзыв секретов идёт раньше расследования?</span><span class="aa">Потому что расследование занимает часы или дни, а доступ у атакующего работает всё это время. Смена ключей, инвалидация всех сессий и ротация паролей сервисных учётных записей останавливают продолжающийся ущерб. Расследование ведётся параллельно на снятых копиях — их важно сохранить до перезапусков, иначе следы будут потеряны.</span></li>
+      <li><span class="qq">Что должно быть готово до инцидента?</span><span class="aa">Список контактов и кто принимает решения; способ отозвать все токены и сессии одной операцией; возможность отключить функцию или заблокировать учётную запись без релиза; понимание, где лежат логи и сколько они хранятся; шаблон уведомления; отрепетированное восстановление из бэкапа. Всё это невозможно собрать в момент инцидента.</span></li>
+      <li><span class="qq">Зачем нужен канал для сообщений об уязвимостях?</span><span class="aa">Потому что внешний исследователь всё равно найдёт способ сообщить — вопрос лишь в том, вам или публично. Достаточно отдельного адреса, описанной политики и обещания не преследовать за добросовестное исследование. Отсутствие канала превращает потенциально управляемое раскрытие в публикацию без предупреждения.</span></li>
+      <li><span class="qq">Какие инженерные принципы работы с персональными данными?</span><span class="aa">Минимизация — не собирать поля «на будущее»; ограничение хранения — у каждой категории есть срок и автоудаление; разграничение доступа с журналированием; возможность выгрузить и удалить данные; обезличивание для стендов и аналитики; понимание, какие данные уходят третьим лицам. Конкретные юридические требования зависят от юрисдикции — это вопрос к юристам, но инженерная часть везде одинакова.</span></li>
+      <li><span class="qq">Как реализовать «удалить все мои данные»?</span><span class="aa">Начинается с реестра: где какие категории данных лежат, включая поисковый индекс, кэш, файловое хранилище, аналитику и логи. Обычно применяется обезличивание, а не физическое удаление: связи и учётные записи сохраняются, но восстановить личность нельзя. Каждое внешнее хранилище требует отдельного шага, и об этом забывают чаще всего.</span></li>
+      <li><span class="qq">Что делать с бэкапами при удалении данных?</span><span class="aa">Бэкапы, как правило, не редактируются: попытка вырезать данные из архивов ломает их целостность и проверяемость. Практика — зафиксировать политику: данные исчезают вместе с истечением срока хранения бэкапа, срок записан и обоснован, доступ к архивам ограничен и журналируется. Это решение нужно принять и записать заранее, а не в момент запроса.</span></li>
+      <li><span class="qq">Как обосновать бизнесу вложения в безопасность?</span><span class="aa">Через сценарии и стоимость, а не через страх: что конкретно может произойти, какова вероятность, во что обойдётся — простой, потеря данных клиентов, штрафы, отток, стоимость расследования. И предлагать дешёвые первые шаги с измеримым результатом: аудит зависимостей в пайплайне, закрытие доступа к базе извне, проверка восстановления. Абстрактное «нам нужна безопасность» не согласовывают никогда, конкретный риск с ценой — обычно да.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Все задания выполняются на своём проекте или на локальном стенде — не на чужих системах. Каждое оставляет артефакт: исправление, тест, отчёт или проверку в пайплайне.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Быстрый аудит своего проекта</h4>
+    <p>Прогоните набор команд из раздела «Опасные места»: склейка SQL, отключённое экранирование в шаблонах, опасные вызовы, слабая случайность, секреты в истории, конфигурация прода.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список находок с приоритетом. Обычно находится хотя бы одно место с <code>|raw</code> и одна форма без лимита попыток.</div>
+
+    <h4>2. Инъекция и её исправление на стенде</h4>
+    <p>Напишите намеренно уязвимый эндпоинт со склейкой SQL на локальной тестовой базе, убедитесь, что подстановка меняет смысл запроса, затем переведите на подготовленные выражения и повторите.</p>
+    <div class="box task"><span class="lbl">Результат</span>Понимание механизма изнутри — оно нужно, чтобы узнавать проблему в чужом коде.</div>
+
+    <h4>3. XSS и экранирование по контексту</h4>
+    <p>На стенде выведите одно и то же значение в четырёх местах: HTML-текст, значение атрибута, <code>href</code>, внутрь скрипта. Проверьте, где экранирование по умолчанию не спасает, и исправьте каждый случай.</p>
+    <div class="box task"><span class="lbl">Результат</span>Собственная памятка по контекстам — она запоминается лучше любой таблицы.</div>
+
+    <h4>4. Куки, сессия и CSRF</h4>
+    <p>Проверьте флаги куки сессии, пересоздание идентификатора после входа и уничтожение сессии при выходе. Воспроизведите CSRF между двумя локальными «сайтами» и закройте её <code>SameSite</code> и токеном.</p>
+    <div class="box task"><span class="lbl">Результат</span>Воспроизведённая атака и два независимых механизма защиты от неё.</div>
+
+    <h4>5. Безопасная загрузка файлов</h4>
+    <p>Реализуйте приём аватара с проверкой размера, определением типа по содержимому, генерацией имени и хранением вне корня. Затем попробуйте обойти: подмена расширения, подмена типа в запросе, путь в имени, слишком большой файл.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица «попытка обхода → что её остановило».</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Охота на IDOR</h4>
+    <p>Заведите две учётные записи в своём проекте и попробуйте из-под одной получить объекты другой: по прямым идентификаторам, через вложенные ресурсы, через экспорт и через фоновые задачи.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список мест, где проверка отсутствовала, и тест, который пытается получить чужой объект по каждому эндпоинту.</div>
+
+    <h4>7. Граница арендатора в слое данных</h4>
+    <p>Перенесите фильтрацию по владельцу из контроллеров в репозиторий или включите RLS на одной таблице. Проверьте, что новый запрос без явного фильтра больше не отдаёт чужие строки.</p>
+    <div class="box task"><span class="lbl">Результат</span>Демонстрация: намеренно «забытый» фильтр в новом методе не приводит к утечке.</div>
+
+    <h4>8. Шифрование поля с ротацией ключа</h4>
+    <p>Зашифруйте одно чувствительное поле авторизованным шифрованием, добавьте версию ключа и слепой индекс для поиска. Затем выполните полную ротацию ключа на тестовых данных.</p>
+    <div class="box task"><span class="lbl">Результат</span>Работающий поиск по зашифрованному полю и отрепетированная ротация — та самая процедура, которая нужна в инциденте.</div>
+
+    <h4>9. Защита от SSRF</h4>
+    <p>Найдите в проекте места, где адрес приходит от пользователя (импорт по ссылке, вебхуки, предпросмотр). Добавьте проверку схемы, проверку IP после разрешения имени и запрет редиректов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Тесты, проверяющие, что адреса из приватных диапазонов и редирект на них отвергаются.</div>
+
+    <h4>10. CSP от отчётов до блокировки</h4>
+    <p>Включите политику в режиме отчётов, соберите нарушения за несколько дней, разберите их: инлайновые скрипты, сторонние виджеты, стили. Переведите инлайн на <code>nonce</code> и включите блокирующий режим.</p>
+    <div class="box task"><span class="lbl">Результат</span>Работающая политика без <code>unsafe-inline</code> и список того, что пришлось переделать.</div>
+
+    <h4>11. Логи и маскирование</h4>
+    <p>Найдите в логах чувствительные данные (токены, тела запросов, персональные данные), добавьте централизованное маскирование и отдельный канал для событий безопасности с одним рабочим алертом.</p>
+    <div class="box task"><span class="lbl">Результат</span>Чистые логи и алерт на всплеск неудачных входов, проверенный искусственной нагрузкой.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Моделирование угроз для одной функции</h4>
+    <p>Возьмите функцию, работающую с деньгами или персональными данными. Нарисуйте потоки данных и границы доверия, пройдите по шести категориям угроз, оформите результат как задачи и список принятых рисков.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ на страницу: схема, угрозы, меры, принятые риски с владельцем и датой пересмотра.</div>
+
+    <h4>13. Проверки в пайплайне</h4>
+    <p>Добавьте сканер секретов, аудит зависимостей и анализ потоков данных, зафиксируйте базовую линию по существующим находкам и настройте блокировку только на новые.</p>
+    <div class="box task"><span class="lbl">Результат</span>Пайплайн, который падает на намеренно добавленном тестовом секрете, и разобранная первая порция находок.</div>
+
+    <h4>14. Учения по инциденту</h4>
+    <p>Разыграйте сценарий: утёк ключ доступа к боевой базе. Проверьте по секундомеру, за сколько вы отзовёте ключ, инвалидируете сессии, найдёте следы в логах и определите объём затронутых данных.</p>
+    <div class="box task"><span class="lbl">Результат</span>Протокол учений с временем каждого шага и списком того, чего не хватило. Самый ценный артефакт раздела.</div>
+
+    <h4>15. Реестр данных и удаление</h4>
+    <p>Составьте реестр: какие категории данных где хранятся, сроки, как удаляются. Реализуйте удаление пользователя с обходом всех хранилищ — база, файлы, поисковый индекс, кэш, аналитика — и зафиксируйте политику по бэкапам.</p>
+    <div class="box task"><span class="lbl">Результат</span>Работающая процедура удаления и таблица, отвечающая на вопрос «где вообще лежат данные этого пользователя».</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Все эксперименты — только на своих системах и локальных стендах: проверка чужих сайтов без письменного разрешения незаконна независимо от намерений.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Ввод, вывод, сессии</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Границы доверия и принципы, валидация против экранирования, инъекции всех видов, XSS и контексты вывода, основы CSP, CSRF и защита сессий, хранение паролей, ограничение попыток входа, сброс пароля, загрузка файлов.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: быстрый аудит проекта, инъекция на стенде, четыре контекста вывода, куки и CSRF, безопасная загрузка файлов.</li>
+      <li>Пройти по своему проекту и закрыть все места с отключённым экранированием либо подключить санитайзер.</li>
+      <li>Проверить конфигурацию прода: показ ошибок, доступность <code>/.env</code>, флаги куки, исполнение скриптов в каталоге загрузок.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Список находок по своему проекту с закрытыми пунктами верхнего приоритета и понимание механизмов изнутри, а не по названиям.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Чем валидация отличается от экранирования?</li>
+      <li>Почему подготовленные выражения защищают и где они не помогают?</li>
+      <li>Какие бывают виды XSS и как экранировать по контексту?</li>
+      <li>Чем CSRF отличается от XSS?</li>
+      <li>Как правильно хранить пароли и почему не <code>md5</code>?</li>
+      <li>Как безопасно принимать загруженные файлы?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Права и криптография</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Нарушенная авторизация во всех видах, IDOR и системная защита, mass assignment, перенос границы в слой данных и RLS, прикладная криптография: хеш, HMAC, подпись, шифрование, случайность, сравнение за постоянное время, ротация ключей, поиск по зашифрованному полю.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6–8: охота на IDOR, граница арендатора в слое данных, шифрование поля с ротацией.</li>
+      <li>Проверить, что произойдёт, если в теле запроса придут поля <code>role</code>, <code>tenant_id</code>, <code>status</code>.</li>
+      <li>Найти в проекте все места, где генерируются токены, и убедиться, что используется криптостойкий источник.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Невозможность получить чужой объект по всем проверенным эндпоинтам и отрепетированная ротация ключа шифрования.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что такое IDOR и как защищаться системно?</li>
+      <li>Чем горизонтальная эскалация отличается от вертикальной?</li>
+      <li>Защищают ли UUID вместо автоинкремента?</li>
+      <li>Чем хеш отличается от HMAC, подписи и шифрования?</li>
+      <li>Зачем нужен <code>hash_equals</code> и почему не <code>rand</code>?</li>
+      <li>Как организовать ротацию ключей и поиск по зашифрованному полю?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Внешний мир и обнаружение</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Секреты и каналы их утечки, SSRF, XXE, небезопасная десериализация, заголовки безопасности и внедрение CSP, зависимости и цепочка поставки, логирование событий безопасности, маскирование, сигналы для алертов.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 9–11: защита от SSRF, CSP от отчётов до блокировки, логи и маскирование с рабочим алертом.</li>
+      <li>Прогнать <code>composer audit</code> и разобрать находки; проверить историю репозитория сканером секретов.</li>
+      <li>Найти все места, где разбираются внешние данные форматами, умеющими создавать объекты.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Закрытые векторы SSRF, работающая CSP без <code>unsafe-inline</code>, чистые логи и алерт, проверенный искусственной поломкой.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Где утекают секреты, кроме репозитория?</li>
+      <li>Что такое SSRF и почему проверять надо IP, а не домен?</li>
+      <li>Чем опасен <code>unserialize</code> для внешних данных?</li>
+      <li>Почему <code>unsafe-inline</code> обесценивает CSP?</li>
+      <li>Как следить за уязвимостями в зависимостях?</li>
+      <li>Что логировать и чего в логах быть не должно?</li>
+      <li>Какие сигналы заслуживают алерта?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Процесс, изоляция, реагирование</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Моделирование угроз и принятые риски, инструменты в пайплайне и борьба с ложными срабатываниями, чек-лист ревью, пентест и bug bounty, модели изоляции арендаторов, аудит-лог, доступ сотрудников, обезличивание стендов, план реагирования, персональные данные и удаление.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: моделирование угроз для одной функции, проверки в пайплайне, учения по инциденту, реестр данных и удаление.</li>
+      <li>Составить чек-лист безопасности для ревью в своей команде и применить его к трём последним pull request.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ, обязательно с границей применимости меры.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Документ моделирования угроз, работающие проверки в пайплайне, протокол учений с временем каждого шага и реестр данных со сроками хранения.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как вы подходите к безопасности новой функции?</li>
+      <li>Что ловит SAST, а что DAST и SCA?</li>
+      <li>Почему сканеры отключают и что с этим делать?</li>
+      <li>Какие есть модели изоляции арендаторов?</li>
+      <li>Каким должен быть аудит-лог?</li>
+      <li>Первые действия при обнаружении утечки?</li>
+      <li>Почему отзыв секретов идёт раньше расследования?</li>
+      <li>Как обосновать бизнесу вложения в безопасность?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы про безопасность</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Называйте механизм, а не заклинание.</strong> «Используем подготовленные выражения» — половина ответа. «Запрос и данные передаются раздельно, поэтому значение не может стать частью синтаксиса; для имён колонок это не работает, там белый список» — полный.</li>
+      <li><strong>Всегда указывайте границу меры.</strong> CSP не устраняет XSS, UUID не заменяет проверку прав, HTTPS не защищает от IDOR, шифрование в базе не спасает от скомпрометированного приложения. Знание границ отличает практика от читателя.</li>
+      <li><strong>Говорите о системных решениях.</strong> «Проверяем права в каждом контроллере» — уровень middle. «Перенесли границу в репозиторий и RLS, чтобы забыть проверку было невозможно» — уровень senior.</li>
+      <li><strong>Не преувеличивайте.</strong> «У нас всё безопасно» — плохой ответ. «Вот что закрыто, вот принятые риски с датой пересмотра, вот что в работе» — хороший: он показывает, что вы управляете риском, а не отрицаете его.</li>
+      <li><strong>Держите наготове историю находки.</strong> Что нашли, как воспроизвели, что закрыли, что изменили в процессе, чтобы не повторилось. Последняя часть ценится выше самой находки.</li>
+      <li><strong>Помните про юридическую сторону.</strong> Проверка чужих систем без письменного разрешения незаконна. На собеседовании стоит упоминать, что эксперименты вы проводите на своих стендах и в рамках программ раскрытия уязвимостей, — это признак профессиональной зрелости.</li>
+      <li><strong>Приносите артефакты.</strong> Отчёт аудита, документ моделирования угроз, протокол учений, чек-лист ревью. Они переводят разговор из «что вы знаете» в «что вы сделали».</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Безопасность веб-приложений» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

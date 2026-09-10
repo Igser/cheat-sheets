@@ -1,0 +1,1523 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · отображение объектов · Doctrine · Eloquent</p>
+  <h1>ORM и Doctrine</h1>
+  <p class="lead">ORM почти всегда обсуждают не в тех терминах. Спор «ORM против чистого SQL» звучит так, будто выбирают способ формировать запросы, — а на деле выбирают модель работы с данными. Doctrine не генератор SQL: это слой, который держит в памяти карту загруженных объектов, следит за их изменениями и в момент сохранения сам решает, какие запросы отправить и в каком порядке. Пока это устройство остаётся невидимым, ORM выглядит как источник необъяснимых запросов, лишних UPDATE и загадочных ошибок про detached-сущности.</p>
+  <p class="lead">Отсюда практический критерий всей темы: вы должны уметь предсказать, сколько запросов уйдёт в базу и какие именно, не запуская профайлер. Если ответ «не знаю, посмотрю в дебаг-панели» — механика ORM не понята, и любая оптимизация будет угадыванием. Сильная часть темы на собеседовании — не перечисление аннотаций, а объяснение, что происходит между <span class="nm">persist()</span> и <span class="nm">flush()</span>, почему коллекция подгрузилась сама и как одно поле в цикле превращается в тысячу запросов.</p>
+  <p class="lead">Конспект идёт от модели к эксплуатации: зачем нужен слой отображения, маппинг, <span class="nm">EntityManager</span>, репозитории, N+1 → identity map и unit of work, состояния сущности, ассоциации, стратегии загрузки, DQL, гидрация, транзакции, миграции → агрегаты, производительность и кэши, пакетная обработка, кастомные типы, тестирование, выход в чистый SQL. Смежные темы: <a href="sql.html">базы данных и SQL</a> (индексы, планы, транзакции), <a href="patterns.html">паттерны и архитектура кода</a> (репозиторий, агрегаты, DDD), <a href="performance.html">производительность</a>, <a href="symfony.html">Symfony</a> и <a href="laravel.html">Laravel</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Зачем ORM и чем платим, Data Mapper против Active Record, маппинг сущностей, жизненный цикл EntityManager, репозитории, проблема N+1.</span></div>
+    <div class="aud m"><b>Middle</b><span>Identity map и unit of work, состояния сущности, владелец связи и каскады, ленивая загрузка и прокси, DQL и QueryBuilder, гидрация, транзакции и блокировки, миграции.</span></div>
+    <div class="aud s"><b>Senior</b><span>Границы агрегата, производительность и кэши, пакетная обработка, наследование и кастомные типы, тестирование, выход в чистый SQL, антипаттерны.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>21</i></span>
+    <span>Блоков кода: <i>19</i></span>
+    <span>Сравнительных таблиц: <i>25</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#why-orm">Зачем нужен слой отображения</a></li>
+    <li><span class="tree">├─</span> <a href="#mapper-vs-ar">Data Mapper и Active Record</a></li>
+    <li><span class="tree">├─</span> <a href="#mapping">Маппинг сущности</a></li>
+    <li><span class="tree">├─</span> <a href="#em-lifecycle">EntityManager: persist и flush</a></li>
+    <li><span class="tree">├─</span> <a href="#repositories">Репозитории и запросы</a></li>
+    <li><span class="tree">├─</span> <a href="#n-plus-one">Проблема N+1</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#unit-of-work">Identity map и unit of work</a></li>
+    <li><span class="tree">├─</span> <a href="#entity-states">Состояния сущности</a></li>
+    <li><span class="tree">├─</span> <a href="#associations">Ассоциации и владелец связи</a></li>
+    <li><span class="tree">├─</span> <a href="#fetching">Ленивая загрузка и прокси</a></li>
+    <li><span class="tree">├─</span> <a href="#dql">DQL, QueryBuilder, нативный SQL</a></li>
+    <li><span class="tree">├─</span> <a href="#hydration">Гидрация и DTO</a></li>
+    <li><span class="tree">├─</span> <a href="#transactions">Транзакции и блокировки</a></li>
+    <li><span class="tree">├─</span> <a href="#migrations">Схема и миграции</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#aggregates">Агрегаты и границы загрузки</a></li>
+    <li><span class="tree">├─</span> <a href="#orm-performance">Производительность и кэши</a></li>
+    <li><span class="tree">├─</span> <a href="#batch">Пакетная обработка</a></li>
+    <li><span class="tree">├─</span> <a href="#inheritance-types">Наследование и кастомные типы</a></li>
+    <li><span class="tree">├─</span> <a href="#testing-orm">Тестирование с ORM</a></li>
+    <li><span class="tree">├─</span> <a href="#raw-sql">Когда выходить из ORM</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Антипаттерны</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Рецепты и команды</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · как устроено отображение</p>
+    <h2>Junior: объекты, таблицы и кто их связывает</h2>
+    <p>Первый уровень отвечает на вопрос, что вообще делает ORM между вашим кодом и базой. Без этого любая работа с Doctrine превращается в набор заклинаний: где-то нужен <span class="nm">flush</span>, где-то <span class="nm">refresh</span>, а откуда взялись двести запросов на странице — неизвестно.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="why-orm">
+    <p class="path">junior / зачем это нужно</p>
+    <div class="card-top"><h3>Зачем нужен слой отображения</h3><span class="badge b-1">База</span></div>
+    <p>База хранит строки, приложение работает с объектами. Между ними структурное несоответствие: у объекта есть поведение и вложенные объекты, у строки — только колонки; объект имеет идентичность в памяти, строка — первичный ключ; связь «один ко многим» в объекте это коллекция, в базе — внешний ключ в другой таблице. Кто-то должен переводить одно в другое, и вопрос только в том, пишете вы этот перевод руками или берёте готовый.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · что даёт ORM и чем за это платят</caption>
+      <thead><tr><th>Даёт</th><th>Стоит</th></tr></thead>
+      <tbody>
+        <tr><td>Код работает с объектами, а не с ассоциативными массивами</td><td>Появляется слой, поведение которого нужно знать</td></tr>
+        <tr><td>Правила предметной области живут в сущностях</td><td>Сущность легко превратить в мешок полей с геттерами</td></tr>
+        <tr><td>Изменения отслеживаются автоматически</td><td>Непонятно, какие запросы уйдут и когда</td></tr>
+        <tr><td>Одна и та же строка — один и тот же объект в памяти</td><td>Кэш в памяти растёт, его нужно чистить в долгих процессах</td></tr>
+        <tr><td>Смена СУБД и портируемость запросов</td><td>Специфичные возможности СУБД доступны хуже</td></tr>
+        <tr><td>Миграции схемы генерируются из маппинга</td><td>Сгенерированное нужно проверять руками</td></tr>
+        <tr><td>Меньше однотипного кода на CRUD</td><td>На отчётах и агрегатах ORM только мешает</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>ORM решает задачу записи и работы с предметной моделью, а не задачу чтения произвольных отчётов. Хорошая система обычно использует оба подхода: изменения идут через сущности, а списки, выборки с агрегатами и экспорт — через SQL или DQL, возвращающий не объекты, а готовые для отображения структуры. Попытка отвечать одним инструментом на оба вопроса и порождает большую часть жалоб на «медленную ORM».</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужна ORM, если есть SQL?</b><br>Она снимает не написание запросов, а ручное отображение строк на объекты и отслеживание изменений. Пишущая часть приложения получает предметную модель с правилами внутри, идентичность объектов и автоматический расчёт того, что нужно сохранить. Взамен появляется слой со своим жизненным циклом, который нужно понимать, и который плохо подходит для отчётов — их нормально писать на SQL.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="mapper-vs-ar">
+    <p class="path">junior / два подхода</p>
+    <div class="card-top"><h3>Data Mapper и Active Record</h3><span class="badge b-1">Выбор</span></div>
+    <p>Это два разных ответа на вопрос, кто знает про базу. В Active Record знает сам объект: у него есть методы <span class="nm">save()</span> и <span class="nm">delete()</span>, он наследуется от базового класса модели и умеет строить запросы. В Data Mapper объект не знает о базе ничего: это обычный класс, а отображением занимается отдельный слой. Eloquent — Active Record, Doctrine — Data Mapper.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · Data Mapper против Active Record</caption>
+      <thead><tr><th>Признак</th><th>Data Mapper (Doctrine)</th><th>Active Record (Eloquent)</th></tr></thead>
+      <tbody>
+        <tr><td>Сущность знает про базу</td><td>Нет, это обычный класс</td><td>Да, наследуется от модели</td></tr>
+        <tr><td>Сохранение</td><td><span class="nm">$em-&gt;flush()</span> — общий для всех изменений</td><td><span class="nm">$model-&gt;save()</span> у каждого объекта</td></tr>
+        <tr><td>Порог входа</td><td>Выше: нужно понимать unit of work</td><td>Ниже: всё видно на месте</td></tr>
+        <tr><td>Скорость прототипирования</td><td>Ниже</td><td>Заметно выше</td></tr>
+        <tr><td>Тесты предметной логики</td><td>Без базы: сущность — обычный объект</td><td>Обычно нужна база или тяжёлые заглушки</td></tr>
+        <tr><td>Сложная предметная область</td><td>Держит лучше: правила и инварианты в сущности</td><td>Логика утекает в модели-божества и хелперы</td></tr>
+        <tr><td>Отслеживание изменений</td><td>Автоматическое, при <span class="nm">flush</span></td><td>Тоже есть, но сохранение поштучное</td></tr>
+        <tr><td>Типичный проект</td><td>Долгоживущая система со сложными правилами</td><td>Продуктовая разработка, CRUD, быстрый вывод фич</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Практический вывод.</strong> Спор бессмысленно вести в отрыве от проекта: на CRUD-приложении Active Record выигрывает по скорости и не проигрывает ни в чём существенном, а на системе с нетривиальными правилами и долгой жизнью выигрывает Data Mapper, потому что предметная модель не привязана к базе и тестируется без неё. На собеседовании ценится не выбор стороны, а способность назвать это различие и его следствия.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Сущность Doctrine с методом <span class="nm">save()</span>, который внутри дёргает <span class="nm">EntityManager</span>, полученный через сервис-локатор или статику. Это ухудшенный Active Record: и связь с инфраструктурой появилась, и преимущества Data Mapper потеряны. Сохранение — ответственность вызывающего слоя, обычно одного места на весь сценарий.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="mapping">
+    <p class="path">junior / маппинг</p>
+    <div class="card-top"><h3>Маппинг сущности</h3><span class="badge b-1">Основа</span></div>
+    <p>Маппинг — описание того, как поля класса ложатся на колонки таблицы. В современных версиях Doctrine его пишут атрибутами прямо в классе; XML-конфигурация остаётся вариантом для тех, кто принципиально не хочет инфраструктурных подробностей в предметном классе. Аннотации в докблоках устарели и в третьей версии ORM не поддерживаются.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Сущность с маппингом атрибутами</span></div><pre><span class="kw">use</span> <span class="nm">Doctrine\ORM\Mapping</span> <span class="kw">as</span> <span class="nm">ORM</span>;
+
+#[<span class="nm">ORM\Entity</span>(repositoryClass: <span class="nm">OrderRepository</span>::<span class="kw">class</span>)]
+#[<span class="nm">ORM\Table</span>(name: <span class="st">'orders'</span>)]
+#[<span class="nm">ORM\Index</span>(columns: [<span class="st">'customer_id'</span>, <span class="st">'created_at'</span>], name: <span class="st">'idx_customer_created'</span>)]
+<span class="kw">class</span> <span class="nm">Order</span>
+{
+    #[<span class="nm">ORM\Id</span>]
+    #[<span class="nm">ORM\GeneratedValue</span>]
+    #[<span class="nm">ORM\Column</span>]
+    <span class="kw">private ?int</span> <span class="nm">$id</span> = <span class="kw">null</span>;   <span class="cm">// null до первого flush</span>
+
+    #[<span class="nm">ORM\Column</span>(length: 32, unique: <span class="kw">true</span>)]
+    <span class="kw">private string</span> <span class="nm">$number</span>;
+
+    <span class="cm">// enum отображается на строку в базе автоматически</span>
+    #[<span class="nm">ORM\Column</span>(enumType: <span class="nm">OrderStatus</span>::<span class="kw">class</span>)]
+    <span class="kw">private</span> <span class="nm">OrderStatus</span> <span class="nm">$status</span> = <span class="nm">OrderStatus</span>::New;
+
+    <span class="cm">// деньги — целое в минимальных единицах, а не float</span>
+    #[<span class="nm">ORM\Column</span>(name: <span class="st">'total_amount'</span>)]
+    <span class="kw">private int</span> <span class="nm">$totalAmount</span> = 0;
+
+    #[<span class="nm">ORM\Column</span>(type: <span class="nm">Types</span>::DATETIME_IMMUTABLE)]
+    <span class="kw">private</span> <span class="nm">\DateTimeImmutable</span> <span class="nm">$createdAt</span>;
+
+    #[<span class="nm">ORM\ManyToOne</span>(targetEntity: <span class="nm">Customer</span>::<span class="kw">class</span>)]
+    #[<span class="nm">ORM\JoinColumn</span>(nullable: <span class="kw">false</span>)]
+    <span class="kw">private</span> <span class="nm">Customer</span> <span class="nm">$customer</span>;
+
+    <span class="cm">// конструктор задаёт корректное состояние сразу</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="nm">Customer</span> <span class="nm">$customer</span>, <span class="kw">string</span> <span class="nm">$number</span>)
+    {
+        <span class="nm">$this</span>-&gt;customer  = <span class="nm">$customer</span>;
+        <span class="nm">$this</span>-&gt;number    = <span class="nm">$number</span>;
+        <span class="nm">$this</span>-&gt;createdAt = <span class="kw">new</span> <span class="nm">\DateTimeImmutable</span>();
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · атрибуты маппинга, которые нужны почти всегда</caption>
+      <thead><tr><th>Атрибут</th><th>Что делает</th><th>На что обратить внимание</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">#[Entity]</span></td><td>Помечает класс как управляемый</td><td>Свой репозиторий указывается здесь же</td></tr>
+        <tr><td><span class="nm">#[Table]</span></td><td>Имя таблицы, индексы, уникальные ключи</td><td>Без него имя выводится из имени класса</td></tr>
+        <tr><td><span class="nm">#[Id]</span> + <span class="nm">#[GeneratedValue]</span></td><td>Первичный ключ и стратегия генерации</td><td>Стратегия влияет на пакетную вставку</td></tr>
+        <tr><td><span class="nm">#[Column]</span></td><td>Тип, длина, nullable, имя колонки</td><td>Тип по умолчанию выводится из типа свойства</td></tr>
+        <tr><td><span class="nm">#[ManyToOne]</span></td><td>Ссылка на одну сущность</td><td>Владеющая сторона: внешний ключ здесь</td></tr>
+        <tr><td><span class="nm">#[OneToMany]</span></td><td>Коллекция связанных сущностей</td><td>Обратная сторона, требует <span class="nm">mappedBy</span></td></tr>
+        <tr><td><span class="nm">#[JoinColumn]</span></td><td>Настройка внешнего ключа</td><td><span class="nm">nullable: false</span> — обязательная связь</td></tr>
+        <tr><td><span class="nm">#[Embedded]</span></td><td>Объект-значение в тех же колонках</td><td>Хороший способ не размазывать деньги и адреса</td></tr>
+        <tr><td><span class="nm">#[Version]</span></td><td>Поле для оптимистичной блокировки</td><td>Дешёвая защита от гонок при редактировании</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Идентификатор объявляется как <span class="nm">?int</span> с начальным <span class="nm">null</span>, потому что до сохранения его действительно нет. Всё остальное лучше объявлять обязательным и заполнять в конструкторе: сущность, которую можно создать наполовину заполненной, обязательно окажется в базе в таком виде. Doctrine восстанавливает объекты из базы в обход конструктора, поэтому строгий конструктор ничего не ломает при чтении.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="em-lifecycle">
+    <p class="path">junior / EntityManager</p>
+    <div class="card-top"><h3>EntityManager: persist и flush</h3><span class="badge b-1">Механика</span></div>
+    <p>Главное недопонимание новичков: кажется, что <span class="nm">persist()</span> сохраняет объект. Он не сохраняет — он берёт объект под управление и говорит: «этот объект новый, при следующем сохранении его нужно вставить». Реальные запросы уходят только в <span class="nm">flush()</span>, и уходят сразу за все изменения, накопленные в текущем менеджере.</p>
+
+    <div class="flow">
+      <div class="node">new Order<small>объект в памяти, база не знает</small></div>
+      <span class="arr">→</span>
+      <div class="node">persist()<small>взят под управление, помечен как новый</small></div>
+      <span class="arr">→</span>
+      <div class="node">изменения<small>меняете свойства как обычно</small></div>
+      <span class="arr">→</span>
+      <div class="node">flush()<small>расчёт изменений и запросы в транзакции</small></div>
+    </div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Что нужно вызывать, а что нет</span></div><pre><span class="cm">// 1. Новый объект: persist обязателен</span>
+<span class="nm">$order</span> = <span class="kw">new</span> <span class="nm">Order</span>(<span class="nm">$customer</span>, <span class="st">'A-1024'</span>);
+<span class="nm">$em</span>-&gt;<span class="fn">persist</span>(<span class="nm">$order</span>);
+<span class="nm">$em</span>-&gt;<span class="fn">flush</span>();           <span class="cm">// INSERT здесь, id появляется здесь же</span>
+
+<span class="cm">// 2. Загруженный объект: persist НЕ нужен</span>
+<span class="nm">$order</span> = <span class="nm">$repo</span>-&gt;<span class="fn">find</span>(42);
+<span class="nm">$order</span>-&gt;<span class="fn">markPaid</span>();
+<span class="nm">$em</span>-&gt;<span class="fn">flush</span>();           <span class="cm">// UPDATE только изменённых колонок</span>
+
+<span class="cm">// 3. Удаление</span>
+<span class="nm">$em</span>-&gt;<span class="fn">remove</span>(<span class="nm">$order</span>);
+<span class="nm">$em</span>-&gt;<span class="fn">flush</span>();           <span class="cm">// DELETE</span>
+
+<span class="cm">// 4. Ссылка без запроса: нужен только внешний ключ</span>
+<span class="nm">$customer</span> = <span class="nm">$em</span>-&gt;<span class="fn">getReference</span>(<span class="nm">Customer</span>::<span class="kw">class</span>, 7);
+<span class="nm">$order</span> = <span class="kw">new</span> <span class="nm">Order</span>(<span class="nm">$customer</span>, <span class="st">'A-1025'</span>);   <span class="cm">// SELECT клиента не выполняется</span>
+
+<span class="cm">// 5. Антипаттерн: flush в цикле</span>
+<span class="kw">foreach</span> (<span class="nm">$rows</span> <span class="kw">as</span> <span class="nm">$row</span>) {
+    <span class="nm">$em</span>-&gt;<span class="fn">persist</span>(<span class="nm">$this</span>-&gt;<span class="fn">makeOrder</span>(<span class="nm">$row</span>));
+    <span class="nm">$em</span>-&gt;<span class="fn">flush</span>();       <span class="cm">// транзакция и пересчёт изменений на каждой итерации</span>
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · основные методы и что они делают на самом деле</caption>
+      <thead><tr><th>Метод</th><th>Что делает</th><th>Идёт ли в базу</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">persist()</span></td><td>Берёт новый объект под управление</td><td>Нет</td></tr>
+        <tr><td><span class="nm">flush()</span></td><td>Считает изменения и пишет их в транзакции</td><td>Да, все накопленные</td></tr>
+        <tr><td><span class="nm">remove()</span></td><td>Помечает объект к удалению</td><td>Нет, до <span class="nm">flush</span></td></tr>
+        <tr><td><span class="nm">find()</span></td><td>Ищет по первичному ключу</td><td>Только если объекта нет в identity map</td></tr>
+        <tr><td><span class="nm">getReference()</span></td><td>Возвращает прокси без загрузки</td><td>Нет, пока не обратятся к полю</td></tr>
+        <tr><td><span class="nm">refresh()</span></td><td>Перечитывает объект из базы</td><td>Да, всегда</td></tr>
+        <tr><td><span class="nm">clear()</span></td><td>Отсоединяет все объекты, чистит карту</td><td>Нет</td></tr>
+        <tr><td><span class="nm">wrapInTransaction()</span></td><td>Выполняет замыкание в транзакции</td><td>Да</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Один <span class="nm">flush()</span> на сценарий — правило, а не оптимизация. Он открывает транзакцию, сохраняет всё накопленное и закрывает её. Вызов в цикле превращает одну транзакцию в тысячу, каждый раз запуская полный пересчёт изменений по всем управляемым объектам, — это одна из самых частых причин, по которой импорт данных работает часами.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="repositories">
+    <p class="path">junior / репозитории</p>
+    <div class="card-top"><h3>Репозитории и запросы</h3><span class="badge b-1">Доступ</span></div>
+    <p>Репозиторий — это коллекция сущностей, к которой можно задавать вопросы. Базовый репозиторий Doctrine даёт <span class="nm">find</span>, <span class="nm">findBy</span>, <span class="nm">findOneBy</span> и <span class="nm">findAll</span>; всё, что сложнее, пишется своим методом с говорящим именем. Важное правило: имя метода описывает вопрос предметной области, а не технику — <span class="nm">findOverdueForCustomer()</span>, а не <span class="nm">findByStatusAndDate()</span>.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Репозиторий с осмысленными методами</span></div><pre><span class="cm">/** @extends ServiceEntityRepository&lt;Order&gt; */</span>
+<span class="kw">final class</span> <span class="nm">OrderRepository</span> <span class="kw">extends</span> <span class="nm">ServiceEntityRepository</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="nm">ManagerRegistry</span> <span class="nm">$registry</span>)
+    {
+        <span class="kw">parent</span>::<span class="fn">__construct</span>(<span class="nm">$registry</span>, <span class="nm">Order</span>::<span class="kw">class</span>);
+    }
+
+    <span class="cm">/** @return list&lt;Order&gt; */</span>
+    <span class="kw">public function</span> <span class="fn">overdueFor</span>(<span class="nm">Customer</span> <span class="nm">$customer</span>, <span class="nm">\DateTimeImmutable</span> <span class="nm">$now</span>): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;<span class="fn">createQueryBuilder</span>(<span class="st">'o'</span>)
+            -&gt;<span class="fn">andWhere</span>(<span class="st">'o.customer = :customer'</span>)
+            -&gt;<span class="fn">andWhere</span>(<span class="st">'o.status = :status'</span>)
+            -&gt;<span class="fn">andWhere</span>(<span class="st">'o.dueAt &lt; :now'</span>)
+            -&gt;<span class="fn">setParameter</span>(<span class="st">'customer'</span>, <span class="nm">$customer</span>)
+            -&gt;<span class="fn">setParameter</span>(<span class="st">'status'</span>, <span class="nm">OrderStatus</span>::Unpaid)
+            -&gt;<span class="fn">setParameter</span>(<span class="st">'now'</span>, <span class="nm">$now</span>)
+            -&gt;<span class="fn">orderBy</span>(<span class="st">'o.dueAt'</span>, <span class="st">'ASC'</span>)
+            -&gt;<span class="fn">getQuery</span>()
+            -&gt;<span class="fn">getResult</span>();
+    }
+}
+
+<span class="cm">// Использование: вопрос читается как предложение</span>
+<span class="nm">$overdue</span> = <span class="nm">$orders</span>-&gt;<span class="fn">overdueFor</span>(<span class="nm">$customer</span>, <span class="kw">new</span> <span class="nm">\DateTimeImmutable</span>());
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · где должен жить запрос</caption>
+      <thead><tr><th>Код</th><th>Место</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Выборка сущностей по правилу предметной области</td><td>Репозиторий</td><td>Правило переиспользуется и тестируется отдельно</td></tr>
+        <tr><td>Запрос под конкретный экран со своим набором полей</td><td>Отдельный сервис чтения</td><td>Это не коллекция сущностей, а проекция</td></tr>
+        <tr><td>QueryBuilder в контроллере</td><td>Никогда</td><td>Логика доступа расползается по слою представления</td></tr>
+        <tr><td>Сохранение и удаление</td><td>Прикладной сервис, один <span class="nm">flush</span></td><td>Транзакционная граница — свойство сценария</td></tr>
+        <tr><td>Сложный отчёт с агрегатами</td><td>Нативный SQL в отдельном классе</td><td>ORM тут не помогает и мешает читать</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Метод репозитория, принимающий массив условий: <span class="nm">findByFilters(array $filters)</span> с двадцатью <span class="nm">if</span> внутри. Такой метод не проверяется типами, невозможно понять по вызову, что он вернёт, и он неизбежно обрастает флагами вроде <span class="nm">'with_items' =&gt; true</span>. Вместо него — несколько методов с явными аргументами или отдельный объект-критерий с типизированными полями.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card" id="n-plus-one">
+    <p class="path">junior / главная проблема</p>
+    <div class="card-top"><h3>Проблема N+1</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Самая частая и самая дорогая ошибка при работе с любой ORM. Вы делаете один запрос за списком, затем в цикле обращаетесь к связанной сущности каждого элемента — и на каждое обращение уходит отдельный запрос. Один запрос превращается в N+1. На двадцати заказах это незаметно, на двух тысячах страница умирает, причём в базе всё выглядит здоровым: запросы быстрые, их просто очень много.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Как выглядит и как лечится</span></div><pre><span class="cm">// N+1: 1 запрос за заказами + по одному за клиентом на каждый</span>
+<span class="nm">$orders</span> = <span class="nm">$orderRepo</span>-&gt;<span class="fn">findBy</span>([<span class="st">'status'</span> =&gt; <span class="nm">OrderStatus</span>::Paid]);
+<span class="kw">foreach</span> (<span class="nm">$orders</span> <span class="kw">as</span> <span class="nm">$order</span>) {
+    <span class="cm">// каждое обращение к прокси триггерит SELECT</span>
+    <span class="fn">printf</span>(<span class="st">"%s — %s\n"</span>, <span class="nm">$order</span>-&gt;<span class="fn">number</span>(), <span class="nm">$order</span>-&gt;<span class="fn">customer</span>()-&gt;<span class="fn">name</span>());
+}
+
+<span class="cm">// Лечение 1: fetch join — забрать всё одним запросом</span>
+<span class="nm">$orders</span> = <span class="nm">$em</span>-&gt;<span class="fn">createQuery</span>(
+    <span class="st">'SELECT o, c FROM App\Entity\Order o
+     JOIN o.customer c
+     WHERE o.status = :status'</span>
+)-&gt;<span class="fn">setParameter</span>(<span class="st">'status'</span>, <span class="nm">OrderStatus</span>::Paid)-&gt;<span class="fn">getResult</span>();
+<span class="cm">// ключевая деталь — "o, c" в SELECT: без c клиент не попадёт в результат</span>
+
+<span class="cm">// Лечение 2: если нужны только имена — вообще не грузить сущности</span>
+<span class="nm">$rows</span> = <span class="nm">$em</span>-&gt;<span class="fn">createQuery</span>(
+    <span class="st">'SELECT o.number AS number, c.name AS customer
+     FROM App\Entity\Order o JOIN o.customer c
+     WHERE o.status = :status'</span>
+)-&gt;<span class="fn">setParameter</span>(<span class="st">'status'</span>, <span class="nm">OrderStatus</span>::Paid)-&gt;<span class="fn">getArrayResult</span>();
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · способы убрать N+1</caption>
+      <thead><tr><th>Способ</th><th>Когда подходит</th><th>Ограничение</th></tr></thead>
+      <tbody>
+        <tr><td>Fetch join в DQL</td><td>Нужны связанные сущности целиком</td><td>С коллекциями ломает <span class="nm">LIMIT</span>: строк больше, чем объектов</td></tr>
+        <tr><td>Проекция в массив или DTO</td><td>Данные только для отображения</td><td>Объектов нет, менять нечего</td></tr>
+        <tr><td>Второй запрос по списку id</td><td>Коллекция плюс пагинация</td><td>Два запроса вместо одного, зато предсказуемо</td></tr>
+        <tr><td><span class="nm">EXTRA_LAZY</span> на коллекции</td><td>Нужен только <span class="nm">count()</span> или одна страница</td><td>Не спасает, если коллекцию всё же обходят</td></tr>
+        <tr><td>Кэш второго уровня</td><td>Справочники, которые почти не меняются</td><td>Своя стоимость и риск устаревших данных</td></tr>
+        <tr><td>В Eloquent — <span class="nm">with()</span></td><td>Тот же случай, что fetch join</td><td>Выполняется вторым запросом <span class="nm">WHERE IN</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>N+1 не ищут глазами — его ловят инструментом. В деве это профайлер фреймворка с числом запросов на страницу, в тестах — счётчик запросов с порогом, в Eloquent — режим, запрещающий ленивую загрузку и бросающий исключение при попытке. Правило «страница делает не больше десяти запросов, иначе тест падает» находит проблему в момент появления, а не через полгода в проде.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card lvl-j" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Проверка</span></div>
+    <p>Что должно быть понятно перед переходом на следующий уровень.</p>
+    <ul class="check">
+      <li>Объяснить, какую задачу решает ORM и в каких сценариях она мешает.</li>
+      <li>Назвать разницу между Data Mapper и Active Record и следствия для тестов.</li>
+      <li>Описать сущность атрибутами, включая связь и перечисление.</li>
+      <li>Объяснить, почему <span class="nm">persist()</span> ничего не сохраняет.</li>
+      <li>Сказать, когда <span class="nm">persist()</span> не нужен вообще.</li>
+      <li>Объяснить, зачем нужен <span class="nm">getReference()</span> и что он экономит.</li>
+      <li>Назвать цену вызова <span class="nm">flush()</span> внутри цикла.</li>
+      <li>Написать метод репозитория с именем из предметной области.</li>
+      <li>Показать N+1 на своём коде и убрать его двумя разными способами.</li>
+      <li>Объяснить, почему в fetch join нужно перечислять сущности в <span class="nm">SELECT</span>.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · внутреннее устройство</p>
+    <h2>Middle: что происходит между вашим кодом и базой</h2>
+    <p>Уровень, на котором ORM перестаёт быть чёрным ящиком. Здесь становится понятно, откуда берутся запросы, почему объект «отвалился» от менеджера, зачем нужен владелец связи и что именно считает Doctrine в момент сохранения.</p>
+  </div>
+
+  <!-- 8 -->
+  <article class="card" id="unit-of-work">
+    <p class="path">middle / ядро Doctrine</p>
+    <div class="card-top"><h3>Identity map и unit of work</h3><span class="badge b-2">Ядро</span></div>
+    <p>Две конструкции, из которых следует почти всё поведение Doctrine. <span class="t">Identity map</span> — карта загруженных объектов: одна строка базы в пределах одного менеджера всегда представлена одним и тем же объектом в памяти. <span class="t">Unit of work</span> — учёт изменений: при загрузке Doctrine запоминает снимок исходных значений, а при <span class="nm">flush()</span> сравнивает текущее состояние со снимком и формирует запросы.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Следствия identity map</span></div><pre><span class="nm">$a</span> = <span class="nm">$repo</span>-&gt;<span class="fn">find</span>(42);
+<span class="nm">$b</span> = <span class="nm">$repo</span>-&gt;<span class="fn">find</span>(42);   <span class="cm">// второго SELECT нет — объект уже в карте</span>
+
+<span class="kw">var_dump</span>(<span class="nm">$a</span> === <span class="nm">$b</span>);       <span class="cm">// true: тот же экземпляр</span>
+
+<span class="cm">// Отсюда же неожиданный эффект: результат запроса не «свежий»,</span>
+<span class="cm">// если объект уже загружен и изменён в памяти</span>
+<span class="nm">$a</span>-&gt;<span class="fn">rename</span>(<span class="st">'новое имя'</span>);
+<span class="nm">$c</span> = <span class="nm">$em</span>-&gt;<span class="fn">createQuery</span>(<span class="st">'SELECT o FROM App\Entity\Order o WHERE o.id = 42'</span>)
+        -&gt;<span class="fn">getSingleResult</span>();
+<span class="cm">// $c — тот же объект с новым именем: запрос ушёл, но объект не перезаписан</span>
+
+<span class="nm">$em</span>-&gt;<span class="fn">refresh</span>(<span class="nm">$a</span>);          <span class="cm">// принудительно перечитать из базы</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · что делает flush по шагам</caption>
+      <thead><tr><th>Шаг</th><th>Что происходит</th><th>Почему это важно знать</th></tr></thead>
+      <tbody>
+        <tr><td>1. Расчёт изменений</td><td>Каждое управляемое свойство сравнивается со снимком</td><td>Стоимость растёт с числом объектов в памяти</td></tr>
+        <tr><td>2. Каскады</td><td>Обход связей с настроенным каскадом</td><td>Можно сохранить больше, чем ожидали</td></tr>
+        <tr><td>3. События</td><td><span class="nm">preFlush</span>, <span class="nm">preUpdate</span>, <span class="nm">prePersist</span></td><td>В <span class="nm">preUpdate</span> нельзя менять связи</td></tr>
+        <tr><td>4. Транзакция</td><td><span class="nm">BEGIN</span></td><td>Всё дальнейшее — атомарно</td></tr>
+        <tr><td>5. Запросы</td><td>Вставки, затем обновления, затем удаления</td><td>Порядок фиксирован, зависит от графа связей</td></tr>
+        <tr><td>6. Фиксация</td><td><span class="nm">COMMIT</span>, обновление снимков</td><td>После этого объекты снова считаются «чистыми»</td></tr>
+        <tr><td>При ошибке</td><td><span class="nm">ROLLBACK</span>, менеджер закрывается</td><td>После неудачного <span class="nm">flush</span> менеджером пользоваться нельзя</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Неудачный <span class="nm">flush()</span> закрывает <span class="nm">EntityManager</span>: любая дальнейшая работа с ним бросает исключение. В воркере, обрабатывающем очередь, это означает, что после первой же ошибки все последующие сообщения будут падать, пока процесс не перезапустят. Правильная реакция — либо перезапускать процесс, либо явно пересоздавать менеджер, — а не ловить исключение и продолжать как ни в чём не бывало.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему после изменения объекта не нужно вызывать persist?</b><br>Потому что объект, загруженный через менеджер, уже находится под управлением, и его исходное состояние сохранено в снимке. При <span class="nm">flush()</span> Doctrine сравнивает текущее состояние со снимком и сама формирует <span class="nm">UPDATE</span> только по изменившимся колонкам. <span class="nm">persist()</span> нужен ровно для одного случая: сообщить менеджеру о существовании нового объекта, которого он ещё не видел.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="entity-states">
+    <p class="path">middle / жизненный цикл</p>
+    <div class="card-top"><h3>Состояния сущности</h3><span class="badge b-2">Механика</span></div>
+    <p>Объект в приложении находится в одном из четырёх состояний относительно менеджера, и большинство странных ошибок объясняются именно тем, в каком он оказался. Особенно это касается долгоживущих процессов и сериализации: объект, положенный в очередь и восстановленный в воркере, менеджеру уже не принадлежит.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · четыре состояния сущности</caption>
+      <thead><tr><th>Состояние</th><th>Что означает</th><th>Как попасть</th><th>Что будет при flush</th></tr></thead>
+      <tbody>
+        <tr><td>New</td><td>Объект создан, менеджер о нём не знает</td><td><span class="nm">new Order(...)</span></td><td>Ничего</td></tr>
+        <tr><td>Managed</td><td>Под управлением, изменения отслеживаются</td><td><span class="nm">find</span>, DQL, <span class="nm">persist</span></td><td><span class="nm">INSERT</span> или <span class="nm">UPDATE</span></td></tr>
+        <tr><td>Detached</td><td>Был управляемым, связь потеряна</td><td><span class="nm">clear()</span>, сериализация, новый запрос</td><td>Ничего, изменения теряются</td></tr>
+        <tr><td>Removed</td><td>Помечен к удалению</td><td><span class="nm">remove()</span></td><td><span class="nm">DELETE</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Detached-сущность и как с ней работать</span></div><pre><span class="cm">// Типичный источник: объект уехал в очередь и вернулся в воркере</span>
+<span class="nm">$order</span> = <span class="fn">unserialize</span>(<span class="nm">$payload</span>);   <span class="cm">// detached: менеджер его не знает</span>
+<span class="nm">$order</span>-&gt;<span class="fn">markPaid</span>();
+<span class="nm">$em</span>-&gt;<span class="fn">flush</span>();                       <span class="cm">// изменений нет — Doctrine не видит объект</span>
+
+<span class="cm">// Правильно: в сообщении передаётся идентификатор, а не сущность</span>
+<span class="kw">final class</span> <span class="nm">MarkOrderPaid</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly int</span> <span class="nm">$orderId</span>) {}
+}
+
+<span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">MarkOrderPaid</span> <span class="nm">$message</span>): <span class="kw">void</span>
+{
+    <span class="nm">$order</span> = <span class="nm">$this</span>-&gt;orders-&gt;<span class="fn">find</span>(<span class="nm">$message</span>-&gt;orderId)
+        ?? <span class="kw">throw new</span> <span class="nm">OrderNotFound</span>(<span class="nm">$message</span>-&gt;orderId);
+
+    <span class="nm">$order</span>-&gt;<span class="fn">markPaid</span>();     <span class="cm">// managed — изменения отследятся</span>
+    <span class="nm">$this</span>-&gt;em-&gt;<span class="fn">flush</span>();
+}
+</pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Передача сущностей Doctrine в очередь, в кэш или в сессию. Сериализуется не только объект, но и прокси связанных сущностей; при восстановлении получается detached-объект с полуживыми связями, обращение к которым бросает исключение о том, что менеджер недоступен. В сообщение кладут идентификаторы и примитивные данные, а сущность загружают на месте.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="associations">
+    <p class="path">middle / связи</p>
+    <div class="card-top"><h3>Ассоциации и владелец связи</h3><span class="badge b-2">Связи</span></div>
+    <p>В базе связь «один ко многим» выражается одним внешним ключом. В объектной модели она видна с двух сторон: у заказа есть позиции, у позиции есть заказ. Doctrine нужно знать, какая из двух сторон отвечает за запись внешнего ключа, — это и есть <span class="t">владеющая сторона</span>. Правило простое: владеет та сторона, где физически лежит внешний ключ, то есть сторона <span class="nm">ManyToOne</span>.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Двусторонняя связь и синхронизация</span></div><pre>#[<span class="nm">ORM\Entity</span>]
+<span class="kw">class</span> <span class="nm">Order</span>
+{
+    <span class="cm">// обратная сторона: внешнего ключа здесь нет</span>
+    <span class="cm">/** @var Collection&lt;int, OrderItem&gt; */</span>
+    #[<span class="nm">ORM\OneToMany</span>(
+        targetEntity: <span class="nm">OrderItem</span>::<span class="kw">class</span>,
+        mappedBy: <span class="st">'order'</span>,
+        cascade: [<span class="st">'persist'</span>],
+        orphanRemoval: <span class="kw">true</span>,
+    )]
+    <span class="kw">private</span> <span class="nm">Collection</span> <span class="nm">$items</span>;
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>()
+    {
+        <span class="nm">$this</span>-&gt;items = <span class="kw">new</span> <span class="nm">ArrayCollection</span>();
+    }
+
+    <span class="cm">// операция предметной области, а не setItems()</span>
+    <span class="kw">public function</span> <span class="fn">addItem</span>(<span class="nm">Sku</span> <span class="nm">$sku</span>, <span class="kw">int</span> <span class="nm">$qty</span>): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> (!<span class="nm">$this</span>-&gt;status-&gt;<span class="fn">allowsEditing</span>()) {
+            <span class="kw">throw new</span> <span class="nm">OrderIsLocked</span>(<span class="nm">$this</span>-&gt;status);
+        }
+        <span class="cm">// обе стороны синхронизируются здесь, в одном месте</span>
+        <span class="nm">$this</span>-&gt;items-&gt;<span class="fn">add</span>(<span class="kw">new</span> <span class="nm">OrderItem</span>(<span class="nm">$this</span>, <span class="nm">$sku</span>, <span class="nm">$qty</span>));
+    }
+}
+
+#[<span class="nm">ORM\Entity</span>]
+<span class="kw">class</span> <span class="nm">OrderItem</span>
+{
+    <span class="cm">// владеющая сторона: order_id лежит в этой таблице</span>
+    #[<span class="nm">ORM\ManyToOne</span>(inversedBy: <span class="st">'items'</span>)]
+    #[<span class="nm">ORM\JoinColumn</span>(nullable: <span class="kw">false</span>)]
+    <span class="kw">private</span> <span class="nm">Order</span> <span class="nm">$order</span>;
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · владеющая и обратная сторона</caption>
+      <thead><tr><th>Признак</th><th>Владеющая</th><th>Обратная</th></tr></thead>
+      <tbody>
+        <tr><td>Атрибут</td><td><span class="nm">ManyToOne</span> или <span class="nm">OneToOne</span> с <span class="nm">JoinColumn</span></td><td><span class="nm">OneToMany</span> или <span class="nm">OneToOne</span> с <span class="nm">mappedBy</span></td></tr>
+        <tr><td>Где внешний ключ</td><td>В её таблице</td><td>В чужой таблице</td></tr>
+        <tr><td>Изменения записываются</td><td>Да</td><td>Нет, Doctrine их игнорирует</td></tr>
+        <tr><td>Что будет, если менять только её</td><td>Всё сохранится</td><td>Ничего не сохранится</td></tr>
+        <tr><td>Ссылается на другую сторону</td><td><span class="nm">inversedBy</span></td><td><span class="nm">mappedBy</span></td></tr>
+        <tr><td>Нужна ли вообще</td><td>Всегда</td><td>Только если коллекция реально нужна коду</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · cascade и orphanRemoval</caption>
+      <thead><tr><th>Настройка</th><th>Что делает</th><th>Когда включать</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">cascade: ['persist']</span></td><td>Новые элементы коллекции сохраняются вместе с корнем</td><td>Части агрегата: позиции заказа</td></tr>
+        <tr><td><span class="nm">cascade: ['remove']</span></td><td>Удаление корня удаляет связанные</td><td>Только для настоящих частей, никогда для справочников</td></tr>
+        <tr><td><span class="nm">orphanRemoval: true</span></td><td>Элемент, убранный из коллекции, удаляется из базы</td><td>Когда элемент не существует вне корня</td></tr>
+        <tr><td><span class="nm">cascade: ['all']</span></td><td>Всё сразу, включая <span class="nm">detach</span> и <span class="nm">refresh</span></td><td>Практически никогда: слишком широко</td></tr>
+        <tr><td><span class="nm">onDelete: 'CASCADE'</span> в <span class="nm">JoinColumn</span></td><td>Каскад на уровне базы, а не ORM</td><td>Когда важна скорость и целостность без загрузки объектов</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Каскад ORM и каскад базы — разные механизмы. Первый загружает объекты и удаляет их по одному, вызывая события; второй выполняется самой СУБД и об объектах ничего не знает. Если включить оба, Doctrine удалит строки, о которых база уже позаботилась, а если не включить ни одного — удаление корня упрётся в ограничение внешнего ключа. Решение принимается осознанно и одинаково для всей кодовой базы.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="fetching">
+    <p class="path">middle / загрузка</p>
+    <div class="card-top"><h3>Ленивая загрузка и прокси</h3><span class="badge b-2">Загрузка</span></div>
+    <p>Когда Doctrine загружает заказ, она не загружает вместе с ним клиента: вместо настоящего объекта подставляется <span class="t">прокси</span> — наследник класса сущности, у которого заполнен только идентификатор. При первом обращении к любому другому полю прокси выполняет запрос и превращается в полноценный объект. Это и удобно, и опасно: запрос уходит в момент, который в коде никак не выделен.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · стратегии загрузки связи</caption>
+      <thead><tr><th>Стратегия</th><th>Поведение</th><th>Когда уместна</th><th>Риск</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">LAZY</span> (по умолчанию)</td><td>Запрос при первом обращении</td><td>Почти всегда</td><td>N+1 в циклах</td></tr>
+        <tr><td><span class="nm">EAGER</span></td><td>Загружается всегда вместе с владельцем</td><td>Практически никогда</td><td>Тянет данные во всех сценариях, включая ненужные</td></tr>
+        <tr><td><span class="nm">EXTRA_LAZY</span></td><td><span class="nm">count</span>, <span class="nm">contains</span> и срез — отдельными запросами без загрузки коллекции</td><td>Большие коллекции, где нужен счётчик</td><td>Полный обход коллекции всё равно всё загрузит</td></tr>
+        <tr><td>Fetch join в запросе</td><td>Явно забирает связь вместе с корнем</td><td>Когда известно, что связь понадобится</td><td>С коллекциями конфликтует с <span class="nm">LIMIT</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Прокси, пагинация и fetch join</span></div><pre><span class="cm">// Прокси: SELECT клиента ещё не было</span>
+<span class="nm">$order</span> = <span class="nm">$repo</span>-&gt;<span class="fn">find</span>(42);
+<span class="nm">$customer</span> = <span class="nm">$order</span>-&gt;<span class="fn">customer</span>();     <span class="cm">// прокси, запроса нет</span>
+<span class="fn">echo</span> <span class="nm">$customer</span>-&gt;<span class="fn">id</span>();               <span class="cm">// запроса всё ещё нет</span>
+<span class="fn">echo</span> <span class="nm">$customer</span>-&gt;<span class="fn">name</span>();             <span class="cm">// вот здесь SELECT</span>
+
+<span class="cm">// Ловушка: fetch join коллекции ломает LIMIT.</span>
+<span class="cm">// Заказ с тремя позициями даёт три строки — LIMIT 10 обрежет объекты.</span>
+<span class="nm">$dql</span> = <span class="st">'SELECT o, i FROM App\Entity\Order o JOIN o.items i'</span>;
+
+<span class="cm">// Решение — Paginator: он делает это в два запроса корректно</span>
+<span class="nm">$paginator</span> = <span class="kw">new</span> <span class="nm">Paginator</span>(
+    <span class="nm">$em</span>-&gt;<span class="fn">createQuery</span>(<span class="nm">$dql</span>)-&gt;<span class="fn">setFirstResult</span>(0)-&gt;<span class="fn">setMaxResults</span>(10)
+);
+<span class="kw">foreach</span> (<span class="nm">$paginator</span> <span class="kw">as</span> <span class="nm">$order</span>) { <span class="cm">/* ровно 10 заказов */</span> }
+
+<span class="cm">// Фильтрация коллекции без её загрузки: Criteria уходит в SQL</span>
+<span class="nm">$criteria</span> = <span class="nm">Criteria</span>::<span class="fn">create</span>()
+    -&gt;<span class="fn">where</span>(<span class="nm">Criteria</span>::<span class="fn">expr</span>()-&gt;<span class="fn">eq</span>(<span class="st">'status'</span>, <span class="nm">ItemStatus</span>::Active))
+    -&gt;<span class="fn">setMaxResults</span>(20);
+<span class="nm">$active</span> = <span class="nm">$order</span>-&gt;<span class="fn">items</span>()-&gt;<span class="fn">matching</span>(<span class="nm">$criteria</span>);
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Стратегию загрузки не задают в маппинге — её задают в запросе. Маппинг описывает структуру и один раз, а нужность связи зависит от сценария: на странице заказа клиент нужен, в фоновом пересчёте — нет. Поэтому в маппинге оставляют <span class="nm">LAZY</span>, а конкретные сценарии пишут fetch join там, где связь точно понадобится.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="dql">
+    <p class="path">middle / запросы</p>
+    <div class="card-top"><h3>DQL, QueryBuilder, нативный SQL</h3><span class="badge b-2">Запросы</span></div>
+    <p>DQL похож на SQL, но оперирует не таблицами и колонками, а классами и свойствами. Это не косметика: Doctrine знает маппинг и умеет сама превратить результат в объекты. QueryBuilder — программный способ собрать тот же DQL, нужный там, где условия зависят от входных данных. Нативный SQL остаётся для того, чего в DQL нет.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · три способа задать вопрос базе</caption>
+      <thead><tr><th>Признак</th><th>DQL</th><th>QueryBuilder</th><th>Нативный SQL</th></tr></thead>
+      <tbody>
+        <tr><td>Оперирует</td><td>Классами и свойствами</td><td>Тем же, но программно</td><td>Таблицами и колонками</td></tr>
+        <tr><td>Читаемость фиксированного запроса</td><td>Высокая</td><td>Ниже: цепочка вызовов</td><td>Высокая</td></tr>
+        <tr><td>Динамические условия</td><td>Неудобно</td><td>Основной сценарий</td><td>Ручная сборка, риск инъекции</td></tr>
+        <tr><td>Возвращает сущности</td><td>Да</td><td>Да</td><td>Только с <span class="nm">ResultSetMapping</span></td></tr>
+        <tr><td>Оконные функции, CTE, специфика СУБД</td><td>Нет</td><td>Нет</td><td>Да</td></tr>
+        <tr><td>Массовые <span class="nm">UPDATE</span> и <span class="nm">DELETE</span></td><td>Да, но в обход unit of work</td><td>Да, так же</td><td>Да</td></tr>
+        <tr><td>Портируемость между СУБД</td><td>Высокая</td><td>Высокая</td><td>Никакой</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Динамические фильтры и массовое обновление</span></div><pre><span class="cm">// QueryBuilder: условия добавляются по мере необходимости</span>
+<span class="nm">$qb</span> = <span class="nm">$this</span>-&gt;<span class="fn">createQueryBuilder</span>(<span class="st">'o'</span>);
+
+<span class="kw">if</span> (<span class="nm">$filter</span>-&gt;status !== <span class="kw">null</span>) {
+    <span class="nm">$qb</span>-&gt;<span class="fn">andWhere</span>(<span class="st">'o.status = :status'</span>)
+       -&gt;<span class="fn">setParameter</span>(<span class="st">'status'</span>, <span class="nm">$filter</span>-&gt;status);
+}
+<span class="kw">if</span> (<span class="nm">$filter</span>-&gt;query !== <span class="kw">null</span>) {
+    <span class="cm">// параметр, а не конкатенация — иначе инъекция</span>
+    <span class="nm">$qb</span>-&gt;<span class="fn">andWhere</span>(<span class="st">'o.number LIKE :q'</span>)
+       -&gt;<span class="fn">setParameter</span>(<span class="st">'q'</span>, <span class="st">'%'</span> . <span class="nm">$filter</span>-&gt;query . <span class="st">'%'</span>);
+}
+
+<span class="cm">// Массовое обновление одним запросом вместо загрузки 100 000 объектов</span>
+<span class="nm">$affected</span> = <span class="nm">$em</span>-&gt;<span class="fn">createQuery</span>(
+    <span class="st">'UPDATE App\Entity\Order o
+     SET o.status = :new
+     WHERE o.status = :old AND o.dueAt &lt; :now'</span>
+)
+-&gt;<span class="fn">setParameter</span>(<span class="st">'new'</span>, <span class="nm">OrderStatus</span>::Overdue)
+-&gt;<span class="fn">setParameter</span>(<span class="st">'old'</span>, <span class="nm">OrderStatus</span>::Unpaid)
+-&gt;<span class="fn">setParameter</span>(<span class="st">'now'</span>, <span class="kw">new</span> <span class="nm">\DateTimeImmutable</span>())
+-&gt;<span class="fn">execute</span>();
+<span class="cm">// ВАЖНО: объекты в памяти об этом не знают — их состояние устарело.</span>
+<span class="cm">// После такого запроса нужен clear() или отдельный менеджер.</span>
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Массовые <span class="nm">UPDATE</span> и <span class="nm">DELETE</span> в DQL идут мимо unit of work: события не вызываются, каскады не применяются, уже загруженные объекты остаются со старыми значениями. Это нормальный и нужный инструмент, но после него нельзя продолжать работать с теми же объектами так, будто ничего не произошло, — иначе следующий <span class="nm">flush()</span> запишет обратно устаревшие данные.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="hydration">
+    <p class="path">middle / результат</p>
+    <div class="card-top"><h3>Гидрация и DTO</h3><span class="badge b-2">Чтение</span></div>
+    <p><span class="t">Гидрация</span> — превращение строк результата в то, что получает код. Она не бесплатна: создать сущность дороже, чем вернуть массив, потому что нужно построить объект, зарегистрировать его в identity map и сделать снимок исходных значений для отслеживания изменений. Для данных, которые вы только показываете и никогда не меняете, это чистые накладные расходы.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · режимы гидрации</caption>
+      <thead><tr><th>Режим</th><th>Что возвращает</th><th>Отслеживаются изменения</th><th>Когда использовать</th></tr></thead>
+      <tbody>
+        <tr><td>Объекты</td><td>Сущности</td><td>Да</td><td>Данные, которые будут изменены</td></tr>
+        <tr><td>Массивы</td><td>Вложенные массивы</td><td>Нет</td><td>Отдача в шаблон или в JSON</td></tr>
+        <tr><td>Скаляры</td><td>Плоский массив значений</td><td>Нет</td><td>Списки идентификаторов, счётчики</td></tr>
+        <tr><td>Один скаляр</td><td>Одно значение</td><td>Нет</td><td><span class="nm">COUNT</span>, <span class="nm">SUM</span></td></tr>
+        <tr><td>DTO через <span class="nm">NEW</span></td><td>Типизированные объекты только для чтения</td><td>Нет</td><td>Лучший вариант для экранов и API</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">DTO прямо из запроса</span></div><pre><span class="cm">// Объект только для чтения: ровно те поля, которые нужны экрану</span>
+<span class="kw">final class</span> <span class="nm">OrderListItem</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> <span class="nm">$id</span>,
+        <span class="kw">public readonly string</span> <span class="nm">$number</span>,
+        <span class="kw">public readonly string</span> <span class="nm">$customerName</span>,
+        <span class="kw">public readonly int</span> <span class="nm">$totalAmount</span>,
+    ) {}
+}
+
+<span class="cm">/** @return list&lt;OrderListItem&gt; */</span>
+<span class="kw">public function</span> <span class="fn">recentForList</span>(<span class="kw">int</span> <span class="nm">$limit</span>): <span class="kw">array</span>
+{
+    <span class="kw">return</span> <span class="nm">$this</span>-&gt;em-&gt;<span class="fn">createQuery</span>(
+        <span class="st">'SELECT NEW App\Query\OrderListItem(o.id, o.number, c.name, o.totalAmount)
+         FROM App\Entity\Order o
+         JOIN o.customer c
+         ORDER BY o.createdAt DESC'</span>
+    )-&gt;<span class="fn">setMaxResults</span>(<span class="nm">$limit</span>)-&gt;<span class="fn">getResult</span>();
+}
+<span class="cm">// Один запрос, ровно нужные колонки, ни identity map, ни снимков,</span>
+<span class="cm">// ни риска, что кто-то случайно изменит объект и он сохранится.</span>
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Простое разделение, которое снимает половину вопросов о производительности ORM: сценарии изменения работают с сущностями, сценарии чтения — с DTO или массивами. Список заказов на экране не нуждается в отслеживании изменений, а страница оформления заказа не нуждается в двадцати колонках для таблицы. Это тот же принцип разделения чтения и записи, только без отдельного хранилища и без инфраструктуры.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="transactions">
+    <p class="path">middle / согласованность</p>
+    <div class="card-top"><h3>Транзакции и блокировки</h3><span class="badge b-2">Гонки</span></div>
+    <p><span class="nm">flush()</span> сам оборачивает свои запросы в транзакцию, но это транзакция вокруг записи, а не вокруг сценария. Если сценарий читает состояние, принимает решение и пишет результат, между чтением и записью может вклиниться другой процесс. Классический пример — списание остатка товара: два запроса прочитали «осталось 1», оба решили, что хватает, и оба списали.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Оптимистичная и пессимистичная блокировка</span></div><pre><span class="cm">// Оптимистичная: поле версии, проверка при записи</span>
+#[<span class="nm">ORM\Entity</span>]
+<span class="kw">class</span> <span class="nm">Stock</span>
+{
+    #[<span class="nm">ORM\Version</span>]
+    #[<span class="nm">ORM\Column</span>]
+    <span class="kw">private int</span> <span class="nm">$version</span> = 1;
+}
+
+<span class="kw">try</span> {
+    <span class="nm">$stock</span>-&gt;<span class="fn">reserve</span>(<span class="nm">$qty</span>);
+    <span class="nm">$em</span>-&gt;<span class="fn">flush</span>();       <span class="cm">// UPDATE ... WHERE id = ? AND version = ?</span>
+} <span class="kw">catch</span> (<span class="nm">OptimisticLockException</span>) {
+    <span class="cm">// кто-то успел раньше: перечитать и повторить сценарий</span>
+}
+
+<span class="cm">// Пессимистичная: блокировка строки на время транзакции</span>
+<span class="nm">$em</span>-&gt;<span class="fn">wrapInTransaction</span>(<span class="kw">function</span> (<span class="nm">EntityManagerInterface</span> <span class="nm">$em</span>) <span class="kw">use</span> (<span class="nm">$id</span>, <span class="nm">$qty</span>) {
+    <span class="nm">$stock</span> = <span class="nm">$em</span>-&gt;<span class="fn">find</span>(
+        <span class="nm">Stock</span>::<span class="kw">class</span>,
+        <span class="nm">$id</span>,
+        <span class="nm">LockMode</span>::PESSIMISTIC_WRITE,   <span class="cm">// SELECT ... FOR UPDATE</span>
+    );
+
+    <span class="nm">$stock</span>-&gt;<span class="fn">reserve</span>(<span class="nm">$qty</span>);        <span class="cm">// параллельные транзакции ждут здесь</span>
+});
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · какую блокировку выбрать</caption>
+      <thead><tr><th>Признак</th><th>Оптимистичная</th><th>Пессимистичная</th></tr></thead>
+      <tbody>
+        <tr><td>Механизм</td><td>Поле версии, проверка при записи</td><td><span class="nm">SELECT ... FOR UPDATE</span></td></tr>
+        <tr><td>Кто ждёт</td><td>Никто</td><td>Конкурирующие транзакции</td></tr>
+        <tr><td>Что происходит при конфликте</td><td>Исключение, сценарий повторяют</td><td>Ожидание, затем работа</td></tr>
+        <tr><td>Частые конфликты</td><td>Много повторов, растёт нагрузка</td><td>Работает лучше</td></tr>
+        <tr><td>Редкие конфликты</td><td>Оптимальна</td><td>Лишние блокировки</td></tr>
+        <tr><td>Работа через UI с долгим редактированием</td><td>Подходит: не держит транзакцию</td><td>Не подходит: нельзя держать блокировку между запросами</td></tr>
+        <tr><td>Риск</td><td>Пользователь теряет несохранённые правки</td><td>Взаимные блокировки и таймауты</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Транзакция должна охватывать сценарий, а не отдельные записи, и не должна включать в себя обращения к внешним сервисам. Открытая транзакция, внутри которой идёт HTTP-запрос к платёжному шлюзу, держит блокировки на время чужого таймаута и способна остановить всю базу. Правильный порядок — подготовить данные, сходить наружу, затем в короткой транзакции зафиксировать результат.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="migrations">
+    <p class="path">middle / схема</p>
+    <div class="card-top"><h3>Схема и миграции</h3><span class="badge b-2">Релиз</span></div>
+    <p>Doctrine умеет сравнивать маппинг с реальной схемой и генерировать миграцию по разнице. Это удобно и опасно одновременно: генератор не знает ни про объём таблицы, ни про то, что приложение во время выкладки работает в двух версиях сразу. Сгенерированную миграцию всегда читают глазами перед коммитом.</p>
+
+    <div class="code"><div class="bar"><span>SHELL</span><span class="r">Рабочий цикл миграций</span></div><pre><span class="cm"># сгенерировать миграцию по разнице маппинга и схемы</span>
+php bin/console doctrine:migrations:diff
+
+<span class="cm"># посмотреть, что именно поедет в базу — обязательный шаг</span>
+php bin/console doctrine:migrations:migrate --dry-run
+
+<span class="cm"># применить</span>
+php bin/console doctrine:migrations:migrate --no-interaction
+
+<span class="cm"># статус: что применено, что нет</span>
+php bin/console doctrine:migrations:status
+
+<span class="cm"># проверить, что маппинг и схема совпадают (полезно в CI)</span>
+php bin/console doctrine:schema:validate
+
+<span class="cm"># НИКОГДА на проде: пересобирает схему по маппингу без учёта данных</span>
+php bin/console doctrine:schema:update --force
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · миграции и выкладка без простоя</caption>
+      <thead><tr><th>Изменение</th><th>Безопасно на живой базе</th><th>Как делать правильно</th></tr></thead>
+      <tbody>
+        <tr><td>Добавить nullable-колонку</td><td>Да</td><td>Обычная миграция</td></tr>
+        <tr><td>Добавить колонку <span class="nm">NOT NULL</span></td><td>Нет</td><td>Добавить nullable → заполнить → сделать обязательной</td></tr>
+        <tr><td>Удалить колонку</td><td>Нет</td><td>Сначала выкатить код без неё, удалить следующим релизом</td></tr>
+        <tr><td>Переименовать колонку</td><td>Нет</td><td>Новая колонка → двойная запись → перенос → удаление старой</td></tr>
+        <tr><td>Создать индекс на большой таблице</td><td>Зависит от СУБД</td><td>В PostgreSQL — <span class="nm">CONCURRENTLY</span>, вне транзакции миграции</td></tr>
+        <tr><td>Изменить тип колонки</td><td>Нет</td><td>Как переименование: через новую колонку</td></tr>
+        <tr><td>Перелив данных на миллионах строк</td><td>Нет</td><td>Отдельной фоновой задачей батчами, не в миграции</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Миграция, которая одновременно меняет структуру и переливает данные по всей таблице. Она держит длинную транзакцию и блокировки, выполняется непредсказуемое время и, если упадёт посередине, оставляет базу в неизвестном состоянии. Структурные изменения делают отдельно и быстро, перенос данных — отдельной идемпотентной задачей, которую можно запустить повторно.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card lvl-m" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Проверка</span></div>
+    <p>Уровень, на котором вы можете предсказать поведение ORM, не заглядывая в профайлер.</p>
+    <ul class="check">
+      <li>Объяснить, что такое identity map и какие два следствия из неё вытекают.</li>
+      <li>Перечислить шаги <span class="nm">flush()</span> и сказать, что происходит при ошибке.</li>
+      <li>Назвать четыре состояния сущности и способ попасть в каждое.</li>
+      <li>Объяснить, почему detached-объект не сохраняется, и как этого избегать в очередях.</li>
+      <li>Определить владеющую сторону связи и предсказать, что будет при изменении обратной.</li>
+      <li>Отличить каскад ORM от каскада базы и обосновать выбор.</li>
+      <li>Объяснить, что такое прокси и в какой момент он делает запрос.</li>
+      <li>Назвать, почему fetch join коллекции ломает <span class="nm">LIMIT</span>, и как решается.</li>
+      <li>Выбрать между DQL, QueryBuilder и нативным SQL с обоснованием.</li>
+      <li>Назвать последствия массового <span class="nm">UPDATE</span> в DQL для объектов в памяти.</li>
+      <li>Написать запрос, возвращающий DTO вместо сущностей, и объяснить выигрыш.</li>
+      <li>Выбрать между оптимистичной и пессимистичной блокировкой по характеру нагрузки.</li>
+      <li>Перечислить изменения схемы, которые нельзя выкатывать одной миграцией.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · границы, цена, эксплуатация</p>
+    <h2>Senior: где ORM заканчивается</h2>
+    <p>Старший уровень отличается не знанием ещё десяти атрибутов, а умением провести границу: что моделируется сущностями, что читается проекциями, что делается голым SQL. И умением объяснить решение через цену, а не через предпочтения.</p>
+  </div>
+
+  <!-- 17 -->
+  <article class="card" id="aggregates">
+    <p class="path">senior / границы</p>
+    <div class="card-top"><h3>Агрегаты и границы загрузки</h3><span class="badge b-3">Дизайн</span></div>
+    <p>Главный вопрос проектирования модели: что грузится вместе. <span class="t">Агрегат</span> — группа объектов, которые изменяются как одно целое и имеют один корень, через который идут все изменения. Заказ и его позиции — агрегат: позиция не существует без заказа, а правило «сумма заказа равна сумме позиций» должно проверяться в одном месте. Заказ и клиент — не агрегат: у клиента своя жизнь, и загружать его целиком ради имени незачем.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · что внутри агрегата, а что снаружи</caption>
+      <thead><tr><th>Признак</th><th>Часть агрегата</th><th>Отдельный агрегат</th></tr></thead>
+      <tbody>
+        <tr><td>Существует самостоятельно</td><td>Нет</td><td>Да</td></tr>
+        <tr><td>Правило целостности</td><td>Общее с корнем</td><td>Своё</td></tr>
+        <tr><td>Как ссылаться</td><td>Прямая связь и коллекция</td><td>По идентификатору</td></tr>
+        <tr><td>Изменяется</td><td>Только через корень</td><td>Через свой корень</td></tr>
+        <tr><td>Транзакция</td><td>Общая с корнем</td><td>Отдельная, согласованность возможна отложенная</td></tr>
+        <tr><td>Пример</td><td>Позиции заказа, адрес доставки</td><td>Клиент, товар, склад</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Ссылка по идентификатору вместо связи</span></div><pre><span class="cm">// Связь на весь агрегат: тянет клиента и всё, что за ним</span>
+#[<span class="nm">ORM\ManyToOne</span>(targetEntity: <span class="nm">Customer</span>::<span class="kw">class</span>)]
+<span class="kw">private</span> <span class="nm">Customer</span> <span class="nm">$customer</span>;
+
+<span class="cm">// Ссылка по идентификатору: границы явные, лишнего не грузим</span>
+#[<span class="nm">ORM\Column</span>(type: <span class="st">'customer_id'</span>)]
+<span class="kw">private</span> <span class="nm">CustomerId</span> <span class="nm">$customerId</span>;
+
+<span class="cm">// Данные клиента для отображения приходят проекцией,</span>
+<span class="cm">// а не через обход графа объектов:</span>
+<span class="kw">final class</span> <span class="nm">OrderView</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly string</span> <span class="nm">$number</span>,
+        <span class="kw">public readonly string</span> <span class="nm">$customerName</span>,
+    ) {}
+}
+</pre></div>
+
+    <p><strong>Практическое следствие.</strong> Агрегат должен помещаться в память и в разумную транзакцию. Если у корня коллекция на сто тысяч элементов, это не агрегат, а ошибка моделирования: такая коллекция никогда не загружается целиком, значит инвариант по ней всё равно не проверяется. В таких случаях коллекцию убирают из корня, а правило переносят в запрос или в отдельный сервис.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как решить, делать связь или хранить идентификатор?</b><br>По тому, нужен ли связанный объект для проверки правил при изменении. Если корень обязан что-то проверить по связанному объекту, связь оправдана. Если он только показывает его данные — достаточно идентификатора, а данные для отображения берутся отдельным запросом-проекцией. Прямые связи между агрегатами удобны в момент написания кода и дорого обходятся потом: граф разрастается, и любая загрузка тянет половину базы.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card" id="orm-performance">
+    <p class="path">senior / стоимость</p>
+    <div class="card-top"><h3>Производительность и кэши</h3><span class="badge b-3">Цена</span></div>
+    <p>Претензия «Doctrine медленная» почти всегда означает одно из трёх: N+1, гидрация тысяч сущностей там, где нужны данные для отображения, или раздутый unit of work, в котором пересчёт изменений идёт по десяткам тысяч объектов. Сам слой отображения стоит недорого — дорого стоит его использование не по назначению.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · кэши Doctrine и что они дают</caption>
+      <thead><tr><th>Кэш</th><th>Что хранит</th><th>Эффект</th><th>Замечание</th></tr></thead>
+      <tbody>
+        <tr><td>Метаданных</td><td>Разобранный маппинг</td><td>Убирает парсинг атрибутов на каждый запрос</td><td>Обязателен на проде</td></tr>
+        <tr><td>Запросов</td><td>Разбор DQL в SQL</td><td>Убирает компиляцию DQL</td><td>Обязателен на проде</td></tr>
+        <tr><td>Результатов</td><td>Результат конкретного запроса</td><td>Убирает обращение к базе</td><td>Включается точечно, нужна инвалидация</td></tr>
+        <tr><td>Второго уровня</td><td>Сущности между запросами</td><td>Убирает загрузку справочников</td><td>Сложен, оправдан для редко меняющихся данных</td></tr>
+        <tr><td>Identity map</td><td>Объекты в пределах запроса</td><td>Работает всегда, отключить нельзя</td><td>Растёт — в долгих процессах нужен <span class="nm">clear()</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Три приёма, дающие основной выигрыш</span></div><pre><span class="cm">// 1. Только чтение — режим без отслеживания изменений</span>
+<span class="nm">$query</span>-&gt;<span class="fn">setHint</span>(<span class="nm">Query</span>::HINT_READ_ONLY, <span class="kw">true</span>);
+<span class="cm">// снимки не создаются, flush эти объекты игнорирует</span>
+
+<span class="cm">// 2. Кэш результата для тяжёлого справочного запроса</span>
+<span class="nm">$query</span>-&gt;<span class="fn">enableResultCache</span>(3600, <span class="st">'active_tariffs'</span>);
+
+<span class="cm">// 3. Считать в базе, а не в PHP</span>
+<span class="cm">// Плохо: тянем все позиции ради суммы</span>
+<span class="nm">$total</span> = 0;
+<span class="kw">foreach</span> (<span class="nm">$order</span>-&gt;<span class="fn">items</span>() <span class="kw">as</span> <span class="nm">$item</span>) { <span class="nm">$total</span> += <span class="nm">$item</span>-&gt;<span class="fn">amount</span>(); }
+
+<span class="cm">// Хорошо: одно число из базы</span>
+<span class="nm">$total</span> = (<span class="kw">int</span>) <span class="nm">$em</span>-&gt;<span class="fn">createQuery</span>(
+    <span class="st">'SELECT SUM(i.amount) FROM App\Entity\OrderItem i WHERE i.order = :o'</span>
+)-&gt;<span class="fn">setParameter</span>(<span class="st">'o'</span>, <span class="nm">$order</span>)-&gt;<span class="fn">getSingleScalarResult</span>();
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Порядок работы над производительностью ORM всегда один: сначала посчитать количество запросов, потом посмотреть, сколько объектов гидрируется, и только потом обсуждать кэши. Кэш, поставленный поверх N+1, прячет проблему до первого промаха и делает поведение системы непредсказуемым. Практическое правило для ревью: если запрос возвращает больше нескольких сотен сущностей, почти наверняка нужны не сущности.</div>
+  </article>
+
+  <!-- 19 -->
+  <article class="card" id="batch">
+    <p class="path">senior / объёмы</p>
+    <div class="card-top"><h3>Пакетная обработка</h3><span class="badge b-3">Объёмы</span></div>
+    <p>ORM спроектирована под сценарий «загрузили несколько объектов, изменили, сохранили». Обработка миллиона строк — другой сценарий, и наивный код в нём упирается в память: каждый загруженный объект остаётся в identity map до конца процесса, а вместе с ним остаётся снимок исходных значений, то есть фактически две копии данных.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Обработка большого объёма без роста памяти</span></div><pre><span class="nm">$batchSize</span> = 500;
+<span class="nm">$i</span> = 0;
+
+<span class="nm">$query</span> = <span class="nm">$em</span>-&gt;<span class="fn">createQuery</span>(
+    <span class="st">'SELECT o FROM App\Entity\Order o WHERE o.status = :s'</span>
+)-&gt;<span class="fn">setParameter</span>(<span class="st">'s'</span>, <span class="nm">OrderStatus</span>::Pending);
+
+<span class="cm">// toIterable отдаёт объекты по одному, а не весь массив сразу</span>
+<span class="kw">foreach</span> (<span class="nm">$query</span>-&gt;<span class="fn">toIterable</span>() <span class="kw">as</span> <span class="nm">$order</span>) {
+    <span class="nm">$order</span>-&gt;<span class="fn">recalculate</span>();
+
+    <span class="kw">if</span> ((++<span class="nm">$i</span> % <span class="nm">$batchSize</span>) === 0) {
+        <span class="nm">$em</span>-&gt;<span class="fn">flush</span>();
+        <span class="nm">$em</span>-&gt;<span class="fn">clear</span>();     <span class="cm">// освобождаем identity map</span>
+    }
+}
+<span class="nm">$em</span>-&gt;<span class="fn">flush</span>();
+<span class="nm">$em</span>-&gt;<span class="fn">clear</span>();
+
+<span class="cm">// Обязательно в консольных командах: иначе логгер SQL копит все запросы</span>
+<span class="cm">// в памяти и процесс падает по лимиту раньше, чем закончит работу.</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · приёмы пакетной обработки</caption>
+      <thead><tr><th>Приём</th><th>Что решает</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">toIterable()</span></td><td>Не держит весь результат в массиве</td><td>Не работает с fetch join коллекций</td></tr>
+        <tr><td><span class="nm">flush()</span> + <span class="nm">clear()</span> батчами</td><td>Ограничивает размер unit of work</td><td>После <span class="nm">clear</span> все объекты detached</td></tr>
+        <tr><td>Отключить логгер SQL</td><td>Убирает рост памяти в консоли</td><td>Нет журнала запросов при отладке</td></tr>
+        <tr><td>Обработка по диапазону id</td><td>Позволяет возобновить после сбоя</td><td>Нужен способ хранить позицию</td></tr>
+        <tr><td>Массовый DQL <span class="nm">UPDATE</span></td><td>Убирает загрузку объектов вовсе</td><td>Ни событий, ни каскадов</td></tr>
+        <tr><td>Голый DBAL или SQL</td><td>Максимальная скорость вставки</td><td>Никакой предметной логики</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>После <span class="nm">clear()</span> все ранее загруженные объекты становятся detached, включая те, что вы держите в локальных переменных за пределами цикла. Ссылка на пользователя, полученная до цикла, после первого <span class="nm">clear()</span> перестаёт быть управляемой, и присвоение её новым сущностям приведёт либо к ошибке, либо к попытке вставить дубликат. В таких местах ссылку получают заново через <span class="nm">getReference()</span> на каждой итерации батча.</div>
+  </article>
+
+  <!-- 20 -->
+  <article class="card" id="inheritance-types">
+    <p class="path">senior / моделирование</p>
+    <div class="card-top"><h3>Наследование и кастомные типы</h3><span class="badge b-3">Модель</span></div>
+    <p>Два механизма, которые позволяют не размазывать предметную модель по колонкам. Наследование сущностей нужно, когда варианты действительно разные по данным; кастомный тип — когда в базе лежит скаляр, а в коде должен быть объект-значение.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 19 · стратегии наследования сущностей</caption>
+      <thead><tr><th>Стратегия</th><th>Как в базе</th><th>Плюс</th><th>Минус</th></tr></thead>
+      <tbody>
+        <tr><td>Одна таблица (<span class="nm">SINGLE_TABLE</span>)</td><td>Все варианты в одной таблице + колонка-дискриминатор</td><td>Быстрые запросы, без соединений</td><td>Колонки подтипов обязаны быть nullable</td></tr>
+        <tr><td>Таблица на класс (<span class="nm">JOINED</span>)</td><td>Общая таблица + таблица на каждый подтип</td><td>Нормализовано, ограничения работают</td><td>Соединение на каждый запрос</td></tr>
+        <tr><td>Составной класс (<span class="nm">MAPPED_SUPERCLASS</span>)</td><td>Общие поля без своей таблицы</td><td>Простой способ переиспользовать поля</td><td>Не тип: нельзя запросить всех разом</td></tr>
+        <tr><td>Без наследования</td><td>Отдельные сущности + общий интерфейс</td><td>Проще всего понимать и менять</td><td>Дублирование части полей</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Кастомный тип: объект-значение в одной колонке</span></div><pre><span class="kw">final class</span> <span class="nm">CustomerIdType</span> <span class="kw">extends</span> <span class="nm">Type</span>
+{
+    <span class="kw">public const</span> NAME = <span class="st">'customer_id'</span>;
+
+    <span class="kw">public function</span> <span class="fn">getSQLDeclaration</span>(<span class="kw">array</span> <span class="nm">$column</span>, <span class="nm">AbstractPlatform</span> <span class="nm">$p</span>): <span class="kw">string</span>
+    {
+        <span class="kw">return</span> <span class="nm">$p</span>-&gt;<span class="fn">getGuidTypeDeclarationSQL</span>(<span class="nm">$column</span>);
+    }
+
+    <span class="cm">// из базы в объект</span>
+    <span class="kw">public function</span> <span class="fn">convertToPHPValue</span>(<span class="kw">mixed</span> <span class="nm">$value</span>, <span class="nm">AbstractPlatform</span> <span class="nm">$p</span>): ?<span class="nm">CustomerId</span>
+    {
+        <span class="kw">return</span> <span class="nm">$value</span> === <span class="kw">null</span> ? <span class="kw">null</span> : <span class="nm">CustomerId</span>::<span class="fn">fromString</span>((<span class="kw">string</span>) <span class="nm">$value</span>);
+    }
+
+    <span class="cm">// из объекта в базу</span>
+    <span class="kw">public function</span> <span class="fn">convertToDatabaseValue</span>(<span class="kw">mixed</span> <span class="nm">$value</span>, <span class="nm">AbstractPlatform</span> <span class="nm">$p</span>): ?<span class="kw">string</span>
+    {
+        <span class="kw">return</span> <span class="nm">$value</span>?-&gt;<span class="fn">toString</span>();
+    }
+
+    <span class="kw">public function</span> <span class="fn">getName</span>(): <span class="kw">string</span> { <span class="kw">return</span> <span class="kw">self</span>::NAME; }
+}
+
+<span class="cm">// Встроенный объект-значение без своей таблицы</span>
+#[<span class="nm">ORM\Embeddable</span>]
+<span class="kw">final class</span> <span class="nm">Money</span>
+{
+    #[<span class="nm">ORM\Column</span>] <span class="kw">public readonly int</span> <span class="nm">$amount</span>;
+    #[<span class="nm">ORM\Column</span>(length: 3)] <span class="kw">public readonly string</span> <span class="nm">$currency</span>;
+}
+
+#[<span class="nm">ORM\Entity</span>]
+<span class="kw">class</span> <span class="nm">Order</span>
+{
+    <span class="cm">// колонки total_amount и total_currency в той же таблице</span>
+    #[<span class="nm">ORM\Embedded</span>(class: <span class="nm">Money</span>::<span class="kw">class</span>, columnPrefix: <span class="st">'total_'</span>)]
+    <span class="kw">private</span> <span class="nm">Money</span> <span class="nm">$total</span>;
+}
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Наследование сущностей — самый дорогой в поддержке механизм маппинга: он влияет на все запросы к иерархии и тяжело меняется потом. Прежде чем его вводить, стоит проверить, не решается ли задача перечислением плюс несколькими nullable-полями или вовсе отдельными сущностями с общим интерфейсом. В большинстве продуктовых систем ответ «решается».</div>
+  </article>
+
+  <!-- 21 -->
+  <article class="card" id="testing-orm">
+    <p class="path">senior / тесты</p>
+    <div class="card-top"><h3>Тестирование с ORM</h3><span class="badge b-3">Проверка</span></div>
+    <p>Главное преимущество Data Mapper проявляется именно здесь: сущность — обычный класс, и всю предметную логику можно проверять без базы вообще. База нужна ровно для того, что без неё не проверяется: маппинг, запросы, ограничения целостности и поведение транзакций.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 20 · что и чем проверять</caption>
+      <thead><tr><th>Что проверяем</th><th>Нужна ли база</th><th>Как</th></tr></thead>
+      <tbody>
+        <tr><td>Правила и инварианты сущности</td><td>Нет</td><td>Обычный модульный тест на объект</td></tr>
+        <tr><td>Прикладной сценарий</td><td>Нет, если репозиторий за интерфейсом</td><td>Репозиторий в памяти как фейк</td></tr>
+        <tr><td>Метод репозитория с запросом</td><td>Да</td><td>Интеграционный тест на реальной СУБД</td></tr>
+        <tr><td>Маппинг и схема</td><td>Да</td><td><span class="nm">schema:validate</span> в CI</td></tr>
+        <tr><td>Уникальные ключи и внешние ключи</td><td>Да</td><td>Тест на реальные ограничения</td></tr>
+        <tr><td>Отсутствие N+1</td><td>Да</td><td>Счётчик запросов с порогом в тесте</td></tr>
+        <tr><td>Миграция</td><td>Да</td><td>Прогон миграций на копии схемы в CI</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>SQLite вместо боевой СУБД в тестах — экономия, за которую платят продом. Отличаются типы, поведение при конкурентном доступе, работа с датами, чувствительность к регистру, реализация транзакций и весь набор специфичных функций. Тесты становятся зелёными на диалекте, которого нет в продакшене. Правильный вариант — та же СУБД той же версии в контейнере, а скорость решается транзакционным откатом после каждого теста.</div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Между тестами базу удобнее откатывать транзакцией, а не пересоздавать: тест открывает транзакцию, работает, в конце делает откат. Это на порядок быстрее пересоздания схемы и не оставляет мусора. Ограничение — сценарии, которые сами управляют транзакциями: для них нужен отдельный режим с честной очисткой таблиц.</div>
+  </article>
+
+  <!-- 22 -->
+  <article class="card" id="raw-sql">
+    <p class="path">senior / границы инструмента</p>
+    <div class="card-top"><h3>Когда выходить из ORM</h3><span class="badge b-3">Решение</span></div>
+    <p>Зрелая позиция состоит не в защите ORM и не в её отрицании, а в понимании, что это инструмент для одной из двух половин работы с данными. Половина изменений — сущности и unit of work. Половина чтения и массовых операций — SQL. Смешивать их в одном классе не нужно, но и выбирать один инструмент на всё — ошибка.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 21 · ORM или SQL</caption>
+      <thead><tr><th>Задача</th><th>Инструмент</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Изменение состояния предметного объекта</td><td>Сущность + <span class="nm">flush</span></td><td>Правила в одном месте, изменения отслеживаются</td></tr>
+        <tr><td>Список на экране с фильтрами</td><td>DQL с DTO или SQL</td><td>Не нужны ни объекты, ни отслеживание</td></tr>
+        <tr><td>Отчёт с группировками и окнами</td><td>Нативный SQL</td><td>В DQL этого нет</td></tr>
+        <tr><td>Обновление статуса у миллиона строк</td><td>SQL или массовый DQL</td><td>Загружать объекты бессмысленно</td></tr>
+        <tr><td>Импорт большого файла</td><td>DBAL или пакетная вставка</td><td>Скорость важнее модели</td></tr>
+        <tr><td>Экспорт данных</td><td>Потоковый SQL-курсор</td><td>Память не должна расти</td></tr>
+        <tr><td>Сложная транзакционная логика с блокировками</td><td>ORM + явная транзакция</td><td>Нужны и правила, и контроль</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Doctrine медленная — как вы это прокомментируете?</b><br>Сама по себе она добавляет предсказуемые накладные расходы: построение объектов и снимков состояния. Практически все жалобы на скорость сводятся к трём причинам: N+1, гидрация сущностей там, где нужны данные для показа, и раздутый unit of work в долгом процессе. Все три — способ использования, а не свойство библиотеки. Правильный ответ показывает порядок диагностики: количество запросов → количество гидрируемых объектов → размер unit of work → и только потом кэши.</div>
+  </article>
+
+  <!-- 23 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / грабли</p>
+    <div class="card-top"><h3>Антипаттерны</h3><span class="badge b-must">Грабли</span></div>
+    <p>Список того, что регулярно встречается в проектах и стабильно приводит к проблемам.</p>
+
+    <ul>
+      <li><strong>Сущность-мешок с геттерами и сеттерами на каждое поле.</strong> Предметные правила уезжают в сервисы и дублируются; Data Mapper выбран, а выгода от него не получена.</li>
+      <li><strong><span class="nm">flush()</span> внутри сущности или репозитория.</strong> Транзакционная граница принадлежит сценарию: когда каждый метод сохраняет сам, невозможно объединить две операции в одну транзакцию.</li>
+      <li><strong>Каскадное удаление на связи со справочником.</strong> Удаление заказа уносит клиента. Каскад допустим только внутри агрегата.</li>
+      <li><strong><span class="nm">EAGER</span> в маппинге «чтобы не было N+1».</strong> Проблема переносится во все остальные сценарии: связь грузится даже там, где не нужна.</li>
+      <li><strong>Сущности в очереди, кэше и сессии.</strong> Восстанавливается detached-объект с нерабочими прокси.</li>
+      <li><strong>Логика в событиях жизненного цикла.</strong> Отправка письма в <span class="nm">postPersist</span> выглядит удобно ровно до первого отката транзакции и до первого теста.</li>
+      <li><strong>Один менеджер на долгий процесс без <span class="nm">clear()</span>.</strong> Память и время <span class="nm">flush</span> растут линейно с числом обработанных объектов.</li>
+      <li><strong>Подавление ошибки «менеджер закрыт» с продолжением работы.</strong> После неудачного <span class="nm">flush</span> состояние неизвестно; воркер нужно завершать.</li>
+      <li><strong>Генерация миграции без чтения.</strong> Сгенерированный <span class="nm">DROP COLUMN</span> на проде необратим.</li>
+      <li><strong>Репозиторий, возвращающий <span class="nm">QueryBuilder</span> наружу.</strong> Инкапсуляция доступа к данным теряется: запрос дособирают в контроллере.</li>
+      <li><strong>Отсутствие индексов под связи и фильтры.</strong> ORM не создаёт индексы сама — только те, что описаны в маппинге явно.</li>
+      <li><strong>Проверка уникальности запросом перед вставкой.</strong> Гонку это не устраняет: нужен уникальный индекс и обработка нарушения ограничения.</li>
+    </ul>
+
+    <div class="box anti"><span class="lbl">Худший из них</span>Отправка писем, вызовы внешних API и публикация событий из событий жизненного цикла Doctrine. Внешний эффект оказывается внутри транзакции: откат отменит запись в базе, но письмо уже ушло. Побочные эффекты выносят за транзакцию — либо в прикладной сервис после успешного <span class="nm">flush</span>, либо через outbox: запись в базу в той же транзакции и отправка отдельным процессом.</div>
+  </article>
+
+  <!-- 24 -->
+  <article class="card lvl-s" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Проверка</span></div>
+    <p>Уровень, на котором вы отвечаете за модель данных целиком.</p>
+    <ul class="check">
+      <li>Провести границы агрегатов и обосновать, где связь, а где идентификатор.</li>
+      <li>Объяснить, почему коллекция на сто тысяч элементов — ошибка моделирования.</li>
+      <li>Назвать порядок диагностики проблем производительности ORM.</li>
+      <li>Перечислить кэши Doctrine и сказать, какие обязательны на проде.</li>
+      <li>Написать обработку миллиона строк без роста памяти.</li>
+      <li>Объяснить, что происходит с внешними ссылками после <span class="nm">clear()</span>.</li>
+      <li>Выбрать стратегию наследования и обосновать через стоимость запросов.</li>
+      <li>Реализовать кастомный тип для объекта-значения.</li>
+      <li>Разделить, что тестируется без базы, а что требует настоящей СУБД.</li>
+      <li>Объяснить, чем опасен SQLite в тестах вместо боевой СУБД.</li>
+      <li>Провести границу между тем, что делается ORM, и тем, что делается SQL.</li>
+      <li>Объяснить, почему побочные эффекты нельзя вешать на события жизненного цикла.</li>
+      <li>Спланировать изменение схемы на живой базе без простоя.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Сводки для повторения перед собеседованием и для быстрой диагностики на ревью.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Симптом и причина</h3><span class="badge b-tag">Таблица 22</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 22 · что означает поведение ORM</caption>
+      <thead><tr><th>Симптом</th><th>Обычная причина</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>Сотни запросов на одной странице</td><td>N+1 при обходе связей</td><td>Fetch join или проекция</td></tr>
+        <tr><td>Изменения объекта не сохраняются</td><td>Объект detached или менялась обратная сторона связи</td><td>Загрузить через менеджер, менять владеющую сторону</td></tr>
+        <tr><td>Лишний <span class="nm">UPDATE</span> без изменений</td><td>Тип поля в PHP и в базе не совпадают, сравнение снимка даёт разницу</td><td>Проверить маппинг типа, особенно даты и <span class="nm">json</span></td></tr>
+        <tr><td>«The EntityManager is closed»</td><td>Предыдущий <span class="nm">flush</span> упал</td><td>Завершить процесс или пересоздать менеджер</td></tr>
+        <tr><td>Память растёт в консольной команде</td><td>Identity map и логгер SQL копят данные</td><td><span class="nm">clear()</span> батчами, отключить логгер</td></tr>
+        <tr><td>Пагинация возвращает меньше записей, чем просили</td><td>Fetch join коллекции вместе с <span class="nm">LIMIT</span></td><td>Использовать <span class="nm">Paginator</span></td></tr>
+        <tr><td>После массового DQL-запроса данные «откатились»</td><td>Объекты в памяти перезаписали новые значения</td><td><span class="nm">clear()</span> после массовой операции</td></tr>
+        <tr><td>Дубликаты при конкурентной вставке</td><td>Проверка существования запросом вместо ограничения</td><td>Уникальный индекс и обработка исключения</td></tr>
+        <tr><td>Медленный <span class="nm">flush</span> при малом числе изменений</td><td>Слишком много управляемых объектов</td><td>Меньше грузить, читать через DTO</td></tr>
+        <tr><td>Запрос вернул старые данные</td><td>Объект уже был в identity map</td><td><span class="nm">refresh()</span> или отдельный менеджер</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Doctrine и Eloquent</h3><span class="badge b-tag">Таблица 23</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 23 · одни и те же задачи в двух ORM</caption>
+      <thead><tr><th>Задача</th><th>Doctrine</th><th>Eloquent</th></tr></thead>
+      <tbody>
+        <tr><td>Найти по ключу</td><td><span class="nm">$repo-&gt;find($id)</span></td><td><span class="nm">Order::find($id)</span></td></tr>
+        <tr><td>Сохранить</td><td><span class="nm">persist()</span> + <span class="nm">flush()</span></td><td><span class="nm">$order-&gt;save()</span></td></tr>
+        <tr><td>Загрузить связь заранее</td><td>Fetch join в DQL</td><td><span class="nm">with('customer')</span></td></tr>
+        <tr><td>Отследить N+1</td><td>Профайлер, счётчик запросов</td><td><span class="nm">preventLazyLoading()</span> в деве</td></tr>
+        <tr><td>Пакетная обработка</td><td><span class="nm">toIterable()</span> + <span class="nm">clear()</span></td><td><span class="nm">chunkById()</span> или <span class="nm">lazy()</span></td></tr>
+        <tr><td>Транзакция</td><td><span class="nm">wrapInTransaction()</span></td><td><span class="nm">DB::transaction()</span></td></tr>
+        <tr><td>Оптимистичная блокировка</td><td><span class="nm">#[Version]</span></td><td>Реализуется вручную</td></tr>
+        <tr><td>Проекция вместо модели</td><td><span class="nm">SELECT NEW</span> с DTO</td><td><span class="nm">select()</span> + <span class="nm">toBase()</span></td></tr>
+        <tr><td>Тест предметной логики</td><td>Без базы</td><td>Обычно с базой</td></tr>
+        <tr><td>Миграции</td><td>Генерация по маппингу</td><td>Пишутся руками</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Термины, которые путают</h3><span class="badge b-tag">Таблица 24</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 24 · пары понятий и разница между ними</caption>
+      <thead><tr><th>Пара</th><th>Первое</th><th>Второе</th></tr></thead>
+      <tbody>
+        <tr><td><span class="nm">persist</span> / <span class="nm">flush</span></td><td>Взять объект под управление</td><td>Записать все изменения в базе</td></tr>
+        <tr><td>Identity map / кэш второго уровня</td><td>В пределах одного менеджера</td><td>Между запросами и процессами</td></tr>
+        <tr><td>Прокси / detached</td><td>Управляемый объект без загруженных данных</td><td>Объект вне управления менеджера</td></tr>
+        <tr><td>Владеющая / обратная сторона</td><td>Пишет внешний ключ</td><td>Только читает</td></tr>
+        <tr><td>Каскад ORM / каскад базы</td><td>Загружает объекты и вызывает события</td><td>Выполняется СУБД, объектов не знает</td></tr>
+        <tr><td>Гидрация / сериализация</td><td>Строки результата в объекты</td><td>Объекты в строку для передачи</td></tr>
+        <tr><td>DQL / SQL</td><td>Классы и свойства</td><td>Таблицы и колонки</td></tr>
+        <tr><td>Сущность / DTO</td><td>Имеет идентичность, отслеживается</td><td>Только данные для чтения</td></tr>
+        <tr><td>Оптимистичная / пессимистичная блокировка</td><td>Конфликт обнаруживается при записи</td><td>Конфликт предотвращается ожиданием</td></tr>
+        <tr><td>Агрегат / связанная сущность</td><td>Меняется как одно целое</td><td>Живёт своей жизнью</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Уровень и ожидания</h3><span class="badge b-tag">Таблица 25</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 25 · чего ждут от Junior, Middle и Senior</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Понимание слоя</td><td>Знает методы менеджера</td><td>Понимает unit of work</td><td>Предсказывает запросы по коду</td></tr>
+        <tr><td>Запросы</td><td><span class="nm">findBy</span> и QueryBuilder</td><td>DQL, проекции, пагинация</td><td>Решает, где ORM, а где SQL</td></tr>
+        <tr><td>Связи</td><td>Умеет объявить</td><td>Знает владеющую сторону и каскады</td><td>Проводит границы агрегатов</td></tr>
+        <tr><td>Производительность</td><td>Слышал про N+1</td><td>Находит и лечит</td><td>Строит модель чтения и записи отдельно</td></tr>
+        <tr><td>Схема</td><td>Генерирует миграции</td><td>Читает и правит их</td><td>Планирует изменения без простоя</td></tr>
+        <tr><td>Тесты</td><td>Пишет с базой</td><td>Отделяет модульные от интеграционных</td><td>Определяет стратегию тестов на проект</td></tr>
+        <tr><td>Ошибки</td><td>Гуглит сообщение</td><td>Понимает причину</td><td>Устраняет класс ошибок дизайном</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Рецепты и команды</h2>
+    <p>Заготовки, которые закрывают большую часть повседневной работы с Doctrine.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Прикладной сценарий целиком</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Один сценарий — одна транзакция</span></div><pre><span class="kw">final class</span> <span class="nm">PlaceOrder</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private</span> <span class="nm">EntityManagerInterface</span> <span class="nm">$em</span>,
+        <span class="kw">private</span> <span class="nm">OrderRepository</span> <span class="nm">$orders</span>,
+        <span class="kw">private</span> <span class="nm">StockRepository</span> <span class="nm">$stock</span>,
+        <span class="kw">private</span> <span class="nm">EventBus</span> <span class="nm">$events</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">PlaceOrderCommand</span> <span class="nm">$cmd</span>): <span class="nm">OrderId</span>
+    {
+        <span class="cm">// 1. Загрузка того, что нужно для правил — и ничего лишнего</span>
+        <span class="nm">$customer</span> = <span class="nm">$this</span>-&gt;em-&gt;<span class="fn">getReference</span>(<span class="nm">Customer</span>::<span class="kw">class</span>, <span class="nm">$cmd</span>-&gt;customerId);
+
+        <span class="cm">// 2. Изменение состояния — внутри сущности</span>
+        <span class="nm">$order</span> = <span class="kw">new</span> <span class="nm">Order</span>(<span class="nm">$customer</span>, <span class="nm">$this</span>-&gt;orders-&gt;<span class="fn">nextNumber</span>());
+        <span class="kw">foreach</span> (<span class="nm">$cmd</span>-&gt;items <span class="kw">as</span> <span class="nm">$item</span>) {
+            <span class="nm">$order</span>-&gt;<span class="fn">addItem</span>(<span class="nm">$item</span>-&gt;sku, <span class="nm">$item</span>-&gt;qty);
+        }
+
+        <span class="cm">// 3. Ровно один flush на сценарий</span>
+        <span class="nm">$this</span>-&gt;em-&gt;<span class="fn">persist</span>(<span class="nm">$order</span>);
+        <span class="nm">$this</span>-&gt;em-&gt;<span class="fn">flush</span>();
+
+        <span class="cm">// 4. Побочные эффекты — после успешной записи, а не в событиях ORM</span>
+        <span class="nm">$this</span>-&gt;events-&gt;<span class="fn">publish</span>(<span class="kw">new</span> <span class="nm">OrderPlaced</span>(<span class="nm">$order</span>-&gt;<span class="fn">id</span>()));
+
+        <span class="kw">return</span> <span class="nm">$order</span>-&gt;<span class="fn">id</span>();
+    }
+}
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Тест на количество запросов</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Защита от N+1, которая не даст ему вернуться</span></div><pre><span class="kw">public function</span> <span class="fn">testOrderListDoesNotExplodeInQueries</span>(): <span class="kw">void</span>
+{
+    <span class="nm">$this</span>-&gt;<span class="fn">seedOrders</span>(50);           <span class="cm">// важно: не 1-2, иначе N+1 не виден</span>
+
+    <span class="nm">$logger</span> = <span class="kw">new</span> <span class="nm">DebugStack</span>();
+    <span class="nm">$this</span>-&gt;<span class="fn">connection</span>()-&gt;<span class="fn">getConfiguration</span>()-&gt;<span class="fn">setSQLLogger</span>(<span class="nm">$logger</span>);
+
+    <span class="nm">$this</span>-&gt;<span class="fn">client</span>()-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, <span class="st">'/orders'</span>);
+
+    <span class="cm">// порог, а не точное число: он ловит регрессию, но не ломается</span>
+    <span class="cm">// от каждого безобидного изменения</span>
+    <span class="nm">$this</span>-&gt;<span class="fn">assertLessThan</span>(10, <span class="fn">count</span>(<span class="nm">$logger</span>-&gt;queries));
+}
+</pre></div>
+    <div class="box good"><span class="lbl">Зачем</span>Такой тест на трёх ключевых страницах ловит подавляющее большинство регрессий по запросам. Сажать порог в единицу не нужно: цель не зафиксировать текущее число, а не дать ему вырасти на порядок незаметно.</div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Команды, которые нужны каждый день</h3><span class="badge b-tag">Справка</span></div>
+    <div class="code"><div class="bar"><span>SHELL</span><span class="r">Doctrine в Symfony</span></div><pre><span class="cm"># СХЕМА И МИГРАЦИИ</span>
+doctrine:migrations:diff              <span class="cm"># сгенерировать по разнице</span>
+doctrine:migrations:migrate --dry-run <span class="cm"># посмотреть SQL, ничего не применяя</span>
+doctrine:migrations:migrate           <span class="cm"># применить</span>
+doctrine:migrations:status            <span class="cm"># что применено</span>
+doctrine:schema:validate              <span class="cm"># маппинг совпадает со схемой?</span>
+
+<span class="cm"># ДИАГНОСТИКА МАППИНГА</span>
+doctrine:mapping:info                 <span class="cm"># список сущностей и их статус</span>
+
+<span class="cm"># ЗАПРОСЫ</span>
+doctrine:query:dql <span class="st">'SELECT o FROM App\Entity\Order o'</span>
+doctrine:query:sql <span class="st">'SELECT count(*) FROM orders'</span>
+
+<span class="cm"># КЭШИ (на проде — после каждой выкладки)</span>
+doctrine:cache:clear-metadata
+doctrine:cache:clear-query
+doctrine:cache:clear-result
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что смотреть при разборе медленной страницы</h3><span class="badge b-tag">Порядок</span></div>
+    <ol>
+      <li><strong>Сколько запросов.</strong> Профайлер фреймворка, вкладка Doctrine. Больше двадцати на страницу — почти всегда N+1.</li>
+      <li><strong>Есть ли повторяющиеся запросы.</strong> Одинаковый SQL с разными параметрами подряд — это он.</li>
+      <li><strong>Сколько объектов гидрируется.</strong> Тысячи сущностей ради списка — берите проекцию.</li>
+      <li><strong>Что делает самый долгий запрос.</strong> Дальше это уже задача из <a href="sql.html">SQL</a>: план, индексы, объём.</li>
+      <li><strong>Размер unit of work.</strong> Если <span class="nm">flush</span> сам по себе долгий при паре изменений — в памяти слишком много управляемых объектов.</li>
+      <li><strong>Включены ли кэши метаданных и запросов.</strong> На проде их отсутствие даёт заметный постоянный налог.</li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Тема, где легко ответить «Doctrine сама всё делает». Сильный ответ всегда описывает механизм и его цену: что происходит внутри и чем за это платят.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">База</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое ORM и какую задачу она решает?</span><span class="aa">Слой, отображающий строки таблиц на объекты и обратно. Он снимает ручное преобразование данных и берёт на себя отслеживание изменений, давая приложению работать с предметной моделью вместо ассоциативных массивов. Взамен появляется собственный жизненный цикл, который надо понимать.</span></li>
+      <li><span class="qq">Чем Data Mapper отличается от Active Record?</span><span class="aa">Тем, кто знает про базу. В Active Record модель сама умеет сохраняться и строить запросы, в Data Mapper сущность — обычный класс, а отображением занимается отдельный слой. Doctrine — Data Mapper, Eloquent — Active Record.</span></li>
+      <li><span class="qq">Какие следствия у этого различия на практике?</span><span class="aa">Data Mapper даёт тестируемость предметной логики без базы и не привязывает модель к инфраструктуре, но требует понимать unit of work. Active Record быстрее в разработке и понятнее сразу, но логика склонна расползаться по моделям, а тесты почти всегда требуют базы.</span></li>
+      <li><span class="qq">Что делает <span class="nm">persist()</span>?</span><span class="aa">Берёт новый объект под управление менеджера и помечает его для вставки. Он не выполняет никаких запросов: <span class="nm">INSERT</span> уйдёт при <span class="nm">flush()</span>, тогда же появится идентификатор.</span></li>
+      <li><span class="qq">Нужен ли <span class="nm">persist()</span> для загруженного объекта?</span><span class="aa">Нет. Объект, полученный через менеджер, уже управляемый, его исходное состояние сохранено в снимке, и при <span class="nm">flush()</span> изменения найдутся автоматически.</span></li>
+      <li><span class="qq">Что делает <span class="nm">flush()</span>?</span><span class="aa">Сравнивает состояние всех управляемых объектов со снимками, обходит каскады, открывает транзакцию и выполняет вставки, обновления и удаления, после чего фиксирует транзакцию и обновляет снимки.</span></li>
+      <li><span class="qq">Почему <span class="nm">flush()</span> в цикле — плохо?</span><span class="aa">Каждый вызов открывает отдельную транзакцию и запускает полный пересчёт изменений по всем управляемым объектам. На импорте это превращает секунды в часы. Правило — один <span class="nm">flush</span> на сценарий или на батч.</span></li>
+      <li><span class="qq">Что такое сущность и чем она отличается от DTO?</span><span class="aa">Сущность имеет идентичность, отображается на таблицу и находится под управлением менеджера: её изменения отслеживаются. DTO — просто структура данных для чтения или передачи, у неё нет ни идентичности, ни отслеживания.</span></li>
+      <li><span class="qq">Зачем нужен репозиторий?</span><span class="aa">Он инкапсулирует способы получить сущности: снаружи задают вопрос предметной области, внутри живёт запрос. Это позволяет переиспользовать выборки, тестировать их отдельно и не растаскивать построение запросов по контроллерам.</span></li>
+      <li><span class="qq">Что такое N+1 и как он возникает?</span><span class="aa">Один запрос за списком плюс по одному запросу на связь каждого элемента. Возникает при обходе ленивой связи в цикле: каждое обращение к прокси выполняет отдельный <span class="nm">SELECT</span>.</span></li>
+      <li><span class="qq">Как убрать N+1?</span><span class="aa">Забрать связь заранее — fetch join в DQL или <span class="nm">with()</span> в Eloquent, — либо вообще не грузить сущности и взять проекцию с нужными полями. Для коллекций с пагинацией часто удобнее второй запрос по списку идентификаторов.</span></li>
+      <li><span class="qq">Как обнаружить N+1, а не искать глазами?</span><span class="aa">Профайлером фреймворка по количеству запросов на страницу и тестом со счётчиком запросов и порогом. В Eloquent есть режим, запрещающий ленивую загрузку и бросающий исключение при попытке.</span></li>
+      <li><span class="qq">Что такое маппинг и где он описывается?</span><span class="aa">Описание соответствия полей класса колонкам таблицы: тип, длина, обязательность, связи, индексы. В современных версиях его пишут атрибутами прямо в классе; аннотации в докблоках устарели.</span></li>
+      <li><span class="qq">Зачем идентификатор объявляют как <span class="nm">?int</span> с <span class="nm">null</span>?</span><span class="aa">Потому что до первой записи его действительно нет: значение генерирует база. Все остальные обязательные поля, наоборот, лучше заполнять в конструкторе, чтобы сущность нельзя было создать в неполном состоянии.</span></li>
+      <li><span class="qq">Что делает <span class="nm">getReference()</span> и зачем он?</span><span class="aa">Возвращает прокси-объект с заполненным идентификатором, не выполняя запрос. Удобен, когда нужно только проставить связь: база всё равно запишет внешний ключ, а данные связанной сущности не нужны.</span></li>
+      <li><span class="qq">Что произойдёт при обращении к полю прокси?</span><span class="aa">Прокси выполнит <span class="nm">SELECT</span> и заполнит себя данными. Обращение к идентификатору запроса не вызывает: он известен заранее.</span></li>
+      <li><span class="qq">Как удалить сущность?</span><span class="aa">Пометить её через <span class="nm">remove()</span> и вызвать <span class="nm">flush()</span>. Сам <span class="nm">remove()</span> запросов не делает, а связанные сущности удалятся только если настроен каскад — ORM или базы.</span></li>
+      <li><span class="qq">Что такое миграция и почему не использовать автообновление схемы?</span><span class="aa">Миграция — версионированный набор изменений схемы, который хранится в репозитории и применяется одинаково на всех окружениях. Автообновление схемы не знает про данные, может выполнить разрушительные операции и не оставляет истории — на проде оно неприменимо.</span></li>
+      <li><span class="qq">Чем DQL отличается от SQL?</span><span class="aa">DQL оперирует классами и свойствами, а не таблицами и колонками, и Doctrine умеет превращать его результат в объекты. Итоговый SQL генерируется по маппингу, поэтому запрос переносим между СУБД, но специфичных возможностей конкретной базы в DQL нет.</span></li>
+      <li><span class="qq">Когда ORM не подходит?</span><span class="aa">На отчётах с агрегатами и оконными функциями, на массовых обновлениях миллионов строк и на импорте больших объёмов. Там нужны SQL и пакетные операции: строить объекты незачем, а накладные расходы заметны.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Механика</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое identity map?</span><span class="aa">Карта загруженных объектов в пределах одного менеджера: одна строка базы всегда представлена одним экземпляром. Отсюда два следствия — повторный <span class="nm">find</span> по тому же ключу не идёт в базу, а результат запроса не перезаписывает уже загруженный и изменённый объект.</span></li>
+      <li><span class="qq">Что такое unit of work?</span><span class="aa">Механизм учёта изменений: при загрузке Doctrine делает снимок значений, при <span class="nm">flush()</span> сравнивает текущее состояние со снимком и строит запросы. Стоимость <span class="nm">flush</span> зависит не от числа изменений, а от числа управляемых объектов.</span></li>
+      <li><span class="qq">Перечислите состояния сущности.</span><span class="aa">New — менеджер о ней не знает; managed — под управлением, изменения отслеживаются; detached — была управляемой, но связь потеряна; removed — помечена к удалению. При <span class="nm">flush</span> изменения detached-объекта просто игнорируются.</span></li>
+      <li><span class="qq">Как объект становится detached?</span><span class="aa">Через <span class="nm">clear()</span>, через сериализацию и восстановление в другом процессе, а также если он пришёл извне — например, из очереди или из кэша. Поэтому сущности не передают в очередь: туда кладут идентификатор.</span></li>
+      <li><span class="qq">Что происходит при неудачном <span class="nm">flush()</span>?</span><span class="aa">Транзакция откатывается и менеджер закрывается: дальнейшая работа с ним бросает исключение. В воркере это означает, что после первой ошибки все следующие сообщения будут падать, пока процесс не перезапустят или менеджер не пересоздадут.</span></li>
+      <li><span class="qq">Что такое владеющая сторона связи?</span><span class="aa">Та, в чьей таблице лежит внешний ключ, то есть сторона <span class="nm">ManyToOne</span>. Doctrine записывает связь только по её состоянию; изменения обратной стороны при <span class="nm">flush</span> игнорируются.</span></li>
+      <li><span class="qq">Зачем тогда нужна обратная сторона?</span><span class="aa">Только ради удобства кода: чтобы у заказа была коллекция позиций. Если коллекция коду не нужна, обратную сторону не объявляют — это лишний источник ошибок и лишние загрузки.</span></li>
+      <li><span class="qq">Чем отличается каскад ORM от каскада базы?</span><span class="aa">Каскад ORM загружает связанные объекты и удаляет их по одному, вызывая события. Каскад базы выполняется СУБД, быстрее и не знает об объектах. Включать оба одновременно не нужно, а выбор делается один раз на весь проект.</span></li>
+      <li><span class="qq">Что делает <span class="nm">orphanRemoval</span>?</span><span class="aa">Удаляет из базы элемент, убранный из коллекции. Осмысленно только для частей агрегата, которые вне корня не существуют: для позиций заказа — да, для товаров в справочнике — нет.</span></li>
+      <li><span class="qq">Что такое прокси и зачем он нужен?</span><span class="aa">Сгенерированный наследник класса сущности с заполненным только идентификатором. Он позволяет не загружать связанные данные до первого обращения, за счёт чего одна загрузка не тянет за собой половину базы.</span></li>
+      <li><span class="qq">Почему <span class="nm">EAGER</span> в маппинге — плохое решение проблемы N+1?</span><span class="aa">Потому что это глобальное решение локальной задачи: связь начинает грузиться во всех сценариях, включая те, где она не нужна. Стратегию загрузки правильно задавать в конкретном запросе через fetch join.</span></li>
+      <li><span class="qq">Почему fetch join коллекции ломает <span class="nm">LIMIT</span>?</span><span class="aa">Потому что соединение размножает строки: заказ с тремя позициями даёт три строки результата, и <span class="nm">LIMIT 10</span> ограничит строки, а не объекты. Решается <span class="nm">Paginator</span>, который делает это двумя запросами корректно.</span></li>
+      <li><span class="qq">Что такое гидрация и почему она стоит денег?</span><span class="aa">Превращение строк результата в объекты. Помимо создания объекта нужно зарегистрировать его в identity map и сделать снимок для отслеживания изменений, то есть фактически удвоить данные в памяти. Для чтения это чистые накладные расходы.</span></li>
+      <li><span class="qq">Как вернуть DTO прямо из запроса?</span><span class="aa">Оператором <span class="nm">NEW</span> в DQL: перечисляются нужные поля, и Doctrine вызывает конструктор указанного класса. Получается ровно нужный набор данных без сущностей, снимков и риска случайного сохранения.</span></li>
+      <li><span class="qq">Что происходит с объектами в памяти после массового DQL <span class="nm">UPDATE</span>?</span><span class="aa">Ничего: такие запросы идут мимо unit of work, поэтому уже загруженные объекты остаются со старыми значениями. Следующий <span class="nm">flush</span> может записать устаревшие данные обратно, поэтому после массовой операции нужен <span class="nm">clear()</span>.</span></li>
+      <li><span class="qq">Когда выбирать оптимистичную блокировку?</span><span class="aa">Когда конфликты редки и нельзя держать транзакцию — например, при редактировании через интерфейс, где между чтением и сохранением проходит время. Конфликт обнаруживается при записи по полю версии, а сценарий повторяют.</span></li>
+      <li><span class="qq">Когда нужна пессимистичная блокировка?</span><span class="aa">Когда конфликты часты и повторы обойдутся дороже ожидания: списание остатков, распределение лимитов, выдача уникальных номеров. Транзакция при этом должна быть короткой и не содержать обращений наружу.</span></li>
+      <li><span class="qq">Почему нельзя вызывать внешний API внутри транзакции?</span><span class="aa">Транзакция будет держать блокировки на время чужого таймаута, а при откате внешний эффект уже произошёл и не отменится. Правильный порядок — подготовить данные, сходить наружу, затем короткой транзакцией зафиксировать результат.</span></li>
+      <li><span class="qq">Почему сгенерированную миграцию нужно читать?</span><span class="aa">Генератор видит только разницу схем: он не знает про объём таблицы, про блокировки при изменении типа и про то, что во время выкладки работают две версии кода. Часть сгенерированных операций разрушительна и необратима.</span></li>
+      <li><span class="qq">Как переименовать колонку без простоя?</span><span class="aa">В несколько релизов: добавить новую колонку, начать писать в обе, перелить данные фоновой задачей, перевести чтение на новую, затем удалить старую. Одношаговое переименование ломает работающую версию кода в момент выкладки.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Проектирование</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое агрегат и зачем он нужен?</span><span class="aa">Группа объектов, изменяемых как одно целое, с единственным корнем, через который идут все изменения. Он задаёт границу транзакции и место, где проверяются инварианты, — без этой границы правила расползаются по сервисам, а загрузка тянет весь граф.</span></li>
+      <li><span class="qq">Связь или идентификатор — как выбрать?</span><span class="aa">По тому, нужен ли связанный объект для проверки правил при изменении. Нужен — связь; нужен только для показа — идентификатор плюс отдельная проекция. Прямые связи между агрегатами удобны при написании и дороги при эксплуатации.</span></li>
+      <li><span class="qq">Что делать, если у корня коллекция на сто тысяч элементов?</span><span class="aa">Признать это ошибкой моделирования. Такая коллекция никогда не загружается целиком, значит инвариант по ней всё равно не проверяется. Её убирают из корня, а правило переносят в запрос или в отдельный сервис.</span></li>
+      <li><span class="qq">Каков порядок диагностики «ORM тормозит»?</span><span class="aa">Количество запросов → сколько объектов гидрируется → размер unit of work → план самого долгого запроса → и только потом кэши. Кэш поверх N+1 маскирует проблему и делает поведение системы непредсказуемым.</span></li>
+      <li><span class="qq">Какие кэши есть в Doctrine и какие обязательны?</span><span class="aa">Метаданных и запросов — обязательны на проде, они убирают разбор маппинга и компиляцию DQL. Кэш результатов включают точечно, помня об инвалидации. Кэш второго уровня сложен и оправдан для редко меняющихся справочников.</span></li>
+      <li><span class="qq">Как обработать миллион строк через ORM?</span><span class="aa">Читать через <span class="nm">toIterable()</span>, сохранять батчами по несколько сотен, после каждого батча делать <span class="nm">clear()</span>, отключить логгер SQL и предусмотреть возобновление по диапазону идентификаторов. Если предметная логика не нужна — вообще не использовать ORM.</span></li>
+      <li><span class="qq">Что происходит после <span class="nm">clear()</span> со ссылками, полученными раньше?</span><span class="aa">Они становятся detached, включая переменные вне цикла. Присвоение такой ссылки новым сущностям приведёт к ошибке или к попытке вставить дубликат, поэтому ссылки получают заново через <span class="nm">getReference()</span> на каждом батче.</span></li>
+      <li><span class="qq">Какие стратегии наследования сущностей вы знаете?</span><span class="aa">Одна таблица с дискриминатором — быстро, но поля подтипов обязаны быть nullable. Таблица на класс — нормализовано, но соединение в каждом запросе. Составной суперкласс — переиспользование полей без типа. Часто лучший вариант — вовсе не наследовать, а сделать отдельные сущности с общим интерфейсом.</span></li>
+      <li><span class="qq">Зачем нужны кастомные типы?</span><span class="aa">Чтобы в базе лежал скаляр, а в коде был объект-значение: идентификатор, деньги, координата. Преобразование живёт в одном месте, и предметная модель перестаёт состоять из строк и чисел без смысла.</span></li>
+      <li><span class="qq">Чем встроенный объект отличается от связанной сущности?</span><span class="aa">Встроенный объект хранится в колонках той же таблицы и не имеет собственной идентичности: это часть значения. Связанная сущность живёт своей жизнью в своей таблице. Деньги и адрес — обычно встроенные объекты, а не сущности.</span></li>
+      <li><span class="qq">Что тестировать без базы, а что с базой?</span><span class="aa">Без базы — правила и инварианты сущностей и прикладные сценарии с фейковым репозиторием. С базой — методы репозиториев, маппинг, ограничения целостности, миграции и отсутствие N+1. Это и есть главная практическая выгода Data Mapper.</span></li>
+      <li><span class="qq">Чем плох SQLite в тестах вместо боевой СУБД?</span><span class="aa">Отличаются типы, транзакции, поведение при конкурентном доступе, работа с датами и специфичные функции. Тесты проходят на диалекте, которого нет в продакшене. Дешевле поднять ту же СУБД в контейнере и откатывать транзакцию после каждого теста.</span></li>
+      <li><span class="qq">Почему побочные эффекты нельзя вешать на события жизненного цикла?</span><span class="aa">Потому что они окажутся внутри транзакции: откат отменит запись, но письмо уже ушло, а внешний вызов уже сделан. Эффекты выносят после успешного <span class="nm">flush</span> либо реализуют через outbox — запись в той же транзакции и отправка отдельным процессом.</span></li>
+      <li><span class="qq">Где должна проходить транзакционная граница?</span><span class="aa">По прикладному сценарию: один сценарий — одна транзакция и один <span class="nm">flush</span>. Если сохранение живёт внутри сущностей или репозиториев, объединить две операции в одну транзакцию становится невозможно.</span></li>
+      <li><span class="qq">Как защититься от дубликатов при конкурентных вставках?</span><span class="aa">Уникальным индексом в базе и обработкой нарушения ограничения. Проверка запросом перед вставкой гонку не устраняет: между проверкой и вставкой успевает вклиниться параллельный процесс.</span></li>
+      <li><span class="qq">Как вы разделяете чтение и запись без отдельного хранилища?</span><span class="aa">Сценарии изменения работают с сущностями и агрегатами, сценарии чтения — с DTO или массивами, полученными отдельными запросами. Это даёт основную часть выигрыша разделения ответственности без инфраструктуры и без синхронизации проекций.</span></li>
+      <li><span class="qq">Когда стоит вообще отказаться от ORM в проекте?</span><span class="aa">Когда предметная модель почти отсутствует, а работа сводится к отчётам, агрегатам и потоковой обработке: там слой отображения только мешает. Обратный случай — сложные правила и долгая жизнь системы — как раз аргумент за ORM.</span></li>
+      <li><span class="qq">Как внедрять ORM в проект с существующей базой?</span><span class="aa">Маппингом на существующую схему, без попыток пересоздать её по сущностям, и по частям: сначала один ограниченный участок, затем следующий. Ключевое ограничение — миграции с этого момента ведутся в одном месте, иначе схема и маппинг разойдутся.</span></li>
+      <li><span class="qq">Какие метрики ORM вы бы вывели в мониторинг?</span><span class="aa">Количество запросов на запрос приложения и его перцентили, время <span class="nm">flush</span>, количество гидрируемых объектов на тяжёлых экранах, число откатов транзакций и конфликтов оптимистичной блокировки. Первая метрика ловит N+1 в проде раньше жалоб пользователей.</span></li>
+      <li><span class="qq">Какой главный признак зрелой работы с ORM?</span><span class="aa">Разработчик может по коду сказать, сколько запросов уйдёт в базу и какие, до запуска профайлера. Второй признак — сознательная граница: часть системы работает через сущности, часть через SQL, и для каждого решения есть внятная причина, а не предпочтение.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Задания рассчитаны на реальный проект: почти каждое начинается с того, что вы открываете профайлер или свой репозиторий.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Основы</span></div>
+    <h4>1. Посчитать запросы</h4>
+    <p>Откройте три самые тяжёлые страницы проекта и запишите количество запросов на каждой. Найдите повторяющийся SQL с разными параметрами.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Список конкретных мест с N+1 вместо общего ощущения, что «страница тормозит».</div>
+    <h4>2. Убрать один N+1 двумя способами</h4>
+    <p>Возьмите найденное место и почините сначала через fetch join, потом через проекцию в DTO. Сравните количество запросов и время в обоих вариантах.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание, что fetch join — не единственный и часто не лучший ответ.</div>
+    <h4>3. Найти лишние persist</h4>
+    <p>Найдите в коде вызовы <span class="nm">persist()</span> для объектов, загруженных из базы, и удалите их. Убедитесь тестами, что поведение не изменилось.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Твёрдое понимание, для чего нужен <span class="nm">persist</span>, вместо привычки писать его везде.</div>
+    <h4>4. Найти flush в цикле</h4>
+    <p>Найдите импорт или обработчик, где <span class="nm">flush()</span> вызывается на каждой итерации. Замерьте время на тысяче записей, вынесите <span class="nm">flush</span> из цикла, замерьте снова.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Собственные цифры вместо теоретического «так делать не надо».</div>
+    <h4>5. Переписать метод репозитория</h4>
+    <p>Найдите метод с именем вроде <span class="nm">findByStatusAndDate</span> и переименуйте его в вопрос предметной области, заодно убрав необязательные аргументы.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Репозиторий, который читается как список вопросов к данным, а не как набор фильтров.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Механика</span></div>
+    <h4>6. Проверить identity map руками</h4>
+    <p>Загрузите объект дважды и убедитесь, что это один экземпляр. Затем измените его, выполните запрос, который его же возвращает, и посмотрите, какие данные пришли.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Наглядное понимание, почему запрос не всегда возвращает «свежие» данные.</div>
+    <h4>7. Сломать detached</h4>
+    <p>Сериализуйте сущность, восстановите, измените и вызовите <span class="nm">flush()</span>. Убедитесь, что ничего не сохранилось. Затем перепишите сценарий на передачу идентификатора.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Личный опыт вместо заученного правила «не кладите сущности в очередь».</div>
+    <h4>8. Изменить обратную сторону связи</h4>
+    <p>Добавьте элемент только в коллекцию, не проставляя владеющую сторону, и вызовите <span class="nm">flush()</span>. Затем исправьте на синхронизацию обеих сторон в одном методе.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание, почему изменения иногда «не сохраняются» без всякой ошибки.</div>
+    <h4>9. Сломать пагинацию fetch join</h4>
+    <p>Сделайте запрос с fetch join коллекции и <span class="nm">setMaxResults(10)</span>, посчитайте объекты в результате. Затем перепишите через <span class="nm">Paginator</span>.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Одна из самых незаметных ошибок в списках, найденная до продакшена.</div>
+    <h4>10. Заменить сущности на DTO</h4>
+    <p>Возьмите самый тяжёлый список в проекте и перепишите его запрос на <span class="nm">SELECT NEW</span> с DTO. Сравните время, память и количество гидрируемых объектов.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Измеренная разница между моделью записи и моделью чтения.</div>
+    <h4>11. Добавить оптимистичную блокировку</h4>
+    <p>Найдите сущность, редактируемую через форму, добавьте поле версии и обработайте конфликт: покажите пользователю понятное сообщение вместо ошибки.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Закрытая гонка «последний сохранивший затирает чужие правки».</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Дизайн</span></div>
+    <h4>12. Провести границы агрегатов</h4>
+    <p>Нарисуйте граф связей сущностей проекта и отметьте, что меняется вместе. Найдите связи между разными агрегатами и оцените, какие можно заменить идентификатором.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Карта модели с явными границами и список загрузок, которые тянут лишнее.</div>
+    <h4>13. Написать пакетную обработку</h4>
+    <p>Реализуйте пересчёт по всей таблице через <span class="nm">toIterable()</span> с батчами и <span class="nm">clear()</span>, добавьте возобновление по диапазону идентификаторов и снимите график памяти.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Задача, которая раньше падала по памяти, выполняется с постоянным потреблением.</div>
+    <h4>14. Поставить защиту от N+1 в CI</h4>
+    <p>Добавьте тесты со счётчиком запросов и порогом на три ключевые страницы. Убедитесь, что тест падает, если убрать fetch join.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Регрессия по запросам ловится в пул-реквесте, а не в проде.</div>
+    <h4>15. Спланировать изменение схемы без простоя</h4>
+    <p>Возьмите переименование колонки в большой таблице и распишите план по релизам: какие миграции, какой код, в каком порядке, как откатывать на каждом шаге.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Готовый шаблон рассуждения, который на собеседовании отличает опыт от теории.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час-полтора в будний день. Практика — на своём проекте: одна разобранная страница со ста запросами даёт больше, чем десять статей про ORM.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Модель и запросы</h3><span class="badge b-1">База</span></div>
+    <h4>Задачи недели</h4>
+    <p>Понять, что делает слой отображения, и научиться видеть запросы, которые он выполняет.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Посчитать запросы на трёх тяжёлых страницах и найти N+1 (задание 1).</li>
+      <li>Починить один N+1 двумя разными способами и сравнить (задание 2).</li>
+      <li>Убрать лишние вызовы <span class="nm">persist()</span> (задание 3).</li>
+      <li>Найти <span class="nm">flush()</span> в цикле и замерить разницу (задание 4).</li>
+      <li>Привести один репозиторий в порядок по именам методов (задание 5).</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Умение объяснить, какие запросы уйдут в базу при чтении конкретного куска кода.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Внутреннее устройство</h3><span class="badge b-2">Механика</span></div>
+    <h4>Задачи недели</h4>
+    <p>Разобраться с identity map, unit of work и состояниями сущности на собственных экспериментах.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Проверить identity map руками и объяснить результат (задание 6).</li>
+      <li>Воспроизвести detached-сущность и переписать сценарий на идентификатор (задание 7).</li>
+      <li>Сломать сохранение изменением обратной стороны связи (задание 8).</li>
+      <li>Разобрать, какие каскады настроены в проекте, и обосновать каждый.</li>
+      <li>Прочитать сгенерированную миграцию построчно и объяснить каждую строку.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Странные ошибки Doctrine перестают быть странными: для каждой есть объяснение через механику.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Чтение и запись</h3><span class="badge b-2">Скорость</span></div>
+    <h4>Задачи недели</h4>
+    <p>Разделить сценарии изменения и сценарии чтения и увидеть разницу в цифрах.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Сломать пагинацию fetch join и починить через <span class="nm">Paginator</span> (задание 9).</li>
+      <li>Перевести тяжёлый список на DTO и замерить эффект (задание 10).</li>
+      <li>Добавить оптимистичную блокировку в редактирование (задание 11).</li>
+      <li>Проверить, включены ли кэши метаданных и запросов на проде.</li>
+      <li>Найти в проекте место, где ORM явно мешает, и переписать его на SQL.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Понятная граница: где работают сущности, где проекции, где чистый SQL.</p>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Дизайн и эксплуатация</h3><span class="badge b-3">Финиш</span></div>
+    <h4>Задачи недели</h4>
+    <p>Перейти от отдельных запросов к модели данных целиком и к её поведению под нагрузкой.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Провести границы агрегатов и найти лишние связи (задание 12).</li>
+      <li>Написать пакетную обработку с постоянным потреблением памяти (задание 13).</li>
+      <li>Поставить защиту от N+1 в CI (задание 14).</li>
+      <li>Расписать план изменения схемы без простоя (задание 15).</li>
+      <li>Собрать список антипаттернов, которые нашлись в проекте, и оценить их стоимость.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Готовность обсуждать модель данных в терминах границ, стоимости запросов и рисков выкладки.</p>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что помогает на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Не занимайте сторону в споре «ORM против SQL».</strong> Сильный ответ описывает разделение: изменения через сущности, чтение и массовые операции через SQL. Это сразу показывает продовый опыт.</li>
+      <li><strong>Объясняйте через механику.</strong> На вопрос «почему изменения не сохранились» отвечать надо не «нужен persist», а через состояние объекта и снимок в unit of work.</li>
+      <li><strong>Называйте цену.</strong> Гидрация стоит памяти, identity map растёт, каскады загружают объекты, кэш требует инвалидации. Умение назвать обратную сторону отличает опыт от начитанности.</li>
+      <li><strong>Держите наготове историю про N+1.</strong> Найденный, измеренный и почищенный случай со своими цифрами — самый убедительный рассказ в этой теме.</li>
+      <li><strong>Будьте готовы к вопросу про миграцию без простоя.</strong> Ответ по шагам с планом отката — то, что отличает Senior от Middle в этой теме гораздо надёжнее, чем знание атрибутов.</li>
+      <li><strong>Умейте сказать, что ORM здесь не нужна.</strong> Кандидат, который на задачу с отчётом предлагает сущности, выглядит слабее того, кто сразу говорит про SQL и проекции.</li>
+      <li><strong>Спрашивайте про их модель.</strong> Вопросы «где у вас проходят границы агрегатов» и «как вы ловите N+1» показывают уровень и заодно многое расскажут о проекте.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «ORM и Doctrine» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

@@ -1,0 +1,1594 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · тесты · качество кода</p>
+  <h1>Тестирование для PHP-разработчиков</h1>
+  <p class="lead">Тесты пишут не ради тестов и не ради процента покрытия. Их пишут ради одной вещи: возможности менять код без страха. Проект без тестов не «работает быстрее» — он просто платит за скорость позже, когда любая правка требует ручной проверки половины системы, а рефакторинг откладывается до бесконечности, потому что никто не знает, что сломается.</p>
+  <p class="lead">Главная ошибка новичка — тестировать реализацию: моки на всё подряд, проверка того, что метод вызвал другой метод. Такие тесты ломаются при каждом рефакторинге и ничего не гарантируют, поэтому команда начинает их ненавидеть и в итоге удаляет. Хороший тест проверяет наблюдаемое поведение и остаётся зелёным, пока поведение не изменилось, — сколько бы раз вы ни переписывали внутренности.</p>
+  <p class="lead">Конспект идёт от первого теста к стратегии: PHPUnit и структура теста → интеграция с базой, HTTP-тесты, внешние сервисы, легаси, TDD → выбор, что покрывать чем, борьба с нестабильными тестами, мутационное тестирование и нагрузка. Смежные темы: <a href="php.html">PHP</a>, <a href="sql.html">базы данных</a>, <a href="infrastructure.html">инфраструктура и CI</a>, <a href="http-api.html">HTTP и API</a>, <a href="symfony.html">Symfony</a>, <a href="laravel.html">Laravel</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Зачем тесты и пирамида, PHPUnit и структура теста, что тестировать и что нет, тестовые двойники, признаки хорошего теста.</span></div>
+    <div class="aud m"><b>Middle</b><span>Тесты с базой и фикстуры, HTTP-тесты, внешние интеграции, время и случайность, легаси, TDD, тесты в CI и флаки.</span></div>
+    <div class="aud s"><b>Senior</b><span>Стратегия покрытия по риску, метрики качества тестов, мутационное тестирование, трудные случаи, нагрузка, процесс и владение.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>17</i></span>
+    <span>Блоков кода: <i>22</i></span>
+    <span>Сравнительных таблиц: <i>20</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#why">Зачем тесты и пирамида</a></li>
+    <li><span class="tree">├─</span> <a href="#phpunit">PHPUnit: первый тест</a></li>
+    <li><span class="tree">├─</span> <a href="#what">Что тестировать, а что нет</a></li>
+    <li><span class="tree">├─</span> <a href="#doubles">Тестовые двойники</a></li>
+    <li><span class="tree">├─</span> <a href="#good">Признаки хорошего теста</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#integration">Тесты с базой данных</a></li>
+    <li><span class="tree">├─</span> <a href="#functional">HTTP и функциональные тесты</a></li>
+    <li><span class="tree">├─</span> <a href="#external">Внешние интеграции</a></li>
+    <li><span class="tree">├─</span> <a href="#nondeterminism">Время, случайность, окружение</a></li>
+    <li><span class="tree">├─</span> <a href="#legacy">Тесты на легаси</a></li>
+    <li><span class="tree">├─</span> <a href="#tdd">TDD и тестируемость</a></li>
+    <li><span class="tree">├─</span> <a href="#ci">Тесты в CI и флаки</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#strategy">Стратегия покрытия</a></li>
+    <li><span class="tree">├─</span> <a href="#metrics">Метрики качества тестов</a></li>
+    <li><span class="tree">├─</span> <a href="#hard">Трудные случаи</a></li>
+    <li><span class="tree">├─</span> <a href="#load">Нагрузочные тесты</a></li>
+    <li><span class="tree">├─</span> <a href="#process">Процесс и владение</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Шпаргалка по PHPUnit</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · основы</p>
+    <h2>Junior: первый тест и его качество</h2>
+    <p>Написать тест умеет почти каждый. Написать тест, который не придётся удалять через полгода, — навык. Разница в одном: проверяется наблюдаемое поведение или внутреннее устройство. Первое переживает рефакторинг, второе ломается от переименования метода.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="why">
+    <p class="path">junior / зачем</p>
+    <div class="card-top"><h3>Зачем тесты и пирамида</h3><span class="badge b-1">База</span></div>
+    <p>Тесты решают конкретную задачу: сделать изменение кода дешёвым. Без них каждая правка требует ручной проверки, а рефакторинг превращается в риск, на который никто не идёт. Поэтому проект без тестов со временем костенеет: код становится плохим не потому, что разработчики хуже, а потому что улучшать его страшно.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · уровни тестов и их роль</caption>
+      <thead><tr><th>Уровень</th><th>Что проверяет</th><th>Скорость</th><th>Сколько их</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Модульные</strong></td><td>Одну единицу логики без внешних зависимостей</td><td>Миллисекунды</td><td>Большинство</td></tr>
+        <tr><td><strong>Интеграционные</strong></td><td>Связку с базой, кэшем, очередью</td><td>Десятки миллисекунд</td><td>Заметная доля</td></tr>
+        <tr><td><strong>Функциональные (HTTP)</strong></td><td>Сценарий через весь стек приложения</td><td>Сотни миллисекунд</td><td>Ключевые сценарии</td></tr>
+        <tr><td><strong>E2E через браузер</strong></td><td>Реальный пользовательский путь</td><td>Секунды</td><td>Единицы, самые важные</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Пирамида</strong> — не догма, а следствие экономики: чем выше уровень, тем тест дороже писать, медленнее выполнять и сложнее диагностировать при падении. Отсюда правило: если поведение можно проверить на уровне ниже — проверяйте там. Но и обратная крайность вредна: тысяча модульных тестов при нуле интеграционных даёт систему, где каждая деталь работает, а вместе ничего не собирается.</p>
+
+    <div class="flow" role="img" aria-label="Обратная связь от теста: чем ниже уровень, тем быстрее ответ">
+      <div class="node">Модульный<small>секунды на весь набор</small></div><span class="arr">→</span>
+      <div class="node">Интеграционный<small>минуты</small></div><span class="arr">→</span>
+      <div class="node">Функциональный<small>единицы минут</small></div><span class="arr">→</span>
+      <div class="node">E2E<small>десятки минут</small></div><span class="arr">→</span>
+      <div class="node">Прод<small>часы и инцидент</small></div>
+    </div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Цена ошибки растёт на порядок с каждым шагом вправо. Баг, пойманный модульным тестом, стоит минуту. Тот же баг на код-ревью — полчаса двоих. В проде — инцидент, откат, разбор и потерянное доверие. Именно поэтому тесты окупаются, хотя на первый взгляд кажутся замедлением.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужны тесты, если код и так работает?</b><br>Он работает сегодня. Тесты нужны для завтра: они позволяют менять код, обновлять зависимости и рефакторить, зная за секунды, что ничего не сломалось. Плюс они документируют ожидаемое поведение точнее комментариев и заставляют делать код тестируемым, а значит менее связанным. Без них цена изменений растёт до момента, когда проще переписать.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="phpunit">
+    <p class="path">junior / инструмент</p>
+    <div class="card-top"><h3>PHPUnit: первый тест</h3><span class="badge b-1">База</span></div>
+    <p>Тест — это обычный класс с методами. Структура любого теста укладывается в три шага: подготовить данные, выполнить действие, проверить результат. Держаться этой структуры полезно даже когда кажется, что можно короче: она делает тест читаемым без разбирательства.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Структура «подготовка → действие → проверка»</span></div><pre><code>&lt;?php
+<span class="kw">declare</span>(strict_types=1);
+
+<span class="kw">namespace</span> App\Tests\Unit\Order;
+
+<span class="kw">use</span> PHPUnit\Framework\TestCase;
+<span class="kw">use</span> PHPUnit\Framework\Attributes\{Test, DataProvider, CoversClass};
+
+#[<span class="nm">CoversClass</span>(<span class="nm">Cart</span>::<span class="kw">class</span>)]
+<span class="kw">final class</span> <span class="nm">CartTest</span> <span class="kw">extends</span> <span class="nm">TestCase</span>
+{
+    #[<span class="nm">Test</span>]
+    <span class="kw">public function</span> <span class="fn">итоговая_сумма_учитывает_скидку</span>(): <span class="nm">void</span>
+    {
+        <span class="cm">// Arrange — подготовка</span>
+        $cart = <span class="kw">new</span> <span class="nm">Cart</span>();
+        $cart-&gt;<span class="fn">add</span>(<span class="kw">new</span> <span class="nm">Item</span>(<span class="st">'A-100'</span>, <span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'1000.00'</span>), qty: 2));
+
+        <span class="cm">// Act — одно действие, которое тестируем</span>
+        $total = $cart-&gt;<span class="fn">total</span>(<span class="kw">new</span> <span class="nm">PercentDiscount</span>(10));
+
+        <span class="cm">// Assert — проверка наблюдаемого результата</span>
+        $this-&gt;<span class="fn">assertSame</span>(<span class="st">'1800.00'</span>, $total-&gt;<span class="fn">amount</span>());
+        $this-&gt;<span class="fn">assertSame</span>(<span class="st">'RUB'</span>, $total-&gt;<span class="fn">currency</span>());
+    }
+
+    #[<span class="nm">Test</span>]
+    <span class="kw">public function</span> <span class="fn">пустая_корзина_не_принимает_скидку</span>(): <span class="nm">void</span>
+    {
+        $this-&gt;<span class="fn">expectException</span>(<span class="nm">EmptyCartException</span>::<span class="kw">class</span>);
+        $this-&gt;<span class="fn">expectExceptionMessage</span>(<span class="st">'Корзина пуста'</span>);
+
+        (<span class="kw">new</span> <span class="nm">Cart</span>())-&gt;<span class="fn">total</span>(<span class="kw">new</span> <span class="nm">PercentDiscount</span>(10));
+    }
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Провайдеры данных: один тест — много случаев</span></div><pre><code>&lt;?php
+    <span class="cm">// Вместо пяти почти одинаковых методов — один с набором входов.</span>
+    <span class="cm">// Каждый набор именуется: при падении сразу видно, какой случай сломался.</span>
+    <span class="kw">public static function</span> <span class="fn">случаи_округления</span>(): <span class="nm">iterable</span>
+    {
+        <span class="kw">yield</span> <span class="st">'ровная сумма'</span>          =&gt; [<span class="st">'100.00'</span>, 10, <span class="st">'90.00'</span>];
+        <span class="kw">yield</span> <span class="st">'копейки вниз'</span>          =&gt; [<span class="st">'100.05'</span>, 10, <span class="st">'90.05'</span>];
+        <span class="kw">yield</span> <span class="st">'скидка 100%'</span>           =&gt; [<span class="st">'100.00'</span>, 100, <span class="st">'0.00'</span>];
+        <span class="kw">yield</span> <span class="st">'минимальная сумма'</span>     =&gt; [<span class="st">'0.01'</span>, 50, <span class="st">'0.01'</span>];   <span class="cm">// граничный случай</span>
+    }
+
+    #[<span class="nm">Test</span>]
+    #[<span class="nm">DataProvider</span>(<span class="st">'случаи_округления'</span>)]
+    <span class="kw">public function</span> <span class="fn">скидка_округляется_корректно</span>(
+        <span class="nm">string</span> $sum, <span class="nm">int</span> $percent, <span class="nm">string</span> $expected
+    ): <span class="nm">void</span> {
+        $this-&gt;<span class="fn">assertSame</span>($expected, <span class="nm">Money</span>::<span class="fn">rub</span>($sum)-&gt;<span class="fn">discount</span>($percent)-&gt;<span class="fn">amount</span>());
+    }</code></pre></div>
+
+    <div class="code"><div class="bar"><span>xml + bash</span><span class="r">Конфигурация и запуск</span></div><pre><code><span class="cm">&lt;!-- phpunit.xml: разделение наборов — ключевая настройка --&gt;</span>
+&lt;phpunit bootstrap="vendor/autoload.php" colors="true" failOnWarning="true"&gt;
+  &lt;testsuites&gt;
+    &lt;testsuite name="unit"&gt;        &lt;directory&gt;tests/Unit&lt;/directory&gt;&lt;/testsuite&gt;
+    &lt;testsuite name="integration"&gt; &lt;directory&gt;tests/Integration&lt;/directory&gt;&lt;/testsuite&gt;
+    &lt;testsuite name="functional"&gt;  &lt;directory&gt;tests/Functional&lt;/directory&gt;&lt;/testsuite&gt;
+  &lt;/testsuites&gt;
+  &lt;source&gt;&lt;include&gt;&lt;directory&gt;src&lt;/directory&gt;&lt;/include&gt;&lt;/source&gt;
+&lt;/phpunit&gt;
+
+<span class="cm"># Быстрая петля разработки: только модульные, секунды</span>
+vendor/bin/phpunit --testsuite=unit
+
+<span class="cm"># Один тест или группа при отладке</span>
+vendor/bin/phpunit --filter=скидка_округляется
+vendor/bin/phpunit tests/Unit/Order/CartTest.php
+
+<span class="cm"># Найти самые медленные тесты — почти всегда там прячется забытый сетевой вызов</span>
+vendor/bin/phpunit --log-junit report.xml &amp;&amp; sort -t'"' -k8 -rn report.xml | head</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Русские имена методов в тестах — не экзотика, а рабочий приём: имя теста читается как утверждение о поведении, и при падении в отчёте видно смысл, а не <code>testTotal2</code>. Если команда предпочитает английский, работает то же правило: имя описывает поведение и условие, а не название метода.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Из чего состоит хороший модульный тест?</b><br>Из трёх частей: подготовка данных, одно действие, проверка результата. Он не ходит в базу, сеть и файловую систему, выполняется за миллисекунды, не зависит от порядка запуска и от других тестов, а его имя объясняет проверяемое поведение. Если в тесте несколько действий и десяток проверок — это уже сценарий, и его лучше разбить.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="what">
+    <p class="path">junior / выбор</p>
+    <div class="card-top"><h3>Что тестировать, а что нет</h3><span class="badge b-1">База</span></div>
+    <p>Самый частый источник бесполезных тестов — попытка покрыть всё подряд. Тест стоит денег дважды: при написании и при каждом изменении кода. Поэтому его пишут там, где он что-то гарантирует.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · где тест окупается, а где нет</caption>
+      <thead><tr><th>Стоит тестировать</th><th>Не стоит</th></tr></thead>
+      <tbody>
+        <tr><td>Бизнес-правила: расчёты, скидки, лимиты, переходы статусов</td><td>Геттеры, сеттеры и простые DTO без логики</td></tr>
+        <tr><td>Граничные случаи: ноль, пусто, максимум, отрицательное</td><td>Код фреймворка и библиотек — он уже протестирован</td></tr>
+        <tr><td>Обработку ошибок и исключения</td><td>Конфигурационные массивы</td></tr>
+        <tr><td>То, что уже ломалось: на каждый баг — тест</td><td>Приватные методы напрямую</td></tr>
+        <tr><td>Сложные условия и ветвления</td><td>Точный текст сообщений интерфейса</td></tr>
+        <tr><td>Публичный контракт модуля</td><td>Порядок вызовов внутри реализации</td></tr>
+        <tr><td>Интеграцию с базой: запросы, транзакции, миграции</td><td>Вёрстку и вид страницы в модульных тестах</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Поведение против реализации — главное различие</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: тест знает, КАК устроен код, и ломается при любом рефакторинге</span>
+<span class="kw">public function</span> <span class="fn">testRegister</span>(): <span class="nm">void</span>
+{
+    $repo   = $this-&gt;<span class="fn">createMock</span>(<span class="nm">UserRepository</span>::<span class="kw">class</span>);
+    $hasher = $this-&gt;<span class="fn">createMock</span>(<span class="nm">Hasher</span>::<span class="kw">class</span>);
+    $mailer = $this-&gt;<span class="fn">createMock</span>(<span class="nm">Mailer</span>::<span class="kw">class</span>);
+
+    $hasher-&gt;<span class="fn">expects</span>($this-&gt;<span class="fn">once</span>())-&gt;<span class="fn">method</span>(<span class="st">'hash'</span>);        <span class="cm">// проверяем вызов метода</span>
+    $repo-&gt;<span class="fn">expects</span>($this-&gt;<span class="fn">once</span>())-&gt;<span class="fn">method</span>(<span class="st">'save'</span>);          <span class="cm">// ...и ещё вызов</span>
+    $mailer-&gt;<span class="fn">expects</span>($this-&gt;<span class="fn">once</span>())-&gt;<span class="fn">method</span>(<span class="st">'send'</span>);        <span class="cm">// ...и ещё</span>
+
+    (<span class="kw">new</span> <span class="nm">Registration</span>($repo, $hasher, $mailer))-&gt;<span class="fn">register</span>(<span class="st">'a@b.c'</span>, <span class="st">'pass'</span>);
+    <span class="cm">// Ни одной проверки результата. Переименуете save в persist — тест упадёт,</span>
+    <span class="cm">// хотя поведение не изменилось. Забудете сохранить пароль — тест пройдёт.</span>
+}
+
+<span class="cm">// ХОРОШО: тест знает, ЧТО должно произойти, и переживает рефакторинг</span>
+<span class="kw">public function</span> <span class="fn">регистрация_создаёт_пользователя_и_шлёт_письмо</span>(): <span class="nm">void</span>
+{
+    $users  = <span class="kw">new</span> <span class="nm">InMemoryUserRepository</span>();     <span class="cm">// фейк, а не мок</span>
+    $mailer = <span class="kw">new</span> <span class="nm">InMemoryMailer</span>();
+
+    (<span class="kw">new</span> <span class="nm">Registration</span>($users, <span class="kw">new</span> <span class="nm">NativeHasher</span>(), $mailer))
+        -&gt;<span class="fn">register</span>(<span class="st">'a@b.c'</span>, <span class="st">'secret123'</span>);
+
+    $user = $users-&gt;<span class="fn">findByEmail</span>(<span class="st">'a@b.c'</span>);
+    $this-&gt;<span class="fn">assertNotNull</span>($user);
+    $this-&gt;<span class="fn">assertTrue</span>($user-&gt;<span class="fn">verifyPassword</span>(<span class="st">'secret123'</span>));   <span class="cm">// пароль реально работает</span>
+    $this-&gt;<span class="fn">assertNotSame</span>(<span class="st">'secret123'</span>, $user-&gt;passwordHash);  <span class="cm">// и не хранится как есть</span>
+    $this-&gt;<span class="fn">assertCount</span>(1, $mailer-&gt;<span class="fn">sentTo</span>(<span class="st">'a@b.c'</span>));
+}</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Тестировать приватные методы, делая их публичными «ради тестируемости». Если приватный метод хочется протестировать отдельно — это сигнал, что в классе прячется отдельная сущность: вынесите её в свой класс с публичным контрактом. Приватные детали проверяются через публичное поведение, иначе тест приколачивает реализацию гвоздями.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что означает «тестировать поведение, а не реализацию»?</b><br>Проверять наблюдаемый результат — возвращаемое значение, изменение состояния, отправленное сообщение, — а не то, какие методы и в каком порядке были вызваны внутри. Практический критерий: если после рефакторинга без изменения поведения тесты покраснели, они тестировали реализацию. Такие тесты не защищают от ошибок, зато мешают менять код — то есть работают ровно против своей цели.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="doubles">
+    <p class="path">junior / изоляция</p>
+    <div class="card-top"><h3>Тестовые двойники</h3><span class="badge b-1">База</span></div>
+    <p>Двойник подставляется вместо настоящей зависимости, чтобы тест был быстрым и детерминированным. Их принято различать по назначению, и путаница в терминах — обычная тема уточняющих вопросов на собеседовании.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · виды тестовых двойников</caption>
+      <thead><tr><th>Вид</th><th>Что делает</th><th>Когда применять</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Dummy</strong></td><td>Заглушка-пустышка: нужна только чтобы заполнить аргумент</td><td>Зависимость не используется в этом сценарии</td></tr>
+        <tr><td><strong>Stub</strong></td><td>Возвращает заранее заданные данные</td><td>Нужно, чтобы код мог выполниться</td></tr>
+        <tr><td><strong>Fake</strong></td><td>Рабочая упрощённая реализация (репозиторий в памяти)</td><td>Лучший выбор для зависимостей, которые вы контролируете</td></tr>
+        <tr><td><strong>Spy</strong></td><td>Запоминает вызовы, проверка — после действия</td><td>Нужно убедиться, что письмо отправлено</td></tr>
+        <tr><td><strong>Mock</strong></td><td>Ожидания задаются заранее, проверка автоматическая</td><td>Когда сам факт взаимодействия и есть поведение</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Заглушка, шпион и фейк на одном примере</span></div><pre><code>&lt;?php
+<span class="cm">// Stub: просто отдаёт данные, никаких проверок вызовов</span>
+$rates = $this-&gt;<span class="fn">createStub</span>(<span class="nm">ExchangeRates</span>::<span class="kw">class</span>);
+$rates-&gt;<span class="fn">method</span>(<span class="st">'rate'</span>)-&gt;<span class="fn">willReturn</span>(<span class="st">'92.50'</span>);
+
+<span class="cm">// Mock: ожидание задаётся до действия и проверяется автоматически</span>
+$gateway = $this-&gt;<span class="fn">createMock</span>(<span class="nm">PaymentGateway</span>::<span class="kw">class</span>);
+$gateway-&gt;<span class="fn">expects</span>($this-&gt;<span class="fn">once</span>())
+        -&gt;<span class="fn">method</span>(<span class="st">'charge'</span>)
+        -&gt;<span class="fn">with</span>($this-&gt;<span class="fn">equalTo</span>(<span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'1990.00'</span>)), $this-&gt;<span class="fn">anything</span>())
+        -&gt;<span class="fn">willReturn</span>(<span class="nm">ChargeResult</span>::<span class="fn">success</span>(<span class="st">'ch_1'</span>));
+
+<span class="cm">// Fake: маленькая настоящая реализация — обычно лучший вариант</span>
+<span class="kw">final class</span> <span class="nm">InMemoryOrderRepository</span> <span class="kw">implements</span> <span class="nm">OrderRepository</span>
+{
+    <span class="kw">private array</span> $orders = [];
+
+    <span class="kw">public function</span> <span class="fn">save</span>(<span class="nm">Order</span> $order): <span class="nm">void</span> { $this-&gt;orders[$order-&gt;id] = $order; }
+    <span class="kw">public function</span> <span class="fn">find</span>(<span class="nm">string</span> $id): ?<span class="nm">Order</span> { <span class="kw">return</span> $this-&gt;orders[$id] ?? <span class="kw">null</span>; }
+
+    <span class="cm">// Фейк может проверять инварианты не хуже настоящего хранилища</span>
+    <span class="kw">public function</span> <span class="fn">countByCustomer</span>(<span class="nm">string</span> $id): <span class="nm">int</span>
+    {
+        <span class="kw">return</span> <span class="fn">count</span>(<span class="fn">array_filter</span>($this-&gt;orders, <span class="kw">fn</span> ($o) =&gt; $o-&gt;customerId === $id));
+    }
+}</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Правило выбора: подменяйте то, что вы не контролируете (внешний API, платёжный шлюз, отправка писем, часы), и не подменяйте то, что контролируете (собственные объекты-значения, чистые функции, простые сущности). Мок на каждую зависимость превращает тест в зеркало реализации: он повторяет структуру кода вместо проверки результата.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем мок отличается от стаба?</b><br>Стаб отдаёт подготовленные данные, чтобы код мог выполниться, и ничего не проверяет. Мок дополнительно задаёт ожидания: был ли метод вызван, сколько раз и с какими аргументами, — и проверяет их автоматически. Практическое правило: моки уместны, когда сам факт взаимодействия и есть проверяемое поведение (письмо отправлено, платёж списан); в остальных случаях лучше стаб или фейк.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="good">
+    <p class="path">junior / качество</p>
+    <div class="card-top"><h3>Признаки хорошего теста</h3><span class="badge b-1">База</span></div>
+    <p>Тесты — такой же код, который придётся читать и поддерживать. Плохие тесты хуже отсутствия тестов: они создают ложное чувство защищённости и тормозят разработку, поэтому команда постепенно начинает их отключать.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · свойства теста и что нарушает каждое</caption>
+      <thead><tr><th>Свойство</th><th>Что означает</th><th>Что его ломает</th></tr></thead>
+      <tbody>
+        <tr><td>Детерминированность</td><td>Результат одинаков при каждом запуске</td><td>Текущее время, случайность, сеть, порядок выполнения</td></tr>
+        <tr><td>Независимость</td><td>Тест не зависит от других тестов</td><td>Общее состояние, данные, оставшиеся от соседа</td></tr>
+        <tr><td>Скорость</td><td>Быстрый набор запускают часто</td><td>Обращения к базе и сети в модульных тестах</td></tr>
+        <tr><td>Читаемость</td><td>Понятно без изучения кода</td><td>Логика и циклы внутри теста, магические числа</td></tr>
+        <tr><td>Точность падения</td><td>По имени видно, что сломалось</td><td>Имена вида <code>test1</code>, двадцать проверок в одном тесте</td></tr>
+        <tr><td>Устойчивость</td><td>Не падает при рефакторинге</td><td>Проверка внутренних вызовов вместо результата</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Один и тот же тест: до и после</span></div><pre><code>&lt;?php
+<span class="cm">// ДО: непонятно, что проверяется; при падении неясно, что сломалось</span>
+<span class="kw">public function</span> <span class="fn">testOrder</span>(): <span class="nm">void</span>
+{
+    $o = <span class="kw">new</span> <span class="nm">Order</span>(1, <span class="st">'new'</span>, 1000, 2, <span class="kw">true</span>, <span class="kw">null</span>, <span class="fn">date</span>(<span class="st">'Y-m-d'</span>));  <span class="cm">// что за аргументы?</span>
+    $o-&gt;<span class="fn">pay</span>();
+    $o-&gt;<span class="fn">ship</span>();
+    $this-&gt;<span class="fn">assertEquals</span>(<span class="st">'shipped'</span>, $o-&gt;<span class="fn">getStatus</span>());
+    $this-&gt;<span class="fn">assertEquals</span>(2000, $o-&gt;<span class="fn">getTotal</span>());
+    $this-&gt;<span class="fn">assertTrue</span>($o-&gt;<span class="fn">isPaid</span>());
+    $this-&gt;<span class="fn">assertNotNull</span>($o-&gt;<span class="fn">getShippedAt</span>());
+}
+
+<span class="cm">// ПОСЛЕ: два теста, говорящие имена, значимые данные явно, остальное — в билдер</span>
+<span class="kw">public function</span> <span class="fn">оплаченный_заказ_можно_отгрузить</span>(): <span class="nm">void</span>
+{
+    $order = <span class="nm">OrderBuilder</span>::<span class="fn">new</span>()-&gt;<span class="fn">paid</span>()-&gt;<span class="fn">build</span>();   <span class="cm">// шум скрыт в билдере</span>
+
+    $order-&gt;<span class="fn">ship</span>();
+
+    $this-&gt;<span class="fn">assertSame</span>(<span class="nm">OrderStatus</span>::Shipped, $order-&gt;status);
+}
+
+<span class="kw">public function</span> <span class="fn">неоплаченный_заказ_отгрузить_нельзя</span>(): <span class="nm">void</span>
+{
+    $order = <span class="nm">OrderBuilder</span>::<span class="fn">new</span>()-&gt;<span class="fn">unpaid</span>()-&gt;<span class="fn">build</span>();
+
+    $this-&gt;<span class="fn">expectException</span>(<span class="nm">OrderNotPaid</span>::<span class="kw">class</span>);
+    $order-&gt;<span class="fn">ship</span>();
+}</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Билдеры и фабрики тестовых данных — самая окупаемая инвестиция в тестах. Они убирают шум из подготовки, оставляя в тесте только то, что относится к делу, и позволяют менять конструктор сущности в одном месте вместо ста тестов. Признак того, что билдер нужен: подготовка данных занимает больше строк, чем действие и проверка вместе.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Сколько проверок должно быть в одном тесте?</b><br>Столько, сколько нужно для проверки одного поведения, — иногда это три ассерта об одном результате. Плохой признак другой: несколько независимых действий и проверок в одном методе. Тогда при падении первого ассерта остальные не выполняются, а по имени теста непонятно, что именно сломалось. Правило простое: одно поведение — один тест, а имя описывает это поведение.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Объясняю, зачем нужны тесты, через цену изменений</li>
+        <li>Знаю уровни тестов и почему их разное количество</li>
+        <li>Пишу тест по структуре «подготовка → действие → проверка»</li>
+        <li>Использую провайдеры данных вместо копирования тестов</li>
+        <li>Разделяю наборы тестов и запускаю быстрые часто</li>
+        <li>Проверяю граничные случаи и обработку ошибок</li>
+      </ul>
+      <ul class="check">
+        <li>Не тестирую геттеры, фреймворк и приватные методы</li>
+        <li>Тестирую поведение, а не порядок вызовов</li>
+        <li>Различаю dummy, stub, fake, spy и mock</li>
+        <li>Подменяю то, что не контролирую, и не подменяю остальное</li>
+        <li>Даю тестам имена, читаемые как утверждение</li>
+        <li>Держу тесты детерминированными и независимыми</li>
+        <li>Выношу подготовку данных в билдеры и фабрики</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-секция по тестам почти всегда содержит три вопроса: чем мок отличается от стаба, что тестировать и что нет, зачем вообще тесты. Этот блок закрывает их — но лучший ответ всегда с примером из своего кода: что вы покрыли, что нашли и что после этого поменяли в самом коде.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · практика</p>
+    <h2>Middle: база, HTTP, интеграции, легаси</h2>
+    <p>Модульные тесты пишут все. Middle отличается тем, что умеет тестировать всё остальное: код, работающий с базой, эндпоинты целиком, интеграции с чужими сервисами, недетерминированные вещи вроде времени и случайности — и умеет заходить с тестами в проект, где их никогда не было.</p>
+  </div>
+
+  <!-- 6 -->
+  <article class="card" id="integration">
+    <p class="path">middle / данные</p>
+    <div class="card-top"><h3>Тесты с базой данных</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Запросы, транзакции, каскады, уникальные индексы и миграции невозможно проверить на моках: моки подтвердят ровно то, что вы в них заложили. Здесь нужна настоящая база — та же СУБД и той же версии, что в проде, иначе тесты пропустят различия в типах, сортировке и блокировках.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · как изолировать тесты друг от друга</caption>
+      <thead><tr><th>Способ</th><th>Как работает</th><th>Скорость</th><th>Ограничение</th></tr></thead>
+      <tbody>
+        <tr><td>Транзакция с откатом</td><td>Тест начинает транзакцию, в конце — откат</td><td>Самый быстрый</td><td>Не работает, если код сам управляет транзакциями</td></tr>
+        <tr><td>Очистка таблиц</td><td>Перед тестом таблицы усекаются</td><td>Средняя</td><td>Замедляется с ростом числа таблиц</td></tr>
+        <tr><td>Пересоздание схемы</td><td>Схема разворачивается заново</td><td>Медленный</td><td>Только для проверки миграций</td></tr>
+        <tr><td>База на процесс</td><td>Каждый параллельный процесс со своей базой</td><td>Быстрый в сумме</td><td>Требует настройки параллельного запуска</td></tr>
+        <tr><td>SQLite вместо боевой СУБД</td><td>Подмена драйвера</td><td>Очень быстрый</td><td>Другое поведение: типы, блокировки, SQL-диалект</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Изоляция откатом транзакции и фабрики данных</span></div><pre><code>&lt;?php
+<span class="kw">abstract class</span> <span class="nm">DatabaseTestCase</span> <span class="kw">extends</span> <span class="nm">TestCase</span>
+{
+    <span class="kw">protected function</span> <span class="fn">setUp</span>(): <span class="nm">void</span>
+    {
+        <span class="kw">parent</span>::<span class="fn">setUp</span>();
+        $this-&gt;connection = $this-&gt;<span class="fn">container</span>()-&gt;<span class="fn">get</span>(<span class="nm">Connection</span>::<span class="kw">class</span>);
+        $this-&gt;connection-&gt;<span class="fn">beginTransaction</span>();      <span class="cm">// всё, что сделает тест, будет отменено</span>
+    }
+
+    <span class="kw">protected function</span> <span class="fn">tearDown</span>(): <span class="nm">void</span>
+    {
+        $this-&gt;connection-&gt;<span class="fn">rollBack</span>();             <span class="cm">// база возвращается в исходное состояние</span>
+        <span class="kw">parent</span>::<span class="fn">tearDown</span>();
+    }
+}
+
+<span class="cm">// Фабрика данных: в тесте указывается только то, что важно для сценария</span>
+<span class="kw">final class</span> <span class="nm">OrderFactory</span>
+{
+    <span class="kw">public static function</span> <span class="fn">create</span>(<span class="nm">array</span> $overrides = []): <span class="nm">Order</span>
+    {
+        <span class="kw">return</span> <span class="nm">Order</span>::<span class="fn">fromArray</span>($overrides + [
+            <span class="st">'id'</span>          =&gt; <span class="st">'ord_'</span> . <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(4)),
+            <span class="st">'customer_id'</span> =&gt; <span class="nm">CustomerFactory</span>::<span class="fn">create</span>()-&gt;id,
+            <span class="st">'status'</span>      =&gt; <span class="nm">OrderStatus</span>::New,
+            <span class="st">'total'</span>       =&gt; <span class="st">'1000.00'</span>,
+            <span class="st">'created_at'</span>  =&gt; <span class="kw">new</span> <span class="nm">DateTimeImmutable</span>(<span class="st">'2026-01-01 10:00:00'</span>),
+        ]);
+    }
+}
+
+<span class="cm">// В тесте видно только существенное — остальное берётся по умолчанию</span>
+$order = <span class="nm">OrderFactory</span>::<span class="fn">create</span>([<span class="st">'status'</span> =&gt; <span class="nm">OrderStatus</span>::Paid, <span class="st">'total'</span> =&gt; <span class="st">'0.01'</span>]);</code></pre></div>
+
+    <div class="code"><div class="bar"><span>yaml + bash</span><span class="r">Окружение для интеграционных тестов</span></div><pre><code><span class="cm"># Та же СУБД и версия, что в проде; в памяти — ради скорости</span>
+services:
+  db-test:
+    image: postgres:16-alpine
+    tmpfs: [/var/lib/postgresql/data]      <span class="cm"># данные не переживают перезапуск — и не надо</span>
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: app_test
+    command: postgres -c fsync=off -c full_page_writes=off   <span class="cm"># быстрее в разы</span>
+    healthcheck:
+      test: [<span class="st">"CMD-SHELL"</span>, <span class="st">"pg_isready"</span>]
+
+<span class="cm"># Схема разворачивается один раз перед набором, а не перед каждым тестом</span>
+php bin/console doctrine:database:create --env=test --if-not-exists
+php bin/console doctrine:migrations:migrate --env=test --no-interaction
+
+<span class="cm"># Отдельная проверка: миграции применяются на копии боевой схемы без ошибок</span>
+vendor/bin/phpunit --testsuite=migrations</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Подменять боевую СУБД на SQLite ради скорости. Отличаются типы, приведения, поведение при конкурентном доступе, диалект SQL, поддержка JSON и оконных функций. Тесты становятся зелёными, а в проде запрос падает или ведёт себя иначе — то есть тесты дают ровно ложную уверенность, ради борьбы с которой их и пишут.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как изолировать тесты, работающие с базой?</b><br>Обычно транзакцией с откатом: тест начинает транзакцию, в конце она откатывается, база остаётся чистой — это самый быстрый способ. Он не подходит, если тестируемый код сам управляет транзакциями; тогда используют усечение таблиц или отдельную базу на параллельный процесс. Схема разворачивается один раз перед набором, а СУБД берётся та же, что в проде.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card" id="functional">
+    <p class="path">middle / сценарии</p>
+    <div class="card-top"><h3>HTTP и функциональные тесты</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Функциональный тест проходит через весь стек: маршрутизация, аутентификация, валидация, бизнес-логика, база, сериализация. Он ловит то, чего не видят модульные, — забытую регистрацию сервиса, неверный код ответа, отсутствующую проверку прав.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Тест эндпоинта: контракт, права и побочный эффект</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> <span class="nm">CreateOrderTest</span> <span class="kw">extends</span> <span class="nm">WebTestCase</span>
+{
+    <span class="kw">public function</span> <span class="fn">создание_заказа_возвращает_201_и_location</span>(): <span class="nm">void</span>
+    {
+        $client = <span class="kw">static</span>::<span class="fn">createClient</span>();
+        $client-&gt;<span class="fn">loginUser</span>(<span class="nm">UserFactory</span>::<span class="fn">create</span>());
+
+        $client-&gt;<span class="fn">request</span>(<span class="st">'POST'</span>, <span class="st">'/api/v1/orders'</span>, server: [
+            <span class="st">'CONTENT_TYPE'</span>        =&gt; <span class="st">'application/json'</span>,
+            <span class="st">'HTTP_IDEMPOTENCY_KEY'</span> =&gt; <span class="st">'3f8c2b1a'</span>,
+        ], content: <span class="fn">json_encode</span>([<span class="st">'product_id'</span> =&gt; <span class="st">'A-100'</span>, <span class="st">'qty'</span> =&gt; 2]));
+
+        $response = $client-&gt;<span class="fn">getResponse</span>();
+
+        $this-&gt;<span class="fn">assertSame</span>(201, $response-&gt;<span class="fn">getStatusCode</span>());
+        $this-&gt;<span class="fn">assertMatchesRegularExpression</span>(<span class="st">'#^/api/v1/orders/#'</span>,
+            $response-&gt;<span class="fn">headers</span>-&gt;<span class="fn">get</span>(<span class="st">'Location'</span>));
+
+        $body = <span class="fn">json_decode</span>($response-&gt;<span class="fn">getContent</span>(), <span class="kw">true</span>, flags: <span class="nm">JSON_THROW_ON_ERROR</span>);
+        $this-&gt;<span class="fn">assertArrayHasKey</span>(<span class="st">'id'</span>, $body);
+        $this-&gt;<span class="fn">assertSame</span>(<span class="st">'created'</span>, $body[<span class="st">'status'</span>]);
+
+        <span class="cm">// Побочный эффект проверяется тоже: заказ действительно сохранён</span>
+        $this-&gt;<span class="fn">assertNotNull</span>($this-&gt;<span class="fn">repository</span>(<span class="nm">OrderRepository</span>::<span class="kw">class</span>)-&gt;<span class="fn">find</span>($body[<span class="st">'id'</span>]));
+    }
+
+    <span class="cm">// Тест на права обязателен для каждого эндпоинта: именно здесь ловятся IDOR</span>
+    <span class="kw">public function</span> <span class="fn">чужой_заказ_недоступен</span>(): <span class="nm">void</span>
+    {
+        $client = <span class="kw">static</span>::<span class="fn">createClient</span>();
+        $client-&gt;<span class="fn">loginUser</span>(<span class="nm">UserFactory</span>::<span class="fn">create</span>());
+        $foreign = <span class="nm">OrderFactory</span>::<span class="fn">create</span>([<span class="st">'tenant_id'</span> =&gt; <span class="st">'other-tenant'</span>]);
+
+        $client-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, <span class="st">"/api/v1/orders/{$foreign-&gt;id}"</span>);
+
+        $this-&gt;<span class="fn">assertSame</span>(404, $client-&gt;<span class="fn">getResponse</span>()-&gt;<span class="fn">getStatusCode</span>());
+    }
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · что проверять в функциональном тесте</caption>
+      <thead><tr><th>Аспект</th><th>Почему важно</th></tr></thead>
+      <tbody>
+        <tr><td>Код ответа</td><td>По нему клиенты решают, повторять ли запрос; ломается при рефакторинге незаметно</td></tr>
+        <tr><td>Форма ответа</td><td>Изменение формы ломает клиентов — это часть контракта</td></tr>
+        <tr><td>Права доступа</td><td>Единственное место, где системно ловятся IDOR и забытые проверки</td></tr>
+        <tr><td>Валидация</td><td>Проверка, что неверный ввод даёт 422, а не 500</td></tr>
+        <tr><td>Побочный эффект</td><td>Ответ 201 без реально сохранённой записи — типовая ошибка</td></tr>
+        <tr><td>Ключевые заголовки</td><td><code>Location</code>, <code>Cache-Control</code>, <code>Retry-After</code> — тоже контракт</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Функциональных тестов должно быть немного: по одному счастливому пути и по одному-двум ключевым отказам на эндпоинт. Всё разнообразие бизнес-правил проверяется на уровне ниже — там это в десятки раз быстрее и точнее диагностируется. Попытка покрыть все комбинации через HTTP даёт набор, который идёт полчаса и падает целиком от одной ошибки в контейнере сервисов.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем функциональный тест отличается от модульного и когда какой писать?</b><br>Модульный проверяет одну единицу логики в изоляции и выполняется за миллисекунды; функциональный проходит через весь стек и проверяет, что всё собрано вместе правильно: маршруты, права, коды ответа, сериализация. Правило: бизнес-правила и граничные случаи — модульными, по одному сценарию на эндпоинт плюс проверка прав — функциональными.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="external">
+    <p class="path">middle / интеграции</p>
+    <div class="card-top"><h3>Внешние интеграции</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Чужой сервис в тестах — источник медленности и нестабильности: он лежит, меняет ответы, ограничивает частоту и требует денег за каждый вызов. Ходить в него из тестов нельзя, но и полностью выдумывать его ответы опасно: тесты пройдут на фантазии, а прод встретит реальность.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · способы тестировать интеграцию</caption>
+      <thead><tr><th>Способ</th><th>Что даёт</th><th>Чего не даёт</th></tr></thead>
+      <tbody>
+        <tr><td>Подмена HTTP-клиента</td><td>Быстро, детерминированно, любые сценарии отказа</td><td>Не заметит изменения реального API</td></tr>
+        <tr><td>Локальный мок-сервер</td><td>Проверяется и сам клиент, включая таймауты и повторы</td><td>Нужно поддерживать сценарии сервера</td></tr>
+        <tr><td>Запись и воспроизведение</td><td>Ответы взяты из реальности</td><td>Записи устаревают; риск записать секреты</td></tr>
+        <tr><td>Песочница провайдера</td><td>Настоящее поведение API</td><td>Медленно, нестабильно, не для каждого прогона</td></tr>
+        <tr><td>Контрактный тест по схеме</td><td>Ловит расхождение с опубликованной спецификацией</td><td>Только если у партнёра есть спецификация</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Подмена клиента: главное — тестировать отказы, а не только успех</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">при_таймауте_платежа_заказ_остаётся_в_обработке</span>(): <span class="nm">void</span>
+{
+    <span class="cm">// Отказы происходят в проде постоянно, а тестируют обычно только успех</span>
+    $http = <span class="kw">new</span> <span class="nm">MockHttpClient</span>(<span class="kw">function</span> () {
+        <span class="kw">throw new</span> <span class="nm">TransportException</span>(<span class="st">'Idle timeout reached'</span>);
+    });
+
+    $service = <span class="kw">new</span> <span class="nm">PaymentService</span>(<span class="kw">new</span> <span class="nm">ProviderClient</span>($http), $this-&gt;orders);
+
+    $service-&gt;<span class="fn">charge</span>($order = <span class="nm">OrderFactory</span>::<span class="fn">create</span>());
+
+    <span class="cm">// Ключевая проверка: неизвестный исход не превращается в «отказано»</span>
+    $this-&gt;<span class="fn">assertSame</span>(<span class="nm">OrderStatus</span>::PaymentPending, $order-&gt;status);
+    $this-&gt;<span class="fn">assertTrue</span>($this-&gt;scheduler-&gt;<span class="fn">hasScheduled</span>(<span class="nm">CheckPaymentStatus</span>::<span class="kw">class</span>));
+}
+
+<span class="kw">public function</span> <span class="fn">повторяет_запрос_при_временной_ошибке_и_не_дублирует_платёж</span>(): <span class="nm">void</span>
+{
+    $calls = 0;
+    $http  = <span class="kw">new</span> <span class="nm">MockHttpClient</span>(<span class="kw">function</span> (<span class="nm">string</span> $method, <span class="nm">string</span> $url, <span class="nm">array</span> $options) <span class="kw">use</span> (&amp;$calls) {
+        $calls++;
+        <span class="cm">// Идемпотентность на нашей стороне: ключ должен быть одинаковым в обеих попытках</span>
+        $this-&gt;<span class="fn">assertSame</span>(<span class="st">'op_123'</span>, $options[<span class="st">'headers'</span>][<span class="st">'Idempotency-Key'</span>]);
+
+        <span class="kw">return</span> $calls === 1
+            ? <span class="kw">new</span> <span class="nm">MockResponse</span>(<span class="st">''</span>, [<span class="st">'http_code'</span> =&gt; 503])
+            : <span class="kw">new</span> <span class="nm">MockResponse</span>(<span class="st">'{"status":"succeeded"}'</span>, [<span class="st">'http_code'</span> =&gt; 200]);
+    });
+
+    $result = (<span class="kw">new</span> <span class="nm">ProviderClient</span>($http))-&gt;<span class="fn">charge</span>(<span class="st">'op_123'</span>, <span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'100.00'</span>));
+
+    $this-&gt;<span class="fn">assertSame</span>(2, $calls);
+    $this-&gt;<span class="fn">assertTrue</span>($result-&gt;<span class="fn">isSuccessful</span>());
+}</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Рабочая комбинация: быстрые тесты на подменённом клиенте закрывают все сценарии, включая отказы, а один отдельный набор ходит в песочницу провайдера по расписанию — раз в сутки, не в каждом прогоне. Первый набор защищает от собственных регрессий, второй — от изменений на стороне партнёра. Эти задачи разные, и одним набором их не решить.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как тестировать код, работающий с внешним API?</b><br>Подменять HTTP-клиент и проверять не только успешный ответ, но и отказы: таймаут, 500, 429, некорректное тело, обрыв соединения. Именно они происходят в проде и почти никогда не покрыты. Отдельно проверяется, что мы не дублируем операцию при повторе — то есть ключ идемпотентности одинаков в обеих попытках. А проверку соответствия реальному API выносят в отдельный набор по расписанию.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="nondeterminism">
+    <p class="path">middle / детерминизм</p>
+    <div class="card-top"><h3>Время, случайность, окружение</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Тест, зависящий от текущего времени, однажды упадёт — в полночь, в конце месяца, тридцать первого декабря или при переходе на летнее время. Тест, зависящий от случайности, упадёт в одном прогоне из ста. Оба лечатся одинаково: недетерминированное становится явной зависимостью.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Часы как зависимость — самый окупаемый приём в тестах</span></div><pre><code>&lt;?php
+<span class="cm">// Проблема: время берётся изнутри, зафиксировать его невозможно</span>
+<span class="kw">final class</span> <span class="nm">Subscription</span>
+{
+    <span class="kw">public function</span> <span class="fn">isExpired</span>(): <span class="nm">bool</span>
+    {
+        <span class="kw">return</span> $this-&gt;expiresAt &lt; <span class="kw">new</span> <span class="nm">DateTimeImmutable</span>();   <span class="cm">// ← скрытая зависимость</span>
+    }
+}
+
+<span class="cm">// Решение: часы приходят снаружи (в PHP 8.3+ есть стандартный интерфейс PSR-20)</span>
+<span class="kw">final class</span> <span class="nm">Subscription</span>
+{
+    <span class="kw">public function</span> <span class="fn">isExpired</span>(<span class="nm">ClockInterface</span> $clock): <span class="nm">bool</span>
+    {
+        <span class="kw">return</span> $this-&gt;expiresAt &lt; $clock-&gt;<span class="fn">now</span>();
+    }
+}
+
+<span class="cm">// В тесте время фиксируется, и граничные случаи становятся проверяемыми</span>
+<span class="kw">public function</span> <span class="fn">подписка_истекает_ровно_в_полночь</span>(): <span class="nm">void</span>
+{
+    $clock = <span class="kw">new</span> <span class="nm">MockClock</span>(<span class="st">'2026-03-01 00:00:00'</span>);
+    $sub   = <span class="nm">SubscriptionFactory</span>::<span class="fn">create</span>([<span class="st">'expires_at'</span> =&gt; <span class="st">'2026-03-01 00:00:00'</span>]);
+
+    $this-&gt;<span class="fn">assertFalse</span>($sub-&gt;<span class="fn">isExpired</span>($clock));
+
+    $clock-&gt;<span class="fn">modify</span>(<span class="st">'+1 second'</span>);                 <span class="cm">// перемотка вместо sleep()</span>
+    $this-&gt;<span class="fn">assertTrue</span>($sub-&gt;<span class="fn">isExpired</span>($clock));
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · источники недетерминизма и что с ними делать</caption>
+      <thead><tr><th>Источник</th><th>Как проявляется</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>Текущее время</td><td>Падение в полночь, в конце месяца, в феврале</td><td>Часы как зависимость, фиксированное время в тесте</td></tr>
+        <tr><td>Случайность</td><td>Один падающий прогон из сотни</td><td>Генератор как зависимость либо фиксированное зерно</td></tr>
+        <tr><td>Идентификаторы</td><td>Ассерт на конкретный UUID</td><td>Проверять формат и связи, а не значение</td></tr>
+        <tr><td>Порядок выборки из БД</td><td>Разный порядок без <code>ORDER BY</code></td><td>Явная сортировка либо сравнение множеств</td></tr>
+        <tr><td>Часовой пояс и локаль</td><td>Работает локально, падает в CI</td><td>Фиксировать пояс и локаль в конфигурации тестов</td></tr>
+        <tr><td>Общее состояние</td><td>Падает только при определённом порядке тестов</td><td>Сброс статики и контейнера между тестами</td></tr>
+        <tr><td>Параллельность</td><td>Тесты мешают друг другу</td><td>Своя база и свои ключи кэша на процесс</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span><code>sleep()</code> в тестах для ожидания асинхронной операции. Он одновременно замедляет набор и не гарантирует результат: на нагруженном агенте CI операция не успеет и за две секунды. Вместо ожидания по времени — либо явная синхронная обработка очереди в тестовом режиме, либо ожидание условия с коротким шагом и таймаутом.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как тестировать код, зависящий от текущего времени?</b><br>Сделать время явной зависимостью: интерфейс часов, который в проде возвращает реальное время, а в тесте — фиксированное и перематываемое. Тогда становятся проверяемыми ровно те случаи, которые ломаются в проде: граница суток, конец месяца, високосный год, истечение срока ровно в момент проверки. Без этого такие сценарии либо не покрыты, либо тест «мигает».</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="legacy">
+    <p class="path">middle / легаси</p>
+    <div class="card-top"><h3>Тесты на легаси</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Классическая ловушка: чтобы безопасно менять код, нужны тесты, а чтобы написать тесты, нужно менять код — он не тестируем. Выход не в том, чтобы покрыть всё, а в том, чтобы покрывать по мере необходимости, начиная с того, что собираетесь трогать.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Характеризующий тест: фиксируем текущее поведение, даже если оно странное</span></div><pre><code>&lt;?php
+<span class="cm">// Цель НЕ в том, чтобы проверить правильность. Цель — зафиксировать, как есть,</span>
+<span class="cm">// чтобы рефакторинг не изменил поведение незаметно.</span>
+
+#[<span class="nm">DataProvider</span>(<span class="st">'реальные_входы_из_прода'</span>)]
+<span class="kw">public function</span> <span class="fn">расчёт_комиссии_сохраняет_текущее_поведение</span>(<span class="nm">array</span> $input, <span class="nm">string</span> $expected): <span class="nm">void</span>
+{
+    <span class="cm">// $expected получен запуском текущего кода на реальных данных, а не выведен из ТЗ</span>
+    $this-&gt;<span class="fn">assertSame</span>($expected, <span class="fn">calculate_commission</span>(...$input));
+}
+
+<span class="kw">public static function</span> <span class="fn">реальные_входы_из_прода</span>(): <span class="nm">iterable</span>
+{
+    <span class="cm">// Данные собраны логированием на проде: 200 самых частых комбинаций</span>
+    <span class="kw">yield</span> <span class="st">'обычный заказ'</span>       =&gt; [[1000, <span class="st">'RUB'</span>, <span class="kw">false</span>], <span class="st">'50.00'</span>];
+    <span class="kw">yield</span> <span class="st">'нулевая сумма'</span>       =&gt; [[0, <span class="st">'RUB'</span>, <span class="kw">false</span>], <span class="st">'0.00'</span>];
+    <span class="kw">yield</span> <span class="st">'странность: минус'</span>   =&gt; [[-100, <span class="st">'RUB'</span>, <span class="kw">false</span>], <span class="st">'-5.00'</span>];  <span class="cm">// баг? фиксируем как есть</span>
+    <span class="kw">yield</span> <span class="st">'валюта неизвестна'</span>   =&gt; [[1000, <span class="st">'XXX'</span>, <span class="kw">false</span>], <span class="st">'0.00'</span>];   <span class="cm">// тоже подозрительно</span>
+}
+
+<span class="cm">// Странности фиксируются отдельным списком и обсуждаются с бизнесом.</span>
+<span class="cm">// Молча «исправлять» их во время рефакторинга нельзя: на них может держаться отчётность.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Шов: минимальное изменение, делающее код тестируемым</span></div><pre><code>&lt;?php
+<span class="cm">// Было: зависимости создаются внутри — подменить нечем</span>
+<span class="kw">class</span> <span class="nm">ReportSender</span>
+{
+    <span class="kw">public function</span> <span class="fn">send</span>(<span class="nm">int</span> $userId): <span class="nm">void</span>
+    {
+        $db     = <span class="kw">new</span> <span class="nm">Database</span>(DB_HOST, DB_USER, DB_PASS);   <span class="cm">// глобальные константы</span>
+        $mailer = <span class="kw">new</span> <span class="nm">SmtpMailer</span>(SMTP_HOST);
+        <span class="cm">// ... 200 строк логики ...</span>
+    }
+}
+
+<span class="cm">// Стало: конструктор со значениями по умолчанию — старый код продолжает работать,</span>
+<span class="cm">// а тест может подставить свои реализации. Изменение минимальное и безопасное.</span>
+<span class="kw">class</span> <span class="nm">ReportSender</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private</span> ?<span class="nm">Database</span> $db = <span class="kw">null</span>,
+        <span class="kw">private</span> ?<span class="nm">Mailer</span> $mailer = <span class="kw">null</span>,
+    ) {
+        $this-&gt;db     ??= <span class="kw">new</span> <span class="nm">Database</span>(DB_HOST, DB_USER, DB_PASS);
+        $this-&gt;mailer ??= <span class="kw">new</span> <span class="nm">SmtpMailer</span>(SMTP_HOST);
+    }
+}
+
+<span class="cm">// Дальше по шагам: покрыть характеризующими тестами → вынести логику в отдельный</span>
+<span class="cm">// класс с явными зависимостями → переписать внутренности под защитой тестов.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · с чего начинать покрытие легаси</caption>
+      <thead><tr><th>Приоритет</th><th>Что покрывать</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Код, который собираетесь менять на этой неделе</td><td>Тест окупается немедленно</td></tr>
+        <tr><td>2</td><td>Места, где уже были инциденты</td><td>Там ломается снова</td></tr>
+        <tr><td>3</td><td>Расчёты денег, скидок, прав доступа</td><td>Самая высокая цена ошибки</td></tr>
+        <tr><td>4</td><td>Сценарии, которые проверяют вручную перед релизом</td><td>Прямая экономия времени команды</td></tr>
+        <tr><td>5</td><td>Код с максимальной цикломатической сложностью</td><td>Больше всего непроверенных ветвлений</td></tr>
+        <tr><td>—</td><td>Всё остальное «для процента покрытия»</td><td>Не окупается, лучше не тратить время</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как начать покрывать тестами проект без тестов?</b><br>Не пытаться покрыть всё. Начать с того, что собираетесь менять: написать характеризующие тесты, фиксирующие текущее поведение на реальных данных, затем сделать минимальный шов для подмены зависимостей и только потом рефакторить под защитой тестов. Приоритеты — деньги, права доступа, места прошлых инцидентов и сценарии, которые сейчас проверяют вручную. Странности фиксируются как есть и обсуждаются отдельно, а не «исправляются» по дороге.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="tdd">
+    <p class="path">middle / подход</p>
+    <div class="card-top"><h3>TDD и тестируемость</h3><span class="badge b-2">Ключевое</span></div>
+    <p>TDD — это цикл «красный → зелёный → рефакторинг»: сначала падающий тест, затем минимальный код, чтобы он прошёл, затем улучшение кода при зелёных тестах. Спорят о нём много, но одно наблюдение бесспорно: код, написанный тестами вперёд, почти всегда получается менее связанным — просто потому, что нетестируемый код невозможно написать этим способом.</p>
+
+    <div class="flow" role="img" aria-label="Цикл TDD: красный, зелёный, рефакторинг">
+      <div class="node">Красный<small>тест падает</small></div><span class="arr">→</span>
+      <div class="node">Зелёный<small>минимальный код</small></div><span class="arr">→</span>
+      <div class="node">Рефакторинг<small>чистим при зелёных</small></div><span class="arr">→</span>
+      <div class="node">Повтор<small>следующий случай</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · где TDD помогает, а где мешает</caption>
+      <thead><tr><th>Помогает</th><th>Мешает</th></tr></thead>
+      <tbody>
+        <tr><td>Алгоритмы и расчёты с понятными правилами</td><td>Исследовательская задача, где решение ещё неизвестно</td></tr>
+        <tr><td>Разбор форматов, валидация, конечные автоматы</td><td>Вёрстка и подбор внешнего вида</td></tr>
+        <tr><td>Исправление бага: сначала падающий тест</td><td>Прототип, который завтра выбросят</td></tr>
+        <tr><td>Проектирование публичного контракта модуля</td><td>Интеграция с чужим API, который ещё не изучен</td></tr>
+        <tr><td>Обработка граничных случаев</td><td>Код, где 90 % — вызовы фреймворка</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · признаки нетестируемого кода</caption>
+      <thead><tr><th>Признак</th><th>Почему мешает</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>Зависимости создаются внутри через <code>new</code></td><td>Нечего подменить</td><td>Внедрение через конструктор</td></tr>
+        <tr><td>Статические вызовы и синглтоны</td><td>Глобальное состояние протекает между тестами</td><td>Обёртка с интерфейсом</td></tr>
+        <tr><td>Обращение к времени и случайности внутри</td><td>Недетерминизм</td><td>Явные зависимости часов и генератора</td></tr>
+        <tr><td>Метод на 300 строк с десятком ветвлений</td><td>Комбинаторный взрыв случаев</td><td>Выделение частей в отдельные единицы</td></tr>
+        <tr><td>Логика внутри контроллера</td><td>Проверяется только через HTTP</td><td>Вынос в сервис или доменный объект</td></tr>
+        <tr><td>Побочные эффекты вперемешку с расчётом</td><td>Нельзя проверить расчёт без записи в базу</td><td>Разделение вычисления и записи</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Даже если вы не практикуете TDD постоянно, есть один случай, где он окупается всегда: исправление бага. Сначала пишется тест, воспроизводящий баг, — он должен упасть. Это доказывает, что вы поняли причину, а не совпадение. Затем исправление, тест зеленеет, и в наборе навсегда остаётся защита от повторения. Багу без такого теста свойственно возвращаться.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Практикуете ли вы TDD?</b><br>Честный и сильный ответ — не «всегда» и не «никогда», а с условиями: на алгоритмах, расчётах и разборе форматов TDD экономит время; при исправлении багов пишу падающий тест первым всегда; на исследовательских задачах и коде, состоящем из вызовов фреймворка, пишу тесты после. Главную ценность вижу не в ритуале, а в том, что при таком подходе невозможно написать код, который нельзя протестировать.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="ci">
+    <p class="path">middle / пайплайн</p>
+    <div class="card-top"><h3>Тесты в CI и флаки</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Набор тестов имеет два свойства, определяющих его судьбу: время прогона и стабильность. Медленный набор перестают запускать локально; нестабильный — перестают воспринимать всерьёз, и красная сборка становится нормой. Оба состояния означают, что тесты больше не работают, хотя формально они есть.</p>
+
+    <div class="code"><div class="bar"><span>yaml + bash</span><span class="r">Разделение по скорости и параллельный прогон</span></div><pre><code><span class="cm"># Быстрая обратная связь: модульные тесты отдельно и первыми</span>
+unit:
+  script: vendor/bin/phpunit --testsuite=unit          <span class="cm"># секунды</span>
+
+integration:
+  needs: [unit]
+  services: [postgres, redis]
+  script:
+    <span class="cm"># Параллельный прогон: у каждого процесса своя база</span>
+    - vendor/bin/paratest --processes=4 --testsuite=integration
+
+<span class="cm"># Изоляция параллельных процессов — обязательное условие</span>
+DB_NAME=app_test_${TEST_TOKEN}          <span class="cm"># своя база на процесс</span>
+REDIS_DB=${TEST_TOKEN}                  <span class="cm"># свой номер базы Redis</span>
+CACHE_PREFIX=test_${TEST_TOKEN}_        <span class="cm"># свой префикс ключей</span>
+
+<span class="cm"># Найти, что тормозит: топ-10 самых медленных тестов</span>
+vendor/bin/phpunit --log-junit junit.xml
+xmllint --xpath <span class="st">'//testcase/@time'</span> junit.xml | tr <span class="st">' '</span> <span class="st">'\n'</span> | sort -rn | head</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · причины нестабильных тестов</caption>
+      <thead><tr><th>Причина</th><th>Как узнать</th><th>Лечение</th></tr></thead>
+      <tbody>
+        <tr><td>Зависимость от времени</td><td>Падает ночью или в конце месяца</td><td>Фиксированные часы</td></tr>
+        <tr><td>Зависимость от порядка</td><td>Падает при случайном порядке запуска</td><td>Сброс состояния, изоляция данных</td></tr>
+        <tr><td>Общие данные между тестами</td><td>Падает только при параллельном прогоне</td><td>Своя база и ключи на процесс</td></tr>
+        <tr><td>Ожидание через <code>sleep</code></td><td>Падает на загруженном агенте</td><td>Ожидание условия с таймаутом</td></tr>
+        <tr><td>Порядок строк без <code>ORDER BY</code></td><td>Падает на другой версии СУБД</td><td>Явная сортировка или сравнение множеств</td></tr>
+        <tr><td>Обращение в сеть</td><td>Падает при проблемах с интернетом</td><td>Подмена клиента</td></tr>
+        <tr><td>Утечка состояния между процессами</td><td>Падает случайно, воспроизводится редко</td><td>Изоляция кэша, файлов, статики</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Автоматический повтор упавших тестов как способ «починить» нестабильность. Повтор скрывает проблему, а не решает: тест, падающий один раз из десяти, точно так же пропустит реальную ошибку один раз из десяти. Повтор допустим только как временная мера вместе с задачей на исправление и учётом частоты — тест, который «мигает» вторую неделю, лучше отключить явно, чем терпеть красную сборку.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Тесты периодически падают без изменений в коде. Что делать?</b><br>Прежде всего не игнорировать: нестабильный тест обесценивает весь набор. Найти причину по типовому списку — время, порядок выполнения, общие данные, ожидание через <code>sleep</code>, сеть, порядок строк без сортировки. Помогает запуск в случайном порядке и повтор одного теста много раз подряд. До исправления тест лучше явно отключить с задачей, чем оставлять красную сборку, к которой команда привыкает.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Тестирую код с базой на той же СУБД, что в проде</li>
+        <li>Изолирую тесты откатом транзакции или очисткой</li>
+        <li>Использую фабрики данных вместо больших фикстур</li>
+        <li>Пишу по одному функциональному тесту на сценарий и проверку прав</li>
+        <li>Не покрываю все комбинации через HTTP</li>
+        <li>Подменяю внешние сервисы и тестирую отказы, а не только успех</li>
+        <li>Проверяю идемпотентность при повторах запросов</li>
+      </ul>
+      <ul class="check">
+        <li>Делаю время и случайность явными зависимостями</li>
+        <li>Не использую <code>sleep</code> для ожидания</li>
+        <li>Начинаю покрытие легаси с того, что меняю</li>
+        <li>Пишу характеризующие тесты перед рефакторингом</li>
+        <li>На каждый баг пишу падающий тест до исправления</li>
+        <li>Узнаю нетестируемый код по признакам и лечу его</li>
+        <li>Разделяю наборы по скорости и гоняю параллельно с изоляцией</li>
+        <li>Не глушу нестабильные тесты повторами</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Проверка зрелости набора тестов одним вопросом: сколько времени проходит от изменения кода до понимания, что оно ничего не сломало. Если ответ «секунды для логики и минуты для всего остального» — набор работает. Если «двадцать минут и потом ещё перезапустить, потому что упало что-то не то» — тесты формально есть, но своей задачи не выполняют.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · стратегия</p>
+    <h2>Senior: что покрывать, чем измерять, как поддерживать</h2>
+    <p>Написать тесты умеет команда. Senior отвечает за другое: где проходит граница между «покрыто достаточно» и «тратим время впустую», как понять, что тесты реально что-то ловят, что делать с принципиально сложными для тестирования вещами и почему набор тестов со временем деградирует, если за него никто не отвечает.</p>
+  </div>
+
+  <!-- 13 -->
+  <article class="card" id="strategy">
+    <p class="path">senior / выбор</p>
+    <div class="card-top"><h3>Стратегия покрытия</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Универсального ответа «сколько процентов покрытия нужно» не существует, потому что вопрос поставлен неверно. Правильный вопрос — какой риск мы снижаем и сколько это стоит. Расчёт комиссии и форма обратной связи заслуживают разного отношения, хотя строк кода в них поровну.</p>
+
+    <div class="formula">Приоритет покрытия ≈ вероятность изменения × цена ошибки<span>Часто меняющийся код с высокой ценой ошибки покрывается первым; редкий и дешёвый — последним или никогда</span></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · тип кода и подходящий уровень тестов</caption>
+      <thead><tr><th>Тип кода</th><th>Основной уровень</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Доменная логика: расчёты, правила, статусы</td><td>Модульные, много</td><td>Быстро, точная диагностика, много случаев</td></tr>
+        <tr><td>Репозитории и сложные запросы</td><td>Интеграционные</td><td>Мок ничего не докажет о реальном SQL</td></tr>
+        <tr><td>Контроллеры и маршруты</td><td>Функциональные, по одному сценарию</td><td>Логики мало, важна сборка целиком</td></tr>
+        <tr><td>Права доступа</td><td>Функциональные, обязательно</td><td>Единственное место, где ловится IDOR</td></tr>
+        <tr><td>Интеграции с внешними API</td><td>С подменённым клиентом + отдельный набор по расписанию</td><td>Регрессии свои и чужие — разные задачи</td></tr>
+        <tr><td>Миграции</td><td>Отдельный набор на копии схемы</td><td>Не откатываются: ошибка дороже всего</td></tr>
+        <tr><td>Фоновые задачи</td><td>Модульные на обработчик + один интеграционный</td><td>Полный цикл через очередь медленный и хрупкий</td></tr>
+        <tr><td>Вёрстка и интерфейс</td><td>Единичные E2E на критичный путь</td><td>Дорого поддерживать, быстро устаревает</td></tr>
+        <tr><td>Конфигурация и обвязка</td><td>Не покрывать</td><td>Ломается редко, ловится при первом запуске</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Про форму пирамиды.</strong> Классическая пирамида (много модульных, мало сквозных) выросла из времени, когда интеграционные тесты были очень медленными. Сегодня база в контейнере поднимается за секунды, и разумный набор ближе к «трофею»: заметная доля интеграционных тестов, потому что именно они проверяют то, что реально ломается — запросы, транзакции, сборку компонентов. Модульные остаются для логики, где важно перебрать много случаев быстро.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Требование «покрытие не ниже 80 %» без уточнений порождает предсказуемый результат: тесты на геттеры, тесты без единого ассерта и вызовы методов «чтобы строчка засчиталась». Полезнее задавать порог на изменённый код в pull request и отдельно требовать тест на каждый исправленный баг — это измеримо и не поощряет имитацию.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какой процент покрытия нужен проекту?</b><br>Сам по себе процент ничего не значит — покрытие показывает, что строка выполнилась, а не что поведение проверено. Практично другое: обязательное покрытие для кода с высокой ценой ошибки (деньги, права, расчёты), порог на изменённый код в pull request, тест на каждый исправленный баг и осознанный отказ от покрытия обвязки. Числу 80 % я бы предпочёл ответ на вопрос «что мы можем безопасно рефакторить».</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="metrics">
+    <p class="path">senior / измерение</p>
+    <div class="card-top"><h3>Метрики качества тестов</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Тесты сами нуждаются в проверке. Набор может иметь 90 % покрытия и не ловить ошибок — если ассерты слабые или их нет вовсе. Есть несколько метрик, которые говорят о наборе больше, чем покрытие.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · метрики набора тестов</caption>
+      <thead><tr><th>Метрика</th><th>Что показывает</th><th>Чего не показывает</th></tr></thead>
+      <tbody>
+        <tr><td>Покрытие строк</td><td>Какой код выполнялся во время тестов</td><td>Проверялось ли поведение хоть одним ассертом</td></tr>
+        <tr><td>Покрытие ветвлений</td><td>Все ли ветки условий пройдены</td><td>Корректность ожиданий</td></tr>
+        <tr><td>Мутационный балл</td><td>Долю внесённых ошибок, которые тесты заметили</td><td>Требует времени на прогон</td></tr>
+        <tr><td>Время прогона</td><td>Насколько быстро приходит обратная связь</td><td>Полезность самих тестов</td></tr>
+        <tr><td>Доля нестабильных</td><td>Можно ли доверять красной сборке</td><td>Причину нестабильности</td></tr>
+        <tr><td>Найденные тестами баги</td><td>Реальную пользу набора</td><td>Требует учёта и дисциплины</td></tr>
+        <tr><td>Баги, ушедшие в прод</td><td>Дыры в покрытии по факту</td><td>Что именно надо было покрыть заранее</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash + php</span><span class="r">Мутационное тестирование: проверка того, что тесты действительно проверяют</span></div><pre><code><span class="cm"># Инструмент вносит в код мелкие изменения (мутации) и смотрит, упадут ли тесты.</span>
+<span class="cm"># Мутация, которую тесты не заметили, — это дыра в проверках.</span>
+vendor/bin/infection --min-msi=70 --threads=4 --only-covered
+
+<span class="cm"># Примеры мутаций:</span>
+<span class="cm">#   &gt;  превращается в &gt;=      (граничные случаи)</span>
+<span class="cm">#   &amp;&amp; превращается в ||      (условия)</span>
+<span class="cm">#   return $x  →  return null  (использование результата)</span>
+<span class="cm">#   удаление вызова метода     (побочные эффекты)</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Что находит мутационное тестирование на практике</span></div><pre><code>&lt;?php
+<span class="cm">// Код: скидка положена от 1000 рублей</span>
+<span class="kw">public function</span> <span class="fn">isEligible</span>(<span class="nm">Money</span> $total): <span class="nm">bool</span>
+{
+    <span class="kw">return</span> $total-&gt;<span class="fn">isGreaterThan</span>(<span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'1000.00'</span>));
+}
+
+<span class="cm">// Тест даёт 100 % покрытия — но не проверяет границу</span>
+<span class="kw">public function</span> <span class="fn">скидка_доступна_для_крупного_заказа</span>(): <span class="nm">void</span>
+{
+    $this-&gt;<span class="fn">assertTrue</span>($this-&gt;discount-&gt;<span class="fn">isEligible</span>(<span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'5000.00'</span>)));
+}
+
+<span class="cm">// Мутация меняет isGreaterThan на isGreaterThanOrEqual — тест остаётся зелёным.</span>
+<span class="cm">// Значит, поведение ровно на границе 1000.00 никак не зафиксировано:</span>
+<span class="cm">// его можно случайно изменить, и никто не заметит.</span>
+
+<span class="cm">// Добавляем граничные случаи — мутация начинает убиваться:</span>
+$this-&gt;<span class="fn">assertFalse</span>($this-&gt;discount-&gt;<span class="fn">isEligible</span>(<span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'1000.00'</span>)));   <span class="cm">// ровно граница</span>
+$this-&gt;<span class="fn">assertTrue</span>($this-&gt;discount-&gt;<span class="fn">isEligible</span>(<span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'1000.01'</span>)));   <span class="cm">// на копейку выше</span></code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Мутационное тестирование дорого гонять на всём проекте, но отлично работает точечно: на модуле расчётов, на правилах скидок, на конечных автоматах статусов. Один прогон по ключевому модулю обычно находит несколько мест, где тесты были декоративными, — и это самая честная проверка качества набора из доступных.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое мутационное тестирование и зачем оно, если есть покрытие?</b><br>Инструмент вносит в код мелкие изменения — меняет знак сравнения, условие, удаляет вызов — и проверяет, упадут ли тесты. Если мутация выжила, значит тесты выполнили эту строку, но не проверили её поведение. Покрытие отвечает на вопрос «код выполнялся?», мутационный балл — на вопрос «а тесты заметили бы ошибку?». Второй вопрос гораздо ближе к тому, ради чего тесты пишут.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="hard">
+    <p class="path">senior / сложные случаи</p>
+    <div class="card-top"><h3>Трудные случаи</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Есть категории кода, которые невозможно протестировать «как обычно»: асинхронная обработка, конкурентность, миграции, взаимодействие нескольких сервисов. Здесь важно не отказываться от тестов совсем, а понимать, что именно вы проверяете и что остаётся непокрытым.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · сложные для тестирования области</caption>
+      <thead><tr><th>Область</th><th>Что проверять</th><th>Что остаётся непокрытым</th></tr></thead>
+      <tbody>
+        <tr><td>Очереди и фоновые задачи</td><td>Обработчик отдельно; факт постановки задачи отдельно</td><td>Поведение брокера, порядок, задержки</td></tr>
+        <tr><td>Идемпотентность</td><td>Повторный вызов с тем же ключом не создаёт второго эффекта</td><td>Реальная гонка на проде</td></tr>
+        <tr><td>Конкурентность</td><td>Два параллельных соединения на реальной базе</td><td>Редкие тайминги, специфичные для нагрузки</td></tr>
+        <tr><td>Миграции</td><td>Применение на копии боевой схемы, обратимость</td><td>Время выполнения на реальном объёме</td></tr>
+        <tr><td>Взаимодействие сервисов</td><td>Контрактные тесты по схеме с обеих сторон</td><td>Сетевые отказы и таймауты в реальности</td></tr>
+        <tr><td>Планировщик</td><td>Логика задачи отдельно от расписания</td><td>Корректность самого расписания</td></tr>
+        <tr><td>Работа с файлами</td><td>Виртуальная файловая система или временный каталог</td><td>Права, квоты, особенности реальной ФС</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Асинхронность: разделяем постановку и обработку</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Тест сервиса: проверяем, что задача поставлена с правильными данными.</span>
+<span class="cm">//    Транспорт в тестовом окружении — «в память», ничего никуда не уходит.</span>
+<span class="kw">public function</span> <span class="fn">оформление_заказа_ставит_задачу_на_письмо</span>(): <span class="nm">void</span>
+{
+    $this-&gt;checkout-&gt;<span class="fn">complete</span>($order = <span class="nm">OrderFactory</span>::<span class="fn">create</span>());
+
+    $messages = $this-&gt;transport-&gt;<span class="fn">getSent</span>();
+    $this-&gt;<span class="fn">assertCount</span>(1, $messages);
+    $this-&gt;<span class="fn">assertSame</span>($order-&gt;id, $messages[0]-&gt;<span class="fn">getMessage</span>()-&gt;orderId);
+}
+
+<span class="cm">// 2. Тест обработчика: вызываем напрямую, без очереди вообще</span>
+<span class="kw">public function</span> <span class="fn">обработчик_отправляет_письмо_и_помечает_заказ</span>(): <span class="nm">void</span>
+{
+    (<span class="kw">new</span> <span class="nm">SendReceiptHandler</span>($this-&gt;mailer, $this-&gt;orders))(<span class="kw">new</span> <span class="nm">SendReceipt</span>($order-&gt;id));
+
+    $this-&gt;<span class="fn">assertCount</span>(1, $this-&gt;mailer-&gt;<span class="fn">sentTo</span>($order-&gt;customerEmail));
+}
+
+<span class="cm">// 3. Отдельно — самое важное свойство: повтор не создаёт второго эффекта</span>
+<span class="kw">public function</span> <span class="fn">повторная_обработка_не_шлёт_второе_письмо</span>(): <span class="nm">void</span>
+{
+    $handler = <span class="kw">new</span> <span class="nm">SendReceiptHandler</span>($this-&gt;mailer, $this-&gt;orders);
+    $message = <span class="kw">new</span> <span class="nm">SendReceipt</span>($order-&gt;id, eventId: <span class="st">'evt_1'</span>);
+
+    $handler($message);
+    $handler($message);                      <span class="cm">// at-least-once: дубликат неизбежен</span>
+
+    $this-&gt;<span class="fn">assertCount</span>(1, $this-&gt;mailer-&gt;<span class="fn">sentTo</span>($order-&gt;customerEmail));
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Конкурентность: два соединения к реальной базе</span></div><pre><code>&lt;?php
+<span class="cm">// Гонки нельзя проверить моками — нужны настоящие параллельные транзакции.</span>
+<span class="cm">// Тест не докажет отсутствие гонок вообще, но ловит самый частый случай.</span>
+<span class="kw">public function</span> <span class="fn">остаток_не_уходит_в_минус_при_двух_одновременных_заказах</span>(): <span class="nm">void</span>
+{
+    $this-&gt;<span class="fn">seedStock</span>(productId: <span class="st">'A-100'</span>, qty: 1);
+
+    $first  = $this-&gt;<span class="fn">newConnection</span>();      <span class="cm">// два независимых соединения</span>
+    $second = $this-&gt;<span class="fn">newConnection</span>();
+
+    $first-&gt;<span class="fn">beginTransaction</span>();
+    $reservedByFirst = (<span class="kw">new</span> <span class="nm">StockService</span>($first))-&gt;<span class="fn">reserve</span>(<span class="st">'A-100'</span>, 1);
+
+    <span class="cm">// Второй пытается зарезервировать тот же последний товар</span>
+    $reservedBySecond = (<span class="kw">new</span> <span class="nm">StockService</span>($second))-&gt;<span class="fn">reserve</span>(<span class="st">'A-100'</span>, 1);
+
+    $first-&gt;<span class="fn">commit</span>();
+
+    $this-&gt;<span class="fn">assertTrue</span>($reservedByFirst);
+    $this-&gt;<span class="fn">assertFalse</span>($reservedBySecond);        <span class="cm">// второму не хватило</span>
+    $this-&gt;<span class="fn">assertSame</span>(0, $this-&gt;<span class="fn">stockOf</span>(<span class="st">'A-100'</span>));    <span class="cm">// и остаток не отрицательный</span>
+}</code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как тестировать асинхронную обработку?</b><br>Разделив её на три независимые проверки: сервис ставит задачу с правильными данными (транспорт в памяти), обработчик делает работу при прямом вызове, повторная обработка того же сообщения не создаёт второго эффекта. Полный цикл через реальный брокер стоит проверить одним интеграционным тестом, но строить на нём весь набор нельзя — он медленный и нестабильный. Ожидание через <code>sleep</code> при этом заменяется ожиданием условия с таймаутом.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="load">
+    <p class="path">senior / нагрузка</p>
+    <div class="card-top"><h3>Нагрузочные тесты</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Функциональные тесты отвечают на вопрос «работает ли», нагрузочные — «до какого предела и что происходит за ним». Без них ответ на вопрос «выдержим ли распродажу» остаётся гаданием, а первый настоящий пик становится экспериментом на пользователях.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · виды нагрузочных тестов</caption>
+      <thead><tr><th>Вид</th><th>Вопрос</th><th>Профиль</th></tr></thead>
+      <tbody>
+        <tr><td>Дымовой</td><td>Работает ли под минимальной нагрузкой</td><td>Несколько пользователей, минуты</td></tr>
+        <tr><td>Нагрузочный</td><td>Держим ли ожидаемый трафик в рамках SLO</td><td>Целевая нагрузка, 10–30 минут</td></tr>
+        <tr><td>Стресс</td><td>Где предел и как система за ним деградирует</td><td>Плавный рост до отказа</td></tr>
+        <tr><td>Пиковый</td><td>Переживём ли резкий всплеск</td><td>Мгновенный скачок и спад</td></tr>
+        <tr><td>Длительный</td><td>Нет ли утечек и деградации со временем</td><td>Умеренная нагрузка, часы</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>js</span><span class="r">Сценарий с целями: тест падает при нарушении SLO</span></div><pre><code><span class="kw">import</span> http <span class="kw">from</span> <span class="st">'k6/http'</span>;
+<span class="kw">import</span> { check, sleep } <span class="kw">from</span> <span class="st">'k6'</span>;
+
+<span class="kw">export const</span> options = {
+  stages: [
+    { duration: <span class="st">'2m'</span>, target: 100 },   <span class="cm">// плавный набор</span>
+    { duration: <span class="st">'5m'</span>, target: 100 },   <span class="cm">// удержание целевой нагрузки</span>
+    { duration: <span class="st">'2m'</span>, target: 300 },   <span class="cm">// пик</span>
+    { duration: <span class="st">'2m'</span>, target: 0 },
+  ],
+  <span class="cm">// Цели — это и есть SLO. Без них тест просто рисует графики.</span>
+  thresholds: {
+    http_req_duration: [<span class="st">'p(95)&lt;300'</span>, <span class="st">'p(99)&lt;800'</span>],
+    http_req_failed:   [<span class="st">'rate&lt;0.01'</span>],
+  },
+};
+
+<span class="kw">export default function</span> () {
+  <span class="cm">// Профиль должен повторять реальный: 90 % чтения, 10 % записи</span>
+  <span class="kw">const</span> res = <span class="nm">Math</span>.random() &lt; 0.9
+    ? http.get(<span class="st">'https://staging.example.com/api/v1/orders?limit=20'</span>)
+    : http.post(<span class="st">'https://staging.example.com/api/v1/orders'</span>, payload, params);
+
+  check(res, { <span class="st">'status ok'</span>: (r) =&gt; r.status &lt; 400 });
+  sleep(1);
+}</code></pre></div>
+
+    <p><strong>Что смотреть во время прогона</strong> — не только цифры клиента. Задержка и доля ошибок со стороны нагрузки говорят «плохо», а причину показывают метрики системы: занятость пула процессов, число соединений и медленные запросы в базе, попадания в кэш, возраст сообщений в очереди, потребление CPU и памяти. Нагрузочный тест без снятия этих метрик отвечает «не держим», но не отвечает «почему».</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Нагрузочный тест на стенде, который вдвое слабее прода и работает на пустой базе, показывает не предел системы, а предел стенда. Минимальные требования к осмысленности: сопоставимая конфигурация, объём данных того же порядка (индексы ведут себя иначе на тысяче и на десяти миллионах строк) и профиль запросов, снятый с реального трафика, а не придуманный.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как проверить, что система выдержит распродажу?</b><br>Снять профиль реального трафика, оценить ожидаемый пик, прогнать нагрузочный тест на стенде с сопоставимой конфигурацией и объёмом данных, задав цели по p95, p99 и доле ошибок. Отдельно прогнать стресс до отказа, чтобы увидеть, как система деградирует за пределом: отказывает штатно с 429 и 503 или заваливается целиком. Во время прогона снимать метрики системы, иначе будет известен только факт, а не причина.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="process">
+    <p class="path">senior / процесс</p>
+    <div class="card-top"><h3>Процесс и владение</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Набор тестов деградирует так же, как код: обрастает дублированием, замедляется, накапливает отключённые и нестабильные тесты. Разница в том, что за код обычно кто-то отвечает, а за тесты — редко.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · практики, удерживающие набор живым</caption>
+      <thead><tr><th>Практика</th><th>Что предотвращает</th></tr></thead>
+      <tbody>
+        <tr><td>Тест на каждый исправленный баг</td><td>Возвращение той же ошибки через полгода</td></tr>
+        <tr><td>Тесты ревьюятся наравне с кодом</td><td>Тесты без ассертов и проверка реализации</td></tr>
+        <tr><td>Порог на изменённый код в pull request</td><td>Постепенное падение покрытия нового кода</td></tr>
+        <tr><td>Бюджет времени прогона</td><td>Набор, который перестают запускать локально</td></tr>
+        <tr><td>Учёт нестабильных тестов</td><td>Привыкание к красной сборке</td></tr>
+        <tr><td>Запрет отключать тест без задачи</td><td>Тихое накопление «временно отключённого»</td></tr>
+        <tr><td>Регулярная чистка</td><td>Дублирование и тесты на удалённый функционал</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Что проверять при ревью тестов.</strong> Есть ли вообще ассерт и проверяет ли он результат, а не факт вызова. Читается ли имя как утверждение о поведении. Покрыты ли граничные случаи и ошибочный путь, а не только счастливый. Не появилось ли зависимости от времени, порядка или сети. Не дублирует ли тест то, что уже проверено уровнем ниже. Этих пяти вопросов достаточно — длинный чек-лист на ревью никто не читает.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Отдельная команда, которая «пишет тесты за разработчиков». Так тесты превращаются во внешний контроль, отстают от кода на спринт и не влияют на дизайн — а разработчики перестают чувствовать ответственность за проверяемость своего кода. Автотесты — часть разработки; отдельная роль в тестировании нужна для другого: исследовательского тестирования, сценариев, приёмки, нагрузки.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как поддерживать набор тестов в рабочем состоянии?</b><br>Тремя вещами. Правилами, которые видны в процессе: тест на каждый баг, ревью тестов наравне с кодом, порог на изменённый код. Ограничением времени прогона — набор, который идёт полчаса, перестают запускать. И отношением к нестабильным тестам как к дефектам с задачей и сроком, а не как к погоде. Без этого набор за год превращается в двадцать минут ожидания и привычку перезапускать сборку.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Выбираю уровень тестов по типу кода, а не по привычке</li>
+        <li>Приоритизирую покрытие по цене ошибки и частоте изменений</li>
+        <li>Понимаю, чего не показывает процент покрытия</li>
+        <li>Применяю мутационное тестирование точечно к ключевым модулям</li>
+        <li>Слежу за временем прогона и долей нестабильных тестов</li>
+        <li>Разделяю тестирование асинхронности на постановку, обработку и повтор</li>
+      </ul>
+      <ul class="check">
+        <li>Проверяю конкурентность на реальных параллельных соединениях</li>
+        <li>Тестирую миграции отдельно на копии боевой схемы</li>
+        <li>Задаю цели по p95, p99 и доле ошибок в нагрузочных тестах</li>
+        <li>Снимаю метрики системы во время нагрузки, а не только клиента</li>
+        <li>Требую тест на каждый исправленный баг</li>
+        <li>Ревьюю тесты наравне с кодом по пяти вопросам</li>
+        <li>Считаю нестабильный тест дефектом с задачей и сроком</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ про тесты почти всегда про экономику, а не про инструменты: «на расчётах — модульные с мутационным баллом выше 80, потому что цена ошибки в деньгах; на репозиториях — интеграционные на настоящем Postgres; по одному функциональному на эндпоинт плюс обязательный тест прав; E2E только на оформление заказа. Набор идёт четыре минуты, нестабильных нет — они чинятся как баги».</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения: что чем проверять, как узнать плохой тест и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Задача → приём</h3><span class="badge b-tag">Таблица 18</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 18 · что применить и чем за это платите</caption>
+      <thead><tr><th>Задача</th><th>Приём</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Много вариантов одного расчёта</td><td>Провайдер данных с именованными случаями</td><td>Нужно следить, чтобы случаи не дублировались</td></tr>
+        <tr><td>Шумная подготовка данных</td><td>Билдеры и фабрики</td><td>Ещё один слой кода в поддержке</td></tr>
+        <tr><td>Медленные тесты с базой</td><td>Транзакция с откатом, база в памяти контейнера</td><td>Не работает, если код сам управляет транзакциями</td></tr>
+        <tr><td>Внешний API в тестах</td><td>Подмена HTTP-клиента + отдельный набор по расписанию</td><td>Два набора вместо одного</td></tr>
+        <tr><td>Зависимость от времени</td><td>Часы как явная зависимость</td><td>Небольшое изменение сигнатур</td></tr>
+        <tr><td>Ожидание асинхронной операции</td><td>Ожидание условия с таймаутом или синхронный режим</td><td>Дополнительный тестовый режим приложения</td></tr>
+        <tr><td>Легаси без тестов</td><td>Характеризующие тесты и швы</td><td>Фиксируются в том числе баги — их надо разбирать</td></tr>
+        <tr><td>Тесты не ловят ошибок</td><td>Мутационное тестирование по ключевому модулю</td><td>Долгий прогон, точечное применение</td></tr>
+        <tr><td>Долгий прогон в CI</td><td>Разделение наборов и параллельность с изоляцией</td><td>Настройка баз и ключей на процесс</td></tr>
+        <tr><td>Нестабильные тесты</td><td>Поиск причины по типовому списку, отключение с задачей</td><td>Время на разбор вместо повторов</td></tr>
+        <tr><td>Неизвестный предел системы</td><td>Нагрузочный и стресс-тест с целями по SLO</td><td>Стенд, сопоставимый с продом</td></tr>
+        <tr><td>Возвращающиеся баги</td><td>Падающий тест до исправления</td><td>Дисциплина в процессе</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Запахи тестов</h3><span class="badge b-tag">Таблица 19</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 19 · как выглядит плохой тест</caption>
+      <thead><tr><th>Запах</th><th>В чём проблема</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>Тест без ассертов</td><td>Проверяет только отсутствие исключения</td><td>Добавить проверку результата или удалить</td></tr>
+        <tr><td>Моки на всё</td><td>Тест повторяет структуру кода</td><td>Фейки, проверка результата вместо вызовов</td></tr>
+        <tr><td>Логика внутри теста</td><td>Тест сам может содержать ошибку</td><td>Явные ожидаемые значения, провайдер данных</td></tr>
+        <tr><td>Подготовка на 40 строк</td><td>Непонятно, что существенно</td><td>Билдер с осмысленными значениями по умолчанию</td></tr>
+        <tr><td>Имя <code>testMethodName</code></td><td>При падении неясно, что сломалось</td><td>Имя описывает поведение и условие</td></tr>
+        <tr><td>Зависимость от порядка</td><td>Падает при перестановке или параллельном запуске</td><td>Изоляция состояния и данных</td></tr>
+        <tr><td>Копия реализации в ассерте</td><td>Тест повторяет формулу из кода</td><td>Ожидаемое значение считается вручную</td></tr>
+        <tr><td>Один тест на весь сценарий</td><td>Первое падение скрывает остальные</td><td>Разделить по поведению</td></tr>
+        <tr><td>Закомментированный тест</td><td>Молча накапливается непокрытое</td><td>Отключать явно и заводить задачу</td></tr>
+        <tr><td>Тест на чужой код</td><td>Проверяется фреймворк, а не ваша логика</td><td>Удалить</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 20</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 20 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Модульные тесты</td><td>Пишет по структуре, знает ассерты</td><td>Тестирует поведение, использует фабрики</td><td>Определяет, что вообще стоит покрывать</td></tr>
+        <tr><td>Двойники</td><td>Различает мок и стаб</td><td>Предпочитает фейки, подменяет только чужое</td><td>Видит в избытке моков проблему дизайна</td></tr>
+        <tr><td>База данных</td><td>Знает, что бывают интеграционные тесты</td><td>Настраивает изоляцию и фабрики</td><td>Выбирает стратегию и следит за временем прогона</td></tr>
+        <tr><td>Интеграции</td><td>Умеет подменить клиент</td><td>Тестирует отказы и идемпотентность</td><td>Разделяет свои и чужие регрессии</td></tr>
+        <tr><td>Легаси</td><td>—</td><td>Пишет характеризующие тесты и швы</td><td>Строит план покрытия по риску</td></tr>
+        <tr><td>CI</td><td>Знает, что тесты гоняются в пайплайне</td><td>Разделяет наборы, чинит флаки</td><td>Задаёт бюджет времени и правила процесса</td></tr>
+        <tr><td>Метрики</td><td>Слышал про покрытие</td><td>Понимает его пределы</td><td>Использует мутационный балл и учёт багов</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и его цена</td><td>Экономика: что покрываем, чем и почему</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Шпаргалка по PHPUnit</h2>
+    <p>Ассерты, атрибуты и команды, которые нужны каждый день, — чтобы не искать в документации.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Ассерты по ситуациям</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Что проверить и чем</span></div><pre><code>&lt;?php
+<span class="cm">// Значения: assertSame строже — сравнивает тип, ошибок из-за приведения не будет</span>
+$this-&gt;<span class="fn">assertSame</span>(<span class="st">'1800.00'</span>, $total);        <span class="cm">// === , предпочтительно по умолчанию</span>
+$this-&gt;<span class="fn">assertEquals</span>($expectedObject, $actual); <span class="cm">// == , для объектов-значений</span>
+$this-&gt;<span class="fn">assertEqualsWithDelta</span>(0.3, $sum, 0.0001);<span class="cm">// для чисел с плавающей точкой</span>
+
+<span class="cm">// Булевы и null</span>
+$this-&gt;<span class="fn">assertTrue</span>($cart-&gt;<span class="fn">isEmpty</span>());
+$this-&gt;<span class="fn">assertNull</span>($repo-&gt;<span class="fn">find</span>(<span class="st">'missing'</span>));
+$this-&gt;<span class="fn">assertNotNull</span>($order-&gt;paidAt);
+
+<span class="cm">// Массивы и коллекции</span>
+$this-&gt;<span class="fn">assertCount</span>(3, $orders);
+$this-&gt;<span class="fn">assertContains</span>(<span class="st">'A-100'</span>, $skus);
+$this-&gt;<span class="fn">assertArrayHasKey</span>(<span class="st">'id'</span>, $body);
+$this-&gt;<span class="fn">assertEqualsCanonicalizing</span>($expected, $actual);  <span class="cm">// порядок не важен</span>
+$this-&gt;<span class="fn">assertEmpty</span>($errors);
+
+<span class="cm">// Строки</span>
+$this-&gt;<span class="fn">assertStringContainsString</span>(<span class="st">'скидка'</span>, $message);
+$this-&gt;<span class="fn">assertMatchesRegularExpression</span>(<span class="st">'#^/orders/\d+$#'</span>, $location);
+$this-&gt;<span class="fn">assertJsonStringEqualsJsonString</span>($expectedJson, $actualJson);
+
+<span class="cm">// Типы и объекты</span>
+$this-&gt;<span class="fn">assertInstanceOf</span>(<span class="nm">PaidOrder</span>::<span class="kw">class</span>, $result);
+$this-&gt;<span class="fn">assertSame</span>($object, $sameObject);          <span class="cm">// тот же экземпляр</span>
+
+<span class="cm">// Исключения — до вызова, а не после</span>
+$this-&gt;<span class="fn">expectException</span>(<span class="nm">OrderNotPaid</span>::<span class="kw">class</span>);
+$this-&gt;<span class="fn">expectExceptionMessage</span>(<span class="st">'не оплачен'</span>);
+$this-&gt;<span class="fn">expectExceptionCode</span>(422);
+
+<span class="cm">// Осознанный пропуск лучше закомментированного теста</span>
+$this-&gt;<span class="fn">markTestSkipped</span>(<span class="st">'Требует расширения pcntl'</span>);
+$this-&gt;<span class="fn">markTestIncomplete</span>(<span class="st">'Ждём решения по округлению, задача PROJ-142'</span>);</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Атрибуты и двойники</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Синтаксис, который приходится вспоминать</span></div><pre><code>&lt;?php
+<span class="kw">use</span> PHPUnit\Framework\Attributes\{Test, DataProvider, Group, Depends,
+    CoversClass, RequiresPhp, TestWith};
+
+#[<span class="nm">Test</span>]                                     <span class="cm">// метод — тест без префикса test</span>
+#[<span class="nm">Group</span>(<span class="st">'slow'</span>)]                            <span class="cm">// запуск: --group=slow / --exclude-group=slow</span>
+#[<span class="nm">DataProvider</span>(<span class="st">'cases'</span>)]                    <span class="cm">// статический метод-провайдер</span>
+#[<span class="nm">TestWith</span>([100, 10, 90])]                 <span class="cm">// один набор данных прямо здесь</span>
+#[<span class="nm">CoversClass</span>(<span class="nm">Cart</span>::<span class="kw">class</span>)]                 <span class="cm">// что покрывает — для отчёта покрытия</span>
+#[<span class="nm">RequiresPhp</span>(<span class="st">'&gt;=8.3'</span>)]
+
+<span class="cm">// Двойники</span>
+$stub = $this-&gt;<span class="fn">createStub</span>(<span class="nm">Rates</span>::<span class="kw">class</span>);       <span class="cm">// только данные, без ожиданий</span>
+$stub-&gt;<span class="fn">method</span>(<span class="st">'rate'</span>)-&gt;<span class="fn">willReturn</span>(<span class="st">'92.50'</span>);
+$stub-&gt;<span class="fn">method</span>(<span class="st">'rate'</span>)-&gt;<span class="fn">willReturnMap</span>([[<span class="st">'USD'</span>, <span class="st">'92.50'</span>], [<span class="st">'EUR'</span>, <span class="st">'99.10'</span>]]);
+$stub-&gt;<span class="fn">method</span>(<span class="st">'rate'</span>)-&gt;<span class="fn">willThrowException</span>(<span class="kw">new</span> <span class="nm">RateUnavailable</span>());
+$stub-&gt;<span class="fn">method</span>(<span class="st">'next'</span>)-&gt;<span class="fn">willReturnOnConsecutiveCalls</span>(1, 2, 3);
+
+$mock = $this-&gt;<span class="fn">createMock</span>(<span class="nm">Mailer</span>::<span class="kw">class</span>);      <span class="cm">// с проверкой взаимодействия</span>
+$mock-&gt;<span class="fn">expects</span>($this-&gt;<span class="fn">once</span>())                  <span class="cm">// never(), exactly(2), atLeastOnce()</span>
+     -&gt;<span class="fn">method</span>(<span class="st">'send'</span>)
+     -&gt;<span class="fn">with</span>($this-&gt;<span class="fn">equalTo</span>($email), $this-&gt;<span class="fn">stringContains</span>(<span class="st">'заказ'</span>));
+
+<span class="cm">// Частичная подмена: заменяется только один метод (признак проблемы в дизайне)</span>
+$partial = $this-&gt;<span class="fn">createPartialMock</span>(<span class="nm">Service</span>::<span class="kw">class</span>, [<span class="st">'externalCall'</span>]);</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Команды запуска</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Повседневное и при отладке</span></div><pre><code><span class="cm"># Быстрая петля: только модульные</span>
+vendor/bin/phpunit --testsuite=unit
+
+<span class="cm"># Один тест, один метод, одна группа</span>
+vendor/bin/phpunit tests/Unit/CartTest.php
+vendor/bin/phpunit --filter=скидка_округляется
+vendor/bin/phpunit --group=slow
+vendor/bin/phpunit --exclude-group=integration
+
+<span class="cm"># Остановиться на первой ошибке — экономит время при массовом падении</span>
+vendor/bin/phpunit --stop-on-failure
+
+<span class="cm"># Поиск зависимости от порядка выполнения</span>
+vendor/bin/phpunit --order-by=random
+vendor/bin/phpunit --order-by=defects        <span class="cm"># сначала недавно падавшие</span>
+
+<span class="cm"># Покрытие (нужен Xdebug или PCOV; PCOV заметно быстрее)</span>
+XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-html var/coverage
+vendor/bin/phpunit --coverage-text --coverage-filter=src/Domain
+
+<span class="cm"># Параллельный прогон</span>
+vendor/bin/paratest --processes=4 --runner=WrapperRunner
+
+<span class="cm"># Мутационное тестирование по одному модулю</span>
+vendor/bin/infection --filter=src/Domain/Pricing --min-msi=80
+
+<span class="cm"># Отладка: показать вывод и не глушить ошибки</span>
+vendor/bin/phpunit --debug --display-warnings --display-deprecations</code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Две команды стоит запускать регулярно, даже когда всё зелёное: <code>--order-by=random</code> ловит скрытые зависимости между тестами, а поиск самых медленных тестов показывает, где в модульный набор пробрался поход в базу или в сеть. Обе находки типичны и обе тихо портят набор месяцами.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас. Сильный ответ про тесты почти всегда содержит цену: не «покрываем всё», а «покрываем расчёты плотно, обвязку не покрываем, потому что тест стоит дважды — при написании и при каждом изменении».</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Зачем нужны тесты?</span><span class="aa">Чтобы изменения кода были дешёвыми: за секунды узнавать, что ничего не сломалось. Дополнительно они документируют ожидаемое поведение точнее комментариев и заставляют делать код менее связанным. Без них цена изменений растёт до момента, когда рефакторинг откладывается навсегда.</span></li>
+      <li><span class="qq">Какие бывают уровни тестов?</span><span class="aa">Модульные проверяют одну единицу логики без внешних зависимостей; интеграционные — связку с базой, кэшем, очередью; функциональные проходят сценарий через весь стек; E2E воспроизводят пользовательский путь через браузер. Чем выше уровень, тем дороже писать, медленнее выполнять и труднее диагностировать падение.</span></li>
+      <li><span class="qq">Почему модульных тестов больше, чем E2E?</span><span class="aa">Из-за экономики: модульный тест выполняется миллисекунды и при падении точно показывает место, E2E идёт секунды и падает целиком от любой мелочи. Правило: если поведение можно проверить уровнем ниже — проверяйте там. Но и полный отказ от верхних уровней плох: каждая деталь работает, а вместе не собирается.</span></li>
+      <li><span class="qq">Из каких частей состоит тест?</span><span class="aa">Подготовка данных, одно действие, проверка результата. Держаться этой структуры полезно даже в коротких тестах: она делает их читаемыми. Если действий несколько и проверок десяток — это уже сценарий, и его лучше разделить.</span></li>
+      <li><span class="qq">Что такое провайдер данных?</span><span class="aa">Способ прогнать один и тот же тест на множестве входов вместо копирования метода. Каждый набор именуется, поэтому при падении сразу видно, какой случай сломался. Идеально подходит для граничных значений: ноль, пусто, максимум, отрицательное.</span></li>
+      <li><span class="qq">Что означает «тестировать поведение, а не реализацию»?</span><span class="aa">Проверять наблюдаемый результат — возвращаемое значение, изменение состояния, отправленное сообщение, — а не порядок внутренних вызовов. Критерий простой: если после рефакторинга без изменения поведения тесты покраснели, они тестировали реализацию и работают против своей цели.</span></li>
+      <li><span class="qq">Что не стоит покрывать тестами?</span><span class="aa">Геттеры и простые DTO без логики, код фреймворка и библиотек, конфигурационные массивы, приватные методы напрямую, точные тексты сообщений интерфейса. Тест стоит денег дважды — при написании и при каждом изменении кода, поэтому пишется там, где что-то гарантирует.</span></li>
+      <li><span class="qq">Почему не стоит тестировать приватные методы?</span><span class="aa">Потому что это фиксирует реализацию: любой рефакторинг ломает тесты. Если приватный метод очень хочется протестировать отдельно, это сигнал, что внутри класса прячется самостоятельная сущность, — её стоит выделить в отдельный класс с публичным контрактом и тестировать его.</span></li>
+      <li><span class="qq">Чем мок отличается от стаба?</span><span class="aa">Стаб отдаёт подготовленные данные, чтобы код мог выполниться, и ничего не проверяет. Мок задаёт ожидания заранее — был ли метод вызван, сколько раз, с какими аргументами — и проверяет их автоматически. Моки уместны, когда сам факт взаимодействия и есть поведение: письмо отправлено, платёж списан.</span></li>
+      <li><span class="qq">Что такое фейк и чем он лучше мока?</span><span class="aa">Рабочая упрощённая реализация — например, репозиторий в памяти. Он не привязывает тест к порядку вызовов: код работает с ним как с настоящим, а тест проверяет результат. Для зависимостей, которые вы контролируете, фейк почти всегда лучше мока и делает тесты устойчивее к рефакторингу.</span></li>
+      <li><span class="qq">Что подменять двойниками, а что нет?</span><span class="aa">Подменять то, что вы не контролируете: внешние API, платёжные шлюзы, отправку писем, часы, файловую систему. Не подменять собственные объекты-значения, чистые функции и простые сущности — их использование в тесте бесплатно и делает проверку честнее. Мок на каждую зависимость превращает тест в зеркало реализации.</span></li>
+      <li><span class="qq">Каким должно быть имя теста?</span><span class="aa">Читаться как утверждение о поведении с условием: «неоплаченный заказ отгрузить нельзя». Тогда отчёт о падении сам объясняет проблему, а список тестов превращается в описание поведения модуля. Имена вида <code>test1</code> или <code>testMethodName</code> лишают отчёт смысла.</span></li>
+      <li><span class="qq">Что делает тест недетерминированным?</span><span class="aa">Обращение к текущему времени, случайность, сеть, зависимость от порядка выполнения и общее состояние между тестами. Такие тесты падают «иногда», и команда быстро привыкает перезапускать сборку — после чего набор перестаёт что-либо значить.</span></li>
+      <li><span class="qq">Почему тесты должны быть независимыми?</span><span class="aa">Чтобы их можно было запускать по одному, в любом порядке и параллельно. Если тест полагается на данные, оставленные предыдущим, набор ломается при перестановке, при запуске одного теста и при распараллеливании — то есть ровно тогда, когда он нужнее всего.</span></li>
+      <li><span class="qq">Сколько проверок должно быть в одном тесте?</span><span class="aa">Столько, сколько нужно для одного поведения, — иногда это три ассерта об одном результате. Проблема не в числе ассертов, а в числе независимых действий: при нескольких сценариях в одном методе падение первого скрывает остальные и по имени непонятно, что сломалось.</span></li>
+      <li><span class="qq">Зачем нужны фабрики и билдеры тестовых данных?</span><span class="aa">Они убирают шум из подготовки: в тесте остаётся только то, что важно для сценария, остальное берётся по умолчанию. Плюс при изменении конструктора сущности правка делается в одном месте, а не в сотне тестов. Признак, что билдер нужен: подготовка длиннее, чем действие и проверка вместе.</span></li>
+      <li><span class="qq">Как тестировать исключения?</span><span class="aa">Объявить ожидание до вызова: тип исключения и, если важно, сообщение или код. Проверять только тип обычно недостаточно, когда один класс исключения используется для разных ситуаций. Отдельно стоит убедиться, что после исключения состояние не изменилось частично.</span></li>
+      <li><span class="qq">Что показывает процент покрытия?</span><span class="aa">Что строка кода выполнялась во время тестов. И только. Он не говорит, была ли проверена корректность: тест без единого ассерта даёт покрытие. Поэтому высокий процент — необходимое, но совсем не достаточное условие; полезнее смотреть, что происходит с непокрытыми участками и есть ли в тестах реальные проверки.</span></li>
+      <li><span class="qq">Что такое AAA?</span><span class="aa">Соглашение о структуре теста: Arrange — подготовка данных и зависимостей, Act — одно действие, Assert — проверка результата. Разделение этих частей пустыми строками или комментариями делает тест читаемым за пару секунд, что важно, потому что тесты читают чаще, чем пишут.</span></li>
+      <li><span class="qq">Что делать, если тест сложно написать?</span><span class="aa">Обычно это сигнал не о тестах, а о коде: зависимости создаются внутри, метод делает пять дел сразу, логика перемешана с побочными эффектами. Правильная реакция — не изобретать хитрый способ протестировать, а упростить код: вынести зависимости в конструктор, разделить вычисление и запись, выделить отдельную единицу.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как изолировать тесты, работающие с базой?</span><span class="aa">Чаще всего транзакцией с откатом: тест начинает транзакцию, в конце она откатывается. Это быстрее очистки таблиц, но не работает, если тестируемый код сам управляет транзакциями, — тогда усечение таблиц или отдельная база на параллельный процесс. Схема разворачивается один раз перед набором.</span></li>
+      <li><span class="qq">Можно ли заменить боевую СУБД на SQLite в тестах?</span><span class="aa">Не стоит: отличаются типы, приведения, диалект SQL, поведение при конкурентном доступе, поддержка JSON и оконных функций. Тесты станут зелёными, а в проде запрос упадёт или отработает иначе — то есть вы получите ровно ложную уверенность. База поднимается в контейнере за секунды, экономия не окупает риска.</span></li>
+      <li><span class="qq">Фикстуры или фабрики?</span><span class="aa">Фабрики: они создают ровно то, что нужно тесту, с осмысленными значениями по умолчанию, и в тесте видно только существенное. Большие общие фикстуры со временем становятся неявной зависимостью — никто не помнит, кто на какие записи полагается, и правка одной строки ломает десяток тестов.</span></li>
+      <li><span class="qq">Что проверять в функциональном тесте эндпоинта?</span><span class="aa">Код ответа, форму тела, ключевые заголовки, права доступа, поведение при неверном вводе и побочный эффект — что запись действительно создана. Особенно важна проверка прав: функциональные тесты — единственное место, где системно ловятся IDOR и забытые проверки владения.</span></li>
+      <li><span class="qq">Сколько нужно функциональных тестов?</span><span class="aa">Немного: по одному счастливому пути и одному-двум ключевым отказам на эндпоинт, плюс обязательная проверка прав. Всё разнообразие бизнес-правил проверяется уровнем ниже — там это в десятки раз быстрее. Попытка покрыть все комбинации через HTTP даёт набор, который идёт полчаса и падает целиком от одной ошибки в конфигурации.</span></li>
+      <li><span class="qq">Как тестировать код, работающий с внешним API?</span><span class="aa">Подменять HTTP-клиент и обязательно проверять отказы: таймаут, 500, 429, некорректное тело, обрыв соединения. Именно эти сценарии происходят в проде и почти никогда не покрыты. Соответствие реальному API проверяется отдельным набором по расписанию или контрактными тестами по спецификации — это другая задача.</span></li>
+      <li><span class="qq">Как проверить, что повтор запроса не создаёт дубль?</span><span class="aa">Вызвать операцию дважды с одним ключом идемпотентности и убедиться, что эффект один: одна запись, одно письмо, одно списание. Для внешних вызовов дополнительно проверяется, что во второй попытке уходит тот же ключ, — иначе провайдер посчитает это новой операцией.</span></li>
+      <li><span class="qq">Как тестировать код, зависящий от текущего времени?</span><span class="aa">Сделать время явной зависимостью: интерфейс часов, который в проде возвращает реальное время, а в тесте — фиксированное и перематываемое. Тогда проверяемыми становятся именно те случаи, которые ломаются в проде: граница суток, конец месяца, високосный год, истечение срока ровно в момент проверки.</span></li>
+      <li><span class="qq">Как тестировать случайность?</span><span class="aa">Либо вынести генератор в зависимость и подставить предсказуемую реализацию, либо не проверять конкретное значение, а проверять свойства результата: длину, формат, диапазон, уникальность в наборе. Ассерт на конкретный сгенерированный идентификатор — классическая причина «мигающего» теста.</span></li>
+      <li><span class="qq">Почему нельзя использовать <code>sleep</code> в тестах?</span><span class="aa">Он одновременно замедляет набор и не гарантирует результат: на загруженном агенте CI операция не успеет и за две секунды, а на быстрой машине вы просто теряете время. Правильно — либо синхронная обработка в тестовом режиме, либо ожидание условия с коротким шагом и общим таймаутом.</span></li>
+      <li><span class="qq">Как начать покрывать тестами проект без тестов?</span><span class="aa">Не пытаться покрыть всё. Начать с того, что собираетесь менять: характеризующие тесты, фиксирующие текущее поведение на реальных данных, минимальный шов для подмены зависимостей, затем рефакторинг под защитой тестов. Приоритеты — деньги, права доступа, места прошлых инцидентов, сценарии ручной проверки перед релизом.</span></li>
+      <li><span class="qq">Что такое характеризующий тест?</span><span class="aa">Тест, фиксирующий текущее поведение как есть, даже если оно выглядит неправильным. Его цель — не проверить корректность, а не дать поведению измениться незаметно при рефакторинге. Найденные странности выписываются отдельно и обсуждаются с бизнесом: молча «исправлять» их по дороге нельзя, на них может держаться отчётность.</span></li>
+      <li><span class="qq">Что такое шов и зачем он нужен?</span><span class="aa">Минимальное изменение, позволяющее подменить зависимость без переписывания кода: например, конструктор с необязательными параметрами и значениями по умолчанию. Старый код продолжает работать, а тест получает возможность подставить свои реализации. Это способ зайти в легаси с тестами, не начиная с большого рискованного рефакторинга.</span></li>
+      <li><span class="qq">Практикуете ли вы TDD?</span><span class="aa">С условиями. На алгоритмах, расчётах, разборе форматов и конечных автоматах он экономит время. При исправлении бага — всегда: сначала падающий тест, доказывающий, что причина понята. На исследовательских задачах и коде из вызовов фреймворка — тесты после. Главная ценность не в ритуале, а в том, что нетестируемый код так просто не напишешь.</span></li>
+      <li><span class="qq">Почему на каждый баг нужен тест?</span><span class="aa">Потому что баг, найденный один раз, склонен возвращаться: тот же участок кода трогают снова. Падающий тест до исправления доказывает, что причина понята правильно, а не совпадение; после исправления он остаётся в наборе как защита. Это самая дешёвая и самая окупаемая практика из всех.</span></li>
+      <li><span class="qq">Как узнать нетестируемый код?</span><span class="aa">По признакам: зависимости создаются внутри через <code>new</code>, статические вызовы и синглтоны, обращение ко времени и случайности изнутри, метод на триста строк с десятком ветвлений, логика внутри контроллера, вычисления вперемешку с записью в базу. Все они лечатся одинаково — вынесением зависимостей наружу и разделением ответственности.</span></li>
+      <li><span class="qq">Как ускорить прогон тестов?</span><span class="aa">Разделить наборы по скорости и гонять модульные отдельно; параллелить с изоляцией (своя база, свой номер базы Redis, свой префикс кэша на процесс); поднимать базу в памяти контейнера с отключённым fsync; развернуть схему один раз на набор; найти самые медленные тесты — в модульный набор регулярно пробирается поход в базу или сеть.</span></li>
+      <li><span class="qq">Тесты падают через раз без изменений в коде. Что делать?</span><span class="aa">Не игнорировать: нестабильный тест обесценивает весь набор. Искать причину по типовому списку — время, порядок выполнения, общие данные, <code>sleep</code>, сеть, порядок строк без сортировки. Помогают запуск в случайном порядке и многократный повтор одного теста. До исправления лучше явно отключить с задачей, чем терпеть красную сборку.</span></li>
+      <li><span class="qq">Можно ли просто перезапускать упавшие тесты автоматически?</span><span class="aa">Как временная мера — да, вместе с задачей на исправление и учётом частоты. Как постоянное решение — нет: повтор скрывает проблему. Тест, падающий один раз из десяти, ровно так же пропустит настоящую ошибку один раз из десяти, а команда привыкнет, что красное — это нормально.</span></li>
+      <li><span class="qq">Как организованы тесты в вашем проекте?</span><span class="aa">Ожидается конкретика: разделение на наборы по скорости, где живут фабрики и базовые классы, как изолируются данные, что подменяется, сколько идёт прогон, что запускается локально, а что только в CI. Ответ «есть PHPUnit» показывает, что человек тесты писал, но за набор не отвечал.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Какой процент покрытия нужен?</span><span class="aa">Сам по себе процент ничего не значит: покрытие показывает, что строка выполнилась, а не что поведение проверено. Практично другое — плотное покрытие кода с высокой ценой ошибки, порог на изменённый код в pull request, обязательный тест на каждый исправленный баг и осознанный отказ от покрытия обвязки. Главный критерий — что мы можем безопасно рефакторить.</span></li>
+      <li><span class="qq">Как выбирать уровень тестов для конкретного кода?</span><span class="aa">По тому, что реально может сломаться. Доменная логика — модульными, много случаев. Репозитории и сложные запросы — интеграционными, потому что мок ничего не докажет о настоящем SQL. Контроллеры — по одному функциональному сценарию. Права — обязательно функционально. Обвязку и конфигурацию не покрывать вовсе.</span></li>
+      <li><span class="qq">Пирамида или трофей?</span><span class="aa">Классическая пирамида выросла из времени, когда интеграционные тесты были очень медленными. Сегодня база в контейнере поднимается за секунды, и разумный набор ближе к трофею: заметная доля интеграционных, потому что именно они проверяют то, что ломается — запросы, транзакции, сборку компонентов. Модульные остаются там, где нужно быстро перебрать много случаев.</span></li>
+      <li><span class="qq">Как приоритизировать, что покрывать первым?</span><span class="aa">По произведению вероятности изменения на цену ошибки. Часто меняющийся код с дорогими последствиями — расчёты денег, права, скидки — первым. Редко меняющийся и дешёвый в ошибке — последним или никогда. Отдельно вне очереди: места прошлых инцидентов и сценарии, которые сейчас проверяются вручную перед каждым релизом.</span></li>
+      <li><span class="qq">Что такое мутационное тестирование?</span><span class="aa">Инструмент вносит в код мелкие изменения — меняет знак сравнения, условие, удаляет вызов — и проверяет, упадут ли тесты. Выжившая мутация означает, что строка выполнялась, но её поведение не проверено. Покрытие отвечает «код выполнялся?», мутационный балл — «тесты заметили бы ошибку?». Второй вопрос ближе к цели.</span></li>
+      <li><span class="qq">Где применять мутационное тестирование на практике?</span><span class="aa">Точечно, а не на всём проекте: прогон дорогой. Лучшие кандидаты — модули расчётов, правила скидок и лимитов, конечные автоматы статусов. Один прогон по такому модулю обычно находит несколько мест, где тесты были декоративными: чаще всего это непроверенные границы условий.</span></li>
+      <li><span class="qq">Какие метрики набора тестов вы смотрите?</span><span class="aa">Время прогона — от него зависит, будут ли тесты запускать; долю нестабильных — от неё зависит доверие к красной сборке; мутационный балл на ключевых модулях — он говорит о качестве проверок; и по возможности учёт багов, ушедших в прод, с разбором, каким тестом это ловилось бы. Процент покрытия — вспомогательная, а не целевая метрика.</span></li>
+      <li><span class="qq">Как тестировать асинхронную обработку?</span><span class="aa">Разделив на три проверки: сервис ставит задачу с правильными данными (транспорт в памяти), обработчик выполняет работу при прямом вызове, повторная обработка того же сообщения не создаёт второго эффекта. Полный цикл через реальный брокер — один интеграционный тест, не более: он медленный и нестабильный, строить на нём набор нельзя.</span></li>
+      <li><span class="qq">Как тестировать конкурентность и гонки?</span><span class="aa">На настоящей базе с двумя независимыми соединениями и параллельными транзакциями: проверяется, что остаток не уходит в минус, а уникальность не нарушается. Такой тест не доказывает отсутствие гонок вообще, но ловит самый частый случай. Моками это принципиально не проверяется — гонка возникает именно в хранилище.</span></li>
+      <li><span class="qq">Как тестировать миграции?</span><span class="aa">Отдельным набором: применение на копии боевой схемы, проверка обратимости там, где она заявлена, и проверка, что после миграции работают ключевые запросы. Отдельно оценивается время выполнения на объёме, сопоставимом с продом, — миграция, идущая на тестовой базе секунду, на боевой может блокировать таблицу на полчаса.</span></li>
+      <li><span class="qq">Что такое контрактные тесты между сервисами?</span><span class="aa">Проверка, что ответы поставщика соответствуют опубликованной схеме, а потребитель ожидает именно её. Они ловят тихое изменение формы ответа — переименованное поле, число вместо строки, исчезнувший <code>null</code>, — которое не ломает логику ни у кого по отдельности, но ломает интеграцию. Обычная альтернатива — узнать об этом в проде.</span></li>
+      <li><span class="qq">Зачем нужны нагрузочные тесты и какие они бывают?</span><span class="aa">Функциональные отвечают «работает ли», нагрузочные — «до какого предела и что за ним». Дымовой проверяет, что всё поднимается; нагрузочный — держим ли целевой трафик в рамках SLO; стресс — где предел и как система деградирует; пиковый — переживём ли всплеск; длительный — нет ли утечек за часы работы.</span></li>
+      <li><span class="qq">Что делает нагрузочный тест осмысленным?</span><span class="aa">Три вещи: цели, выраженные как SLO (p95, p99, доля ошибок) — иначе тест просто рисует графики; профиль запросов, снятый с реального трафика, а не придуманный; стенд, сопоставимый с продом по конфигурации и объёму данных — на пустой базе индексы ведут себя иначе. И обязательное снятие метрик системы, иначе будет известен факт, но не причина.</span></li>
+      <li><span class="qq">Как убедиться, что система штатно деградирует под перегрузкой?</span><span class="aa">Стресс-тестом с плавным ростом до отказа и наблюдением, что происходит за пределом: отдаются ли 429 и 503 с <code>Retry-After</code>, срабатывают ли лимиты и предохранители, отключается ли некритичное, восстанавливается ли система после снятия нагрузки. Если вместо этого растёт очередь и всё останавливается — деградации нет, есть отказ.</span></li>
+      <li><span class="qq">Что проверять при ревью тестов?</span><span class="aa">Пять вопросов: есть ли ассерт и проверяет ли он результат, а не факт вызова; читается ли имя как утверждение о поведении; покрыт ли ошибочный путь, а не только счастливый; нет ли зависимости от времени, порядка и сети; не дублирует ли тест то, что уже проверено уровнем ниже. Длинный чек-лист на ревью не работает.</span></li>
+      <li><span class="qq">Почему набор тестов деградирует и как это предотвратить?</span><span class="aa">Потому что за него обычно никто не отвечает: накапливаются дублирование, медленные тесты, отключённые и «мигающие». Помогают правила, видимые в процессе: тест на каждый баг, ревью тестов наравне с кодом, порог на изменённый код, бюджет времени прогона и отношение к нестабильному тесту как к дефекту с задачей и сроком.</span></li>
+      <li><span class="qq">Нужна ли отдельная команда, пишущая автотесты?</span><span class="aa">Для автотестов на код — нет: так они отстают от кода, не влияют на дизайн и превращаются во внешний контроль, а разработчики перестают отвечать за тестируемость. Отдельная роль в тестировании ценна для другого: исследовательского тестирования, сложных сценариев, приёмки, нагрузки — того, что разработчик со своим кодом не увидит.</span></li>
+      <li><span class="qq">Как убедить команду или бизнес вкладываться в тесты?</span><span class="aa">Через измеримые вещи, а не через принципы: сколько времени уходит на ручную проверку перед релизом, сколько багов вернулось повторно, сколько длится подготовка релиза, как часто откатываем. И начинать с малого — покрыть один модуль с высокой ценой ошибки и показать разницу. Абстрактное «нужны тесты» не согласовывают, конкретную экономию — обычно да.</span></li>
+      <li><span class="qq">Когда тесты писать не нужно?</span><span class="aa">Для прототипа, который заведомо выбросят; для разового скрипта; для кода, состоящего из вызовов фреймворка без своей логики. Отказ должен быть осознанным решением с пониманием риска, а не привычкой. Опасность в другом: прототипы имеют свойство уезжать в прод — и тогда решение нужно пересмотреть, а не унаследовать.</span></li>
+      <li><span class="qq">Как выглядит зрелый набор тестов?</span><span class="aa">Быстрая обратная связь: логика проверяется за секунды, весь набор — за единицы минут. Нестабильных тестов нет, они чинятся как дефекты. Каждый исправленный баг имеет тест. Уровень тестов выбран по типу кода, а не по привычке. И главный признак: команда спокойно проводит рефакторинг, потому что доверяет зелёной сборке.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Тестирование осваивается на своём коде: почти каждое задание выполняется в рабочем репозитории и оставляет артефакт — тесты, замеры, отчёт или настройку пайплайна.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Первый набор на доменной логике</h4>
+    <p>Возьмите класс с расчётами — цена, скидка, комиссия — и покройте его модульными тестами: счастливый путь, границы (ноль, максимум, отрицательное), ошибочные входы. Используйте провайдер данных с именованными случаями.</p>
+    <div class="box task"><span class="lbl">Результат</span>Набор, который выполняется за миллисекунды, и как минимум один найденный граничный случай, который раньше работал неверно.</div>
+
+    <h4>2. Переписать плохой тест</h4>
+    <p>Найдите в проекте тест с моками на всё и проверкой вызовов. Перепишите его на проверку результата с фейками. Затем переименуйте что-нибудь в реализации и убедитесь, что новый тест не упал, а старый бы упал.</p>
+    <div class="box task"><span class="lbl">Результат</span>Наглядное доказательство разницы между тестированием поведения и реализации.</div>
+
+    <h4>3. Билдер тестовых данных</h4>
+    <p>Для самой громоздкой сущности проекта напишите билдер с осмысленными значениями по умолчанию и методами вроде <code>paid()</code>, <code>expired()</code>. Перепишите на него пять существующих тестов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Сокращение подготовки в тестах в несколько раз и одно место для правки при изменении конструктора.</div>
+
+    <h4>4. Тесты на исключения и ошибки</h4>
+    <p>Покройте ошибочные пути модуля: неверный ввод, нарушение бизнес-правила, отсутствующий объект. Проверьте не только тип исключения, но и то, что состояние не изменилось частично.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список найденных мест, где ошибка оставляла систему в промежуточном состоянии.</div>
+
+    <h4>5. Разделение наборов</h4>
+    <p>Разложите тесты по каталогам и наборам (модульные, интеграционные, функциональные), настройте отдельный запуск и замерьте время каждого набора.</p>
+    <div class="box task"><span class="lbl">Результат</span>Команда, которая гоняет модульные тесты за секунды, — то, что вы будете запускать при каждом изменении.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Интеграционные тесты с базой</h4>
+    <p>Настройте окружение: та же СУБД, что в проде, в контейнере с данными в памяти; схема разворачивается один раз; изоляция откатом транзакции. Покройте самые сложные запросы проекта.</p>
+    <div class="box task"><span class="lbl">Результат</span>Тесты на реальном SQL и замер: сколько добавилось к времени прогона.</div>
+
+    <h4>7. Функциональные тесты и права</h4>
+    <p>Для трёх эндпоинтов напишите по одному тесту счастливого пути и обязательный тест доступа: попытка получить чужой объект должна давать 404 или 403.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список эндпоинтов, где проверка владения отсутствовала. Обычно он не пустой.</div>
+
+    <h4>8. Тесты отказов внешнего сервиса</h4>
+    <p>Подмените HTTP-клиент и покройте сценарии: таймаут, 500, 429 с <code>Retry-After</code>, некорректное тело. Проверьте, что при неизвестном исходе операция не считается неуспешной и что повтор идёт с тем же ключом идемпотентности.</p>
+    <div class="box task"><span class="lbl">Результат</span>Найденные места, где таймаут интерпретировался как отказ, — типичный источник двойных списаний.</div>
+
+    <h4>9. Избавление от зависимости во времени</h4>
+    <p>Найдите код, берущий текущее время изнутри, вынесите часы в зависимость и покройте граничные случаи: полночь, конец месяца, истечение срока ровно в момент проверки.</p>
+    <div class="box task"><span class="lbl">Результат</span>Тесты, которые раньше было невозможно написать, и один-два найденных бага на границах.</div>
+
+    <h4>10. Характеризующие тесты для легаси</h4>
+    <p>Выберите непонятный участок кода, соберите реальные входы, зафиксируйте текущее поведение тестами. Отдельно выпишите обнаруженные странности. Затем проведите рефакторинг под защитой этих тестов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отрефакторенный модуль и список странностей для обсуждения с бизнесом.</div>
+
+    <h4>11. Ускорение и стабилизация прогона</h4>
+    <p>Запустите набор в случайном порядке и найдите зависимости между тестами. Найдите десять самых медленных тестов и разберитесь, почему они медленные. Настройте параллельный прогон с изоляцией баз и ключей кэша.</p>
+    <div class="box task"><span class="lbl">Результат</span>Время прогона до и после плюс список исправленных скрытых зависимостей.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Мутационное тестирование ключевого модуля</h4>
+    <p>Прогоните мутационное тестирование по модулю с расчётами. Разберите выжившие мутации: какие означают реальные дыры в проверках, какие — эквивалентные изменения. Доведите балл до осмысленного уровня.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список мест, где тесты были декоративными, и добавленные проверки границ.</div>
+
+    <h4>13. Тесты асинхронности и конкурентности</h4>
+    <p>Покройте фоновую обработку по трём осям: постановка, обработчик, повтор без дублирования эффекта. Отдельно напишите тест гонки на двух параллельных соединениях к настоящей базе.</p>
+    <div class="box task"><span class="lbl">Результат</span>Доказательство идемпотентности обработчика и тест, который падает при снятии защиты от гонки.</div>
+
+    <h4>14. Нагрузочный тест с целями</h4>
+    <p>Снимите профиль реального трафика, напишите сценарий с целями по p95, p99 и доле ошибок, прогоните нагрузочный и стресс-тесты на стенде с сопоставимым объёмом данных, снимая метрики системы.</p>
+    <div class="box task"><span class="lbl">Результат</span>Известный предел системы в запросах в секунду и описание того, как она деградирует за ним.</div>
+
+    <h4>15. Стратегия тестирования проекта</h4>
+    <p>Опишите на двух страницах: что каким уровнем покрывается и почему, какой бюджет времени прогона, какие правила процесса (тест на баг, ревью тестов, порог на изменённый код), что делаем с нестабильными тестами и что осознанно не покрываем.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ, по которому команда принимает решения без спора в каждом pull request. Лучший артефакт для senior-собеседования.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Тема максимально практичная: каждое задание делается на рабочем проекте и сразу приносит пользу — в отличие от чтения о тестировании, которое почти ничего не даёт.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Модульные тесты и качество</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Зачем тесты и уровни, структура теста, ассерты и провайдеры данных, что тестировать и что нет, поведение против реализации, тестовые двойники и их выбор, признаки хорошего теста, билдеры данных.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: набор на доменной логике, переписывание плохого теста, билдер данных, тесты на ошибки, разделение наборов.</li>
+      <li>Найти в проекте пять тестов с проверкой вызовов вместо результата и переписать их.</li>
+      <li>Прогнать набор с ключом случайного порядка и посмотреть, что упадёт.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Покрытый модуль доменной логики, билдер тестовых данных и модульный набор, выполняющийся за секунды.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Зачем нужны тесты и почему модульных больше?</li>
+      <li>Что означает «тестировать поведение, а не реализацию»?</li>
+      <li>Чем мок отличается от стаба и когда лучше фейк?</li>
+      <li>Что не стоит покрывать тестами?</li>
+      <li>Что делает тест недетерминированным?</li>
+      <li>Что показывает процент покрытия и чего не показывает?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · База, HTTP, интеграции</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Тесты с настоящей базой, стратегии изоляции, фабрики против фикстур, окружение в контейнерах, функциональные тесты и проверка прав, подмена внешних сервисов, тестирование отказов и идемпотентности.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6–8: интеграционные тесты с базой, функциональные тесты с проверкой прав, тесты отказов внешнего сервиса.</li>
+      <li>Проверить каждый эндпоинт на попытку получить чужой объект — это одновременно тест и аудит безопасности.</li>
+      <li>Замерить, насколько выросло время прогона, и решить, что запускать локально, а что только в CI.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Интеграционные тесты на настоящем SQL, функциональные с проверкой доступа и покрытые сценарии отказов внешних сервисов.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как изолировать тесты, работающие с базой?</li>
+      <li>Почему не стоит подменять СУБД на SQLite?</li>
+      <li>Фабрики или фикстуры и почему?</li>
+      <li>Что проверять в функциональном тесте эндпоинта?</li>
+      <li>Как тестировать код, работающий с внешним API?</li>
+      <li>Как проверить, что повтор запроса не создаёт дубль?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Легаси, TDD, CI</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Время и случайность как зависимости, борьба с недетерминизмом, характеризующие тесты и швы, приоритеты покрытия легаси, цикл TDD и признаки нетестируемого кода, разделение наборов и параллельный прогон, причины нестабильных тестов.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 9–11: вынос часов в зависимость, характеризующие тесты для легаси, ускорение и стабилизация прогона.</li>
+      <li>Исправить один баг по TDD: сначала падающий тест, потом исправление.</li>
+      <li>Завести учёт нестабильных тестов: сколько их, как часто падают, что с ними делается.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Отрефакторенный легаси-модуль под защитой тестов, ускоренный прогон и список исправленных скрытых зависимостей между тестами.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как тестировать код, зависящий от времени и случайности?</li>
+      <li>Что такое характеризующий тест и что такое шов?</li>
+      <li>Как начать покрывать проект без тестов?</li>
+      <li>Где TDD помогает, а где мешает?</li>
+      <li>Как узнать нетестируемый код?</li>
+      <li>Как ускорить прогон тестов?</li>
+      <li>Что делать с тестами, падающими через раз?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Стратегия, метрики, нагрузка</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Выбор уровня тестов по типу кода, приоритизация по риску, пределы покрытия и мутационное тестирование, метрики набора, асинхронность и конкурентность, миграции и контрактные тесты, виды нагрузочных тестов и цели по SLO, процесс и владение набором.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: мутационное тестирование модуля, тесты асинхронности и гонок, нагрузочный тест с целями, документ стратегии.</li>
+      <li>Посчитать метрики своего набора: время прогона, число нестабильных, мутационный балл на ключевом модуле.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ, обязательно с экономикой решения.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Закрытые дыры в проверках по результатам мутационного тестирования, покрытая асинхронность, известный предел системы и документ стратегии тестирования.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Какой процент покрытия нужен и почему вопрос поставлен неверно?</li>
+      <li>Как выбирать уровень тестов для конкретного кода?</li>
+      <li>Что такое мутационное тестирование и где его применять?</li>
+      <li>Как тестировать асинхронную обработку и гонки?</li>
+      <li>Что делает нагрузочный тест осмысленным?</li>
+      <li>Что проверять при ревью тестов?</li>
+      <li>Почему набор тестов деградирует?</li>
+      <li>Как выглядит зрелый набор тестов?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы про тесты</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Говорите про экономику, а не про идеологию.</strong> «Тесты нужны всегда» — слабо. «Расчёты покрываем плотно, потому что цена ошибки в деньгах; обвязку не покрываем, потому что тест стоит дважды» — сильно.</li>
+      <li><strong>Приводите числа.</strong> Сколько идёт прогон, сколько тестов, сколько нестабильных, какой мутационный балл на ключевом модуле, сколько времени занимала ручная проверка до и после. Числа мгновенно отличают опыт от прочитанного.</li>
+      <li><strong>Не защищайте догмы.</strong> Ответ «TDD всегда» вызывает уточняющий вопрос, на котором обычно и выясняется, что практики не было. Честный ответ с условиями звучит гораздо убедительнее.</li>
+      <li><strong>Показывайте, что понимаете границы.</strong> Покрытие не гарантирует корректности, моки не докажут работу SQL, тест гонки не доказывает её отсутствия. Знание границ — главный признак практика.</li>
+      <li><strong>Держите наготове историю.</strong> Баг, который вернулся из-за отсутствия теста; тест, поймавший ошибку перед релизом; набор, который вы ускорили с двадцати минут до четырёх. Такие истории отвечают сразу на несколько вопросов.</li>
+      <li><strong>Не стесняйтесь признавать плохое положение дел.</strong> «В проекте покрытие низкое, вот что я успел закрыть и с чего начал бы дальше» — сильный ответ. Он показывает и понимание приоритетов, и реализм.</li>
+      <li><strong>Приносите артефакты.</strong> Документ стратегии тестирования, отчёт мутационного тестирования, замеры времени прогона до и после, сценарий нагрузочного теста с целями.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Тестирование для PHP-разработчиков» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

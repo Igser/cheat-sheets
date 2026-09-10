@@ -1,0 +1,1664 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · протокол · контракт между системами</p>
+  <h1>HTTP и дизайн API</h1>
+  <p class="lead">API — это не набор эндпоинтов, а обязательство. Схему базы можно переписать за вечер, код отрефакторить за неделю, а опубликованный контракт живёт годами: им пользуются мобильные приложения, которые обновляются месяцами, интеграции партнёров, о существовании которых вы забыли, и ваши же сервисы. Поэтому цена ошибки в дизайне API выше, чем почти где-либо ещё в бэкенде.</p>
+  <p class="lead">Фундамент здесь — сам HTTP. Большинство «сложных» вопросов на собеседовании (почему повторный POST создаёт второй заказ, почему браузер не отдаёт куку, почему CORS ругается на preflight, почему CDN отдаёт чужие данные) — это вопросы про семантику методов, заголовки и кэширование. Разобравшись с протоколом, вы получаете ответы на них бесплатно.</p>
+  <p class="lead">Конспект идёт от протокола к контракту и дальше к эволюции: методы и коды → REST-дизайн, кэширование, аутентификация и лимиты → выбор между REST, GraphQL, gRPC и вебхуками, OpenAPI и безопасность. Смежные темы: <a href="php.html">PHP</a>, <a href="system-design.html">System Design</a>, <a href="infrastructure.html">инфраструктура</a>, <a href="symfony.html">Symfony</a>, <a href="laravel.html">Laravel</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Устройство запроса, методы и коды ответов, ключевые заголовки, REST-контракт, куки и сессии, HTTPS.</span></div>
+    <div class="aud m"><b>Middle</b><span>Проектирование ресурсов и версионирование, пагинация, идемпотентность и ETag, формат ошибок, HTTP-кэш, OAuth 2.0 и JWT, лимиты и CORS.</span></div>
+    <div class="aud s"><b>Senior</b><span>Выбор стиля интеграции, OpenAPI и контрактные тесты, вебхуки, долгие операции, производительность и безопасность API.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>20</i></span>
+    <span>Блоков кода: <i>27</i></span>
+    <span>Сравнительных таблиц: <i>23</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#http">Как устроен HTTP</a></li>
+    <li><span class="tree">├─</span> <a href="#methods">Методы и коды ответов</a></li>
+    <li><span class="tree">├─</span> <a href="#headers">Заголовки, которые нужно знать</a></li>
+    <li><span class="tree">├─</span> <a href="#rest">REST-контракт</a></li>
+    <li><span class="tree">├─</span> <a href="#cookies">Куки, сессии, состояние</a></li>
+    <li><span class="tree">├─</span> <a href="#https">HTTPS и транспорт</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#design">Проектирование ресурсов</a></li>
+    <li><span class="tree">├─</span> <a href="#versioning">Версионирование и совместимость</a></li>
+    <li><span class="tree">├─</span> <a href="#collections">Коллекции: пагинация и фильтры</a></li>
+    <li><span class="tree">├─</span> <a href="#idempotency">Идемпотентность и конкурентность</a></li>
+    <li><span class="tree">├─</span> <a href="#errors">Ошибки и валидация</a></li>
+    <li><span class="tree">├─</span> <a href="#caching">HTTP-кэширование</a></li>
+    <li><span class="tree">├─</span> <a href="#auth">Аутентификация и авторизация</a></li>
+    <li><span class="tree">├─</span> <a href="#limits">Лимиты, CORS, защита</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#styles">REST, GraphQL, gRPC, события</a></li>
+    <li><span class="tree">├─</span> <a href="#contracts">OpenAPI и контрактные тесты</a></li>
+    <li><span class="tree">├─</span> <a href="#webhooks">Вебхуки и исходящие интеграции</a></li>
+    <li><span class="tree">├─</span> <a href="#longrunning">Долгие операции и потоки</a></li>
+    <li><span class="tree">├─</span> <a href="#perf">Производительность API</a></li>
+    <li><span class="tree">├─</span> <a href="#security">Безопасность API</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Коды и заголовки: шпаргалка</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · протокол</p>
+    <h2>Junior: протокол и базовый контракт</h2>
+    <p>PHP-разработчик работает с HTTP каждый день, но обычно через абстракции фреймворка. Проблема в том, что абстракции протекают: браузер не отдал куку, CDN закэшировал приватный ответ, клиент повторил запрос и создал второй заказ. Все эти истории объясняются семантикой протокола — и на собеседовании их разбирают именно так.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="http">
+    <p class="path">junior / протокол</p>
+    <div class="card-top"><h3>Как устроен HTTP</h3><span class="badge b-1">База</span></div>
+    <p>HTTP — текстовый (в первом приближении) протокол запрос-ответ без состояния. Каждый запрос самодостаточен: сервер не помнит предыдущий. Всё, что выглядит как «сервер меня помнит», реализовано поверх — куками, токенами, сессиями.</p>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">Запрос и ответ целиком</span></div><pre><code><span class="cm"># Запрос: стартовая строка, заголовки, пустая строка, тело</span>
+POST /api/v1/orders HTTP/1.1
+Host: api.example.com
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOi...
+Idempotency-Key: 3f8c2b1a-...
+Content-Length: 52
+
+{"product_id": 42, "qty": 2, "currency": "RUB"}
+
+<span class="cm"># Ответ: статус, заголовки, пустая строка, тело</span>
+HTTP/1.1 201 Created
+Content-Type: application/json; charset=utf-8
+Location: /api/v1/orders/9271
+Cache-Control: no-store
+X-Request-Id: 0f2a5c...
+
+{"id": 9271, "status": "created", "total": "1990.00"}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">curl: инструмент, который должен быть в пальцах</span></div><pre><code>curl -i https://api.example.com/health          <span class="cm"># показать заголовки ответа</span>
+curl -v https://api.example.com/health          <span class="cm"># весь диалог, включая TLS и запрос</span>
+curl -X POST https://api.example.com/orders \
+     -H <span class="st">'Content-Type: application/json'</span> \
+     -H <span class="st">'Authorization: Bearer TOKEN'</span> \
+     -d <span class="st">'{"product_id":42}'</span>
+
+curl -sS -o /dev/null -w <span class="st">'%{http_code} %{time_total}s %{size_download}b\n'</span> URL   <span class="cm"># замер</span>
+curl -I https://example.com/logo.png            <span class="cm"># только заголовки: проверить кэш</span>
+curl --compressed URL                           <span class="cm"># запросить сжатие</span>
+curl -H <span class="st">'Accept-Encoding: gzip'</span> -sS URL | wc -c    <span class="cm"># размер сжатого ответа</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · версии протокола и что они меняют</caption>
+      <thead><tr><th>Версия</th><th>Ключевое отличие</th><th>Что меняется на практике</th></tr></thead>
+      <tbody>
+        <tr><td>HTTP/1.0</td><td>Соединение на каждый запрос</td><td>Историческая; сегодня не встречается</td></tr>
+        <tr><td>HTTP/1.1</td><td>Keep-alive, chunked, <code>Host</code></td><td>6 параллельных соединений на домен, отсюда склейка ассетов и спрайты</td></tr>
+        <tr><td>HTTP/2</td><td>Бинарный, мультиплексирование в одном соединении, сжатие заголовков</td><td>Много мелких запросов перестают быть проблемой; склейка теряет смысл</td></tr>
+        <tr><td>HTTP/3</td><td>Поверх QUIC (UDP), нет блокировки на потерях пакетов</td><td>Заметный выигрыш на мобильных и плохих сетях</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Stateless — не значит «без состояния вообще».</strong> Это значит, что состояние не хранится в соединении: сервер не связывает два запроса, пока клиент сам не принёс идентификатор — куку с идентификатором сессии или токен. Отсюда следует всё остальное: балансировщик может отправить следующий запрос на другой узел, а сессия должна лежать в общем хранилище.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что происходит, когда вы вводите URL в браузере?</b><br>Разрешение DNS, TCP-соединение, TLS-рукопожатие (для HTTPS), отправка HTTP-запроса со стартовой строкой и заголовками, ответ со статусом и телом, затем браузер разбирает HTML и запрашивает подресурсы. Ценные детали, которых ждут: переиспользование соединения, кэш на стороне браузера, редиректы и то, что HTTP не хранит состояния между запросами.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="methods">
+    <p class="path">junior / семантика</p>
+    <div class="card-top"><h3>Методы и коды ответов</h3><span class="badge b-1">База</span></div>
+    <p>Два свойства методов определяют почти всё поведение промежуточных узлов — браузеров, прокси, CDN, клиентских библиотек. <strong>Безопасный</strong> метод не меняет состояние; такой запрос можно выполнять свободно и кэшировать. <strong>Идемпотентный</strong> метод при повторе даёт тот же результат; такой запрос можно автоматически повторять при сетевой ошибке.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · методы и их свойства</caption>
+      <thead><tr><th>Метод</th><th>Назначение</th><th>Безопасный</th><th>Идемпотентный</th><th>Кэшируемый</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET</code></td><td>Получить представление ресурса</td><td>Да</td><td>Да</td><td>Да</td></tr>
+        <tr><td><code>HEAD</code></td><td>Только заголовки: проверка наличия и свежести</td><td>Да</td><td>Да</td><td>Да</td></tr>
+        <tr><td><code>POST</code></td><td>Создать подчинённый ресурс или выполнить действие</td><td>Нет</td><td>Нет</td><td>Практически нет</td></tr>
+        <tr><td><code>PUT</code></td><td>Заменить ресурс целиком по известному URL</td><td>Нет</td><td>Да</td><td>Нет</td></tr>
+        <tr><td><code>PATCH</code></td><td>Частичное изменение</td><td>Нет</td><td>Не гарантируется</td><td>Нет</td></tr>
+        <tr><td><code>DELETE</code></td><td>Удалить ресурс</td><td>Нет</td><td>Да</td><td>Нет</td></tr>
+        <tr><td><code>OPTIONS</code></td><td>Возможности ресурса, preflight в CORS</td><td>Да</td><td>Да</td><td>Нет</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span><code>DELETE</code> идемпотентен по смыслу, а не по коду ответа: первый вызов возвращает 204, второй — 404, и это нормально. Идемпотентность означает одинаковое <em>состояние системы</em> после повторов, а не одинаковый ответ. То же с <code>PUT</code>: три одинаковых запроса оставляют ресурс в одном и том же виде.</div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · коды ответов, которые реально используются</caption>
+      <thead><tr><th>Код</th><th>Когда</th><th>Частая ошибка</th></tr></thead>
+      <tbody>
+        <tr><td><strong>200</strong> OK</td><td>Успех с телом</td><td>Возврат 200 с полем <code>"error"</code> внутри</td></tr>
+        <tr><td><strong>201</strong> Created</td><td>Создан ресурс; в <code>Location</code> — его адрес</td><td>Забытый <code>Location</code></td></tr>
+        <tr><td><strong>202</strong> Accepted</td><td>Принято в обработку, результат позже</td><td>Нет способа узнать статус</td></tr>
+        <tr><td><strong>204</strong> No Content</td><td>Успех без тела (удаление, подтверждение)</td><td>Тело в ответе вопреки коду</td></tr>
+        <tr><td><strong>301 / 308</strong></td><td>Постоянный редирект</td><td>Кэшируется навсегда: откатить почти невозможно</td></tr>
+        <tr><td><strong>302 / 307</strong></td><td>Временный редирект</td><td>302 может сменить метод на GET, 307 — нет</td></tr>
+        <tr><td><strong>304</strong> Not Modified</td><td>Ответ на условный запрос: клиентская копия свежая</td><td>Не реализуют — и гоняют мегабайты зря</td></tr>
+        <tr><td><strong>400</strong></td><td>Запрос не разобрать: битый JSON, нет обязательного поля</td><td>Используется как универсальная ошибка на всё</td></tr>
+        <tr><td><strong>401</strong></td><td>Не аутентифицирован или токен истёк</td><td>Путают с 403</td></tr>
+        <tr><td><strong>403</strong></td><td>Аутентифицирован, но прав нет</td><td>Раскрытие существования чужого объекта</td></tr>
+        <tr><td><strong>404</strong></td><td>Ресурса нет (или его нельзя показывать)</td><td>404 вместо 403 — иногда это осознанно и правильно</td></tr>
+        <tr><td><strong>409</strong> Conflict</td><td>Конфликт состояния: дубль, гонка версий</td><td>Отдают 400 и теряют смысл</td></tr>
+        <tr><td><strong>412</strong></td><td>Не выполнено условие <code>If-Match</code></td><td>Не используют — и теряют защиту от потери правок</td></tr>
+        <tr><td><strong>422</strong></td><td>Синтаксис верный, бизнес-правило нарушено</td><td>Смешивают с 400 без разбора</td></tr>
+        <tr><td><strong>429</strong></td><td>Превышен лимит; нужен <code>Retry-After</code></td><td>Отдают без заголовка — клиент долбит дальше</td></tr>
+        <tr><td><strong>500 / 502 / 503 / 504</strong></td><td>Наша ошибка, шлюз, недоступность, таймаут</td><td>Отдача 500 на пользовательскую ошибку ломает алерты</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Правило разделения: 4xx — «клиент, исправь запрос», 5xx — «сервер виноват, повтори позже». Оно влияет не на эстетику, а на поведение: по 5xx клиенты повторяют запрос и срабатывают алерты, по 4xx — нет. Поэтому валидационная ошибка, отданная как 500, поднимает дежурного ночью, а сбой базы, отданный как 400, остаётся незамеченным.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем 401 отличается от 403, а 400 от 422?</b><br>401 — мы не знаем, кто вы: токена нет, он истёк или неверен; клиент должен аутентифицироваться заново. 403 — знаем, но доступ запрещён; повтор с теми же данными бесполезен. 400 — запрос невозможно разобрать или он структурно неверен. 422 — структура верная, но нарушено бизнес-правило: например, дата окончания раньше даты начала.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="headers">
+    <p class="path">junior / метаданные</p>
+    <div class="card-top"><h3>Заголовки, которые нужно знать</h3><span class="badge b-1">База</span></div>
+    <p>Заголовки — это метаданные запроса и ответа: кто спрашивает, в каком формате, что делать с результатом. Их сотни, но повседневно нужны примерно двадцать.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · рабочий минимум заголовков</caption>
+      <thead><tr><th>Заголовок</th><th>Направление</th><th>Зачем</th></tr></thead>
+      <tbody>
+        <tr><td><code>Content-Type</code></td><td>Оба</td><td>Формат тела: <code>application/json</code>, <code>multipart/form-data</code></td></tr>
+        <tr><td><code>Accept</code></td><td>Запрос</td><td>Что клиент готов принять; основа согласования формата</td></tr>
+        <tr><td><code>Authorization</code></td><td>Запрос</td><td><code>Bearer &lt;token&gt;</code> или <code>Basic</code></td></tr>
+        <tr><td><code>Cookie</code> / <code>Set-Cookie</code></td><td>Запрос / ответ</td><td>Состояние сессии в браузере</td></tr>
+        <tr><td><code>Cache-Control</code></td><td>Оба</td><td>Правила кэширования; главный заголовок кэша</td></tr>
+        <tr><td><code>ETag</code> / <code>If-None-Match</code></td><td>Ответ / запрос</td><td>Версия представления и условный запрос</td></tr>
+        <tr><td><code>Last-Modified</code> / <code>If-Modified-Since</code></td><td>Ответ / запрос</td><td>То же по времени изменения</td></tr>
+        <tr><td><code>Location</code></td><td>Ответ</td><td>Адрес созданного ресурса или цель редиректа</td></tr>
+        <tr><td><code>Retry-After</code></td><td>Ответ</td><td>Когда повторить: с 429 и 503</td></tr>
+        <tr><td><code>Vary</code></td><td>Ответ</td><td>От каких заголовков зависит представление — критично для кэша</td></tr>
+        <tr><td><code>Content-Encoding</code> / <code>Accept-Encoding</code></td><td>Ответ / запрос</td><td>Сжатие: gzip, br</td></tr>
+        <tr><td><code>X-Request-Id</code></td><td>Оба</td><td>Сквозной идентификатор для отладки</td></tr>
+        <tr><td><code>X-Forwarded-For</code> / <code>-Proto</code></td><td>Запрос</td><td>Реальный IP и схема за прокси</td></tr>
+        <tr><td><code>Origin</code> / <code>Access-Control-*</code></td><td>Запрос / ответ</td><td>Механика CORS</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Доверять <code>X-Forwarded-For</code> без разбора. Клиент может прислать этот заголовок сам, и тогда «реальный IP» в логах и в rate limiting — то, что нарисовал злоумышленник. Доверять можно только значению, добавленному вашим балансировщиком: веб-сервер и приложение должны быть явно настроены на список доверенных прокси.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужен заголовок <code>Vary</code>?</b><br>Он говорит кэшам, от каких заголовков запроса зависит ответ. Если ответ различается по <code>Accept-Language</code> или <code>Authorization</code>, а <code>Vary</code> не указан, кэш отдаст одну версию всем — включая приватные данные одного пользователя другому. Это одна из самых опасных ошибок кэширования, потому что она проявляется не сразу.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="rest">
+    <p class="path">junior / контракт</p>
+    <div class="card-top"><h3>REST-контракт</h3><span class="badge b-1">База</span></div>
+    <p>REST — это архитектурный стиль, а не стандарт: ресурсы, идентифицируемые URL, единообразный интерфейс через методы HTTP, отсутствие состояния на сервере. На практике под «REST API» понимают набор соглашений, и главное из них — <strong>URL описывает существительное, метод описывает глагол</strong>.</p>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">Хорошо и плохо: одни и те же операции</span></div><pre><code><span class="cm"># Плохо: глаголы в URL, метод не несёт смысла</span>
+POST /getUser?id=42
+POST /createOrder
+POST /updateOrderStatus?id=9271&amp;status=paid
+GET  /deleteOrder?id=9271          <span class="cm"># GET, меняющий состояние: сломается на первом же префетче</span>
+
+<span class="cm"># Хорошо: ресурсы + методы</span>
+GET    /users/42
+POST   /orders                     <span class="cm"># → 201 + Location: /orders/9271</span>
+GET    /orders/9271
+PATCH  /orders/9271                <span class="cm"># {"status": "paid"} — частичное изменение</span>
+DELETE /orders/9271                <span class="cm"># → 204</span>
+GET    /users/42/orders?status=paid&amp;limit=20
+
+<span class="cm"># Действия, которые не ложатся в CRUD, — подресурс-действие, а не глагол в корне</span>
+POST   /orders/9271/refunds        <span class="cm"># возврат как отдельный ресурс: у него есть история</span>
+POST   /orders/9271/cancellation   <span class="cm"># лучше, чем POST /cancelOrder</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · соглашения по URL</caption>
+      <thead><tr><th>Правило</th><th>Хорошо</th><th>Плохо</th></tr></thead>
+      <tbody>
+        <tr><td>Существительные во множественном числе</td><td><code>/orders/9271</code></td><td><code>/order/get/9271</code></td></tr>
+        <tr><td>Вложенность максимум на один уровень</td><td><code>/users/42/orders</code></td><td><code>/users/42/orders/9271/items/3/tax</code></td></tr>
+        <tr><td>Фильтры — в query, не в пути</td><td><code>/orders?status=paid</code></td><td><code>/orders/status/paid</code></td></tr>
+        <tr><td>Единый стиль имён</td><td><code>/order_items</code> или <code>/order-items</code></td><td>Смесь стилей в одном API</td></tr>
+        <tr><td>Без расширений формата</td><td><code>Accept: application/json</code></td><td><code>/orders.json</code></td></tr>
+        <tr><td>Идентификаторы непредсказуемы, если объект приватный</td><td>UUID</td><td>Автоинкремент в публичном API</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Не всякая операция — CRUD, и это нормально. «Отправить письмо», «пересчитать корзину», «выполнить импорт» плохо ложатся на ресурсы. Два рабочих выхода: смоделировать действие как ресурс (<code>POST /imports</code> создаёт задачу импорта, у которой есть статус и история) или честно сделать action-эндпоинт. Насилие над предметной областью ради буквы REST хуже, чем один прагматичный <code>POST</code>.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем PUT отличается от PATCH?</b><br><code>PUT</code> заменяет ресурс целиком: отсутствующие в теле поля должны быть сброшены — поэтому он идемпотентен. <code>PATCH</code> изменяет часть полей, и его идемпотентность зависит от семантики: <code>{"status":"paid"}</code> идемпотентен, а <code>{"op":"increment","value":1}</code> — нет. На практике для обновлений чаще используют PATCH, потому что клиенты редко присылают полное состояние.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="cookies">
+    <p class="path">junior / состояние</p>
+    <div class="card-top"><h3>Куки, сессии, состояние</h3><span class="badge b-1">База</span></div>
+    <p>Кука — единственный способ, которым браузер сам, без участия кода, прикладывает состояние к каждому запросу. Отсюда и её удобство, и её главная уязвимость: браузер прикладывает куку и к запросу, инициированному чужим сайтом, — это и есть механика CSRF.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Кука сессии: каждый флаг закрывает конкретную атаку</span></div><pre><code>&lt;?php
+<span class="fn">setcookie</span>(<span class="st">'session'</span>, $id, [
+    <span class="st">'expires'</span>  =&gt; 0,          <span class="cm">// сессионная: живёт до закрытия браузера</span>
+    <span class="st">'path'</span>     =&gt; <span class="st">'/'</span>,
+    <span class="st">'domain'</span>   =&gt; <span class="st">'example.com'</span>,
+    <span class="st">'secure'</span>   =&gt; <span class="kw">true</span>,       <span class="cm">// только по HTTPS — защита от перехвата</span>
+    <span class="st">'httponly'</span> =&gt; <span class="kw">true</span>,       <span class="cm">// недоступна из JS — снижает ущерб от XSS</span>
+    <span class="st">'samesite'</span> =&gt; <span class="st">'Lax'</span>,      <span class="cm">// не отправляется при межсайтовых POST — защита от CSRF</span>
+]);
+
+<span class="cm">// То же для сессий PHP — задаётся один раз в конфигурации</span>
+<span class="fn">session_set_cookie_params</span>([
+    <span class="st">'secure'</span> =&gt; <span class="kw">true</span>, <span class="st">'httponly'</span> =&gt; <span class="kw">true</span>, <span class="st">'samesite'</span> =&gt; <span class="st">'Lax'</span>,
+]);
+<span class="fn">ini_set</span>(<span class="st">'session.use_strict_mode'</span>, <span class="st">'1'</span>);   <span class="cm">// запрет фиксации чужого id сессии</span>
+<span class="fn">session_start</span>();
+
+<span class="cm">// После входа идентификатор сессии обязательно меняется</span>
+<span class="fn">session_regenerate_id</span>(<span class="kw">true</span>);            <span class="cm">// иначе — session fixation</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · флаги куки и что они закрывают</caption>
+      <thead><tr><th>Флаг</th><th>Что делает</th><th>Что происходит без него</th></tr></thead>
+      <tbody>
+        <tr><td><code>Secure</code></td><td>Отправляется только по HTTPS</td><td>Кука утекает при любом HTTP-запросе</td></tr>
+        <tr><td><code>HttpOnly</code></td><td>Недоступна из JavaScript</td><td>XSS сразу превращается в угон сессии</td></tr>
+        <tr><td><code>SameSite=Lax</code></td><td>Не шлётся при межсайтовых POST и в iframe</td><td>Открыта классическая CSRF-атака</td></tr>
+        <tr><td><code>SameSite=Strict</code></td><td>Не шлётся ни при каких переходах со стороны</td><td>Строже, но ломает переходы по внешним ссылкам</td></tr>
+        <tr><td><code>SameSite=None</code></td><td>Разрешает межсайтовую отправку</td><td>Требует <code>Secure</code>; нужен только для встраиваний</td></tr>
+        <tr><td><code>Domain</code></td><td>Область действия</td><td>Слишком широкий домен раздаёт куку поддоменам</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Выбор между сессией в куке и токеном в заголовке — это выбор между двумя классами атак. Кука уязвима к CSRF, но защищена от чтения из JS флагом <code>HttpOnly</code>. Токен в <code>localStorage</code> не уязвим к CSRF, но читается любым XSS. Для браузерных приложений на своём домене обычно правильнее кука с <code>HttpOnly</code>, <code>Secure</code> и <code>SameSite</code>; токены — для мобильных клиентов и межсервисного взаимодействия.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как работает CSRF и как от неё защититься?</b><br>Чужой сайт инициирует запрос к вашему, а браузер автоматически прикладывает куку сессии — действие выполняется от имени пользователя. Защита: <code>SameSite=Lax</code> или <code>Strict</code> на куке сессии плюс CSRF-токен в форме, который проверяется на сервере. Для API на токенах в заголовке проблема не возникает: заголовок браузер сам не добавит.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card" id="https">
+    <p class="path">junior / транспорт</p>
+    <div class="card-top"><h3>HTTPS и транспорт</h3><span class="badge b-1">База</span></div>
+    <p>HTTPS — это HTTP поверх TLS. Он даёт три вещи: шифрование (никто по пути не прочитает), целостность (никто не подменит) и аутентификацию сервера (вы говорите с тем доменом, что в адресной строке). Для API это не опция: <code>Authorization</code> в открытом виде читается любым узлом по дороге.</p>
+
+    <div class="code"><div class="bar"><span>bash + http</span><span class="r">Проверка и обязательные заголовки безопасности</span></div><pre><code><span class="cm"># Что за сертификат, кем выдан и когда истекает</span>
+openssl s_client -connect api.example.com:443 -servername api.example.com &lt;/dev/null 2&gt;/dev/null \
+  | openssl x509 -noout -subject -issuer -dates
+
+<span class="cm"># Проверить редирект с HTTP на HTTPS</span>
+curl -sI http://example.com | head -3
+
+<span class="cm"># Заголовки, которые стоит отдавать всегда</span>
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff          <span class="cm"># браузер не «угадывает» тип содержимого</span>
+Referrer-Policy: strict-origin-when-cross-origin
+Content-Security-Policy: default-src <span class="st">'self'</span>   <span class="cm"># главный барьер против XSS</span>
+
+<span class="cm"># Для API дополнительно</span>
+Cache-Control: no-store                  <span class="cm"># приватные ответы не кэшируются нигде</span>
+X-Frame-Options: DENY                    <span class="cm"># защита от кликджекинга (или frame-ancestors в CSP)</span></code></pre></div>
+
+    <p><strong>Что важно помнить про TLS в PHP-приложении:</strong></p>
+    <ul>
+      <li>TLS обычно терминируется на балансировщике или nginx — приложение видит уже расшифрованный запрос. Отсюда необходимость доверять <code>X-Forwarded-Proto</code>, иначе генерируются ссылки с <code>http://</code> и возникает петля редиректов.</li>
+      <li>Отключение проверки сертификата в HTTP-клиенте (<code>verify_peer =&gt; false</code>) полностью обесценивает HTTPS: соединение шифруется, но неизвестно с кем. Это никогда не решение проблемы «сертификат не проверяется» — решение в обновлении корневых сертификатов.</li>
+      <li>Сертификаты истекают. Автопродление и алерт за две недели до окончания — обязательная часть эксплуатации, а не приятное дополнение.</li>
+      <li>HSTS означает, что браузер откажется ходить по HTTP на этот домен. Это хорошо, но <code>max-age</code> нельзя откатить мгновенно — начинайте с малого значения.</li>
+    </ul>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что даёт HTTPS и достаточно ли его для безопасности API?</b><br>Он защищает данные в канале: шифрование, целостность, аутентификация сервера. Но не защищает ни от чего на концах: неверная авторизация, IDOR, SQL-инъекция, утечка токена в логах остаются. HTTPS — необходимое условие, а не достаточное; он гарантирует, что вас не подслушали по дороге, и ничего не говорит о том, правильно ли сервер проверил права.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Понимаю структуру запроса и ответа и читаю их в <code>curl -v</code></li>
+        <li>Знаю, чем отличаются HTTP/1.1, HTTP/2 и HTTP/3</li>
+        <li>Объясняю, что значит «HTTP не хранит состояния»</li>
+        <li>Различаю безопасные и идемпотентные методы</li>
+        <li>Не меняю состояние методом GET</li>
+        <li>Осознанно выбираю между 400, 401, 403, 404, 409, 422 и 429</li>
+        <li>Отдаю <code>Location</code> при 201 и <code>Retry-After</code> при 429</li>
+      </ul>
+      <ul class="check">
+        <li>Знаю рабочий минимум заголовков и роль <code>Vary</code></li>
+        <li>Не доверяю <code>X-Forwarded-For</code> без списка доверенных прокси</li>
+        <li>Проектирую URL из существительных, фильтры кладу в query</li>
+        <li>Понимаю разницу PUT и PATCH</li>
+        <li>Ставлю кукам <code>Secure</code>, <code>HttpOnly</code>, <code>SameSite</code></li>
+        <li>Пересоздаю идентификатор сессии после входа</li>
+        <li>Объясняю механику CSRF и способы защиты</li>
+        <li>Понимаю, что HTTPS необходим, но недостаточен</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-секция по HTTP почти всегда состоит из трёх вопросов: разница методов и кодов, как устроена аутентификация в вебе, что такое CSRF. Этот блок закрывает все три — но проговорить их нужно вслух: разница между «читал» и «объясняю» здесь особенно заметна.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · контракт</p>
+    <h2>Middle: проектирование и эксплуатация API</h2>
+    <p>Middle отвечает за контракт целиком: как называются ресурсы и поля, что произойдёт при повторе запроса, что вернётся при ошибке, как клиент узнает об изменениях и что случится, если два человека редактируют одну сущность. На этом уровне ждут не «умею писать эндпоинты», а «умею проектировать так, чтобы это можно было развивать пять лет».</p>
+  </div>
+
+  <!-- 7 -->
+  <article class="card" id="design">
+    <p class="path">middle / моделирование</p>
+    <div class="card-top"><h3>Проектирование ресурсов</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Хороший API описывает предметную область, а не структуру таблиц. Прямая проекция базы наружу — самая частая ошибка: она навсегда привязывает контракт к схеме, раскрывает внутренние поля и заставляет клиента собирать смысл из пяти запросов.</p>
+
+    <div class="code"><div class="bar"><span>json</span><span class="r">Ответ, который не придётся ломать через год</span></div><pre><code>{
+  <span class="st">"id"</span>: <span class="st">"ord_9271"</span>,                        <span class="cm">// строка, а не число: префикс читаем в логах</span>
+  <span class="st">"status"</span>: <span class="st">"paid"</span>,                        <span class="cm">// перечисление, а не bool is_paid</span>
+  <span class="st">"total"</span>: { <span class="st">"amount"</span>: <span class="st">"1990.00"</span>, <span class="st">"currency"</span>: <span class="st">"RUB"</span> },  <span class="cm">// деньги строкой + валюта</span>
+  <span class="st">"created_at"</span>: <span class="st">"2026-02-11T08:15:30Z"</span>,     <span class="cm">// ISO 8601 в UTC, а не «11.02.2026»</span>
+  <span class="st">"customer"</span>: {
+    <span class="st">"id"</span>: <span class="st">"usr_42"</span>,
+    <span class="st">"display_name"</span>: <span class="st">"Иван"</span>                  <span class="cm">// ровно то, что нужно клиенту, без внутренних полей</span>
+  },
+  <span class="st">"items"</span>: [
+    { <span class="st">"sku"</span>: <span class="st">"A-100"</span>, <span class="st">"qty"</span>: 2, <span class="st">"price"</span>: { <span class="st">"amount"</span>: <span class="st">"995.00"</span>, <span class="st">"currency"</span>: <span class="st">"RUB"</span> } }
+  ],
+  <span class="st">"links"</span>: {
+    <span class="st">"self"</span>: <span class="st">"/v1/orders/ord_9271"</span>,
+    <span class="st">"refunds"</span>: <span class="st">"/v1/orders/ord_9271/refunds"</span>   <span class="cm">// клиент не собирает URL из кусков</span>
+  }
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · соглашения по формату данных</caption>
+      <thead><tr><th>Что</th><th>Как</th><th>Почему не иначе</th></tr></thead>
+      <tbody>
+        <tr><td>Идентификаторы</td><td>Строки, при возможности с префиксом типа</td><td>Число ограничивает миграцию на UUID и путается между сущностями</td></tr>
+        <tr><td>Дата и время</td><td>ISO 8601 в UTC с <code>Z</code></td><td>Локальные форматы неоднозначны, часовой пояс теряется</td></tr>
+        <tr><td>Деньги</td><td>Строка с фиксированной точностью + код валюты</td><td>Число с плавающей точкой теряет копейки</td></tr>
+        <tr><td>Состояния</td><td>Строковое перечисление</td><td>Набор булевых флагов допускает невозможные комбинации</td></tr>
+        <tr><td>Отсутствие значения</td><td><code>null</code> явно, а не пропуск поля</td><td>Иначе клиент не отличит «нет» от «не изменилось»</td></tr>
+        <tr><td>Коллекции</td><td>Всегда массив, пустой — <code>[]</code></td><td><code>null</code> вместо пустого массива ломает клиентов</td></tr>
+        <tr><td>Именование полей</td><td>Один стиль во всём API</td><td>Смесь <code>snake_case</code> и <code>camelCase</code> — источник багов</td></tr>
+        <tr><td>Обёртка ответа</td><td>Единая: данные и метаданные на своих местах</td><td>Разная форма ответа у эндпоинтов усложняет клиента</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>DTO ответа — это не сущность и не модель. Отдавать наружу объект ORM означает: любое переименование колонки ломает клиентов, а любое новое поле (включая <code>password_hash</code> или внутренние флаги) автоматически публикуется. Явный слой представления стоит десяти минут и снимает целый класс инцидентов.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему нельзя отдавать сущности ORM напрямую?</b><br>Потому что контракт становится заложником схемы: переименование колонки — ломающее изменение, а новое поле утекает наружу без ревью. Плюс появляются ленивая загрузка в сериализации и N+1, а формат ответа перестаёт быть управляемым. Правильно — явный DTO или ресурс-класс, который ревьюится как часть контракта.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="versioning">
+    <p class="path">middle / эволюция</p>
+    <div class="card-top"><h3>Версионирование и совместимость</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Опубликованный API нельзя изменить — можно только расширить. Мобильные клиенты обновляются месяцами, интеграции партнёров не обновляются никогда. Поэтому первый вопрос при любом изменении: ломающее оно или нет.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · что ломает клиентов, а что нет</caption>
+      <thead><tr><th>Изменение</th><th>Ломающее?</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td>Новое необязательное поле в ответе</td><td>Нет</td><td>Клиент, падающий на неизвестном поле, написан неверно</td></tr>
+        <tr><td>Новый необязательный параметр запроса</td><td>Нет</td><td>Со значением по умолчанию, сохраняющим прежнее поведение</td></tr>
+        <tr><td>Новый эндпоинт</td><td>Нет</td><td>Безопасно всегда</td></tr>
+        <tr><td>Удаление или переименование поля</td><td><strong>Да</strong></td><td>Классическая причина ночного инцидента у партнёра</td></tr>
+        <tr><td>Изменение типа поля</td><td><strong>Да</strong></td><td>Число → строка ломает типизированных клиентов</td></tr>
+        <tr><td>Новое обязательное поле в запросе</td><td><strong>Да</strong></td><td>Старые клиенты начинают получать 422</td></tr>
+        <tr><td>Новое значение в перечислении</td><td>Условно</td><td>Ломает клиентов со строгим <code>match</code>: предупреждать заранее</td></tr>
+        <tr><td>Ужесточение валидации</td><td><strong>Да</strong></td><td>То, что вчера принималось, сегодня отвергается</td></tr>
+        <tr><td>Изменение кода ответа</td><td><strong>Да</strong></td><td>Клиент ветвится по коду</td></tr>
+        <tr><td>Изменение порядка в коллекции</td><td>Условно</td><td>Ломает пагинацию, если сортировка не детерминирована</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Способы версионирования</h4>
+    <ul>
+      <li><strong>В пути:</strong> <code>/v1/orders</code>. Самый распространённый: видно в логах, легко маршрутизировать, просто объяснить. Минус — версионируется весь API целиком.</li>
+      <li><strong>В заголовке:</strong> <code>Accept: application/vnd.example.v2+json</code>. Чище с точки зрения теории, но неудобно отлаживать и легко забыть.</li>
+      <li><strong>По дате:</strong> <code>API-Version: 2026-02-11</code> — клиент закрепляется за срезом поведения. Используется крупными платёжными API; требует дисциплины и слоя совместимости.</li>
+      <li><strong>Без версий:</strong> только аддитивные изменения. Работает, если вы контролируете всех клиентов.</li>
+    </ul>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">Вывод из эксплуатации: предупреждать, а не отключать внезапно</span></div><pre><code>HTTP/1.1 200 OK
+Deprecation: true
+Sunset: Wed, 30 Sep 2026 23:59:59 GMT        <span class="cm"># дата отключения, машиночитаемо</span>
+Link: &lt;https://docs.example.com/migrate/v2&gt;; rel="deprecation"
+Warning: 299 - "Endpoint /v1/orders is deprecated, use /v2/orders"
+
+<span class="cm"># Процедура: объявить → предупреждать в ответах → следить, кто ещё ходит →</span>
+<span class="cm"># лично связаться с оставшимися → «тёмный день»: короткое отключение для проверки →</span>
+<span class="cm"># окончательное отключение. Метрика использования по версиям обязательна:</span>
+<span class="cm"># без неё вы не знаете, кого сломаете.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как выпустить ломающее изменение в публичном API?</b><br>Не ломать существующую версию: выпустить новую (<code>/v2</code> или новое поле рядом со старым), пометить старое как устаревшее заголовками <code>Deprecation</code> и <code>Sunset</code>, вести метрику использования по версиям и клиентам, предупредить заранее, отключить только когда трафик сошёл почти на нет. Ключевое — знать, кто пользуется старым: без этой метрики отключение всегда происходит вслепую.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="collections">
+    <p class="path">middle / коллекции</p>
+    <div class="card-top"><h3>Коллекции: пагинация и фильтры</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Любой эндпоинт, возвращающий список, обязан быть ограничен. Отсутствие лимита — это не «пока данных мало», это отложенный инцидент: однажды у клиента окажется 200 тысяч заказов, и ответ положит и базу, и приложение.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · способы пагинации</caption>
+      <thead><tr><th>Способ</th><th>Как</th><th>Плюс</th><th>Минус</th></tr></thead>
+      <tbody>
+        <tr><td>Offset / page</td><td><code>?page=5&amp;per_page=20</code></td><td>Произвольная страница, привычно</td><td>Дорогие глубокие страницы, дубли и пропуски при вставках</td></tr>
+        <tr><td>Курсор (keyset)</td><td><code>?cursor=eyJ...&amp;limit=20</code></td><td>Постоянная стоимость, стабильность</td><td>Только вперёд/назад, нет общего числа</td></tr>
+        <tr><td>Диапазон по времени</td><td><code>?since=...&amp;until=...</code></td><td>Естественно для событий и синхронизации</td><td>Нужны уникальные метки и обработка совпадений</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">Курсорная пагинация: ссылки отдаёт сервер, клиент их не собирает</span></div><pre><code>GET /v1/orders?status=paid&amp;sort=-created_at&amp;limit=20 HTTP/1.1
+
+HTTP/1.1 200 OK
+Link: &lt;/v1/orders?cursor=eyJpZCI6OTI3MX0&amp;limit=20&gt;; rel="next"
+
+{
+  "data": [ ... 20 элементов ... ],
+  "meta": {
+    "limit": 20,
+    "has_more": true
+  },
+  "links": {
+    "next": "/v1/orders?cursor=eyJpZCI6OTI3MX0&amp;limit=20"
+  }
+}
+
+<span class="cm"># Заметьте: нет "total". Точный подсчёт на большой таблице стоит дороже самой выборки.</span>
+<span class="cm"># Если total действительно нужен — отдавайте его отдельным эндпоинтом или приблизительным.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">Фильтры, сортировка, состав полей — соглашения, а не изобретения</span></div><pre><code><span class="cm"># Фильтрация: плоские параметры покрывают 90 % случаев</span>
+GET /v1/orders?status=paid&amp;created_after=2026-01-01&amp;customer_id=usr_42
+
+<span class="cm"># Сортировка: минус = по убыванию, запятая = несколько полей</span>
+GET /v1/orders?sort=-created_at,id
+
+<span class="cm"># Разреженные поля: клиент берёт только нужное — меньше трафик и меньше связность</span>
+GET /v1/orders?fields=id,status,total
+
+<span class="cm"># Управляемое расширение вместо N+1 на клиенте</span>
+GET /v1/orders?expand=customer,items
+
+<span class="cm"># Ограничения, которые должны быть жёсткими:</span>
+<span class="cm">#   limit по умолчанию 20, максимум 100 — больше не отдаём никогда</span>
+<span class="cm">#   белый список полей для sort и fields — иначе это SQL-инъекция через сортировку</span>
+<span class="cm">#   глубина expand ограничена одним уровнем</span></code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Подставлять имя поля из <code>sort</code> прямо в SQL. Подготовленные выражения здесь не помогают: имена колонок и направление сортировки нельзя передать параметром. Единственная защита — белый список допустимых значений с отображением на реальные колонки.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему в API-ответах часто нет общего количества?</b><br>Потому что <code>COUNT</code> по отфильтрованной большой таблице обычно дороже, чем сама страница, и с ростом данных становится главным тормозом эндпоинта. Практика: отдавать <code>has_more</code> и курсор, а точный подсчёт — только там, где он действительно нужен, отдельным запросом или в приблизительном виде.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="idempotency">
+    <p class="path">middle / надёжность</p>
+    <div class="card-top"><h3>Идемпотентность и конкурентность</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Две разные задачи, которые постоянно путают. <strong>Идемпотентность</strong> защищает от повтора одного и того же запроса (потерялся ответ, клиент нажал дважды). <strong>Оптимистическая конкурентность</strong> защищает от того, что двое одновременно меняют один ресурс и один затирает правки другого.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Идемпотентность: ключ от клиента, уникальный индекс на сервере</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">createOrder</span>(<span class="nm">Request</span> $request): <span class="nm">Response</span>
+{
+    $key = $request-&gt;<span class="fn">headers</span>-&gt;<span class="fn">get</span>(<span class="st">'Idempotency-Key'</span>);
+
+    <span class="kw">if</span> ($key === <span class="kw">null</span>) {
+        <span class="kw">return</span> $this-&gt;<span class="fn">problem</span>(400, <span class="st">'missing-idempotency-key'</span>);
+    }
+
+    $hash = <span class="fn">hash</span>(<span class="st">'sha256'</span>, $request-&gt;<span class="fn">getContent</span>());
+
+    <span class="kw">if</span> ($saved = $this-&gt;keys-&gt;<span class="fn">find</span>($key)) {
+        <span class="cm">// Тот же ключ с другим телом — ошибка клиента, а не повтор</span>
+        <span class="kw">if</span> (!<span class="fn">hash_equals</span>($saved-&gt;hash, $hash)) {
+            <span class="kw">return</span> $this-&gt;<span class="fn">problem</span>(409, <span class="st">'idempotency-key-reuse'</span>);
+        }
+
+        <span class="cm">// Повтор: отдаём сохранённый ответ с тем же кодом</span>
+        <span class="kw">return new</span> <span class="nm">JsonResponse</span>($saved-&gt;response, $saved-&gt;status);
+    }
+
+    <span class="kw">return</span> $this-&gt;db-&gt;<span class="fn">transactional</span>(<span class="kw">function</span> () <span class="kw">use</span> ($key, $hash, $request) {
+        $this-&gt;keys-&gt;<span class="fn">insert</span>($key, $hash);          <span class="cm">// уникальный индекс закрывает гонку повторов</span>
+        $order = $this-&gt;orders-&gt;<span class="fn">create</span>($request-&gt;<span class="fn">toArray</span>());
+        $body  = [<span class="st">'id'</span> =&gt; $order-&gt;id, <span class="st">'status'</span> =&gt; $order-&gt;status];
+        $this-&gt;keys-&gt;<span class="fn">saveResponse</span>($key, $body, 201);
+
+        <span class="kw">return new</span> <span class="nm">JsonResponse</span>($body, 201, [<span class="st">'Location'</span> =&gt; <span class="st">"/v1/orders/{$order-&gt;id}"</span>]);
+    });
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php + http</span><span class="r">ETag и If-Match: защита от потери чужих правок</span></div><pre><code>&lt;?php
+<span class="cm">// GET отдаёт версию представления</span>
+$etag = <span class="st">'"'</span> . $order-&gt;version . <span class="st">'"'</span>;          <span class="cm">// или хеш содержимого</span>
+$response-&gt;<span class="fn">setEtag</span>($etag);
+
+<span class="cm">// PATCH обязан прислать версию, которую редактировал</span>
+<span class="kw">public function</span> <span class="fn">update</span>(<span class="nm">Request</span> $request, <span class="nm">string</span> $id): <span class="nm">Response</span>
+{
+    $expected = $request-&gt;<span class="fn">headers</span>-&gt;<span class="fn">get</span>(<span class="st">'If-Match'</span>);
+
+    <span class="kw">if</span> ($expected === <span class="kw">null</span>) {
+        <span class="kw">return</span> $this-&gt;<span class="fn">problem</span>(428, <span class="st">'precondition-required'</span>);   <span class="cm">// требуем условный запрос</span>
+    }
+
+    <span class="cm">// Условие в UPDATE: изменение применяется, только если версия не менялась</span>
+    $affected = $this-&gt;db-&gt;<span class="fn">execute</span>(
+        <span class="st">'UPDATE orders SET status = :s, version = version + 1
+          WHERE id = :id AND version = :v'</span>,
+        [<span class="st">'s'</span> =&gt; $new, <span class="st">'id'</span> =&gt; $id, <span class="st">'v'</span> =&gt; <span class="fn">trim</span>($expected, <span class="st">'"'</span>)]
+    );
+
+    <span class="kw">return</span> $affected === 0
+        ? $this-&gt;<span class="fn">problem</span>(412, <span class="st">'precondition-failed'</span>)   <span class="cm">// кто-то опередил: клиент перечитает</span>
+        : <span class="kw">new</span> <span class="nm">JsonResponse</span>($this-&gt;orders-&gt;<span class="fn">find</span>($id));
+}</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Клиент имеет право повторять запрос автоматически только для идемпотентных методов. Поэтому HTTP-клиенты по умолчанию повторяют <code>GET</code> и <code>PUT</code>, но не <code>POST</code>. Если ваш <code>POST</code> поддерживает <code>Idempotency-Key</code>, это нужно явно указать в документации — иначе клиенты не будут повторять и будут терять запросы при сетевых сбоях.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Пользователь дважды нажал «Оплатить». Что делает API?</b><br>Принимает <code>Idempotency-Key</code>, сформированный клиентом для этой попытки. Первый запрос выполняет операцию и сохраняет ответ вместе с ключом под уникальным индексом; повтор с тем же ключом возвращает сохранённый ответ, не создавая второго платежа; тот же ключ с другим телом — 409. Гонка двух одновременных повторов закрывается именно уникальным индексом, а не проверкой «есть ли уже такой ключ».</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="errors">
+    <p class="path">middle / ошибки</p>
+    <div class="card-top"><h3>Ошибки и валидация</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Ошибки — половина контракта, и обычно самая недооценённая. Клиенту нужно машиночитаемо понять три вещи: можно ли повторять, что именно не так и что показать пользователю. Разнобой в формате ошибок приводит к тому, что клиенты начинают разбирать текст сообщений — и любое изменение формулировки ломает интеграцию.</p>
+
+    <div class="code"><div class="bar"><span>json</span><span class="r">RFC 9457 (problem+json): единый формат вместо самодельного</span></div><pre><code>HTTP/1.1 422 Unprocessable Content
+Content-Type: application/problem+json
+
+{
+  <span class="st">"type"</span>: <span class="st">"https://docs.example.com/errors/validation-failed"</span>,  <span class="cm">// стабильный идентификатор</span>
+  <span class="st">"title"</span>: <span class="st">"Validation failed"</span>,                <span class="cm">// краткое, не зависит от экземпляра</span>
+  <span class="st">"status"</span>: 422,
+  <span class="st">"detail"</span>: <span class="st">"Order cannot be created: 2 fields are invalid"</span>,
+  <span class="st">"instance"</span>: <span class="st">"/v1/orders"</span>,
+  <span class="st">"trace_id"</span>: <span class="st">"0f2a5c9d1b"</span>,                  <span class="cm">// с ним поддержка найдёт запрос в логах</span>
+  <span class="st">"errors"</span>: [                                <span class="cm">// расширение под валидацию</span>
+    { <span class="st">"field"</span>: <span class="st">"qty"</span>,      <span class="st">"code"</span>: <span class="st">"min_value"</span>, <span class="st">"message"</span>: <span class="st">"Должно быть больше 0"</span> },
+    { <span class="st">"field"</span>: <span class="st">"currency"</span>, <span class="st">"code"</span>: <span class="st">"unsupported"</span>, <span class="st">"message"</span>: <span class="st">"Валюта не поддерживается"</span> }
+  ]
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · правила обработки ошибок</caption>
+      <thead><tr><th>Правило</th><th>Зачем</th></tr></thead>
+      <tbody>
+        <tr><td>Машиночитаемый код ошибки отдельно от текста</td><td>Клиент ветвится по коду, а не по строке сообщения</td></tr>
+        <tr><td>Возвращать все ошибки валидации сразу</td><td>Иначе пользователь исправляет форму по одному полю за раз</td></tr>
+        <tr><td>Идентификатор запроса в каждой ошибке</td><td>Поддержка находит инцидент за секунды</td></tr>
+        <tr><td>Никаких трассировок и SQL наружу</td><td>Это подсказка для атакующего и утечка внутренностей</td></tr>
+        <tr><td>Сообщения для пользователя — на стороне клиента</td><td>Локализация и тон — забота интерфейса, а не API</td></tr>
+        <tr><td>Один формат для всех эндпоинтов, включая 500</td><td>Клиенту не нужно писать два разбора</td></tr>
+        <tr><td>4xx не должны шуметь в алертах</td><td>Иначе настоящие сбои теряются в фоне</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Ответ <code>200 OK</code> с телом <code>{"success": false, "error": "..."}</code>. Такой API невозможно нормально мониторить (все ответы успешны), клиенты не могут использовать стандартную обработку ошибок, а промежуточные узлы кэшируют ошибку как валидный ответ. Код статуса — часть контракта, а не украшение.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как правильно возвращать ошибки валидации?</b><br>Кодом 422 (или 400, если запрос вообще не разобрать) и телом единого формата — например, problem+json: тип ошибки, статус, идентификатор запроса и массив полей с машиночитаемыми кодами. Все ошибки возвращаются за один раз, тексты для пользователя формирует клиент, а внутренние детали наружу не попадают.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="caching">
+    <p class="path">middle / кэш</p>
+    <div class="card-top"><h3>HTTP-кэширование</h3><span class="badge b-2">Ключевое</span></div>
+    <p>HTTP-кэш — самый дешёвый способ ускорить систему: ответ не доходит до вашего сервера вообще. И самый быстрый способ устроить утечку данных, если перепутать приватный ответ с публичным.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · директивы Cache-Control</caption>
+      <thead><tr><th>Директива</th><th>Смысл</th><th>Когда применять</th></tr></thead>
+      <tbody>
+        <tr><td><code>no-store</code></td><td>Не сохранять нигде</td><td>Персональные данные, платежи, токены</td></tr>
+        <tr><td><code>no-cache</code></td><td>Сохранять можно, но перед выдачей проверить</td><td>Часто меняющиеся данные при наличии ETag</td></tr>
+        <tr><td><code>private</code></td><td>Только браузер, не общий кэш</td><td>Ответы, зависящие от пользователя</td></tr>
+        <tr><td><code>public</code></td><td>Можно кэшировать промежуточным узлам</td><td>Справочники, статика, публичный контент</td></tr>
+        <tr><td><code>max-age=N</code></td><td>Свежесть в секундах</td><td>Основной инструмент</td></tr>
+        <tr><td><code>s-maxage=N</code></td><td>Свежесть для общих кэшей (CDN)</td><td>Когда CDN должна держать дольше браузера</td></tr>
+        <tr><td><code>stale-while-revalidate=N</code></td><td>Отдать устаревшее и обновить в фоне</td><td>Убирает провалы задержки при истечении</td></tr>
+        <tr><td><code>immutable</code></td><td>Не проверять до истечения</td><td>Файлы с хешем в имени</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Условный запрос: 304 вместо повторной отправки тела</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">show</span>(<span class="nm">Request</span> $request, <span class="nm">string</span> $id): <span class="nm">Response</span>
+{
+    $order = $this-&gt;orders-&gt;<span class="fn">find</span>($id);
+    $etag  = <span class="st">'"'</span> . <span class="fn">sha1</span>($order-&gt;id . $order-&gt;version) . <span class="st">'"'</span>;
+
+    $response = <span class="kw">new</span> <span class="nm">JsonResponse</span>();
+    $response-&gt;<span class="fn">setEtag</span>($etag);
+    $response-&gt;<span class="fn">setLastModified</span>($order-&gt;updatedAt);
+
+    <span class="cm">// Приватные данные: только браузер пользователя, с обязательной проверкой</span>
+    $response-&gt;<span class="fn">setPrivate</span>();
+    $response-&gt;<span class="fn">headers</span>-&gt;<span class="fn">addCacheControlDirective</span>(<span class="st">'no-cache'</span>);
+
+    <span class="cm">// Если ETag клиента совпал — отдаём 304 без тела: экономим трафик и сериализацию</span>
+    <span class="kw">if</span> ($response-&gt;<span class="fn">isNotModified</span>($request)) {
+        <span class="kw">return</span> $response;                       <span class="cm">// 304 Not Modified</span>
+    }
+
+    <span class="kw">return</span> $response-&gt;<span class="fn">setData</span>($this-&gt;serializer-&gt;<span class="fn">toArray</span>($order));
+}
+
+<span class="cm">// Публичный справочник — наоборот, можно отдать CDN надолго:</span>
+<span class="cm">// Cache-Control: public, max-age=60, s-maxage=3600, stale-while-revalidate=600</span>
+<span class="cm">// Vary: Accept-Encoding, Accept-Language</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Самая опасная ошибка кэширования — приватный ответ, помеченный как <code>public</code>, без <code>Vary: Authorization</code>. Тогда общий кэш или CDN отдаёт данные одного пользователя другому. Практическое правило: для всего, что зависит от аутентификации, по умолчанию ставится <code>Cache-Control: no-store</code>, а кэширование включается точечно и осознанно.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как работает ETag?</b><br>Сервер отдаёт вместе с ответом версию представления. При следующем запросе клиент присылает её в <code>If-None-Match</code>; если представление не изменилось, сервер отвечает 304 без тела, и клиент использует свою копию. Экономится трафик и сериализация, но не обязательно запрос к базе — поэтому ETag выгоднее всего считать из версии или метки времени, а не из полностью собранного ответа.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="auth">
+    <p class="path">middle / доступ</p>
+    <div class="card-top"><h3>Аутентификация и авторизация</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Аутентификация отвечает «кто вы», авторизация — «что вам можно». Их путают постоянно, и это не терминологическая придирка: большинство серьёзных уязвимостей API — это корректная аутентификация при отсутствующей проверке прав на конкретный объект.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · способы аутентификации</caption>
+      <thead><tr><th>Способ</th><th>Где уместен</th><th>Слабое место</th></tr></thead>
+      <tbody>
+        <tr><td>Сессия в куке</td><td>Браузерное приложение на своём домене</td><td>CSRF; нужен <code>SameSite</code> и токен формы</td></tr>
+        <tr><td>API-ключ</td><td>Сервер-сервер, простые интеграции</td><td>Долгоживущий, часто без ограничения прав и без ротации</td></tr>
+        <tr><td>Bearer-токен (JWT)</td><td>Мобильные клиенты, микросервисы</td><td>Нельзя отозвать до истечения; хранение на клиенте</td></tr>
+        <tr><td>OAuth 2.0</td><td>Доступ третьих лиц к данным пользователя</td><td>Сложность; неверный flow сводит защиту на нет</td></tr>
+        <tr><td>mTLS</td><td>Межсервисное взаимодействие с высокими требованиями</td><td>Управление сертификатами</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="flow" role="img" aria-label="Authorization Code Flow с PKCE">
+      <div class="node">Клиент<small>redirect + PKCE</small></div><span class="arr">→</span>
+      <div class="node">Провайдер<small>вход и согласие</small></div><span class="arr">→</span>
+      <div class="node">Код<small>одноразовый, короткий</small></div><span class="arr">→</span>
+      <div class="node">Обмен<small>код + verifier → токены</small></div><span class="arr">→</span>
+      <div class="node">API<small>access token</small></div>
+    </div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Проверка JWT: список того, что обязательно проверить</span></div><pre><code>&lt;?php
+<span class="cm">// JWT = header.payload.signature, всё в base64url. Payload НЕ зашифрован —</span>
+<span class="cm">// это подписанные, а не секретные данные: персональным данным там не место.</span>
+
+$claims = $jwt-&gt;<span class="fn">decode</span>($token, $publicKey, [
+    <span class="st">'algorithms'</span> =&gt; [<span class="st">'RS256'</span>],   <span class="cm">// ЯВНЫЙ список: иначе атака с подменой alg на none или HS256</span>
+]);
+
+<span class="cm">// Библиотека проверяет подпись и exp, остальное — на вас:</span>
+<span class="kw">if</span> ($claims-&gt;iss !== <span class="st">'https://auth.example.com'</span>)  { <span class="kw">throw new</span> <span class="nm">AuthException</span>(); } <span class="cm">// кто выдал</span>
+<span class="kw">if</span> (!<span class="fn">in_array</span>(<span class="st">'api.example.com'</span>, (<span class="kw">array</span>) $claims-&gt;aud, <span class="kw">true</span>)) { <span class="kw">throw new</span> <span class="nm">AuthException</span>(); } <span class="cm">// кому</span>
+<span class="kw">if</span> ($claims-&gt;exp &lt; <span class="fn">time</span>())                        { <span class="kw">throw new</span> <span class="nm">AuthException</span>(); } <span class="cm">// срок</span>
+
+<span class="cm">// Отзыв: главный минус JWT. Токен действителен до exp, даже если пользователь заблокирован.</span>
+<span class="cm">// Практика: короткий access (5–15 минут) + refresh с ротацией и хранением на сервере,</span>
+<span class="cm">// плюс denylist по jti для экстренного отзыва.</span>
+<span class="kw">if</span> ($this-&gt;revoked-&gt;<span class="fn">has</span>($claims-&gt;jti)) { <span class="kw">throw new</span> <span class="nm">AuthException</span>(); }
+
+<span class="cm">// Авторизация — отдельный шаг, и он обязателен для КАЖДОГО объекта:</span>
+<span class="kw">if</span> ($order-&gt;tenantId !== $claims-&gt;tenant) {
+    <span class="kw">throw new</span> <span class="nm">AccessDenied</span>();          <span class="cm">// без этой строки получается BOLA/IDOR</span>
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · JWT против серверной сессии</caption>
+      <thead><tr><th>Критерий</th><th>JWT</th><th>Сессия на сервере</th></tr></thead>
+      <tbody>
+        <tr><td>Проверка</td><td>Локально по подписи, без похода в хранилище</td><td>Запрос в Redis или БД</td></tr>
+        <tr><td>Отзыв</td><td>Сложно: нужен denylist или короткий срок</td><td>Мгновенно: удалить запись</td></tr>
+        <tr><td>Размер</td><td>Сотни байт в каждом запросе</td><td>Короткий идентификатор</td></tr>
+        <tr><td>Изменение прав</td><td>Вступает в силу после обновления токена</td><td>Сразу</td></tr>
+        <tr><td>Масштабирование</td><td>Не требует общего хранилища</td><td>Требует</td></tr>
+        <tr><td>Где уместно</td><td>Межсервисные вызовы, мобильные клиенты</td><td>Браузерные приложения</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как отозвать JWT?</b><br>Строго говоря — никак: он самодостаточен и действителен до <code>exp</code>. Практические подходы: делать access-токен коротким (5–15 минут) и полагаться на refresh-токен, который хранится на сервере и отзывается мгновенно; вести denylist по <code>jti</code> для экстренных случаев; хранить версию учётных данных пользователя и инвалидировать все токены, выданные до её изменения. Если отзыв нужен мгновенно и всегда — это аргумент в пользу серверных сессий.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="limits">
+    <p class="path">middle / защита</p>
+    <div class="card-top"><h3>Лимиты, CORS, защита</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Публичный эндпоинт без ограничений — это ресурс, который кто-нибудь однажды использует целиком. Лимиты нужны не только против злоумышленников: чаще всего API кладёт добросовестный клиент с ошибкой в цикле.</p>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">Ограничение частоты: клиент должен понимать правила</span></div><pre><code>HTTP/1.1 200 OK
+RateLimit-Limit: 1000              <span class="cm"># квота в текущем окне</span>
+RateLimit-Remaining: 987
+RateLimit-Reset: 42                <span class="cm"># через сколько секунд окно обновится</span>
+
+<span class="cm"># При превышении — не обрыв соединения, а внятный отказ</span>
+HTTP/1.1 429 Too Many Requests
+Retry-After: 30
+Content-Type: application/problem+json
+
+{"type": "https://docs.example.com/errors/rate-limited", "status": 429,
+ "title": "Too Many Requests", "detail": "Limit 1000/hour exceeded"}
+
+<span class="cm"># Уровни лимитов ставятся сразу несколько:</span>
+<span class="cm">#   по IP           — от ботов и сканеров</span>
+<span class="cm">#   по клиенту/ключу — от злоупотребления интеграцией</span>
+<span class="cm">#   по операции      — экспорт, поиск, генерация отчёта дороже обычного чтения</span>
+<span class="cm">#   по попыткам входа — отдельно и жёстко, иначе это перебор паролей</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">CORS: что на самом деле происходит в браузере</span></div><pre><code><span class="cm"># 1. Предварительный запрос — браузер спрашивает разрешение до основного</span>
+OPTIONS /v1/orders HTTP/1.1
+Origin: https://app.example.com
+Access-Control-Request-Method: POST
+Access-Control-Request-Headers: content-type, authorization
+
+<span class="cm"># 2. Ответ сервера — что именно разрешено</span>
+HTTP/1.1 204 No Content
+Access-Control-Allow-Origin: https://app.example.com   <span class="cm"># конкретный источник, не *</span>
+Access-Control-Allow-Methods: GET, POST, PATCH, DELETE
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Allow-Credentials: true                 <span class="cm"># для кук; несовместимо с *</span>
+Access-Control-Max-Age: 600                            <span class="cm"># кэш preflight: меньше лишних запросов</span>
+Vary: Origin                                           <span class="cm"># иначе кэш отдаст чужой Allow-Origin</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · что CORS делает и чего не делает</caption>
+      <thead><tr><th>Утверждение</th><th>Верно?</th><th>Пояснение</th></tr></thead>
+      <tbody>
+        <tr><td>CORS защищает API от посторонних запросов</td><td>Нет</td><td>Это правило браузера; curl и любой сервер его игнорируют</td></tr>
+        <tr><td>CORS защищает данные пользователя в браузере</td><td>Да</td><td>Чужой сайт не прочитает ответ вашего API от имени пользователя</td></tr>
+        <tr><td><code>Allow-Origin: *</code> — удобное решение</td><td>Нет</td><td>Не работает с кредами и открывает публичный доступ к чтению</td></tr>
+        <tr><td>Preflight бывает не всегда</td><td>Да</td><td>Простые запросы идут без него — отсюда и возможность CSRF</td></tr>
+        <tr><td>CORS заменяет авторизацию</td><td>Нет</td><td>Права проверяются на сервере всегда</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Фронтенд получает ошибку CORS. Что происходит и где чинить?</b><br>Браузер выполнил предварительный запрос <code>OPTIONS</code> и не получил разрешения: нет нужного <code>Access-Control-Allow-Origin</code>, метода или заголовка в списке разрешённых. Чинится на сервере API, а не на фронтенде. Важно понимать, что это ограничение браузера, а не защита API: сам запрос до сервера дошёл и, возможно, выполнился — поэтому авторизацию CORS не заменяет.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Отдаю DTO, а не сущности ORM</li>
+        <li>Использую ISO 8601, деньги строкой, перечисления вместо флагов</li>
+        <li>Отличаю ломающие изменения от совместимых</li>
+        <li>Веду метрику использования по версиям и клиентам</li>
+        <li>Объявляю устаревание заголовками <code>Deprecation</code> и <code>Sunset</code></li>
+        <li>Ограничиваю любые коллекции и знаю цену <code>total</code></li>
+        <li>Фильтрую и сортирую только по белому списку полей</li>
+      </ul>
+      <ul class="check">
+        <li>Поддерживаю <code>Idempotency-Key</code> на небезопасных операциях</li>
+        <li>Использую ETag и <code>If-Match</code> против потери правок</li>
+        <li>Возвращаю ошибки одним форматом с машиночитаемым кодом</li>
+        <li>Никогда не отдаю 200 с <code>"success": false</code></li>
+        <li>Ставлю <code>no-store</code> на приватное и <code>Vary</code> там, где нужно</li>
+        <li>Проверяю в JWT алгоритм, издателя, аудиторию и срок</li>
+        <li>Проверяю права на каждый объект, а не только роль</li>
+        <li>Ограничиваю частоту и отдаю 429 с <code>Retry-After</code></li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Проверка контракта одним упражнением: возьмите свой API и попробуйте описать его клиенту, у которого нет доступа к вашему коду. Всё, что придётся объяснять словами — «здесь на самом деле возвращается 200, но внутри ошибка», «сюда лучше не ходить с большим лимитом», — это дефект контракта, а не особенность.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · интеграции и эволюция</p>
+    <h2>Senior: выбор стиля, контракт, безопасность</h2>
+    <p>На senior-уровне обсуждают не эндпоинты, а обязательства: какой стиль интеграции выбран и почему, как контракт описан и проверяется, что происходит при долгих операциях и отказах партнёра, сколько стоит один запрос и какие уязвимости открывает ваш дизайн. Ошибки здесь дороже всего: интеграцию нельзя «отрефакторить» в одностороннем порядке.</p>
+  </div>
+
+  <!-- 15 -->
+  <article class="card" id="styles">
+    <p class="path">senior / выбор</p>
+    <div class="card-top"><h3>REST, GraphQL, gRPC, события</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Вопрос «REST или GraphQL» на собеседовании проверяет не предпочтение, а способность назвать критерий и цену. У каждого стиля своя область, и большинство систем в итоге используют несколько одновременно.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · стили интеграции</caption>
+      <thead><tr><th>Критерий</th><th>REST</th><th>GraphQL</th><th>gRPC</th><th>События</th></tr></thead>
+      <tbody>
+        <tr><td>Формат</td><td>JSON поверх HTTP</td><td>JSON, один эндпоинт</td><td>Protobuf поверх HTTP/2</td><td>Сообщения в брокере</td></tr>
+        <tr><td>Кто определяет форму ответа</td><td>Сервер</td><td>Клиент</td><td>Схема</td><td>Издатель</td></tr>
+        <tr><td>HTTP-кэш</td><td>Работает из коробки</td><td>Практически нет</td><td>Нет</td><td>Неприменим</td></tr>
+        <tr><td>Типизация</td><td>Через OpenAPI</td><td>Встроенная схема</td><td>Строгая, кодогенерация</td><td>Схема событий</td></tr>
+        <tr><td>Отладка</td><td>curl, браузер</td><td>Нужны инструменты</td><td>Нужны инструменты</td><td>Сложнее всего</td></tr>
+        <tr><td>Связанность</td><td>Низкая</td><td>Средняя</td><td>Высокая (общая схема)</td><td>Самая низкая</td></tr>
+        <tr><td>Сильная сторона</td><td>Универсальность, простота, кэш</td><td>Гибкие выборки для разных экранов</td><td>Скорость и строгость между сервисами</td><td>Асинхронность, развязка</td></tr>
+        <tr><td>Слабое место</td><td>Over/under-fetching</td><td>Дорогие запросы, сложное ограничение нагрузки</td><td>Плохо подходит для публичного API</td><td>Дубликаты, порядок, отладка</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>graphql + proto</span><span class="r">Как выглядит то же самое в трёх стилях</span></div><pre><code><span class="cm"># REST: сервер решил, что отдать</span>
+GET /v1/orders/9271?expand=customer
+
+<span class="cm"># GraphQL: клиент запросил ровно нужные поля одним запросом</span>
+query {
+  order(id: "ord_9271") {
+    status
+    total { amount currency }
+    customer { displayName }
+  }
+}
+
+<span class="cm"># gRPC: контракт описан схемой, клиент и сервер генерируются из неё</span>
+service Orders {
+  rpc GetOrder (GetOrderRequest) returns (Order);
+}
+message GetOrderRequest { string id = 1; }
+message Order {
+  string id = 1;
+  string status = 2;
+  Money  total = 3;                 <span class="cm">// номера полей нельзя менять — это и есть совместимость</span>
+}</code></pre></div>
+
+    <p><strong>Практический выбор.</strong> Публичное API и интеграции партнёров — REST: его умеют все, он отлаживается curl и кэшируется. Мобильные и веб-клиенты с разнородными экранами и болью от десятка запросов на экран — GraphQL, но с ограничением глубины и стоимости запроса, иначе один клиент положит базу одним запросом. Внутренние вызовы между сервисами с высокой частотой — gRPC ради скорости и строгой схемы. Уведомление других систем о произошедшем — события: они снимают синхронную связанность, но приносят дубликаты и вопросы порядка.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда GraphQL оправдан, а когда вреден?</b><br>Оправдан, когда клиентов много и им нужны разные подмножества связанных данных: он убирает over-fetching и лишние круги. Вреден там, где нужны HTTP-кэширование, простая отладка и предсказуемая нагрузка: один эндпоинт с произвольной формой запроса плохо кэшируется и требует отдельной защиты — ограничения глубины, сложности и стоимости, иначе клиент случайно построит запрос, который перебирает всю базу.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="contracts">
+    <p class="path">senior / контракт</p>
+    <div class="card-top"><h3>OpenAPI и контрактные тесты</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Документация, которую пишут руками после релиза, устаревает за неделю. Спецификация ценна тогда, когда она — исполняемый артефакт: из неё генерируются клиенты и моки, ей проверяются ответы в тестах, по ней ломающие изменения обнаруживаются в пайплайне, а не у партнёра.</p>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">OpenAPI: фрагмент, из которого растёт всё остальное</span></div><pre><code>openapi: 3.1.0
+info: { title: Orders API, version: <span class="st">"1.4.0"</span> }
+
+paths:
+  /v1/orders:
+    post:
+      operationId: createOrder
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: <span class="st">'#/components/schemas/CreateOrder'</span> }
+      responses:
+        <span class="st">'201'</span>:
+          description: Created
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: <span class="st">'#/components/schemas/Order'</span> }
+        <span class="st">'422'</span>:
+          description: Validation failed
+          content:
+            application/problem+json:
+              schema: { $ref: <span class="st">'#/components/schemas/Problem'</span> }
+        <span class="st">'429'</span>:
+          description: Rate limited
+          headers:
+            Retry-After: { schema: { type: integer } }</code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Спецификация в пайплайне: она должна что-то ломать, иначе бесполезна</span></div><pre><code><span class="cm"># 1. Валидность самой спецификации</span>
+npx @redocly/cli lint openapi.yaml
+
+<span class="cm"># 2. Поиск ломающих изменений относительно версии в main — главный шаг</span>
+oasdiff breaking main-openapi.yaml openapi.yaml --fail-on ERR
+
+<span class="cm"># 3. Проверка, что реальные ответы соответствуют схеме (контрактные тесты)</span>
+vendor/bin/phpunit --testsuite=api-contract
+
+<span class="cm"># 4. Мок-сервер для фронтенда до готовности бэкенда</span>
+npx @stoplight/prism mock openapi.yaml
+
+<span class="cm"># 5. Генерация клиента для партнёров и внутренних потребителей</span>
+npx @openapitools/openapi-generator-cli generate -i openapi.yaml -g php -o ./client</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · два подхода к спецификации</caption>
+      <thead><tr><th>Критерий</th><th>Design-first (сначала спецификация)</th><th>Code-first (генерация из кода)</th></tr></thead>
+      <tbody>
+        <tr><td>Обсуждение контракта</td><td>До реализации, дёшево менять</td><td>После, менять дороже</td></tr>
+        <tr><td>Параллельная работа с фронтендом</td><td>Возможна сразу через мок</td><td>После готовности бэкенда</td></tr>
+        <tr><td>Риск расхождения с кодом</td><td>Есть, снимается контрактными тестами</td><td>Минимальный</td></tr>
+        <tr><td>Порог входа</td><td>Выше: нужна дисциплина</td><td>Ниже: атрибуты в коде</td></tr>
+        <tr><td>Где уместно</td><td>Публичные API, несколько команд</td><td>Внутренние API одной команды</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Контрактный тест — это не тест эндпоинта. Он проверяет одно: ответ реального приложения соответствует опубликованной схеме. Такой тест ловит именно то, что не ловят обычные тесты, — тихое изменение формы ответа: переименованное поле, число вместо строки, исчезнувший <code>null</code>. Это самый дешёвый способ не ломать клиентов случайно.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как гарантировать, что документация соответствует реальности?</b><br>Сделать спецификацию частью пайплайна: линт схемы, автоматическая проверка на ломающие изменения относительно предыдущей версии и контрактные тесты, сверяющие реальные ответы со схемой. Тогда расхождение падает в CI, а не обнаруживается партнёром. Документация, которую ничто не проверяет, всегда врёт — вопрос лишь в том, насколько.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="webhooks">
+    <p class="path">senior / исходящие</p>
+    <div class="card-top"><h3>Вебхуки и исходящие интеграции</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Вебхук переворачивает роли: теперь вы клиент, а получатель — сервер, который может лежать, отвечать за 30 секунд или обрабатывать ваши запросы дважды. Отсюда все требования: подпись, повторы, дедупликация, DLQ и защита от того, что адрес получателя выбирает пользователь.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Отправка: подпись со временем, чтобы нельзя было переиграть запись</span></div><pre><code>&lt;?php
+$payload   = <span class="fn">json_encode</span>($event, <span class="nm">JSON_THROW_ON_ERROR</span>);
+$timestamp = <span class="fn">time</span>();
+
+<span class="cm">// Подписываем время + тело: без времени старый перехваченный запрос можно повторить</span>
+$signature = <span class="fn">hash_hmac</span>(<span class="st">'sha256'</span>, <span class="st">"{$timestamp}."</span> . $payload, $endpoint-&gt;secret);
+
+$this-&gt;http-&gt;<span class="fn">request</span>(<span class="st">'POST'</span>, $endpoint-&gt;url, [
+    <span class="st">'headers'</span> =&gt; [
+        <span class="st">'Content-Type'</span>       =&gt; <span class="st">'application/json'</span>,
+        <span class="st">'Webhook-Id'</span>         =&gt; $event-&gt;id,          <span class="cm">// ключ дедупликации для получателя</span>
+        <span class="st">'Webhook-Timestamp'</span>  =&gt; $timestamp,
+        <span class="st">'Webhook-Signature'</span>  =&gt; <span class="st">'v1='</span> . $signature,
+    ],
+    <span class="st">'body'</span>    =&gt; $payload,
+    <span class="st">'timeout'</span> =&gt; 5,        <span class="cm">// чужой сервер не должен занимать наш воркер надолго</span>
+]);</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Приём чужого вебхука: проверка до любой бизнес-логики</span></div><pre><code>&lt;?php
+$raw = $request-&gt;<span class="fn">getContent</span>();          <span class="cm">// именно сырое тело: разбор меняет байты</span>
+$ts  = (<span class="kw">int</span>) $request-&gt;<span class="fn">headers</span>-&gt;<span class="fn">get</span>(<span class="st">'Webhook-Timestamp'</span>);
+
+<span class="cm">// 1. Свежесть: окно в пять минут против повторного проигрывания</span>
+<span class="kw">if</span> (<span class="fn">abs</span>(<span class="fn">time</span>() - $ts) &gt; 300) {
+    <span class="kw">return new</span> <span class="nm">Response</span>(<span class="st">''</span>, 400);
+}
+
+<span class="cm">// 2. Подпись: сравнение обязательно за постоянное время</span>
+$expected = <span class="fn">hash_hmac</span>(<span class="st">'sha256'</span>, <span class="st">"{$ts}."</span> . $raw, $this-&gt;secret);
+<span class="kw">if</span> (!<span class="fn">hash_equals</span>(<span class="st">'v1='</span> . $expected, (<span class="kw">string</span>) $request-&gt;<span class="fn">headers</span>-&gt;<span class="fn">get</span>(<span class="st">'Webhook-Signature'</span>))) {
+    <span class="kw">return new</span> <span class="nm">Response</span>(<span class="st">''</span>, 401);
+}
+
+<span class="cm">// 3. Дедупликация: доставка «хотя бы один раз», дубликаты неизбежны</span>
+<span class="kw">if</span> (!$this-&gt;processed-&gt;<span class="fn">tryInsert</span>($request-&gt;<span class="fn">headers</span>-&gt;<span class="fn">get</span>(<span class="st">'Webhook-Id'</span>))) {
+    <span class="kw">return new</span> <span class="nm">Response</span>(<span class="st">''</span>, 200);      <span class="cm">// уже обработали — подтверждаем</span>
+}
+
+<span class="cm">// 4. Отвечаем быстро, работу делаем в фоне: отправитель ждёт секунды, а не минуты</span>
+$this-&gt;bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> <span class="nm">HandleWebhook</span>($raw));
+
+<span class="kw">return new</span> <span class="nm">Response</span>(<span class="st">''</span>, 202);</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · обязательные свойства вебхуков</caption>
+      <thead><tr><th>Требование</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Подпись тела секретом</td><td>Иначе кто угодно пришлёт «оплата прошла»</td></tr>
+        <tr><td>Метка времени в подписи</td><td>Защита от повторного проигрывания перехваченного запроса</td></tr>
+        <tr><td>Уникальный идентификатор события</td><td>Получатель обязан дедуплицировать</td></tr>
+        <tr><td>Повторы с экспонентой и джиттером</td><td>Получатель падает — мы не должны его добивать</td></tr>
+        <tr><td>Ограничение попыток и отключение эндпоинта</td><td>Мёртвый адрес не должен вечно жечь ресурсы</td></tr>
+        <tr><td>Журнал доставок с возможностью повтора</td><td>Первое, что спросит партнёр: «а вы точно отправляли?»</td></tr>
+        <tr><td>Проверка адреса получателя</td><td>URL задаёт пользователь — это прямой путь к SSRF</td></tr>
+        <tr><td>Порядок не гарантируется</td><td>Получатель должен опираться на метку версии в событии</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Отправлять вебхук на произвольный URL, введённый пользователем, без проверки. Адрес вида <code>http://169.254.169.254/</code> или <code>http://localhost:6379</code> превращает вашу интеграцию в инструмент доступа к внутренней сети. Минимум: разрешён только HTTPS, публичные адреса, запрет приватных диапазонов после разрешения DNS, запрет следования редиректам.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как сделать надёжную доставку вебхуков?</b><br>Событие пишется в базу вместе с бизнес-операцией (outbox), отправляется отдельным процессом с подписью, временем и уникальным идентификатором, повторяется с экспоненциальной задержкой при ошибках и уходит в DLQ после лимита попыток. Получателю гарантируется «хотя бы один раз» — значит, он обязан дедуплицировать. Плюс журнал доставок с ручным повтором и алерт на массовые отказы конкретного эндпоинта.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card" id="longrunning">
+    <p class="path">senior / асинхронность</p>
+    <div class="card-top"><h3>Долгие операции и потоки</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Операция, которая занимает больше нескольких секунд, не должна выполняться внутри HTTP-запроса: она держит процесс, упирается в таймауты прокси и не переживает разрыв соединения. Стандартное решение — сделать саму операцию ресурсом.</p>
+
+    <div class="code"><div class="bar"><span>http</span><span class="r">202 + ресурс задачи: работает везде и отлаживается curl</span></div><pre><code><span class="cm"># 1. Клиент запускает работу</span>
+POST /v1/reports
+{ "type": "sales", "period": "2026-01" }
+
+HTTP/1.1 202 Accepted
+Location: /v1/jobs/job_5f21          <span class="cm"># адрес, где смотреть статус</span>
+Retry-After: 5                       <span class="cm"># через сколько имеет смысл спросить</span>
+
+<span class="cm"># 2. Клиент опрашивает статус</span>
+GET /v1/jobs/job_5f21
+
+HTTP/1.1 200 OK
+{ "id": "job_5f21", "status": "running", "progress": 0.42 }
+
+<span class="cm"># 3. Готово: ссылка на результат</span>
+HTTP/1.1 200 OK
+{ "id": "job_5f21", "status": "succeeded",
+  "result": { "url": "/v1/reports/rep_7712", "expires_at": "2026-02-12T00:00:00Z" } }
+
+<span class="cm"># Ошибка выглядит так же и не теряется:</span>
+{ "id": "job_5f21", "status": "failed",
+  "error": { "code": "source_unavailable", "retryable": true } }</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · способы вернуть результат позже</caption>
+      <thead><tr><th>Способ</th><th>Когда подходит</th><th>Ограничения</th></tr></thead>
+      <tbody>
+        <tr><td>202 + опрос статуса</td><td>Универсально: отчёты, импорты, обработка файлов</td><td>Лишние запросы; нужен <code>Retry-After</code></td></tr>
+        <tr><td>Вебхук по завершении</td><td>Сервер-сервер, длительные операции</td><td>Нужен публичный адрес получателя и подпись</td></tr>
+        <tr><td>Server-Sent Events</td><td>Односторонний поток обновлений в браузер</td><td>Держит соединение и процесс; только текст</td></tr>
+        <tr><td>WebSocket</td><td>Двусторонний обмен: чаты, совместная работа</td><td>Отдельный рантайм; PHP-FPM для этого не годится</td></tr>
+        <tr><td>Long polling</td><td>Когда нужен «почти realtime» без нового стека</td><td>Занимает процессы на время ожидания</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Классическая ловушка для PHP-стека: SSE и long polling держат процесс FPM занятым всё время ожидания. Сто клиентов на странице с живыми обновлениями — сто занятых процессов из ста доступных, и сайт перестаёт отвечать на обычные запросы. Для таких сценариев нужен отдельный рантайм (долгоживущий процесс, Mercure, отдельный сервис) или честный опрос с разумным интервалом.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Клиент просит отчёт, который строится две минуты. Как спроектировать API?</b><br>Не держать соединение: <code>POST /reports</code> возвращает 202, <code>Location</code> на ресурс задачи и <code>Retry-After</code>. Задача выполняется воркером, её статус доступен по <code>GET</code>, готовый результат отдаётся отдельной ссылкой с временем жизни. Запуск делается идемпотентным по ключу, чтобы двойной клик не породил два отчёта, а для серверных клиентов дополнительно предлагается вебхук по завершении.</div>
+  </article>
+
+  <!-- 19 -->
+  <article class="card" id="perf">
+    <p class="path">senior / скорость</p>
+    <div class="card-top"><h3>Производительность API</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Медленный API редко тормозит из-за PHP. Обычно причины три: слишком много запросов к базе на один ответ, слишком большой ответ и слишком много круговых поездок между клиентом и сервером.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 19 · где уходит время и что с этим делать</caption>
+      <thead><tr><th>Причина</th><th>Признак</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>N+1 в сериализации</td><td>Число запросов растёт с размером страницы</td><td>Жадная загрузка, явные DTO, лимит на <code>expand</code></td></tr>
+        <tr><td>Большой ответ</td><td>Сотни килобайт JSON</td><td>Разреженные поля, пагинация, сжатие</td></tr>
+        <tr><td>Много круговых поездок</td><td>Экран делает 12 запросов</td><td>Агрегирующий эндпоинт, батчинг, HTTP/2</td></tr>
+        <tr><td>Синхронный внешний вызов</td><td>p99 повторяет чужой p99</td><td>Кэш ответа, вынос в фон, таймаут и деградация</td></tr>
+        <tr><td>Дорогой подсчёт</td><td><code>COUNT</code> дороже самой выборки</td><td><code>has_more</code> вместо <code>total</code>, приблизительные счётчики</td></tr>
+        <tr><td>Отсутствие переиспользования соединений</td><td>Много TLS-рукопожатий</td><td>Keep-alive в HTTP-клиенте, пул соединений</td></tr>
+        <tr><td>Сериализация тяжёлых структур</td><td>CPU в профиле на JSON</td><td>Меньше полей, кэш готового представления</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Клиент, который не убивает ваш p99</span></div><pre><code>&lt;?php
+<span class="cm">// Один переиспользуемый клиент: соединения и TLS-сессии не устанавливаются заново</span>
+$client = <span class="nm">HttpClient</span>::<span class="fn">create</span>([
+    <span class="st">'timeout'</span>         =&gt; 3.0,
+    <span class="st">'max_duration'</span>    =&gt; 5.0,        <span class="cm">// потолок с учётом редиректов и повторов</span>
+    <span class="st">'http_version'</span>    =&gt; <span class="st">'2.0'</span>,
+    <span class="st">'headers'</span>         =&gt; [<span class="st">'Accept-Encoding'</span> =&gt; <span class="st">'gzip'</span>],
+]);
+
+<span class="cm">// Параллельные запросы вместо последовательных: три вызова по 200 мс — это 200 мс, а не 600</span>
+$responses = [];
+<span class="kw">foreach</span> ($ids <span class="kw">as</span> $id) {
+    $responses[$id] = $client-&gt;<span class="fn">request</span>(<span class="st">'GET'</span>, <span class="st">"https://api.partner.com/items/{$id}"</span>);
+}
+
+<span class="kw">foreach</span> ($client-&gt;<span class="fn">stream</span>($responses) <span class="kw">as</span> $response =&gt; $chunk) {
+    <span class="kw">if</span> ($chunk-&gt;<span class="fn">isLast</span>()) {
+        $data[] = $response-&gt;<span class="fn">toArray</span>(<span class="kw">false</span>);   <span class="cm">// частичный отказ не должен ронять всё</span>
+    }
+}</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Порядок оптимизации API всегда один: сначала число запросов к базе на ответ, потом размер ответа, потом число круговых поездок клиента, и только затем всё остальное. Замер на каждом шаге обязателен — на фоне одного лишнего запроса к базе разница между способами сериализации теряется в шуме.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Эндпоинт списка отвечает за 3 секунды. Что делаете?</b><br>Смотрю разбивку времени: сколько запросов к базе, есть ли N+1 в сериализации связей, сколько весит ответ, есть ли синхронные внешние вызовы. Почти всегда причина — N+1 или отсутствующий индекс, и лечится жадной загрузкой и правкой запроса. Дальше — ограничение полей и размера страницы, сжатие и кэш. Микрооптимизации PHP в этом списке не участвуют.</div>
+  </article>
+
+  <!-- 20 -->
+  <article class="card" id="security">
+    <p class="path">senior / защита</p>
+    <div class="card-top"><h3>Безопасность API</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Уязвимости API отличаются от классических веб-уязвимостей: здесь почти нет XSS, зато первое место уверенно занимает нарушенная авторизация на уровне объекта. Причина проста — аутентификацию делает фреймворк, а проверку прав на конкретный объект приходится писать руками в каждом обработчике.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 20 · типовые уязвимости API</caption>
+      <thead><tr><th>Уязвимость</th><th>Как выглядит</th><th>Защита</th></tr></thead>
+      <tbody>
+        <tr><td>Нарушенная авторизация объекта (BOLA/IDOR)</td><td><code>GET /orders/9272</code> отдаёт чужой заказ</td><td>Проверка владельца/арендатора в слое данных, а не в контроллере</td></tr>
+        <tr><td>Нарушенная авторизация функции</td><td>Обычный пользователь вызывает <code>/admin/*</code></td><td>Запрет по умолчанию, явное разрешение по ролям</td></tr>
+        <tr><td>Mass assignment</td><td>В теле приходит <code>"role": "admin"</code> и применяется</td><td>Белый список полей, DTO вместо заполнения модели</td></tr>
+        <tr><td>Избыточные данные в ответе</td><td>Клиент скрывает поля, API их отдаёт</td><td>Явные DTO, ревью представлений</td></tr>
+        <tr><td>Отсутствие лимитов</td><td>Перебор идентификаторов и паролей</td><td>Rate limit по IP, ключу и операции</td></tr>
+        <tr><td>SSRF</td><td>«Загрузить по ссылке», вебхуки, импорт</td><td>Белый список схем и адресов, запрет приватных диапазонов</td></tr>
+        <tr><td>Инъекция через сортировку и фильтры</td><td>Имя колонки из query подставляется в SQL</td><td>Белый список полей с отображением на колонки</td></tr>
+        <tr><td>Утечка в логах</td><td>Тело запроса с токеном пишется целиком</td><td>Маскирование, запрет секретов в URL</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Две строки, закрывающие две самых частых уязвимости</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Mass assignment: никогда не заполняем модель тем, что пришло</span>
+<span class="cm">// Плохо: $order-&gt;fill($request-&gt;all());  ← сюда приедет всё, включая tenant_id и status</span>
+$dto = <span class="kw">new</span> <span class="nm">CreateOrderRequest</span>(
+    productId: (<span class="kw">string</span>) $body[<span class="st">'product_id'</span>],
+    qty:       (<span class="kw">int</span>)    $body[<span class="st">'qty'</span>],
+);                                        <span class="cm">// белый список по построению</span>
+
+<span class="cm">// 2. BOLA: право на объект проверяется всегда, даже если id «никто не угадает»</span>
+$order = $this-&gt;orders-&gt;<span class="fn">find</span>($id);
+
+<span class="kw">if</span> ($order === <span class="kw">null</span> || $order-&gt;tenantId !== $user-&gt;tenantId) {
+    <span class="cm">// 404, а не 403: не подтверждаем существование чужого объекта</span>
+    <span class="kw">throw new</span> <span class="nm">NotFoundHttpException</span>();
+}
+
+<span class="cm">// 3. SSRF: адрес от пользователя проверяется после разрешения DNS</span>
+$ip = <span class="fn">gethostbyname</span>(<span class="fn">parse_url</span>($url, <span class="nm">PHP_URL_HOST</span>));
+<span class="kw">if</span> (!<span class="fn">filter_var</span>($ip, <span class="nm">FILTER_VALIDATE_IP</span>,
+        <span class="nm">FILTER_FLAG_NO_PRIV_RANGE</span> | <span class="nm">FILTER_FLAG_NO_RES_RANGE</span>)) {
+    <span class="kw">throw new</span> <span class="nm">InvalidArgumentException</span>(<span class="st">'Недопустимый адрес'</span>);
+}
+<span class="cm">// + запрет редиректов, иначе публичный адрес перекинет на внутренний</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Секретам не место в URL: адреса попадают в логи веб-сервера, историю браузера, заголовок <code>Referer</code> и метрики. Токен передаётся заголовком <code>Authorization</code>, а не параметром <code>?token=</code>. То же относится к одноразовым ссылкам: если без параметра не обойтись, он должен быть короткоживущим и одноразовым.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое IDOR и почему это самая частая уязвимость API?</b><br>Обработчик проверяет, что пользователь аутентифицирован, но не проверяет, что запрошенный объект принадлежит именно ему: смена идентификатора в URL отдаёт чужие данные. Частая она потому, что аутентификацию делает фреймворк централизованно, а проверку владения нужно писать в каждом обработчике — и однажды её забывают. Системное решение — переносить границу в слой данных: репозиторий с обязательной фильтрацией по арендатору или RLS в базе.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Выбираю стиль интеграции по критерию, а не по моде</li>
+        <li>Знаю, чем платит GraphQL и как ограничить стоимость запроса</li>
+        <li>Держу OpenAPI как исполняемый артефакт в пайплайне</li>
+        <li>Проверяю ломающие изменения автоматически</li>
+        <li>Пишу контрактные тесты на соответствие схеме</li>
+        <li>Подписываю вебхуки со временем и даю идентификатор события</li>
+      </ul>
+      <ul class="check">
+        <li>Веду журнал доставок с возможностью повтора</li>
+        <li>Проверяю адрес получателя против SSRF</li>
+        <li>Делаю долгие операции ресурсом: 202, статус, результат</li>
+        <li>Знаю, почему SSE и long polling опасны для FPM</li>
+        <li>Оптимизирую в порядке: запросы к базе → размер → круговые поездки</li>
+        <li>Проверяю права на объект в слое данных</li>
+        <li>Использую белые списки для полей, сортировки и адресов</li>
+        <li>Не передаю секреты в URL</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ по API всегда содержит обязательство и его цену: «публичное REST с версией в пути, ломающие изменения только новой версией, устаревание объявляем за полгода заголовком <code>Sunset</code>, спецификация проверяется в CI, вебхуки подписаны и повторяются до суток». Такой ответ показывает, что вы отвечали за контракт, а не только писали эндпоинты.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения перед собеседованием: какой приём решает какую задачу, что проверить перед публикацией API и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Задача → приём</h3><span class="badge b-tag">Таблица 21</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 21 · что применить и чем за это платите</caption>
+      <thead><tr><th>Задача</th><th>Приём</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Клиент повторяет небезопасный запрос</td><td><code>Idempotency-Key</code> + уникальный индекс</td><td>Хранение ключей и ответов, обработка конфликтов</td></tr>
+        <tr><td>Двое редактируют один объект</td><td>ETag + <code>If-Match</code>, версия строки</td><td>Клиент обязан обрабатывать 412 и перечитывать</td></tr>
+        <tr><td>Список может стать огромным</td><td>Курсорная пагинация с жёстким максимумом</td><td>Нет произвольной страницы и точного <code>total</code></td></tr>
+        <tr><td>Клиенту нужны разные наборы полей</td><td><code>fields</code> и управляемый <code>expand</code></td><td>Сложнее кэшировать, нужен белый список</td></tr>
+        <tr><td>Трафик читающих запросов</td><td><code>Cache-Control</code>, ETag, CDN</td><td>Риск отдать приватное; нужен <code>Vary</code></td></tr>
+        <tr><td>Нужно изменить контракт</td><td>Новая версия + <code>Deprecation</code> и <code>Sunset</code></td><td>Поддержка двух версий и метрика использования</td></tr>
+        <tr><td>Ошибки разбираются клиентами по тексту</td><td>problem+json с машиночитаемым кодом</td><td>Разовая переделка клиентов</td></tr>
+        <tr><td>Один клиент выжигает ресурсы</td><td>Многоуровневый rate limit и 429</td><td>Нужны квоты, заголовки и объяснение в документации</td></tr>
+        <tr><td>Операция длится минуты</td><td>202 + ресурс задачи + результат по ссылке</td><td>Опрос, хранение статусов, идемпотентный запуск</td></tr>
+        <tr><td>Партнёру нужно узнавать о событиях</td><td>Вебхуки с подписью и повторами</td><td>Журнал доставок, DLQ, защита от SSRF</td></tr>
+        <tr><td>Документация расходится с реальностью</td><td>OpenAPI в CI + контрактные тесты</td><td>Дисциплина и время на поддержку спецификации</td></tr>
+        <tr><td>Экран делает десяток запросов</td><td>Агрегирующий эндпоинт или GraphQL</td><td>Связанность с интерфейсом либо сложность защиты</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Чек-лист готовности API</h3><span class="badge b-tag">Таблица 22</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 22 · что проверить до публикации</caption>
+      <thead><tr><th>Область</th><th>Вопрос, на который нужен ответ</th></tr></thead>
+      <tbody>
+        <tr><td>Контракт</td><td>Есть ли спецификация и проверяется ли она в CI?</td></tr>
+        <tr><td>Версионирование</td><td>Как выпустим ломающее изменение и как узнаем, кого сломаем?</td></tr>
+        <tr><td>Коды</td><td>Разделены ли 400, 401, 403, 404, 409, 422, 429 осмысленно?</td></tr>
+        <tr><td>Ошибки</td><td>Единый формат, машиночитаемый код, идентификатор запроса?</td></tr>
+        <tr><td>Коллекции</td><td>Есть ли жёсткий максимум размера страницы и белый список сортировок?</td></tr>
+        <tr><td>Повторы</td><td>Какие операции идемпотентны и чем это обеспечено в хранилище?</td></tr>
+        <tr><td>Конкурентность</td><td>Что произойдёт при одновременном изменении одного объекта?</td></tr>
+        <tr><td>Кэширование</td><td>Приватные ответы помечены <code>no-store</code>, где нужно — <code>Vary</code>?</td></tr>
+        <tr><td>Аутентификация</td><td>Проверяются ли алгоритм, издатель, аудитория и срок токена?</td></tr>
+        <tr><td>Авторизация</td><td>Проверяется ли право на конкретный объект в каждом обработчике?</td></tr>
+        <tr><td>Лимиты</td><td>Есть ли ограничения по IP, клиенту и дорогим операциям?</td></tr>
+        <tr><td>Безопасность</td><td>Нет ли mass assignment, SSRF, секретов в URL и лишних полей в ответе?</td></tr>
+        <tr><td>Наблюдаемость</td><td>Есть ли p99 и доля ошибок по эндпоинтам и по версиям?</td></tr>
+        <tr><td>Документация</td><td>Описаны ли ошибки, лимиты, идемпотентность и политика устаревания?</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 23</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 23 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Протокол</td><td>Методы, коды, заголовки</td><td>Семантика идемпотентности, условные запросы</td><td>Влияние протокола на архитектуру и кэш</td></tr>
+        <tr><td>Дизайн</td><td>Ресурсы вместо глаголов</td><td>Форматы, версионирование, совместимость</td><td>Контракт как обязательство и его эволюция</td></tr>
+        <tr><td>Ошибки</td><td>Правильный код ответа</td><td>Единый формат с машиночитаемым кодом</td><td>Политика ошибок, влияние на алерты и клиентов</td></tr>
+        <tr><td>Кэш</td><td>Знает про <code>Cache-Control</code></td><td>ETag, 304, <code>Vary</code>, приватность</td><td>Слои кэша и риски утечки данных</td></tr>
+        <tr><td>Доступ</td><td>Сессии и токены, CSRF</td><td>OAuth-потоки, JWT и его отзыв</td><td>Модель угроз, границы доверия, аудит</td></tr>
+        <tr><td>Интеграции</td><td>Умеет вызвать чужой API</td><td>Таймауты, повторы, обработка отказов</td><td>Выбор стиля, вебхуки, контрактные тесты</td></tr>
+        <tr><td>Производительность</td><td>Знает про пагинацию</td><td>Находит N+1 и уменьшает ответ</td><td>Считает стоимость запроса и бюджет задержки</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и его цена</td><td>Компромиссы, цифры, условие смены решения</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Коды и заголовки: шпаргалка</h2>
+    <p>То, что стоит держать перед глазами при проектировании эндпоинта и при разборе чужого API.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Ситуация → код ответа</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>http</span><span class="r">Что возвращать в типовых случаях</span></div><pre><code>Создали ресурс                        → 201 + Location + тело
+Приняли в обработку, результат позже  → 202 + Location на задачу + Retry-After
+Успех без содержимого                 → 204 (DELETE, подтверждение)
+Данные не изменились                  → 304 (в ответ на If-None-Match)
+
+Битый JSON, нет обязательного поля    → 400
+Токена нет, истёк, неверен            → 401 + WWW-Authenticate
+Аутентифицирован, но прав нет         → 403 (или 404, чтобы не раскрывать существование)
+Объекта нет                           → 404
+Дубликат, конфликт версий             → 409
+Не выполнено If-Match                 → 412
+Тело больше лимита                    → 413
+Неподдерживаемый Content-Type         → 415
+Бизнес-правило нарушено               → 422
+Требуется условный запрос             → 428
+Превышен лимит                        → 429 + Retry-After
+
+Необработанное исключение             → 500 (и алерт)
+Зависимость недоступна                → 503 + Retry-After (не 500!)
+Таймаут вышестоящего                  → 504
+
+<span class="cm"># Правило: 4xx — «клиент, исправь запрос», 5xx — «сервер виноват, повтори позже».</span>
+<span class="cm"># От этого зависят повторы клиентов и срабатывание алертов.</span></code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Задача → заголовок</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>http</span><span class="r">Заголовки по назначению</span></div><pre><code>Сказать формат тела            Content-Type: application/json; charset=utf-8
+Попросить формат ответа        Accept: application/json
+Передать токен                 Authorization: Bearer &lt;token&gt;
+Защитить повтор                Idempotency-Key: &lt;uuid&gt;
+Указать созданный ресурс       Location: /v1/orders/ord_9271
+Сказать «повтори позже»        Retry-After: 30
+Сообщить лимиты                RateLimit-Limit / -Remaining / -Reset
+Версия представления           ETag: "a1b2c3"
+Условное чтение                If-None-Match: "a1b2c3"        → 304
+Условная запись                If-Match: "a1b2c3"             → 412 при конфликте
+Правила кэша                   Cache-Control: private, no-cache
+Запретить кэш полностью        Cache-Control: no-store
+От чего зависит представление  Vary: Accept-Encoding, Authorization
+Сквозная отладка               X-Request-Id: &lt;id&gt;
+Устаревание эндпоинта          Deprecation: true / Sunset: &lt;date&gt;
+Пагинация ссылками             Link: &lt;...&gt;; rel="next"
+
+<span class="cm"># Ответ API по умолчанию: Content-Type + Cache-Control: no-store + X-Request-Id.</span>
+<span class="cm"># Всё остальное добавляется осознанно.</span></code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Скелет обработчика</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Порядок проверок, который стоит воспроизводить всегда</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">Request</span> $request, <span class="nm">string</span> $id): <span class="nm">Response</span>
+{
+    <span class="cm">// 1. Аутентификация: кто это</span>
+    $user = $this-&gt;auth-&gt;<span class="fn">requireUser</span>($request);           <span class="cm">// нет/истёк → 401</span>
+
+    <span class="cm">// 2. Лимиты: до любой работы</span>
+    $this-&gt;limiter-&gt;<span class="fn">consume</span>($user-&gt;id, <span class="st">'orders.write'</span>);   <span class="cm">// превышен → 429 + Retry-After</span>
+
+    <span class="cm">// 3. Разбор и валидация входа в DTO по белому списку</span>
+    $dto = <span class="nm">UpdateOrder</span>::<span class="fn">fromArray</span>($request-&gt;<span class="fn">toArray</span>());    <span class="cm">// невалидно → 422 problem+json</span>
+
+    <span class="cm">// 4. Загрузка объекта И проверка права на него — вместе, а не по отдельности</span>
+    $order = $this-&gt;orders-&gt;<span class="fn">findForUser</span>($id, $user);       <span class="cm">// чужое/нет → 404</span>
+
+    <span class="cm">// 5. Условная запись: защита от потери чужих правок</span>
+    $this-&gt;<span class="fn">assertIfMatch</span>($request, $order-&gt;version);      <span class="cm">// не совпало → 412</span>
+
+    <span class="cm">// 6. Бизнес-правила домена</span>
+    <span class="kw">if</span> (!$order-&gt;<span class="fn">canTransitionTo</span>($dto-&gt;status)) {
+        <span class="kw">return</span> $this-&gt;<span class="fn">problem</span>(422, <span class="st">'invalid-status-transition'</span>);
+    }
+
+    <span class="cm">// 7. Изменение состояния — в транзакции, с событием через outbox</span>
+    $updated = $this-&gt;handler-&gt;<span class="fn">handle</span>($order, $dto);
+
+    <span class="cm">// 8. Ответ: DTO, версия, запрет кэширования приватного</span>
+    <span class="kw">return</span> (<span class="kw">new</span> <span class="nm">JsonResponse</span>(<span class="nm">OrderView</span>::<span class="fn">from</span>($updated)))
+        -&gt;<span class="fn">setEtag</span>(<span class="st">'"'</span> . $updated-&gt;version . <span class="st">'"'</span>)
+        -&gt;<span class="fn">setPrivate</span>();
+}</code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Порядок важен: лимиты до разбора тела (иначе злоумышленник заставляет вас парсить мегабайты), проверка прав вместе с загрузкой (иначе однажды забудете), условие <code>If-Match</code> до бизнес-логики (иначе выполните работу и откатите). Этот скелет — готовый ответ на вопрос «как вы структурируете обработчик».</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас. Сильный ответ про API почти всегда содержит последствие: не «нужен ETag», а «нужен, иначе двое редактирующих один заказ молча затрут правки друг друга».</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Из чего состоит HTTP-запрос?</span><span class="aa">Стартовая строка (метод, путь, версия), заголовки, пустая строка и необязательное тело. Ответ устроен так же, только вместо метода — код состояния. Всё, кроме тела, — текст, поэтому запрос можно прочитать глазами в <code>curl -v</code>.</span></li>
+      <li><span class="qq">Что значит «HTTP не хранит состояния»?</span><span class="aa">Сервер не связывает два запроса сам по себе: каждый запрос самодостаточен. Всё, что выглядит как память о пользователе, реализовано поверх — кукой с идентификатором сессии или токеном. Отсюда следует, что запросы одного пользователя может обслуживать любой узел.</span></li>
+      <li><span class="qq">Чем HTTP/2 отличается от HTTP/1.1?</span><span class="aa">Он бинарный и мультиплексирует множество запросов в одном соединении, плюс сжимает заголовки. Практическое следствие: множество мелких запросов перестаёт быть проблемой, а старые приёмы вроде склейки файлов и доменного шардирования теряют смысл. HTTP/3 добавляет к этому работу поверх QUIC без блокировки на потерях пакетов.</span></li>
+      <li><span class="qq">Какие методы безопасные, а какие идемпотентные?</span><span class="aa">Безопасные (не меняют состояние): GET, HEAD, OPTIONS. Идемпотентные (повтор не меняет результат): те же плюс PUT и DELETE. POST не является ни тем, ни другим, PATCH идемпотентен только если так спроектирован. От этих свойств зависит, будут ли клиенты и прокси повторять запрос автоматически.</span></li>
+      <li><span class="qq">Чем PUT отличается от PATCH и от POST?</span><span class="aa">PUT заменяет ресурс целиком по известному URL и потому идемпотентен. PATCH меняет часть полей. POST создаёт подчинённый ресурс или выполняет действие, адрес результата определяет сервер и возвращает в <code>Location</code>.</span></li>
+      <li><span class="qq">DELETE идемпотентен, но второй вызов даёт 404. Противоречие?</span><span class="aa">Нет. Идемпотентность — про состояние системы, а не про одинаковый ответ: после первого и после третьего вызова ресурса нет одинаково. Возвращать 404 на повтор нормально; некоторые API отвечают 204 всегда — это тоже допустимо, если задокументировано.</span></li>
+      <li><span class="qq">Чем 401 отличается от 403?</span><span class="aa">401 — мы не знаем, кто вы: токена нет, он истёк или неверен; помогает повторная аутентификация. 403 — знаем, но доступ запрещён; повтор с теми же данными бессмысленен. Иногда вместо 403 осознанно отдают 404, чтобы не подтверждать существование чужого объекта.</span></li>
+      <li><span class="qq">Чем 400 отличается от 422?</span><span class="aa">400 — запрос невозможно разобрать или он структурно неверен: битый JSON, отсутствует обязательное поле, неверный тип. 422 — синтаксис корректен, но нарушено бизнес-правило: дата окончания раньше начала, недостаточно средств. Разделение помогает клиенту понять, где чинить.</span></li>
+      <li><span class="qq">Когда возвращать 409, а когда 429?</span><span class="aa">409 — конфликт состояния: дубликат по уникальному полю, попытка изменить объект, который уже изменён. 429 — превышен лимит частоты; обязательно с <code>Retry-After</code>, иначе клиент продолжит долбить с той же скоростью.</span></li>
+      <li><span class="qq">Что вернуть при успешном создании ресурса?</span><span class="aa">201 Created, заголовок <code>Location</code> с адресом созданного ресурса и тело с его представлением. Возвращать 200 без <code>Location</code> — рабочая, но более слабая практика: клиенту приходится собирать URL самому.</span></li>
+      <li><span class="qq">Зачем нужны HEAD и OPTIONS?</span><span class="aa">HEAD возвращает только заголовки — им проверяют существование, размер и свежесть ресурса без скачивания тела. OPTIONS сообщает возможности ресурса и используется браузером как предварительный запрос в CORS.</span></li>
+      <li><span class="qq">Зачем нужен заголовок <code>Vary</code>?</span><span class="aa">Он говорит кэшам, от каких заголовков запроса зависит ответ. Без него кэш отдаёт одну версию всем: разным языкам, разным кодировкам, а в худшем случае — данные одного пользователя другому. Это одна из самых опасных ошибок, потому что проявляется не сразу и не у всех.</span></li>
+      <li><span class="qq">Зачем сквозной идентификатор запроса?</span><span class="aa">Чтобы связать запись в логе приложения, в логе веб-сервера, в фоновой задаче и в ответе клиенту. Пользователь присылает идентификатор из сообщения об ошибке — и поддержка находит весь путь запроса за секунды вместо получаса поиска по времени.</span></li>
+      <li><span class="qq">Почему нельзя доверять <code>X-Forwarded-For</code>?</span><span class="aa">Потому что клиент может прислать этот заголовок сам. Если приложение берёт из него IP без проверки, то в логах и в ограничении частоты окажется значение, придуманное злоумышленником. Доверять можно только части, добавленной вашим балансировщиком, — для этого настраивается список доверенных прокси.</span></li>
+      <li><span class="qq">Как проектировать URL в REST API?</span><span class="aa">Существительные во множественном числе, идентификатор в пути, действие выражается методом: <code>GET /orders/9271</code>, <code>PATCH /orders/9271</code>. Фильтры и сортировка — в query, вложенность не глубже одного уровня, единый стиль имён. Глаголы в URL (<code>/getUser</code>) означают, что метод HTTP не несёт смысла.</span></li>
+      <li><span class="qq">Какие флаги нужны куке сессии и зачем?</span><span class="aa"><code>Secure</code> — отправлять только по HTTPS; <code>HttpOnly</code> — недоступна из JavaScript, что резко снижает ущерб от XSS; <code>SameSite=Lax</code> или <code>Strict</code> — не отправлять при межсайтовых запросах, что закрывает CSRF. Плюс пересоздание идентификатора сессии после входа.</span></li>
+      <li><span class="qq">Как работает CSRF и как защититься?</span><span class="aa">Чужой сайт инициирует запрос к вашему, браузер автоматически прикладывает куку сессии, действие выполняется от имени пользователя. Защита: <code>SameSite</code> на куке плюс CSRF-токен, проверяемый на сервере. Для API с токеном в заголовке проблема не возникает — заголовок браузер сам не добавит.</span></li>
+      <li><span class="qq">Что даёт HTTPS и достаточно ли его?</span><span class="aa">Шифрование канала, целостность и аутентификацию сервера. Недостаточно: он ничего не знает про права доступа, инъекции, IDOR и утечки в логах. Это необходимое условие, а не защита приложения.</span></li>
+      <li><span class="qq">Чем сессия в куке отличается от токена в заголовке?</span><span class="aa">Сессия — идентификатор, состояние хранится на сервере: легко отозвать, но нужно общее хранилище и защита от CSRF. Токен самодостаточен и проверяется локально: удобно для мобильных клиентов и межсервисных вызовов, но отозвать сложно, а хранение на клиенте уязвимо к XSS.</span></li>
+      <li><span class="qq">Что такое CORS?</span><span class="aa">Механизм браузера, разрешающий или запрещающий JavaScript одного источника читать ответы другого. Сервер сообщает разрешения заголовками <code>Access-Control-*</code>, для «непростых» запросов браузер сначала шлёт <code>OPTIONS</code>. Важно: это ограничение браузера, а не защита API — из curl или с сервера запрос пройдёт.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Почему нельзя отдавать сущности ORM напрямую?</span><span class="aa">Контракт становится заложником схемы: переименование колонки ломает клиентов, новое поле публикуется без ревью, включая внутренние флаги. Плюс ленивая загрузка в сериализации даёт N+1. Правильно — явный DTO, который ревьюится как часть контракта.</span></li>
+      <li><span class="qq">Как представлять в JSON деньги и даты?</span><span class="aa">Деньги — строкой с фиксированной точностью и отдельным кодом валюты: число с плавающей точкой теряет копейки. Дата и время — ISO 8601 в UTC. Локальные форматы неоднозначны, а «время без пояса» рано или поздно даёт сдвиг на несколько часов.</span></li>
+      <li><span class="qq">Какие изменения API ломают клиентов?</span><span class="aa">Удаление и переименование полей, изменение типа, новое обязательное поле в запросе, ужесточение валидации, смена кода ответа. Не ломают: новые эндпоинты, новые необязательные поля и параметры со значением по умолчанию. Новое значение в перечислении — пограничный случай: оно ломает клиентов со строгим разбором.</span></li>
+      <li><span class="qq">Какие есть способы версионирования?</span><span class="aa">Версия в пути (<code>/v1/</code>) — просто, видно в логах, версионируется весь API; в заголовке <code>Accept</code> — теоретически чище, но неудобно отлаживать; по дате — клиент закрепляется за срезом поведения, требует слоя совместимости. Есть и вариант без версий: только аддитивные изменения, если вы контролируете всех клиентов.</span></li>
+      <li><span class="qq">Как правильно вывести эндпоинт из эксплуатации?</span><span class="aa">Объявить устаревание заголовками <code>Deprecation</code> и <code>Sunset</code> с датой, дать ссылку на инструкцию, вести метрику использования по клиентам, связаться с оставшимися, провести короткое пробное отключение и только потом выключить окончательно. Без метрики использования отключение делается вслепую.</span></li>
+      <li><span class="qq">Почему в ответах часто нет общего количества?</span><span class="aa">Потому что <code>COUNT</code> по отфильтрованной большой таблице обычно дороже самой страницы и становится главным тормозом эндпоинта. Практика — отдавать <code>has_more</code> и курсор, а точное число только там, где оно действительно нужно, отдельным запросом.</span></li>
+      <li><span class="qq">Offset или курсор?</span><span class="aa">Offset удобен для админок с небольшими таблицами: есть переход на произвольную страницу. Курсор нужен для лент, экспорта и публичных API: стоимость страницы постоянна, а вставки не приводят к дублям и пропускам. Цена курсора — отсутствие произвольного перехода и точного количества.</span></li>
+      <li><span class="qq">Как безопасно реализовать сортировку по полю из query?</span><span class="aa">Белым списком: имя поля из запроса отображается на реальную колонку, всё остальное отвергается. Подготовленные выражения тут не спасают — имена колонок и направление сортировки нельзя передать параметром, поэтому подстановка строки прямо в SQL остаётся инъекцией.</span></li>
+      <li><span class="qq">Как работает <code>Idempotency-Key</code>?</span><span class="aa">Клиент генерирует ключ для попытки и присылает его в заголовке. Сервер сохраняет ключ вместе с хешем тела и ответом под уникальным индексом: первый запрос выполняет работу, повтор с тем же ключом возвращает сохранённый ответ, тот же ключ с другим телом — 409. Уникальный индекс закрывает гонку одновременных повторов.</span></li>
+      <li><span class="qq">Зачем нужны ETag и <code>If-Match</code>?</span><span class="aa">Для оптимистической конкурентности: клиент присылает версию, которую редактировал, и обновление применяется, только если версия не изменилась; иначе — 412, и клиент перечитывает. Без этого двое редактирующих один объект молча затирают правки друг друга, и обнаруживается это через недели.</span></li>
+      <li><span class="qq">Как должен выглядеть формат ошибки?</span><span class="aa">Единым для всего API, машиночитаемым: тип или код ошибки, статус, идентификатор запроса, при валидации — список полей с кодами. Хороший готовый вариант — problem+json (RFC 9457). Тексты для пользователя формирует клиент, внутренние детали наружу не попадают.</span></li>
+      <li><span class="qq">Почему нельзя отвечать 200 с телом <code>{"success": false}</code>?</span><span class="aa">Потому что код статуса — часть контракта: по нему клиенты решают, повторять ли запрос, а мониторинг считает долю ошибок. При таком подходе все ответы успешны, сбои не видны в метриках, стандартная обработка ошибок в клиентах не работает, а кэши могут сохранить ошибку как валидный ответ.</span></li>
+      <li><span class="qq">Чем отличаются <code>no-store</code>, <code>no-cache</code> и <code>private</code>?</span><span class="aa"><code>no-store</code> — не сохранять нигде, для платежей и персональных данных. <code>no-cache</code> — сохранять можно, но перед выдачей обязательно проверить актуальность. <code>private</code> — сохранять только в браузере пользователя, но не в общих кэшах и CDN.</span></li>
+      <li><span class="qq">Как работает ETag и 304?</span><span class="aa">Сервер отдаёт версию представления в <code>ETag</code>, клиент при следующем запросе присылает её в <code>If-None-Match</code>. Если представление не изменилось, сервер отвечает 304 без тела. Экономится трафик и сериализация; чтобы экономить ещё и запрос к базе, ETag считают из версии или метки времени, а не из готового ответа.</span></li>
+      <li><span class="qq">Чем опасен <code>Cache-Control: public</code> на ответе API?</span><span class="aa">Тем, что общий кэш или CDN может отдать ответ, сформированный для одного пользователя, другому. Если ответ зависит от аутентификации, он либо не кэшируется вовсе (<code>no-store</code>), либо помечается <code>private</code> и сопровождается корректным <code>Vary</code>. Ошибка проявляется не сразу и выглядит как мистика.</span></li>
+      <li><span class="qq">Что обязательно проверять в JWT?</span><span class="aa">Подпись с явно заданным списком допустимых алгоритмов (иначе возможна подмена на <code>none</code> или на симметричный алгоритм), издателя, аудиторию и срок действия. Плюс помнить, что payload не зашифрован: персональным данным и секретам там не место.</span></li>
+      <li><span class="qq">JWT или серверная сессия?</span><span class="aa">JWT проверяется локально и не требует общего хранилища — это выигрыш для межсервисных вызовов и мобильных клиентов. Сессия мгновенно отзывается и сразу отражает изменение прав — это выигрыш для браузерных приложений. Выбор определяется требованием к отзыву: если он должен быть мгновенным, JWT неудобен.</span></li>
+      <li><span class="qq">Как отозвать JWT?</span><span class="aa">Прямо — никак, он действителен до истечения. Практика: короткий access-токен (5–15 минут) плюс refresh, хранящийся на сервере и отзываемый мгновенно; denylist по <code>jti</code> для экстренных случаев; версия учётных данных пользователя, инвалидирующая все ранее выданные токены.</span></li>
+      <li><span class="qq">Как устроено ограничение частоты запросов?</span><span class="aa">Несколькими уровнями сразу: по IP — от ботов, по клиенту или ключу — от злоупотребления, отдельно по дорогим операциям и отдельно по попыткам входа. Клиенту сообщаются квота и остаток заголовками, при превышении возвращается 429 с <code>Retry-After</code>. Алгоритм обычно token bucket: он допускает короткие всплески и ограничивает среднюю скорость.</span></li>
+      <li><span class="qq">От чего защищает CORS, а от чего нет?</span><span class="aa">Защищает данные пользователя в браузере: чужой сайт не сможет прочитать ответ вашего API, выполненный с куками пользователя. Не защищает API от запросов вообще — curl, сервер или мобильное приложение игнорируют CORS полностью. Авторизацию он не заменяет ни в каком виде.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">REST или GraphQL — как выбрать?</span><span class="aa">По клиентам и по требованиям к кэшу. REST выигрывает для публичных API и интеграций: универсален, отлаживается curl, кэшируется HTTP-механизмами. GraphQL выигрывает, когда много разнородных экранов и клиенту нужны разные подмножества связанных данных. Цена GraphQL — слабое кэширование и необходимость ограничивать глубину и стоимость запроса.</span></li>
+      <li><span class="qq">Когда оправдан gRPC?</span><span class="aa">Для внутренних вызовов между сервисами с высокой частотой: бинарный формат, HTTP/2, строгая схема и кодогенерация дают скорость и защиту от расхождения контрактов. Для публичного API он плох: сложнее отладка, выше порог входа у потребителей, нет привычного кэширования.</span></li>
+      <li><span class="qq">Когда лучше событие, а не синхронный вызов?</span><span class="aa">Когда вызывающему не нужен результат немедленно и он не должен зависеть от доступности получателя: уведомления, индексация, аналитика, реакции других доменов. Событие снимает связанность и сглаживает пики, но приносит дубликаты, отсутствие гарантий порядка и более сложную отладку.</span></li>
+      <li><span class="qq">Как ограничить стоимость запроса в GraphQL?</span><span class="aa">Ограничением глубины и сложности запроса (стоимость по полям и множителям), персистентными запросами вместо произвольных, таймаутом и лимитом числа резолверов, обязательными аргументами пагинации у списков. Без этого один клиент случайно построит запрос, обходящий половину базы.</span></li>
+      <li><span class="qq">Design-first или code-first?</span><span class="aa">Design-first — когда API публичный или его потребляют другие команды: контракт обсуждается до реализации, фронтенд работает по моку, изменения дешевле. Code-first — для внутренних API одной команды: ниже порог входа и меньше риск расхождения. В обоих случаях спецификация должна проверяться автоматически.</span></li>
+      <li><span class="qq">Как гарантировать, что документация соответствует реальности?</span><span class="aa">Сделав спецификацию исполняемым артефактом в пайплайне: линт, автоматический поиск ломающих изменений относительно предыдущей версии и контрактные тесты, сверяющие реальные ответы со схемой. Тогда расхождение падает в CI, а не обнаруживается партнёром.</span></li>
+      <li><span class="qq">Что такое контрактный тест и чем он отличается от обычного?</span><span class="aa">Обычный тест проверяет поведение, контрактный — форму: что ответ реального приложения соответствует опубликованной схеме. Он ловит тихие изменения, которые не ломают логику: переименованное поле, число вместо строки, исчезнувший <code>null</code>. Это самый дешёвый способ не ломать клиентов случайно.</span></li>
+      <li><span class="qq">Как автоматически находить ломающие изменения?</span><span class="aa">Сравнением спецификации ветки со спецификацией основной ветки специальным инструментом, который классифицирует изменения и падает на ломающих. Дополняется метрикой использования полей и версий: она показывает, есть ли вообще потребители у того, что вы собираетесь изменить.</span></li>
+      <li><span class="qq">Как спроектировать надёжную доставку вебхуков?</span><span class="aa">Событие пишется в базу вместе с бизнес-операцией, отправляется отдельным процессом с подписью, меткой времени и уникальным идентификатором, повторяется с экспонентой и джиттером, уходит в DLQ после лимита попыток. Получателю гарантируется доставка «хотя бы один раз», поэтому он обязан дедуплицировать. Плюс журнал доставок с ручным повтором и алерт на массовые отказы эндпоинта.</span></li>
+      <li><span class="qq">Как безопасно принимать чужой вебхук?</span><span class="aa">Проверить свежесть по метке времени (окно в несколько минут против повторного проигрывания), проверить подпись по сырому телу сравнением за постоянное время, дедуплицировать по идентификатору события, ответить быстро и выполнить работу в фоне. Бизнес-логика запускается только после всех проверок.</span></li>
+      <li><span class="qq">Как защититься от SSRF, если URL задаёт пользователь?</span><span class="aa">Разрешать только HTTPS и только публичные адреса: после разрешения DNS проверять, что IP не попадает в приватные и служебные диапазоны, запрещать следование редиректам (иначе публичный адрес перебросит на внутренний), использовать белый список доменов там, где он возможен, и выполнять такие запросы из ограниченного сетевого сегмента.</span></li>
+      <li><span class="qq">Как спроектировать API для операции длиной в минуты?</span><span class="aa">Сделать саму операцию ресурсом: <code>POST</code> возвращает 202, <code>Location</code> на задачу и <code>Retry-After</code>; работа выполняется воркером; статус доступен по <code>GET</code>; результат отдаётся отдельной ссылкой с временем жизни. Запуск делается идемпотентным по ключу, а для серверных клиентов дополнительно предлагается вебхук по завершении.</span></li>
+      <li><span class="qq">Чем опасны SSE и long polling на PHP-стеке?</span><span class="aa">Тем, что удерживают процесс FPM на всё время ожидания. Сотня клиентов с открытым потоком занимает сотню процессов из доступных, и обычные запросы перестают обслуживаться. Для таких сценариев нужен отдельный долгоживущий рантайм или специализированный сервис, либо честный опрос с разумным интервалом.</span></li>
+      <li><span class="qq">Эндпоинт списка отвечает три секунды. Как действуете?</span><span class="aa">Смотрю разбивку: число запросов к базе на ответ (обычно это N+1 в сериализации связей), наличие индексов под фильтр и сортировку, размер ответа, синхронные внешние вызовы. Порядок правок: убрать N+1, поправить запрос и индексы, ограничить поля и размер страницы, включить сжатие и кэш. Замер после каждого шага.</span></li>
+      <li><span class="qq">Экран мобильного приложения делает двенадцать запросов. Что предложите?</span><span class="aa">Сначала выяснить, почему: обычно это отсутствие нужных связей в ответе. Варианты — агрегирующий эндпоинт под конкретный экран, управляемый <code>expand</code>, батч-эндпоинт или GraphQL, если таких экранов много. У каждого своя цена: агрегатор связывает API с интерфейсом, GraphQL требует защиты от дорогих запросов.</span></li>
+      <li><span class="qq">Что такое BOLA/IDOR и как защищаться системно?</span><span class="aa">Обработчик проверяет аутентификацию, но не проверяет принадлежность объекта пользователю: смена идентификатора в URL отдаёт чужие данные. Точечные проверки в контроллерах ненадёжны — однажды забудут. Системное решение: фильтрация по владельцу или арендатору в слое данных (репозиторий, обёртка соединения, RLS в базе), плюс непредсказуемые идентификаторы как дополнительный барьер.</span></li>
+      <li><span class="qq">Что такое mass assignment и как его исключить?</span><span class="aa">Заполнение модели напрямую данными запроса: клиент присылает лишнее поле — <code>role</code>, <code>tenant_id</code>, <code>status</code> — и оно применяется. Исключается белым списком по построению: явный DTO с перечисленными полями вместо массового заполнения. Дополнительно помогает разделение полей, доступных на запись, и полей только для чтения.</span></li>
+      <li><span class="qq">Почему секреты не должны быть в URL?</span><span class="aa">Потому что адреса попадают в логи веб-сервера и прокси, историю браузера, заголовок <code>Referer</code> при переходе и в системы метрик. Токен передаётся заголовком <code>Authorization</code>. Если параметр в ссылке неизбежен (письмо, одноразовая ссылка), он должен быть короткоживущим и одноразовым.</span></li>
+      <li><span class="qq">Как спроектировать API для клиента с ненадёжной сетью?</span><span class="aa">Исходить из того, что ответ может потеряться: все небезопасные операции идемпотентны по ключу, чтение поддерживает условные запросы и 304, ответы компактны и допускают частичную выборку полей, есть внятные коды для «повторяемых» и «неповторяемых» ошибок, а лимиты сообщаются заголовками. Долгие операции обязательно асинхронны, иначе разрыв соединения теряет результат.</span></li>
+      <li><span class="qq">Что делает API пригодным к жизни в течение пяти лет?</span><span class="aa">Три вещи: дисциплина совместимости (только аддитивные изменения, ломающие — новой версией с объявленным сроком), проверяемый контракт (спецификация в CI и контрактные тесты) и знание своих потребителей (метрики по версиям, полям и клиентам). Всё остальное — детали, которые можно исправить; сломанное обязательство перед клиентами исправить нельзя.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>API проверяется не чтением спецификаций, а попытками сломать собственный контракт. Каждое задание оставляет артефакт — конфиг, тест, спецификацию или отчёт, который можно показать на собеседовании.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Разбор чужого API</h4>
+    <p>Возьмите публичный API и изучите его через <code>curl -v</code>: какие коды возвращает, какие заголовки кэширования, есть ли ETag, как выглядят ошибки и лимиты, как устроена пагинация.</p>
+    <div class="box task"><span class="lbl">Результат</span>Заметка на страницу: что сделано хорошо, что вы бы сделали иначе и почему.</div>
+
+    <h4>2. Проектирование URL</h4>
+    <p>Опишите десять операций своей предметной области сначала так, как их назвали бы «интуитивно», а затем — по ресурсной модели. Отдельно решите, куда деть три операции, которые не ложатся в CRUD.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица «до и после» — заодно готовый ответ на вопрос о REST на собеседовании.</div>
+
+    <h4>3. CRUD с правильными кодами</h4>
+    <p>Реализуйте ресурс целиком: 201 с <code>Location</code> при создании, 204 при удалении, 404 на несуществующий объект, 422 на нарушение бизнес-правила, 400 на битый JSON. Проверьте каждый случай через curl.</p>
+    <div class="box task"><span class="lbl">Результат</span>Набор curl-команд, воспроизводящих все коды, — основа будущих тестов.</div>
+
+    <h4>4. Куки и CSRF на стенде</h4>
+    <p>Поднимите локально два «сайта». С первого выполните запрос ко второму и убедитесь, что кука прикладывается автоматически. Затем включите <code>SameSite=Lax</code> и повторите.</p>
+    <div class="box task"><span class="lbl">Результат</span>Воспроизведённая атака и подтверждение, что флаг её останавливает. Это самый убедительный способ запомнить CSRF.</div>
+
+    <h4>5. Аудит заголовков своего сайта</h4>
+    <p>Проверьте: есть ли редирект с HTTP, отдаются ли HSTS, <code>X-Content-Type-Options</code>, CSP; помечены ли приватные ответы <code>no-store</code>; доступен ли <code>/.env</code>; какие флаги у куки сессии.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список находок и три закрытые из них в тот же день.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. DTO вместо сущностей</h4>
+    <p>Переведите два эндпоинта с сериализации сущностей на явные DTO. Сравните ответы до и после: какие поля утекали наружу, сколько запросов к базе выполнялось при сериализации связей.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список полей, которые публиковались случайно, и число запросов к базе до и после.</div>
+
+    <h4>7. Курсорная пагинация</h4>
+    <p>Реализуйте пагинацию по паре (дата, id) с подходящим индексом, отдавайте <code>next</code> в теле и в <code>Link</code>. Замерьте первую и десятитысячную страницу против варианта с <code>OFFSET</code>.</p>
+    <div class="box task"><span class="lbl">Результат</span>График или таблица замеров, показывающая постоянную стоимость курсора.</div>
+
+    <h4>8. Идемпотентное создание</h4>
+    <p>Добавьте поддержку <code>Idempotency-Key</code> с хранением ключа, хеша тела и ответа. Отправьте один и тот же запрос трижды параллельно и убедитесь, что создан один объект.</p>
+    <div class="box task"><span class="lbl">Результат</span>Тест на параллельные повторы и обработанный случай «тот же ключ, другое тело» → 409.</div>
+
+    <h4>9. Оптимистическая конкурентность</h4>
+    <p>Добавьте ETag на чтение и <code>If-Match</code> на изменение с версией строки. Смоделируйте сценарий: два клиента открыли объект, оба сохраняют — второй должен получить 412, а не затереть правки.</p>
+    <div class="box task"><span class="lbl">Результат</span>Воспроизведённый конфликт и понятное поведение клиента при 412.</div>
+
+    <h4>10. Единый формат ошибок</h4>
+    <p>Переведите API на problem+json: маппинг исключений в коды, идентификатор запроса в каждой ошибке, все ошибки валидации за один ответ, никаких трассировок наружу.</p>
+    <div class="box task"><span class="lbl">Результат</span>Один обработчик исключений вместо разрозненных ответов и тест на формат ошибки.</div>
+
+    <h4>11. Лимиты и заголовки</h4>
+    <p>Реализуйте ограничение частоты по клиенту и отдельно по дорогой операции, с заголовками квоты и корректным 429 с <code>Retry-After</code>. Проверьте поведение при недоступном Redis.</p>
+    <div class="box task"><span class="lbl">Результат</span>Решённый и записанный выбор: пропускать трафик или блокировать, если хранилище лимитов недоступно.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Спецификация в пайплайне</h4>
+    <p>Опишите API в OpenAPI, добавьте в CI линт, автоматический поиск ломающих изменений относительно основной ветки и контрактные тесты на соответствие ответов схеме. Попробуйте намеренно переименовать поле.</p>
+    <div class="box task"><span class="lbl">Результат</span>Красный пайплайн на переименовании поля — доказательство, что защита работает.</div>
+
+    <h4>13. Вебхуки от начала до конца</h4>
+    <p>Реализуйте исходящие вебхуки: outbox, подпись с меткой времени, уникальный идентификатор события, повторы с экспонентой, DLQ, журнал доставок с ручным повтором и проверка адреса получателя против SSRF.</p>
+    <div class="box task"><span class="lbl">Результат</span>Демонстрация: получатель лежал час, после подъёма получил все события ровно по одному разу.</div>
+
+    <h4>14. Долгая операция как ресурс</h4>
+    <p>Переведите операцию, занимающую минуты, на схему 202 + ресурс задачи + результат по ссылке. Добавьте идемпотентный запуск, прогресс и внятную обработку неуспеха.</p>
+    <div class="box task"><span class="lbl">Результат</span>Освободившиеся процессы FPM и клиент, переживающий разрыв соединения без потери результата.</div>
+
+    <h4>15. Аудит безопасности API</h4>
+    <p>Пройдите по таблице типовых уязвимостей: попробуйте получить чужой объект сменой идентификатора, прислать лишнее поле в теле, отсортировать по несуществующей колонке, увести вебхук на внутренний адрес, найти секреты в URL и логах.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отчёт с находками, приоритетами и закрытыми пунктами верхнего уровня. Лучший артефакт для senior-собеседования.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Всё проверяется на своём проекте: тема хорошо ложится на существующий код, поэтому почти каждое задание можно выполнить в рабочем репозитории.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Протокол и базовый контракт</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Устройство запроса и ответа, версии HTTP, stateless, безопасные и идемпотентные методы, коды ответов и их разделение, рабочий минимум заголовков, <code>Vary</code>, проектирование URL, куки и их флаги, CSRF, HTTPS и заголовки безопасности.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: разбор чужого API, проектирование URL, CRUD с правильными кодами, воспроизведение CSRF, аудит заголовков.</li>
+      <li>Пройти по своему API и выписать эндпоинты, где код ответа выбран неверно, — обычно их больше, чем кажется.</li>
+      <li>Научиться читать <code>curl -v</code> без подсказок: запрос, ответ, заголовки, время.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Ресурс с корректными кодами и заголовками, набор curl-команд для проверки и закрытые находки по заголовкам безопасности.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Какие методы безопасные, а какие идемпотентные?</li>
+      <li>Чем 401 отличается от 403, а 400 от 422?</li>
+      <li>Что вернуть при успешном создании ресурса?</li>
+      <li>Зачем нужен <code>Vary</code>?</li>
+      <li>Какие флаги нужны куке сессии?</li>
+      <li>Как работает CSRF и что её останавливает?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Дизайн и эволюция</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Моделирование ресурсов и форматы данных, DTO вместо сущностей, ломающие и совместимые изменения, способы версионирования, объявление устаревания, пагинация и фильтры, белые списки для сортировки, ограничение размера коллекций.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6 и 7: перевод на DTO и курсорная пагинация с замерами.</li>
+      <li>Проверить свой API на ломающие изменения за последний год: что бы сломалось у мобильного клиента годичной давности.</li>
+      <li>Найти эндпоинты без ограничения размера страницы и закрыть их жёстким максимумом.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>API без утечек внутренних полей, с ограниченными коллекциями и осознанной политикой версионирования.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Почему нельзя отдавать сущности ORM?</li>
+      <li>Как представлять деньги и даты?</li>
+      <li>Какие изменения ломают клиентов?</li>
+      <li>Какие есть способы версионирования и их цена?</li>
+      <li>Почему в ответах часто нет <code>total</code>?</li>
+      <li>Как безопасно сортировать по полю из query?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Надёжность и доступ</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Идемпотентность и <code>Idempotency-Key</code>, оптимистическая конкурентность через ETag и <code>If-Match</code>, единый формат ошибок, HTTP-кэширование и его риски, аутентификация и авторизация, JWT и его отзыв, OAuth-потоки, ограничение частоты, CORS.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 8–11: идемпотентное создание, конкурентное редактирование, problem+json, лимиты с заголовками.</li>
+      <li>Пройти по обработчикам и проверить, везде ли есть проверка права на конкретный объект, а не только на роль.</li>
+      <li>Проверить заголовки кэширования на приватных эндпоинтах — нет ли <code>public</code> без <code>Vary</code>.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Операции, безопасные к повторам и к гонкам, единый формат ошибок и работающие лимиты с понятным клиенту поведением.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как работает <code>Idempotency-Key</code> и что закрывает уникальный индекс?</li>
+      <li>Зачем ETag и <code>If-Match</code>, когда возвращается 412?</li>
+      <li>Почему нельзя 200 с <code>"success": false</code>?</li>
+      <li>Чем отличаются <code>no-store</code>, <code>no-cache</code> и <code>private</code>?</li>
+      <li>Что обязательно проверять в JWT?</li>
+      <li>Как отозвать JWT?</li>
+      <li>От чего защищает CORS, а от чего нет?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Интеграции и безопасность</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Выбор между REST, GraphQL, gRPC и событиями, OpenAPI и контрактные тесты, поиск ломающих изменений в CI, вебхуки и их надёжность, SSRF, долгие операции и потоки, производительность API, типовые уязвимости и системная защита.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: спецификация в пайплайне, вебхуки от начала до конца, долгая операция как ресурс, аудит безопасности.</li>
+      <li>Замерить самый медленный эндпоинт и разложить его время: запросы к базе, размер ответа, внешние вызовы.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ, обязательно с ценой решения.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Спецификация, ломающая пайплайн при несовместимом изменении, надёжные вебхуки, асинхронная долгая операция и отчёт аудита с закрытыми находками.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>REST или GraphQL — по какому критерию?</li>
+      <li>Что такое контрактный тест и что он ловит?</li>
+      <li>Как сделать надёжные вебхуки?</li>
+      <li>Как защититься от SSRF, если URL задаёт пользователь?</li>
+      <li>Как спроектировать API для операции длиной в минуты?</li>
+      <li>Почему SSE и long polling опасны на PHP-стеке?</li>
+      <li>Что такое IDOR и как защищаться системно?</li>
+      <li>Что делает API пригодным к жизни в течение пяти лет?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы про API</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Отвечайте последствием, а не определением.</strong> «ETag — это версия представления» — слабо. «ETag с <code>If-Match</code> нужен, иначе двое редактирующих один заказ молча затрут правки друг друга, и вы узнаете об этом через месяц от бухгалтерии» — сильно.</li>
+      <li><strong>Разделяйте протокол и дизайн.</strong> Часть вопросов проверяет знание HTTP (коды, кэш, идемпотентность), часть — умение проектировать контракт (версионирование, ошибки, эволюция). Полезно явно обозначать, о чём вы говорите.</li>
+      <li><strong>Помните про клиентов.</strong> Любой вопрос об изменении API имеет второй слой: «а как вы узнаете, кого сломаете». Ответ «по метрике использования по версиям и клиентам» почти всегда производит впечатление.</li>
+      <li><strong>Не бойтесь прагматизма.</strong> «Здесь мы отошли от REST и сделали action-эндпоинт, потому что операция не ресурс» — нормальный ответ. Догматичное следование букве стиля ценится ниже, чем осознанный выбор.</li>
+      <li><strong>Приводите числа.</strong> Размер ответа, p99, число запросов к базе на ответ, сколько клиентов на старой версии, за сколько отключали эндпоинт. Числа отличают опыт от прочитанного.</li>
+      <li><strong>Держите наготове историю поломки.</strong> Ломающее изменение, ушедшее в прод; кэш, отдавший чужие данные; забытая проверка владельца объекта. Что случилось, как обнаружили, что изменили в процессе — это лучший формат ответа.</li>
+      <li><strong>Приносите артефакты.</strong> Спецификация с проверкой в CI, отчёт аудита, набор curl-команд, замеры до и после. Они переводят разговор из «что вы знаете» в «что вы сделали».</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «HTTP и дизайн API» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

@@ -1,0 +1,1510 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · контроль версий · работа в команде</p>
+  <h1>Git и командная работа</h1>
+  <p class="lead">Git выучивают дважды. Сначала как набор из шести команд, которых хватает, пока всё идёт по плану. Потом — по-настоящему, обычно после первого случая «я что-то сделал и потерял день работы». Разница между этими состояниями не в количестве заученных флагов, а в понимании модели: что такое коммит, куда указывает ветка и почему почти ничего в Git на самом деле не теряется.</p>
+  <p class="lead">Вторая половина темы — не про инструмент, а про людей. История коммитов, размер pull request и тон комментариев на ревью влияют на скорость команды сильнее, чем выбор между rebase и merge. Проект, где ревью идёт три дня, а ветки живут месяц, тормозит не из-за Git — Git лишь делает эту боль видимой.</p>
+  <p class="lead">Конспект идёт от модели данных к процессу: объекты и ветки → rebase, отмена изменений, стратегии ветвления, pull request → выбор процесса под команду, история как инструмент расследования, откаты в инцидентах и договорённости, которые держат всё это вместе. Смежные темы: <a href="infrastructure.html">инфраструктура и CI</a>, <a href="testing.html">тестирование</a>, <a href="soft-skills.html">софт-скиллы</a>, <a href="php.html">PHP</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Модель данных Git, ежедневный цикл, ветки и слияния, конфликты, хорошие коммиты, работа с удалённым репозиторием.</span></div>
+    <div class="aud m"><b>Middle</b><span>Rebase против merge, отмена изменений и reflog, стратегии ветвления и релизы, pull request и ревью, хуки и защита веток.</span></div>
+    <div class="aud s"><b>Senior</b><span>История как инструмент расследования, выбор процесса под команду, культура ревью, откаты в инцидентах, договорённости и онбординг.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>17</i></span>
+    <span>Блоков кода: <i>22</i></span>
+    <span>Сравнительных таблиц: <i>19</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#model">Как устроен Git</a></li>
+    <li><span class="tree">├─</span> <a href="#daily">Ежедневный цикл</a></li>
+    <li><span class="tree">├─</span> <a href="#branches">Ветки и слияние</a></li>
+    <li><span class="tree">├─</span> <a href="#conflicts">Конфликты</a></li>
+    <li><span class="tree">├─</span> <a href="#commits">Хорошие коммиты</a></li>
+    <li><span class="tree">├─</span> <a href="#remote">Удалённый репозиторий</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#rebase">Rebase против merge</a></li>
+    <li><span class="tree">├─</span> <a href="#undo">Отмена изменений и reflog</a></li>
+    <li><span class="tree">├─</span> <a href="#flows">Стратегии ветвления</a></li>
+    <li><span class="tree">├─</span> <a href="#releases">Релизы, теги, версии</a></li>
+    <li><span class="tree">├─</span> <a href="#pr">Pull request и ревью</a></li>
+    <li><span class="tree">├─</span> <a href="#hooks">Хуки и защита веток</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#archaeology">История как инструмент</a></li>
+    <li><span class="tree">├─</span> <a href="#choose">Выбор процесса под команду</a></li>
+    <li><span class="tree">├─</span> <a href="#culture">Культура ревью</a></li>
+    <li><span class="tree">├─</span> <a href="#incidents">Git в инцидентах</a></li>
+    <li><span class="tree">├─</span> <a href="#agreements">Договорённости команды</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Команды по ситуациям</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · основы</p>
+    <h2>Junior: модель, цикл, ветки</h2>
+    <p>Большинство страшных историй про Git — следствие того, что человек выполняет команды, не представляя, что они делают с данными. Модель на самом деле простая, и её понимание за час избавляет от паники на годы вперёд: почти всё, что кажется потерянным, лежит на месте и достаётся одной командой.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="model">
+    <p class="path">junior / модель</p>
+    <div class="card-top"><h3>Как устроен Git</h3><span class="badge b-1">База</span></div>
+    <p>Git хранит не изменения, а <strong>снимки</strong>: каждый коммит — это полное состояние дерева файлов плюс ссылка на родителя. Различия вычисляются на лету при показе. Отсюда следует всё остальное: коммит неизменяем, ветка — просто указатель, а история — граф, а не список.</p>
+
+    <div class="flow" role="img" aria-label="Рабочий каталог, индекс, репозиторий и удалённый репозиторий">
+      <div class="node">Рабочий каталог<small>файлы, которые вы правите</small></div><span class="arr">→</span>
+      <div class="node">Индекс<small>что войдёт в коммит</small></div><span class="arr">→</span>
+      <div class="node">Локальный репозиторий<small>коммиты и ветки</small></div><span class="arr">→</span>
+      <div class="node">Удалённый<small>origin</small></div>
+    </div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Что внутри: объекты, на которые всё опирается</span></div><pre><code><span class="cm"># Коммит — это объект: дерево файлов, родитель, автор, сообщение</span>
+git cat-file -p HEAD
+<span class="cm"># tree   a1b2c3...        ← снимок дерева файлов</span>
+<span class="cm"># parent 9f8e7d...        ← предыдущий коммит (у merge их два)</span>
+<span class="cm"># author Ivan &lt;i@e.com&gt; 1770000000 +0300</span>
+
+<span class="cm"># Ветка — это файл с одной строкой: хеш коммита. Всё.</span>
+cat .git/refs/heads/main
+<span class="cm"># 9f8e7d6c5b4a...</span>
+
+<span class="cm"># HEAD — указатель на текущую ветку (или прямо на коммит в detached-состоянии)</span>
+cat .git/HEAD
+<span class="cm"># ref: refs/heads/main</span>
+
+<span class="cm"># Отсюда следствие: переключение веток и создание веток — операции почти бесплатные,</span>
+<span class="cm"># потому что это запись одного хеша в один файл, а не копирование кода.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · три состояния файла и переходы между ними</caption>
+      <thead><tr><th>Состояние</th><th>Где находится</th><th>Как попасть</th><th>Как выйти</th></tr></thead>
+      <tbody>
+        <tr><td>Изменён</td><td>Рабочий каталог</td><td>Правка файла</td><td><code>git restore &lt;file&gt;</code> — правки пропадут</td></tr>
+        <tr><td>Подготовлен</td><td>Индекс</td><td><code>git add</code></td><td><code>git restore --staged &lt;file&gt;</code></td></tr>
+        <tr><td>Зафиксирован</td><td>Локальный репозиторий</td><td><code>git commit</code></td><td><code>git reset</code> или <code>git revert</code></td></tr>
+        <tr><td>Опубликован</td><td>Удалённый репозиторий</td><td><code>git push</code></td><td>Только <code>revert</code>: историю уже видят другие</td></tr>
+        <tr><td>Неотслеживаемый</td><td>Рабочий каталог</td><td>Новый файл</td><td><code>git clean -fd</code> — удалит безвозвратно</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Главное практическое следствие модели: коммит, который вы сделали, почти невозможно потерять. Даже если ветка «пропала», а <code>reset --hard</code> увёл вас в прошлое, коммиты остаются в репозитории и находятся через <code>git reflog</code> в течение месяцев. По-настоящему теряются только незакоммиченные изменения — поэтому первое правило при страшной операции: сначала закоммитить или спрятать в <code>stash</code>.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое ветка в Git?</b><br>Подвижный указатель на коммит — буквально файл с одним хешем. Создание ветки не копирует код, поэтому это мгновенная операция, а переключение меняет рабочий каталог на состояние из соответствующего снимка. Каждый коммит знает своего родителя, поэтому история — это граф, и ветка «содержит» все коммиты, достижимые от неё по родителям.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="daily">
+    <p class="path">junior / рутина</p>
+    <div class="card-top"><h3>Ежедневный цикл</h3><span class="badge b-1">База</span></div>
+    <p>Девяносто процентов работы — это шесть команд. Важна не их зубрёжка, а привычка смотреть на состояние перед каждым действием: <code>git status</code> отвечает почти на все вопросы и подсказывает следующую команду.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Рабочий цикл от задачи до пуша</span></div><pre><code><span class="cm"># 1. Начинаем от свежего состояния основной ветки</span>
+git switch main
+git pull --ff-only              <span class="cm"># безопасный вариант: не создаст неожиданный merge</span>
+
+<span class="cm"># 2. Своя ветка под задачу</span>
+git switch -c feature/PROJ-142-order-discount
+
+<span class="cm"># 3. Смотрим, что изменилось, ПЕРЕД добавлением</span>
+git status
+git diff                        <span class="cm"># изменения, ещё не добавленные в индекс</span>
+git diff --staged               <span class="cm"># то, что уже уйдёт в коммит</span>
+
+<span class="cm"># 4. Добавляем осознанно, а не «всё подряд»</span>
+git add src/Pricing/Discount.php
+git add -p src/Order/Cart.php   <span class="cm"># по кускам: отличный способ не тащить лишнее</span>
+
+<span class="cm"># 5. Коммит с внятным сообщением</span>
+git commit -m "feat(pricing): процентная скидка на корзину"
+
+<span class="cm"># 6. Публикация с привязкой ветки к удалённой</span>
+git push -u origin feature/PROJ-142-order-discount
+
+<span class="cm"># Дальше в цикле хватает трёх команд</span>
+git status &amp;&amp; git add -p &amp;&amp; git commit</code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash + gitignore</span><span class="r">Что не должно попадать в репозиторий</span></div><pre><code><span class="cm"># .gitignore — заводится в первый день, а не после того, как vendor уже в истории</span>
+/vendor/
+/node_modules/
+/var/
+/public/build/
+.env
+.env.local
+.idea/
+.phpunit.result.cache
+*.log
+
+<span class="cm"># Файл уже отслеживается, а .gitignore на него не действует — обычная ловушка:</span>
+<span class="cm"># игнорирование работает только для неотслеживаемых файлов</span>
+git rm --cached .env            <span class="cm"># убрать из индекса, оставить на диске</span>
+git commit -m "chore: убрать .env из репозитория"
+<span class="cm"># ВАЖНО: файл остаётся в истории. Если там был секрет — его нужно отозвать,</span>
+<span class="cm"># удаление коммита не помогает (см. конспект по безопасности).</span>
+
+<span class="cm"># Проверить, почему файл игнорируется</span>
+git check-ignore -v public/build/app.js</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Полезная настройка на весь компьютер один раз: <code>git config --global pull.ff only</code> (не создавать неожиданных merge-коммитов при <code>pull</code>), <code>git config --global push.default current</code>, <code>git config --global rerere.enabled true</code> (запоминать разрешённые конфликты) и <code>init.defaultBranch main</code>. Эти четыре строки убирают половину типовых недоразумений.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужен индекс (staging area)?</b><br>Чтобы отделить «что я изменил» от «что я хочу зафиксировать». Это позволяет собрать атомарный коммит из части правок — например, закоммитить исправление бага отдельно от случайно затронутого форматирования. Основной инструмент здесь <code>git add -p</code>: он предлагает добавлять изменения кусками и почти всегда улучшает качество истории.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="branches">
+    <p class="path">junior / ветвление</p>
+    <div class="card-top"><h3>Ветки и слияние</h3><span class="badge b-1">База</span></div>
+    <p>Ветка отделяет вашу работу от общей, чтобы незаконченное не мешало остальным. Слияние возвращает её обратно. Понимать нужно два случая: когда история линейна и когда она разошлась.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Два вида слияния и почему они разные</span></div><pre><code><span class="cm"># Случай 1: fast-forward — main не двигался, пока вы работали.</span>
+<span class="cm"># Git просто передвигает указатель вперёд, нового коммита не появляется.</span>
+<span class="cm">#   main:    A---B</span>
+<span class="cm">#   feature:      \---C---D</span>
+<span class="cm">#   после:   A---B---C---D   (main указывает на D)</span>
+git switch main &amp;&amp; git merge feature
+
+<span class="cm"># Случай 2: истории разошлись — создаётся merge-коммит с двумя родителями</span>
+<span class="cm">#   main:    A---B---E</span>
+<span class="cm">#   feature:      \---C---D</span>
+<span class="cm">#   после:   A---B---E---M   (M имеет родителей E и D)</span>
+git merge feature
+
+<span class="cm"># Явно запретить fast-forward: слияние ветки всегда видно в истории</span>
+git merge --no-ff feature      <span class="cm"># типовая настройка для веток задач</span>
+
+<span class="cm"># Посмотреть граф глазами — привычка, экономящая массу непонимания</span>
+git log --oneline --graph --all --decorate -20</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · операции с ветками</caption>
+      <thead><tr><th>Задача</th><th>Команда</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td>Создать и перейти</td><td><code>git switch -c name</code></td><td>Современная замена <code>checkout -b</code></td></tr>
+        <tr><td>Переключиться</td><td><code>git switch name</code></td><td>Незакоммиченные правки переносятся, если не конфликтуют</td></tr>
+        <tr><td>Список веток</td><td><code>git branch -vv</code></td><td>Показывает отставание от удалённой</td></tr>
+        <tr><td>Переименовать</td><td><code>git branch -m new-name</code></td><td>После пуша нужно удалить старую на сервере</td></tr>
+        <tr><td>Удалить слитую</td><td><code>git branch -d name</code></td><td>Откажется, если есть неслитые коммиты</td></tr>
+        <tr><td>Удалить принудительно</td><td><code>git branch -D name</code></td><td>Коммиты остаются в reflog</td></tr>
+        <tr><td>Что не слито в main</td><td><code>git branch --no-merged main</code></td><td>Полезно перед уборкой</td></tr>
+        <tr><td>Временно спрятать правки</td><td><code>git stash push -m "wip"</code></td><td>Вернуть: <code>git stash pop</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Ветка задачи должна жить дни, а не недели. Чем дольше она существует, тем сильнее расходится с основной, тем больнее слияние и тем выше шанс, что кто-то параллельно переписал те же файлы. Практическое правило: если ветка живёт больше недели — либо задача слишком крупная и её надо резать, либо изменения стоит вливать за флагом функциональности по частям.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое fast-forward и когда его лучше запретить?</b><br>Это слияние без создания коммита: основная ветка не двигалась, поэтому её указатель просто передвигается вперёд, история остаётся линейной. Запрещают его (<code>--no-ff</code>) для веток задач, когда важно видеть в истории сам факт вливания ветки — тогда группа коммитов остаётся выделенной и её можно откатить одним <code>revert</code> merge-коммита.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="conflicts">
+    <p class="path">junior / конфликты</p>
+    <div class="card-top"><h3>Конфликты</h3><span class="badge b-1">База</span></div>
+    <p>Конфликт возникает, когда две стороны изменили одни и те же строки, и Git не может решить за вас, какой вариант верный. Это не ошибка и не поломка — это вопрос, на который нужно ответить.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Разрешение конфликта по шагам</span></div><pre><code><span class="cm"># Git останавливается и говорит, какие файлы конфликтуют</span>
+git status                       <span class="cm"># «both modified: src/Order/Cart.php»</span>
+
+<span class="cm"># В файле появляются маркеры:</span>
+<span class="cm">#   &lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD            ← ваша текущая ветка</span>
+<span class="cm">#   $total = $sum * 1.2;</span>
+<span class="cm">#   =======</span>
+<span class="cm">#   $total = $sum * $rate;   ← то, что вливается</span>
+<span class="cm">#   &gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/rates</span>
+
+<span class="cm"># Показать три версии сразу: базовую, свою и чужую — так понятнее, что произошло</span>
+git checkout --conflict=diff3 src/Order/Cart.php
+
+<span class="cm"># Взять целиком одну из сторон, если правка тривиальна</span>
+git checkout --ours   config/services.yaml    <span class="cm"># свою</span>
+git checkout --theirs composer.lock           <span class="cm"># чужую</span>
+
+<span class="cm"># После правки: убрать маркеры, проверить, что код собирается, и пометить решённым</span>
+git add src/Order/Cart.php
+git commit                        <span class="cm"># для merge сообщение подставится автоматически</span>
+
+<span class="cm"># Передумали — откат в исходное состояние</span>
+git merge --abort                 <span class="cm"># или git rebase --abort</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · частые ситуации с конфликтами</caption>
+      <thead><tr><th>Ситуация</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>Конфликт в <code>composer.lock</code></td><td>Не править руками: взять версию основной ветки и переустановить зависимости заново</td></tr>
+        <tr><td>Конфликт в миграциях</td><td>Обе миграции нужны: переименовать свою, чтобы порядок был корректным</td></tr>
+        <tr><td>Конфликт только из-за форматирования</td><td>Признак отсутствия единого стиля — чинится настройкой форматтера в проекте</td></tr>
+        <tr><td>Один и тот же конфликт при каждом rebase</td><td>Включить <code>rerere</code>: Git запомнит решение и применит автоматически</td></tr>
+        <tr><td>Огромный конфликт после долгой ветки</td><td>Влить основную ветку в свою маленькими шагами, а не одним рывком в конце</td></tr>
+        <tr><td>Не уверены, что получилось</td><td><code>git diff</code> с обеими сторонами и обязательный прогон тестов до коммита</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Разрешать конфликт, механически удаляя маркеры и оставляя «свою» версию. Так теряются чужие изменения — молча и без следа, потому что после коммита конфликт исчезает из истории. Правило: после разрешения обязательно перечитать получившийся фрагмент целиком и прогнать тесты, а в сомнительных случаях спросить автора второй стороны — это две минуты против дня расследования.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы разрешаете конфликты слияния?</b><br>Сначала смотрю, что именно конфликтует, и по возможности показываю три версии — базовую, свою и чужую: часто становится понятно, что стороны решали разные задачи и нужно объединить, а не выбрать. Правлю, убираю маркеры, прогоняю тесты, только потом фиксирую. Для файлов вроде <code>composer.lock</code> ручная правка не годится — беру версию основной ветки и переустанавливаю зависимости.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="commits">
+    <p class="path">junior / история</p>
+    <div class="card-top"><h3>Хорошие коммиты</h3><span class="badge b-1">База</span></div>
+    <p>История коммитов — это документация, которую читают в двух ситуациях: когда разбираются, почему код такой, и когда ищут причину поломки. В обеих ситуациях сообщение вида «фиксы» бесполезно.</p>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Сообщение коммита: форма и содержание</span></div><pre><code><span class="cm"># Заголовок: до ~72 символов, повелительное наклонение, что делает коммит</span>
+feat(pricing): добавить процентную скидку на корзину
+
+<span class="cm"># Пустая строка, затем тело — самое ценное: ПОЧЕМУ, а не ЧТО</span>
+Маркетингу нужны акции вида «−10% на всё». Скидка считается
+от суммы позиций до налога, потому что бухгалтерия сводит
+отчётность по доналоговой базе.
+
+Отвергнутый вариант: хранить итог со скидкой в заказе — тогда
+пересчёт при возврате становится неоднозначным.
+
+Refs: PROJ-142
+
+<span class="cm"># Conventional commits: тип(область): описание</span>
+<span class="cm">#   feat     — новая возможность</span>
+<span class="cm">#   fix      — исправление ошибки</span>
+<span class="cm">#   refactor — изменение кода без изменения поведения</span>
+<span class="cm">#   perf     — производительность</span>
+<span class="cm">#   test     — тесты</span>
+<span class="cm">#   docs     — документация</span>
+<span class="cm">#   chore    — рутина: зависимости, конфиги</span>
+<span class="cm">#   BREAKING CHANGE в теле — несовместимое изменение</span>
+
+<span class="cm"># Зачем формат: по нему автоматически собирается changelog и определяется</span>
+<span class="cm"># следующая версия по семантическому версионированию.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · признаки хорошего и плохого коммита</caption>
+      <thead><tr><th>Хорошо</th><th>Плохо</th></tr></thead>
+      <tbody>
+        <tr><td>Одно логическое изменение</td><td>«Работа за день» — фича, багфикс и рефакторинг вместе</td></tr>
+        <tr><td>Проект собирается и тесты зелёные на каждом коммите</td><td>Промежуточные сломанные состояния в истории</td></tr>
+        <tr><td>Заголовок объясняет смысл</td><td>«фиксы», «правки», «wip», «.»</td></tr>
+        <tr><td>Тело объясняет причину и отвергнутые варианты</td><td>Пересказ диффа словами</td></tr>
+        <tr><td>Форматирование отделено от логики</td><td>Смена стиля во всём файле вперемешку с правкой в двух строках</td></tr>
+        <tr><td>Ссылка на задачу</td><td>Никакого контекста — через год не восстановить</td></tr>
+        <tr><td>Переименования отдельным коммитом</td><td>Переименование плюс изменение логики — дифф нечитаем</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Тест на качество коммита: сможет ли человек через год, увидев <code>git blame</code> на этой строке, понять причину изменения, не спрашивая вас. Если да — сообщение написано правильно. Особенно ценно фиксировать <em>отвергнутые варианты</em>: они экономят следующему человеку неделю, потраченную на «а давайте сделаем вот так» — и обнаружение, почему так нельзя.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Каким должен быть коммит?</b><br>Атомарным: одно логическое изменение, проект собирается и тесты проходят. Сообщение — заголовок в повелительном наклонении о смысле изменения и тело с причиной: почему сделано именно так и какие варианты отвергнуты. Форматирование и переименования выносятся отдельными коммитами, иначе дифф с содержательной правкой становится нечитаемым.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card" id="remote">
+    <p class="path">junior / удалённый</p>
+    <div class="card-top"><h3>Удалённый репозиторий</h3><span class="badge b-1">База</span></div>
+    <p>Локальный и удалённый репозитории независимы. Git не синхронизирует их автоматически — вы явно забираете и явно отправляете. Понимание, что <code>origin/main</code> — это ваше локальное представление о состоянии сервера, снимает большинство недоумений.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Синхронизация: что происходит на самом деле</span></div><pre><code><span class="cm"># fetch: скачивает изменения, НО не трогает ваши ветки.</span>
+<span class="cm"># Обновляется только origin/main — «моё знание о том, что на сервере».</span>
+git fetch origin
+
+<span class="cm"># Теперь можно посмотреть, что прилетело, ДО того как это на вас повлияет</span>
+git log --oneline HEAD..origin/main     <span class="cm"># что есть у них, но нет у меня</span>
+git log --oneline origin/main..HEAD     <span class="cm"># что есть у меня, но нет у них</span>
+git diff HEAD origin/main -- src/
+
+<span class="cm"># pull = fetch + слияние. Опасен тем, что делает второй шаг неявно.</span>
+git pull --ff-only        <span class="cm"># влить только если можно без merge-коммита; иначе — ошибка</span>
+git pull --rebase         <span class="cm"># перенести свои коммиты поверх чужих (линейная история)</span>
+
+<span class="cm"># Состояние веток относительно удалённых</span>
+git branch -vv
+<span class="cm"># feature/x  9f8e7d6 [origin/feature/x: ahead 2, behind 1] ...</span>
+
+<span class="cm"># Уборка ссылок на удалённые ветки, которых уже нет на сервере</span>
+git fetch --prune
+
+<span class="cm"># Публикация новой ветки с привязкой</span>
+git push -u origin feature/PROJ-142</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Правило про <code>push --force</code>: никогда в общие ветки (<code>main</code>, <code>develop</code>, релизные) — вы перепишете историю, на которую опираются другие, и их работа окажется в подвешенном состоянии. В своей ветке задачи после rebase это нормально, но используйте <code>--force-with-lease</code>: он откажется затирать чужие изменения, если кто-то успел запушить в вашу ветку.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем <code>fetch</code> отличается от <code>pull</code>?</b><br><code>fetch</code> скачивает изменения с сервера и обновляет только ссылки вида <code>origin/main</code>, ваши ветки и рабочий каталог не трогает — это безопасная операция, после которой можно посмотреть, что прилетело. <code>pull</code> — это <code>fetch</code> плюс слияние в текущую ветку, и именно второй шаг делает неожиданности: неявный merge-коммит или конфликт посреди работы.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Понимаю, что коммит — снимок, а ветка — указатель</li>
+        <li>Знаю три состояния файла и переходы между ними</li>
+        <li>Смотрю <code>git status</code> и <code>git diff</code> перед коммитом</li>
+        <li>Использую <code>git add -p</code> для сборки атомарных коммитов</li>
+        <li>Завёл <code>.gitignore</code> и знаю, почему он не действует на отслеживаемые файлы</li>
+        <li>Понимаю fast-forward и когда нужен <code>--no-ff</code></li>
+      </ul>
+      <ul class="check">
+        <li>Разрешаю конфликты осмысленно и прогоняю тесты после</li>
+        <li>Знаю про <code>merge --abort</code> и не боюсь конфликтов</li>
+        <li>Пишу сообщения с причиной, а не пересказом диффа</li>
+        <li>Держу ветку задачи короткой</li>
+        <li>Различаю <code>fetch</code> и <code>pull</code></li>
+        <li>Не делаю <code>push --force</code> в общие ветки</li>
+        <li>Знаю, что почти ничего в Git не теряется</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-уровень закрывается не количеством команд, а спокойствием: вы знаете, в каком состоянии репозиторий, что сделает следующая команда и как вернуться назад, если что-то пойдёт не так. Лучшее упражнение — завести учебный репозиторий и намеренно сломать его пятью способами, каждый раз восстанавливая.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · рабочий процесс</p>
+    <h2>Middle: переписывание истории и процесс</h2>
+    <p>Middle отличается тем, что не боится трогать историю и понимает границу, за которой это становится опасным. Плюс отвечает уже не только за свои коммиты: за то, как устроено ветвление, как выглядят pull request и что происходит автоматически до того, как код попадёт к ревьюеру.</p>
+  </div>
+
+  <!-- 7 -->
+  <article class="card" id="rebase">
+    <p class="path">middle / история</p>
+    <div class="card-top"><h3>Rebase против merge</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Обе команды решают одну задачу — соединить разошедшиеся ветки, — но принципиально по-разному. <code>merge</code> сохраняет историю как было и добавляет коммит слияния. <code>rebase</code> переписывает ваши коммиты так, будто вы начали работу от актуального состояния основной ветки.</p>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Одна и та же ситуация, два результата</span></div><pre><code>Исходное состояние:
+
+  main:     A---B---E---F
+                 \
+  feature:        C---D
+
+
+После git merge main (находясь в feature):
+
+  main:     A---B---E---F
+                 \       \
+  feature:        C---D---M      ← merge-коммит с двумя родителями
+
+
+После git rebase main (находясь в feature):
+
+  main:     A---B---E---F
+                         \
+  feature:                C'--D'  ← НОВЫЕ коммиты с новыми хешами
+
+<span class="cm"># C' и D' — это копии C и D с другим родителем. Исходные C и D остаются</span>
+<span class="cm"># в репозитории (их видно в reflog), но ветка на них больше не указывает.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · когда что применять</caption>
+      <thead><tr><th>Критерий</th><th>merge</th><th>rebase</th></tr></thead>
+      <tbody>
+        <tr><td>История</td><td>Сохраняется как было, с ветвлениями</td><td>Линейная, читается сверху вниз</td></tr>
+        <tr><td>Хеши коммитов</td><td>Не меняются</td><td>Меняются: это новые коммиты</td></tr>
+        <tr><td>Конфликты</td><td>Разрешаются один раз</td><td>Могут повторяться на каждом коммите</td></tr>
+        <tr><td>Безопасность для общих веток</td><td>Полная</td><td>Опасен: ломает работу тех, кто уже забрал ветку</td></tr>
+        <tr><td>Видно факт слияния ветки</td><td>Да, merge-коммитом</td><td>Нет, коммиты растворяются в общей линии</td></tr>
+        <tr><td>Откат целой фичи</td><td>Один <code>revert -m 1</code></td><td>Нужно откатывать коммиты по одному</td></tr>
+        <tr><td>Где уместен</td><td>Вливание ветки задачи в основную</td><td>Актуализация своей ветки перед PR</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Золотое правило rebase:</strong> не переписывайте историю, которую уже видят другие. В своей ветке задачи — сколько угодно; в <code>main</code> или в ветке, над которой работает коллега, — никогда. Практичная схема для большинства команд: свою ветку актуализируем через <code>rebase</code> и чистим интерактивно, а вливаем в основную через <code>merge --no-ff</code> или squash — так история остаётся читаемой, а факт вливания фичи виден.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Интерактивный rebase: уборка ветки перед ревью</span></div><pre><code><span class="cm"># Привести в порядок последние 5 коммитов перед отправкой на ревью</span>
+git rebase -i HEAD~5
+
+<span class="cm"># В открывшемся списке напротив каждого коммита ставится действие:</span>
+<span class="cm">#   pick   — оставить как есть</span>
+<span class="cm">#   reword — изменить сообщение</span>
+<span class="cm">#   squash — объединить с предыдущим, объединив сообщения</span>
+<span class="cm">#   fixup  — объединить с предыдущим, отбросив сообщение</span>
+<span class="cm">#   edit   — остановиться и дать поправить коммит</span>
+<span class="cm">#   drop   — выбросить коммит</span>
+<span class="cm">#   reorder — просто переставить строки местами</span>
+
+<span class="cm"># Типовая уборка: «fix опечатка», «ещё fix», «правка после ревью» → в исходный коммит</span>
+
+<span class="cm"># Ещё удобнее — помечать правки сразу, а потом схлопнуть автоматически:</span>
+git commit --fixup=9f8e7d6          <span class="cm"># коммит-правка к конкретному коммиту</span>
+git rebase -i --autosquash HEAD~5   <span class="cm"># сам расставит fixup в нужные места</span>
+
+<span class="cm"># После rebase ветку нужно перезалить — только с проверкой чужих изменений</span>
+git push --force-with-lease
+
+<span class="cm"># Если во время rebase всё пошло не так</span>
+git rebase --abort</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span><code>--force-with-lease</code> вместо <code>--force</code> — привычка, которая однажды спасёт чужой день. Обычный <code>--force</code> затирает удалённую ветку безусловно, включая коммиты, которые кто-то запушил туда, пока вы делали rebase. Вариант с lease проверяет, что удалённая ветка находится там, где вы её видели в последний раз, и отказывается работать, если это не так.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем rebase отличается от merge и что вы используете?</b><br>Merge соединяет ветки, сохраняя историю и добавляя коммит слияния; rebase переписывает коммиты поверх новой базы, делая историю линейной, но меняя хеши. Правило одно: rebase только для своей ещё не общей ветки. У себя я актуализирую ветку rebase-ом и чищу её интерактивно перед ревью, а в основную вливаю merge-ом без fast-forward — тогда фича видна одним блоком и откатывается одним revert.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="undo">
+    <p class="path">middle / отмена</p>
+    <div class="card-top"><h3>Отмена изменений и reflog</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Самая полезная категория команд: она превращает Git из источника тревоги в инструмент. Ключевое различие — меняете вы историю (можно, пока она ваша) или добавляете компенсирующий коммит (можно всегда).</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · сценарий и команда отмены</caption>
+      <thead><tr><th>Что случилось</th><th>Команда</th><th>Осторожно</th></tr></thead>
+      <tbody>
+        <tr><td>Опечатка в сообщении последнего коммита</td><td><code>git commit --amend</code></td><td>Только если он не запушен</td></tr>
+        <tr><td>Забыли файл в последнем коммите</td><td><code>git add file &amp;&amp; git commit --amend --no-edit</code></td><td>То же условие</td></tr>
+        <tr><td>Нужно убрать коммит, оставив правки</td><td><code>git reset --soft HEAD~1</code></td><td>Правки остаются в индексе</td></tr>
+        <tr><td>Убрать коммит и разобрать заново</td><td><code>git reset HEAD~1</code></td><td>Правки остаются в рабочем каталоге</td></tr>
+        <tr><td>Выбросить последние коммиты совсем</td><td><code>git reset --hard HEAD~2</code></td><td>Незакоммиченное пропадёт безвозвратно</td></tr>
+        <tr><td>Отменить уже опубликованный коммит</td><td><code>git revert &lt;hash&gt;</code></td><td>Единственный безопасный способ</td></tr>
+        <tr><td>Отменить влитую ветку</td><td><code>git revert -m 1 &lt;merge-hash&gt;</code></td><td>Повторное вливание потребует revert of revert</td></tr>
+        <tr><td>Вернуть правки одного файла</td><td><code>git restore &lt;file&gt;</code></td><td>Изменения пропадут</td></tr>
+        <tr><td>Перенести чужой коммит к себе</td><td><code>git cherry-pick &lt;hash&gt;</code></td><td>Создаёт копию с новым хешем</td></tr>
+        <tr><td>Всё пропало</td><td><code>git reflog</code></td><td>Почти всегда спасает</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">reflog: журнал того, где побывал HEAD</span></div><pre><code><span class="cm"># Ситуация: сделали reset --hard и поняли, что выбросили нужные коммиты</span>
+git reflog
+<span class="cm"># 9f8e7d6 HEAD@{0}: reset: moving to HEAD~3      ← вот сюда мы «упали»</span>
+<span class="cm"># a1b2c3d HEAD@{1}: commit: feat: расчёт скидки  ← а вот потерянная работа</span>
+<span class="cm"># 4d5e6f7 HEAD@{2}: commit: test: покрытие границ</span>
+
+<span class="cm"># Вернуться в состояние до reset</span>
+git reset --hard HEAD@{1}
+<span class="cm"># или создать ветку от потерянного коммита, ничего не ломая:</span>
+git switch -c rescue a1b2c3d
+
+<span class="cm"># reflog работает и для веток — видно, где ветка была раньше</span>
+git reflog show feature/PROJ-142
+
+<span class="cm"># Коммиты, на которые ничто не ссылается («потерянные»)</span>
+git fsck --lost-found
+
+<span class="cm"># ВАЖНО: reflog локальный и хранится по умолчанию 90 дней.</span>
+<span class="cm"># Он не спасёт незакоммиченные изменения — их спасает только stash или коммит.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">reset и revert: разница, которую спрашивают почти всегда</span></div><pre><code><span class="cm"># reset переписывает историю: «сделаем вид, что этих коммитов не было»</span>
+<span class="cm">#   A---B---C---D  (main)</span>
+git reset --hard B
+<span class="cm">#   A---B          (main)   — C и D перестали быть достижимы</span>
+
+<span class="cm"># revert добавляет новый коммит, отменяющий изменения:</span>
+<span class="cm">#   A---B---C---D  (main)</span>
+git revert C
+<span class="cm">#   A---B---C---D---C'  (main)   — история сохранена, эффект C отменён</span>
+
+<span class="cm"># Правило: всё, что уже видели другие, отменяется ТОЛЬКО через revert.</span>
+<span class="cm"># reset в опубликованной ветке ломает репозитории всех, кто её забрал.</span>
+
+<span class="cm"># Откат влитой ветки: нужно указать, какого родителя считать «основным»</span>
+git revert -m 1 &lt;merge-commit&gt;    <span class="cm"># 1 — обычно ветка, в которую вливали</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем <code>reset</code> отличается от <code>revert</code>?</b><br><code>reset</code> сдвигает указатель ветки назад — история переписывается, коммиты перестают быть достижимыми. <code>revert</code> создаёт новый коммит, отменяющий изменения, история сохраняется. Практическое правило: пока коммиты только у вас — можно <code>reset</code>; как только они опубликованы и их кто-то забрал — только <code>revert</code>, иначе у коллег ломается ветка. И почти всё, что «пропало» после reset, возвращается через <code>reflog</code>.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="flows">
+    <p class="path">middle / ветвление</p>
+    <div class="card-top"><h3>Стратегии ветвления</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Стратегия ветвления — это не вкусовщина, а следствие того, как часто вы выкатываетесь и сколько версий поддерживаете. Команда, релизящаяся десять раз в день, и команда с квартальными релизами коробочного продукта не могут работать одинаково.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · три подхода и их условия применимости</caption>
+      <thead><tr><th>Критерий</th><th>Trunk-based</th><th>GitHub flow</th><th>Git flow</th></tr></thead>
+      <tbody>
+        <tr><td>Основные ветки</td><td>Только <code>main</code></td><td><code>main</code> + короткие ветки задач</td><td><code>main</code>, <code>develop</code>, release, hotfix, feature</td></tr>
+        <tr><td>Время жизни ветки</td><td>Часы</td><td>1–3 дня</td><td>Недели</td></tr>
+        <tr><td>Частота релизов</td><td>Много раз в день</td><td>Ежедневно</td><td>По расписанию</td></tr>
+        <tr><td>Незаконченное в main</td><td>Да, за feature flag</td><td>Нет</td><td>Нет</td></tr>
+        <tr><td>Поддержка старых версий</td><td>Плохо</td><td>Плохо</td><td>Хорошо</td></tr>
+        <tr><td>Требует</td><td>Сильных тестов и флагов</td><td>CI и ревью</td><td>Дисциплины и релиз-менеджмента</td></tr>
+        <tr><td>Кому подходит</td><td>Продуктовые команды с CD</td><td>Большинству веб-проектов</td><td>Коробочный софт, несколько поддерживаемых версий</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Практический выбор.</strong> Для типичного веб-проекта с одной боевой версией правильный ответ почти всегда — GitHub flow: <code>main</code> всегда готова к выкатке, ветки задач живут пару дней, вливание через pull request с зелёным CI. Git flow с двумя долгоживущими ветками добавляет постоянную работу по синхронизации <code>develop</code> и <code>main</code> и оправдан, только если вы реально поддерживаете несколько версий одновременно. Trunk-based — следующий шаг для зрелой команды, но он требует хорошего покрытия тестами и работающих feature flags, иначе превращается в «выкатываем недоделанное».</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Долгоживущая ветка <code>refactoring</code> или <code>new-version</code>, которая существует месяцами параллельно с активной разработкой. Она гарантированно превращается в ад слияния: конфликты накапливаются экспоненциально, а ценность работы падает, потому что основная ветка ушла вперёд. Крупные изменения делаются в основной ветке маленькими совместимыми шагами — за флагом или по схеме «расширить, перенести, удалить».</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какую стратегию ветвления вы используете и почему?</b><br>Для веб-проекта с одной боевой версией — короткие ветки задач от <code>main</code>, вливание через pull request с зелёным CI, релиз из <code>main</code>. Git flow беру только когда нужно поддерживать несколько версий одновременно: две долгоживущие ветки стоят постоянной синхронизации. Ключевой критерий не название схемы, а время жизни ветки: если ветки живут неделями, любая схема превратится в проблему слияний.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="releases">
+    <p class="path">middle / релизы</p>
+    <div class="card-top"><h3>Релизы, теги, версии</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Тег — неподвижная метка на коммите: он отвечает на вопрос «какой именно код сейчас в проде». Без тегов ответ приходится восстанавливать по датам деплоя, а во время инцидента это лишние минуты.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Теги и семантическое версионирование</span></div><pre><code><span class="cm"># Аннотированный тег (с автором, датой и сообщением) — для релизов только такой</span>
+git tag -a v2.4.0 -m "Скидки на корзину, ускорение выгрузки"
+git push origin v2.4.0
+
+<span class="cm"># Семантическое версионирование: MAJOR.MINOR.PATCH</span>
+<span class="cm">#   MAJOR — несовместимые изменения (сломается у потребителей)</span>
+<span class="cm">#   MINOR — новая функциональность, совместимая назад</span>
+<span class="cm">#   PATCH — исправления без изменения поведения</span>
+
+<span class="cm"># Что сейчас в проде и насколько мы ушли вперёд</span>
+git describe --tags                     <span class="cm"># v2.4.0-17-g9f8e7d6: 17 коммитов после тега</span>
+git log --oneline v2.3.0..v2.4.0        <span class="cm"># что вошло в релиз</span>
+git log --oneline v2.4.0..HEAD          <span class="cm"># что накопилось после релиза</span>
+
+<span class="cm"># Changelog по conventional commits собирается автоматически</span>
+git log v2.3.0..v2.4.0 --pretty=format:<span class="st">'%s'</span> | grep -E <span class="st">'^(feat|fix)'</span> | sort
+
+<span class="cm"># Найти, в какой релиз попал коммит (частый вопрос от поддержки)</span>
+git tag --contains 9f8e7d6
+git describe --contains 9f8e7d6</code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Срочное исправление в проде, пока main ушла вперёд</span></div><pre><code><span class="cm"># Ситуация: в проде тег v2.4.0, а в main уже 30 коммитов недорелизной работы.</span>
+<span class="cm"># Выкатывать main нельзя — там незаконченное. Нужен точечный фикс.</span>
+
+<span class="cm"># 1. Ветка от тега, который сейчас в проде, — а не от main</span>
+git switch -c hotfix/v2.4.1 v2.4.0
+
+<span class="cm"># 2. Минимальное исправление и тест на него</span>
+git commit -am "fix(orders): не терять валюту при частичном возврате"
+
+<span class="cm"># 3. Тег и выкатка</span>
+git tag -a v2.4.1 -m "Hotfix: валюта при частичном возврате"
+git push origin hotfix/v2.4.1 v2.4.1
+
+<span class="cm"># 4. ОБЯЗАТЕЛЬНО: вернуть исправление в основную ветку, иначе следующий релиз</span>
+<span class="cm">#    вернёт баг обратно. Это самая частая ошибка при hotfix.</span>
+git switch main
+git cherry-pick &lt;hash-фикса&gt;      <span class="cm"># или merge ветки hotfix</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Регрессия «баг починили в hotfix, а через неделю он вернулся» — классика, и причина всегда одна: исправление не попало в основную ветку. Защита процессная: ветка hotfix закрывается только после того, как фикс влит и в релиз, и в <code>main</code>; в шаблоне pull request для hotfix стоит галочка «портирование в main выполнено».</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как выкатить срочное исправление, если в основной ветке незаконченная работа?</b><br>Ветка от тега, который сейчас в проде, минимальное исправление, новый patch-тег, выкатка. Затем обязательный перенос фикса в основную ветку через cherry-pick или merge — без этого следующий релиз вернёт баг. Отдельно проверяю, что на исправление есть тест: hotfix без теста имеет свойство повторяться.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="pr">
+    <p class="path">middle / ревью</p>
+    <div class="card-top"><h3>Pull request и ревью</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Pull request — это не формальность перед вливанием, а место, где происходит передача знаний и ловятся ошибки, которые не найдёт ни один линтер. Но работает он только при одном условии: он должен быть маленьким.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · размер pull request и что происходит</caption>
+      <thead><tr><th>Размер</th><th>Что делает ревьюер</th><th>Время до вливания</th></tr></thead>
+      <tbody>
+        <tr><td>До 100 строк</td><td>Читает внимательно, находит логические ошибки</td><td>Часы</td></tr>
+        <tr><td>100–400 строк</td><td>Читает, но внимание падает к концу</td><td>День</td></tr>
+        <tr><td>400–1000 строк</td><td>Просматривает по диагонали, комментирует стиль</td><td>Дни</td></tr>
+        <tr><td>Больше 1000 строк</td><td>Пишет «LGTM» — прочитать это невозможно</td><td>Неделя и больше</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>markdown</span><span class="r">Описание PR: помогает ревьюеру, а через год — археологу</span></div><pre><code>## Что и зачем
+Добавляет процентную скидку на корзину (PROJ-142).
+Маркетингу нужны акции «−10% на всё» без ручной правки цен.
+
+## Как проверить
+1. Создать корзину на 1000 ₽
+2. Применить промокод SALE10
+3. Итог должен быть 900 ₽, в отчёте — доналоговая база 1000 ₽
+
+## Решения и альтернативы
+- Скидка считается от суммы позиций до налога — так сводится отчётность.
+- Отвергнуто: хранить итог со скидкой в заказе. Ломает пересчёт при возврате.
+
+## Риски
+- Затрагивает расчёт итога заказа. Покрыто тестами на границы (0, 100%, копейки).
+- Миграция добавляет nullable-колонку — обратно совместима.
+
+## Чек-лист
+- [x] Тесты на новое поведение и на границы
+- [x] Миграция совместима со старым кодом
+- [ ] Требуется обновить документацию API — отдельной задачей PROJ-151</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · на что смотреть при ревью (по убыванию ценности)</caption>
+      <thead><tr><th>Уровень</th><th>Вопрос</th></tr></thead>
+      <tbody>
+        <tr><td>Правильность</td><td>Решает ли код заявленную задачу? Есть ли пропущенные случаи?</td></tr>
+        <tr><td>Безопасность</td><td>Проверены ли права на объект? Экранирован ли вывод? Нет ли лишних полей?</td></tr>
+        <tr><td>Данные</td><td>Совместима ли миграция? Нет ли N+1? Что при повторе запроса?</td></tr>
+        <tr><td>Тесты</td><td>Проверяют поведение или вызовы? Покрыт ли ошибочный путь?</td></tr>
+        <tr><td>Читаемость</td><td>Поймёт ли этот код человек через год без автора?</td></tr>
+        <tr><td>Соответствие проекту</td><td>Не изобретён ли заново уже существующий механизм?</td></tr>
+        <tr><td>Стиль</td><td>Должен проверяться линтером, а не человеком</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Формулировки в комментариях определяют, будет ли ревью помощью или конфликтом. Работает три приёма: писать о коде, а не об авторе («этот метод делает две вещи» вместо «ты намешал»); отделять обязательное от желательного явной пометкой; задавать вопрос там, где не уверены («что произойдёт, если список пуст?» вместо «здесь баг»). Похвала за удачное решение стоит ноль и заметно меняет отношение к ревью в команде.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы проводите код-ревью?</b><br>Сначала читаю описание и понимаю задачу, потом смотрю на архитектурный уровень: решает ли код проблему, нет ли пропущенных случаев, что с правами и данными. Стиль не комментирую — это работа линтера. Замечания делю на обязательные и необязательные, спорные формулирую вопросом. Если PR больше пятисот строк, прошу разбить: честно прочитать такой объём невозможно, а «LGTM» на нём — это отсутствие ревью.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="hooks">
+    <p class="path">middle / автоматизация</p>
+    <div class="card-top"><h3>Хуки и защита веток</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Всё, что можно проверить автоматически, не должно проверять человек. Задача ревьюера — думать о логике, а не считать пробелы; задача правил репозитория — сделать невозможными опасные действия.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Локальные хуки: быстрая проверка до коммита</span></div><pre><code><span class="cm">#!/usr/bin/env bash</span>
+<span class="cm"># .git/hooks/pre-commit — выполняется перед созданием коммита</span>
+<span class="cm"># Правило: хук должен быть БЫСТРЫМ. Всё, что дольше пары секунд, идёт в CI.</span>
+
+set -e
+
+<span class="cm"># Проверяем только то, что реально попадёт в коммит</span>
+STAGED=$(git diff --cached --name-only --diff-filter=ACM -- <span class="st">'*.php'</span>)
+[ -z <span class="st">"$STAGED"</span> ] &amp;&amp; exit 0
+
+<span class="cm"># Синтаксис</span>
+echo <span class="st">"$STAGED"</span> | xargs -n1 php -l &gt; /dev/null
+
+<span class="cm"># Стиль — с автоисправлением и повторным добавлением в индекс</span>
+vendor/bin/php-cs-fixer fix --quiet $STAGED
+echo <span class="st">"$STAGED"</span> | xargs git add
+
+<span class="cm"># Мусор, который не должен уезжать в репозиторий</span>
+<span class="kw">if</span> echo <span class="st">"$STAGED"</span> | xargs grep -nE <span class="st">'(dd\(|var_dump\(|dump\(|console\.log\()'</span>; <span class="kw">then</span>
+    echo <span class="st">"Отладочный вывод в коммите. Уберите или используйте --no-verify осознанно."</span>
+    exit 1
+<span class="kw">fi</span>
+
+<span class="cm"># Хуки не копируются при клонировании — их ставят через инструмент</span>
+<span class="cm"># (captainhook, husky) или скриптом установки в проекте:</span>
+<span class="cm">#   git config core.hooksPath .githooks</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · что проверять где</caption>
+      <thead><tr><th>Проверка</th><th>Где</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Синтаксис, форматирование</td><td>Локальный хук</td><td>Секунды, обратная связь мгновенная</td></tr>
+        <tr><td>Формат сообщения коммита</td><td>Локальный хук <code>commit-msg</code></td><td>Потом переписывать неудобно</td></tr>
+        <tr><td>Отладочный вывод и секреты</td><td>Локальный хук + CI</td><td>Локально быстро, в CI надёжно</td></tr>
+        <tr><td>Статический анализ</td><td>CI</td><td>Десятки секунд — слишком долго для хука</td></tr>
+        <tr><td>Тесты</td><td>CI</td><td>Минуты; локально запускается вручную</td></tr>
+        <tr><td>Аудит зависимостей</td><td>CI</td><td>Требует сети</td></tr>
+        <tr><td>Запрет прямого пуша в main</td><td>Настройка репозитория</td><td>Хук обходится ключом <code>--no-verify</code></td></tr>
+        <tr><td>Обязательное ревью</td><td>Настройка репозитория</td><td>Единственный надёжный способ</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Защита основной ветки</strong> — минимум из четырёх правил: запрет прямого пуша, обязательный зелёный CI, минимум одно одобрение на pull request, запрет <code>force push</code> и удаления ветки. Это единственные проверки, которые невозможно обойти локально: любой хук отключается ключом <code>--no-verify</code>, и рано или поздно кто-нибудь им воспользуется в пятницу вечером.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что вы автоматизируете в процессе работы с репозиторием?</b><br>Быстрое — локальными хуками: синтаксис, форматирование с автоисправлением, формат сообщения коммита, поиск отладочного вывода. Долгое — в CI: статический анализ, тесты, аудит зависимостей, сканер секретов. Плюс настройки репозитория, которые нельзя обойти: запрет прямого пуша в основную ветку, обязательный зелёный пайплайн и минимум одно одобрение. Хук — это удобство, защита ветки — это гарантия.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Понимаю, что rebase создаёт новые коммиты</li>
+        <li>Не переписываю историю, которую видят другие</li>
+        <li>Чищу ветку интерактивным rebase перед ревью</li>
+        <li>Использую <code>--force-with-lease</code> вместо <code>--force</code></li>
+        <li>Различаю <code>reset</code> и <code>revert</code> и выбираю осознанно</li>
+        <li>Умею восстановить потерянное через <code>reflog</code></li>
+        <li>Знаю, как откатить влитую ветку одним revert</li>
+      </ul>
+      <ul class="check">
+        <li>Выбираю стратегию ветвления по частоте релизов</li>
+        <li>Не завожу долгоживущих веток рефакторинга</li>
+        <li>Ставлю аннотированные теги на релизы</li>
+        <li>Переношу hotfix обратно в основную ветку</li>
+        <li>Держу pull request меньше 400 строк</li>
+        <li>Пишу описание PR с решениями и способом проверки</li>
+        <li>Автоматизирую быстрое хуками, долгое — в CI</li>
+        <li>Защищаю основную ветку настройками репозитория</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Хороший индикатор зрелости процесса — среднее время жизни pull request. Если оно измеряется часами, команда работает мелкими шагами и ревью происходит по-настоящему. Если днями — ветки успевают разойтись, конфликты растут, а ревью превращается в формальность. Это метрика процесса, а не людей: чинится размером задач и договорённостью о сроке ответа на ревью.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · процесс команды</p>
+    <h2>Senior: расследование, процесс, люди</h2>
+    <p>На senior-уровне Git перестаёт быть личным инструментом. Это способ найти причину бага, который никто не может воспроизвести; это процесс, который либо разгоняет команду, либо тормозит её на дни; и это место, где принятые решения либо сохраняются для будущих людей, либо теряются вместе с ушедшим разработчиком.</p>
+  </div>
+
+  <!-- 13 -->
+  <article class="card" id="archaeology">
+    <p class="path">senior / расследование</p>
+    <div class="card-top"><h3>История как инструмент</h3><span class="badge b-3">Архитектура</span></div>
+    <p>История коммитов — это база данных о том, как система пришла в текущее состояние. Умение задавать ей вопросы превращает расследования из «читаем весь код и гадаем» в направленный поиск за минуты.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">bisect: двоичный поиск по истории</span></div><pre><code><span class="cm"># Ситуация: «месяц назад работало, сейчас нет». Между релизами 400 коммитов.</span>
+<span class="cm"># bisect найдёт виновный коммит примерно за 9 проверок вместо 400.</span>
+
+git bisect start
+git bisect bad                  <span class="cm"># текущее состояние сломано</span>
+git bisect good v2.3.0          <span class="cm"># здесь точно работало</span>
+<span class="cm"># Git переключается на середину диапазона, вы проверяете и отвечаете:</span>
+git bisect good                 <span class="cm"># или git bisect bad</span>
+<span class="cm"># ... повторяется ~log2(N) раз ...</span>
+<span class="cm"># 9f8e7d6 is the first bad commit</span>
+
+git bisect reset                <span class="cm"># вернуться туда, где были</span>
+
+<span class="cm"># Автоматический вариант: скрипт возвращает 0 (хорошо) или 1 (плохо)</span>
+git bisect start HEAD v2.3.0
+git bisect run vendor/bin/phpunit --filter=ЧекОкругления
+<span class="cm"># Уходите пить кофе — Git сам найдёт коммит. Работает и с любым скриптом:</span>
+<span class="cm"># проверкой производительности, curl к эндпоинту, сборкой.</span>
+
+<span class="cm"># Пропустить коммит, который не собирается</span>
+git bisect skip</code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Поиск по истории: когда и зачем появилась строка</span></div><pre><code><span class="cm"># Кто и когда менял каждую строку файла</span>
+git blame -L 40,60 src/Order/Cart.php
+git blame -w -C -C src/Order/Cart.php    <span class="cm"># игнорировать пробелы и перемещения кода</span>
+
+<span class="cm"># Найти коммит, где появилась или исчезла конкретная строка — очень мощный приём</span>
+git log -S <span class="st">'calculateDiscount'</span> --oneline          <span class="cm"># по вхождению строки</span>
+git log -G <span class="st">'discount.*rate'</span> --oneline            <span class="cm"># по регулярному выражению</span>
+git log -S <span class="st">'TAX_RATE'</span> -p -- src/                  <span class="cm"># с диффами: сразу видно контекст</span>
+
+<span class="cm"># История файла, переживающая переименования</span>
+git log --follow --oneline -- src/Pricing/Discount.php
+
+<span class="cm"># Что происходило в конкретный период и кем</span>
+git log --since=<span class="st">'2026-01-01'</span> --until=<span class="st">'2026-02-01'</span> --author=<span class="st">'Ivan'</span> --oneline
+
+<span class="cm"># Какие файлы меняются чаще всего — карта «горячих точек» проекта</span>
+git log --pretty=format: --name-only | sort | uniq -c | sort -rn | head -20
+<span class="cm"># Файлы из верха этого списка обычно и есть кандидаты на рефакторинг:</span>
+<span class="cm"># высокая частота изменений плюс высокая сложность = источник большинства багов.</span>
+
+<span class="cm"># Кто последний трогал модуль — к кому идти с вопросом</span>
+git shortlog -sn --since=<span class="st">'6 months ago'</span> -- src/Pricing/</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · вопрос к истории и инструмент</caption>
+      <thead><tr><th>Вопрос</th><th>Команда</th></tr></thead>
+      <tbody>
+        <tr><td>Какой коммит сломал поведение?</td><td><code>git bisect run &lt;скрипт&gt;</code></td></tr>
+        <tr><td>Почему эта строка такая?</td><td><code>git blame -w -C</code> → <code>git show &lt;hash&gt;</code></td></tr>
+        <tr><td>Когда появился этот вызов?</td><td><code>git log -S '&lt;строка&gt;' -p</code></td></tr>
+        <tr><td>Что вошло в релиз?</td><td><code>git log v2.3.0..v2.4.0 --oneline</code></td></tr>
+        <tr><td>В какой версии этот фикс?</td><td><code>git tag --contains &lt;hash&gt;</code></td></tr>
+        <tr><td>Что менялось в модуле за полгода?</td><td><code>git log --since --oneline -- path/</code></td></tr>
+        <tr><td>Где горячие точки проекта?</td><td>Частота изменений файлов из <code>git log --name-only</code></td></tr>
+        <tr><td>Кто знает этот код?</td><td><code>git shortlog -sn -- path/</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Ценность bisect напрямую зависит от качества истории: если половина коммитов не собирается или содержит «работу за день», двоичный поиск буксует. Это главный практический аргумент за атомарные коммиты — не эстетика, а возможность за десять минут найти причину в четырёхстах коммитах. Отдельно помогает <code>git bisect run</code> с тестом: он превращает расследование в фоновую задачу.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Баг воспроизводится в проде, но никто не знает, когда он появился. Ваши действия?</b><br>Сначала свожу воспроизведение к автоматической проверке — тесту или скрипту, возвращающему код возврата. Затем <code>git bisect run</code> между заведомо рабочим тегом и текущим состоянием: это девять проверок вместо четырёхсот. Найдя коммит, смотрю его дифф и сообщение, а через <code>blame</code> и <code>log -S</code> — историю вокруг. Найденный коммит почти всегда объясняет и причину, и почему это сделали именно так.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="choose">
+    <p class="path">senior / процесс</p>
+    <div class="card-top"><h3>Выбор процесса под команду</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Процесс работы с репозиторием — такое же инженерное решение, как выбор базы данных: у него есть условия применимости и цена. Скопированный из статьи процесс, не соответствующий размеру команды и частоте релизов, становится обрядом, который все обходят.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · факторы, определяющие процесс</caption>
+      <thead><tr><th>Фактор</th><th>Как влияет</th></tr></thead>
+      <tbody>
+        <tr><td>Частота релизов</td><td>Ежедневные релизы несовместимы с долгими релизными ветками</td></tr>
+        <tr><td>Число поддерживаемых версий</td><td>Больше одной — нужны релизные ветки и порты фиксов</td></tr>
+        <tr><td>Размер команды</td><td>Чем больше людей, тем короче должны быть ветки</td></tr>
+        <tr><td>Зрелость тестов</td><td>Без тестов trunk-based превращается в выкатку недоделанного</td></tr>
+        <tr><td>Наличие feature flags</td><td>Без них незаконченное нельзя держать в основной ветке</td></tr>
+        <tr><td>Требования к аудиту</td><td>Может требоваться прослеживаемость: коммит → задача → релиз</td></tr>
+        <tr><td>Распределённость по часовым поясам</td><td>Ревью через сутки требует более крупных, но самодостаточных PR</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · один репозиторий или много</caption>
+      <thead><tr><th>Критерий</th><th>Монорепозиторий</th><th>Отдельные репозитории</th></tr></thead>
+      <tbody>
+        <tr><td>Атомарное изменение нескольких сервисов</td><td>Один PR</td><td>Несколько PR и порядок выкатки</td></tr>
+        <tr><td>Общий код</td><td>Прямая зависимость, всегда актуальна</td><td>Пакет с версионированием</td></tr>
+        <tr><td>Единый стиль и инструменты</td><td>Проще</td><td>Расползается</td></tr>
+        <tr><td>Права доступа по частям</td><td>Сложнее</td><td>Естественно</td></tr>
+        <tr><td>Время CI</td><td>Нужна сборка только изменённого</td><td>Естественно изолировано</td></tr>
+        <tr><td>Размер клона</td><td>Растёт, нужны частичные клоны</td><td>Небольшой</td></tr>
+        <tr><td>Кому подходит</td><td>Связанные сервисы одной команды или продукта</td><td>Независимые продукты с разным жизненным циклом</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Признак того, что процесс не подходит команде: люди регулярно его обходят. Прямые пуши в основную ветку «в порядке исключения», ревью-заглушки «посмотри потом», ветки, которые висят месяцами. Правильная реакция — не усиливать контроль, а выяснить, что именно мешает: обычно это слишком крупные задачи, медленный CI или отсутствие договорённости о сроке ответа на ревью. Процесс, который неудобен, всегда проигрывает срокам.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как бы вы выстроили процесс работы с репозиторием в новой команде?</b><br>От условий: сколько версий поддерживаем, как часто релизимся, какие есть тесты, сколько людей. Для типичного веб-продукта — короткие ветки от <code>main</code>, обязательный PR с зелёным CI и одним одобрением, защита основной ветки, релиз по тегу, hotfix от тега с обязательным портированием. Дальше смотрю на две метрики: время жизни ветки и время до вливания PR. Если они растут — проблема в размере задач или в скорости ревью, а не в схеме ветвления.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="culture">
+    <p class="path">senior / ревью</p>
+    <div class="card-top"><h3>Культура ревью</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Ревью — самый дорогой процесс в команде по человеко-часам и самый недооценённый по влиянию. Оно одновременно ловит ошибки, распространяет знания о коде и формирует стандарты. Оно же способно испортить отношения в команде за месяц.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · проблемы ревью и что с ними делать</caption>
+      <thead><tr><th>Проблема</th><th>Причина</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>PR висит три дня</td><td>Нет договорённости о сроке</td><td>SLA: ответ в течение рабочего дня; ревью важнее своей задачи</td></tr>
+        <tr><td>«LGTM» без чтения</td><td>PR слишком большой</td><td>Ограничение размера, разбиение задач</td></tr>
+        <tr><td>Спор о скобках и кавычках</td><td>Нет автоформатирования</td><td>Линтер в хуке и CI, стиль не обсуждается людьми</td></tr>
+        <tr><td>Ревью как экзамен</td><td>Формулировки об авторе, а не о коде</td><td>Договорённость о тоне; обязательное/желательное явно</td></tr>
+        <tr><td>Ревьюит всегда один человек</td><td>Знание концентрируется, он же становится узким местом</td><td>Ротация, парные ревью, ограничение числа назначений</td></tr>
+        <tr><td>Бесконечные раунды</td><td>Обсуждается дизайн, когда код уже написан</td><td>Обсуждать подход до реализации, а не в PR</td></tr>
+        <tr><td>Конфликт двух ревьюеров</td><td>Нет решающего голоса</td><td>Правило: расхождение решает владелец модуля или обсуждение голосом</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Что стоит договориться заранее.</strong> Срок ответа на ревью (обычно рабочий день, а срочное — по сигналу). Максимальный размер PR и что делать, если задача больше. Кто обязан ревьюить: один человек, двое, владелец модуля. Что блокирует вливание, а что остаётся пожеланием — это самый ценный пункт: без него любой комментарий воспринимается как блокирующий. И правило разрешения споров, чтобы обсуждение не зацикливалось.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Ревью не заменяет обсуждение подхода. Если человек два дня писал код по решению, которое ревьюер считает неверным, любой исход плох: переделывать дорого, соглашаться — накапливать долг. Дешёвое решение — короткое согласование подхода до реализации: пять минут разговора или три строки в задаче. Правило простое: чем крупнее изменение, тем раньше нужно обсуждение.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что делать, если ревьюер требует переделать то, с чем вы не согласны?</b><br>Сначала понять аргумент — часто за замечанием стоит контекст, которого я не знал. Если после этого не согласен, отвечаю по существу: чем обосновано моё решение, какие есть компромиссы. Если расхождение остаётся, не спорю в комментариях по кругу: перевожу в разговор голосом на пять минут или зову третьего человека. И отдельно фиксирую итог в описании PR или в решении — чтобы через полгода не проходить это заново.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="incidents">
+    <p class="path">senior / инциденты</p>
+    <div class="card-top"><h3>Git в инцидентах</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Во время инцидента Git используется для одного: как можно быстрее вернуть систему в рабочее состояние. Решения принимаются под давлением, поэтому они должны быть заранее отрепетированы, а не изобретены на месте.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · способы отката и когда что</caption>
+      <thead><tr><th>Способ</th><th>Когда</th><th>Плюс</th><th>Риск</th></tr></thead>
+      <tbody>
+        <tr><td>Выкатить предыдущий тег образа</td><td>Первый выбор почти всегда</td><td>Быстро, код не трогаем</td><td>Не работает, если применена несовместимая миграция</td></tr>
+        <tr><td>Выключить feature flag</td><td>Проблема в новой функции</td><td>Секунды, точечно</td><td>Нужен флаг, заведённый заранее</td></tr>
+        <tr><td><code>revert</code> коммита</td><td>Понятен виновный коммит</td><td>История честная, изменение прослеживаемо</td><td>Требует прогона пайплайна</td></tr>
+        <tr><td><code>revert -m 1</code> merge-коммита</td><td>Проблема во всей влитой ветке</td><td>Откат одним действием</td><td>Повторное вливание требует revert of revert</td></tr>
+        <tr><td>Hotfix от тега прода</td><td>Откат невозможен, нужно чинить вперёд</td><td>Не тянет незаконченное из main</td><td>Обязательное портирование фикса в main</td></tr>
+        <tr><td>Откат миграции</td><td>Крайний случай</td><td>—</td><td>Часто необратим: обычно чинят вперёд</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Порядок действий и восстановление потерянного</span></div><pre><code><span class="cm"># Приоритет в инциденте: восстановление &gt; расследование.</span>
+<span class="cm"># Сначала вернуть работу, потом искать причину — на здоровой системе.</span>
+
+<span class="cm"># 1. Что сейчас в проде и что вошло в последний релиз</span>
+git describe --tags
+git log --oneline v2.4.0..v2.4.1
+
+<span class="cm"># 2. Откат влитой ветки целиком (первый родитель — основная ветка)</span>
+git revert -m 1 &lt;merge-commit&gt;
+<span class="cm"># Важно помнить: чтобы влить эту ветку заново, потребуется отменить сам revert,</span>
+<span class="cm"># иначе Git будет считать изменения уже применёнными.</span>
+
+<span class="cm"># 3. Точечный перенос фикса в релизную ветку</span>
+git switch release/2.4
+git cherry-pick -x &lt;hash&gt;        <span class="cm"># -x добавит ссылку на исходный коммит</span>
+
+<span class="cm"># --- Восстановление в критических ситуациях ---</span>
+
+<span class="cm"># Ветку удалили на сервере, но она есть у кого-то локально</span>
+git reflog show &lt;branch&gt;
+git push origin &lt;last-good-hash&gt;:refs/heads/&lt;branch&gt;
+
+<span class="cm"># Кто-то сделал force push и затёр коммиты</span>
+git reflog                        <span class="cm"># у того, кто забирал ветку до этого</span>
+git fsck --lost-found             <span class="cm"># на сервере, если есть доступ</span>
+
+<span class="cm"># Восстановить файл из состояния на момент релиза</span>
+git checkout v2.4.0 -- src/Pricing/Discount.php</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Самый быстрый откат — не Git-операция, а выкатка предыдущего образа или выключение флага. Git-откат нужен, когда предыдущая версия несовместима с уже применённой миграцией или когда чинить приходится вперёд. Это ещё один аргумент в пользу совместимых миграций: они превращают откат из спецоперации в одну команду.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>После релиза прод сломался. Что вы делаете с точки зрения репозитория?</b><br>Сначала восстанавливаю: выкатываю предыдущий тег образа или выключаю функцию флагом — расследование ведётся на здоровой системе. Если вернуться нельзя из-за миграции, чиню вперёд hotfix-ом от тега прода. Когда виновата вся влитая ветка, делаю <code>revert -m 1</code> merge-коммита, помня, что повторное вливание потребует отмены этого revert. И обязательно фиксирую хронологию по ходу: потом её не восстановить.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="agreements">
+    <p class="path">senior / команда</p>
+    <div class="card-top"><h3>Договорённости команды</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Git фиксирует, что изменилось. Гораздо важнее сохранять, <em>почему</em> — и именно это теряется первым. Через год после решения в команде обычно не остаётся ни одного человека, помнящего аргументы, а код выглядит странным без объяснения.</p>
+
+    <div class="code"><div class="bar"><span>markdown</span><span class="r">Запись архитектурного решения: страница, которая живёт годами</span></div><pre><code><span class="cm">&lt;!-- docs/decisions/0007-outbox-for-events.md --&gt;</span>
+
+# 7. Публикация событий через outbox
+
+Статус: принято · Дата: 2026-02-11 · Заменяет: —
+
+## Контекст
+Заказы отправляют события в брокер. Иногда транзакция коммитится,
+а событие теряется: склад не узнаёт об оплате. За квартал 4 инцидента.
+
+## Решение
+Событие пишется в таблицу outbox в той же транзакции, отдельный
+процесс переносит его в брокер.
+
+## Последствия
++ Событие не теряется при падении между коммитом и отправкой.
+− Доставка «хотя бы один раз»: потребители обязаны дедуплицировать.
+− Появляется процесс-релей, за которым нужно следить (метрика возраста).
+
+## Отвергнутые варианты
+- Отправка после коммита: не решает проблему, она ровно про этот промежуток.
+- Двухфазный коммит: доступность становится произведением доступностей.
+
+<span class="cm"># Формат намеренно короткий: одна страница, иначе их перестанут писать.</span>
+<span class="cm"># Лежат в репозитории рядом с кодом и ревьюются вместе с ним.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · что стоит зафиксировать письменно</caption>
+      <thead><tr><th>Что</th><th>Где</th><th>Зачем</th></tr></thead>
+      <tbody>
+        <tr><td>Архитектурные решения и отвергнутые варианты</td><td>Файлы решений в репозитории</td><td>Через год никто не помнит аргументов</td></tr>
+        <tr><td>Правила работы с ветками и PR</td><td><code>CONTRIBUTING.md</code></td><td>Новый человек не угадывает</td></tr>
+        <tr><td>Как поднять проект локально</td><td><code>README.md</code></td><td>Онбординг за час вместо трёх дней</td></tr>
+        <tr><td>Владельцы модулей</td><td><code>CODEOWNERS</code></td><td>Ревью назначается автоматически</td></tr>
+        <tr><td>Шаблон описания PR</td><td>Шаблон в репозитории</td><td>Описание перестаёт зависеть от настроения</td></tr>
+        <tr><td>Runbook по инцидентам</td><td>Рядом с кодом или в вики</td><td>В три часа ночи никто не вспомнит</td></tr>
+        <tr><td>Причина странного кода</td><td>Комментарий со ссылкой на решение</td><td>Спасает от «оптимизации», ломающей систему</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Онбординг</strong> — лучший тест на качество всего перечисленного. Если новый человек делает первый осмысленный pull request в первый день, значит проект поднимается по инструкции, правила описаны, а задачи нарезаны понятно. Если на это уходит неделя, проблема не в человеке: где-то знание существует только в головах. Полезная практика — новичок правит документацию по ходу онбординга: он единственный, кто видит пробелы свежим взглядом.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как в вашей команде сохраняются знания о принятых решениях?</b><br>Короткими записями решений в репозитории рядом с кодом: контекст, решение, последствия и — самое ценное — отвергнутые варианты с причинами. Они ревьюются вместе с кодом, поэтому не устаревают отдельно от него. Плюс сообщения коммитов с причиной, а не пересказом диффа, и комментарии со ссылкой на решение в неочевидных местах кода. Проверка качества — онбординг: если новый человек не задаёт вопросов, ответы на которые нигде не записаны, система работает.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Использую <code>bisect</code>, в том числе автоматический, для поиска причины</li>
+        <li>Ищу по истории через <code>log -S</code> и <code>blame -w -C</code></li>
+        <li>Нахожу горячие точки проекта по частоте изменений файлов</li>
+        <li>Выбираю процесс по частоте релизов и числу версий</li>
+        <li>Понимаю компромиссы монорепозитория</li>
+        <li>Слежу за временем жизни ветки и временем до вливания PR</li>
+      </ul>
+      <ul class="check">
+        <li>Договариваюсь о сроке ответа на ревью и размере PR</li>
+        <li>Разделяю блокирующие замечания и пожелания</li>
+        <li>Обсуждаю подход до реализации, а не в комментариях к PR</li>
+        <li>Знаю порядок отката и репетирую его заранее</li>
+        <li>Помню про портирование hotfix и про revert of revert</li>
+        <li>Восстанавливаю потерянные ветки и коммиты</li>
+        <li>Фиксирую решения письменно, включая отвергнутые варианты</li>
+        <li>Проверяю качество документации онбордингом новых людей</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ про Git почти никогда не про команды. Он про процесс и числа: «ветки живут до двух дней, PR до трёхсот строк, ответ на ревью в течение дня, релиз по тегу, откат — выкатка предыдущего образа за минуту, решения фиксируем страницей в репозитории». Перечисление флагов <code>rebase</code> впечатляет заметно меньше, чем описание процесса, который реально работает.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения: что применять в какой ситуации, какие ошибки типичны и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Ситуация → приём</h3><span class="badge b-tag">Таблица 17</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 17 · что применить и чем за это платите</caption>
+      <thead><tr><th>Ситуация</th><th>Приём</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>В коммит попало лишнее</td><td><code>git add -p</code> и сборка коммита по кускам</td><td>Чуть медленнее, чем <code>add .</code></td></tr>
+        <tr><td>Ветка отстала от основной</td><td><code>rebase</code> для своей ветки, <code>merge</code> для общей</td><td>Rebase меняет хеши и требует force-push</td></tr>
+        <tr><td>История ветки грязная</td><td>Интерактивный rebase с autosquash</td><td>Только до публикации ветки</td></tr>
+        <tr><td>Опубликованный коммит неверен</td><td><code>revert</code></td><td>В истории остаются оба коммита</td></tr>
+        <tr><td>Кажется, что работа потеряна</td><td><code>reflog</code>, затем ветка от найденного хеша</td><td>Незакоммиченное не спасает</td></tr>
+        <tr><td>Нужен один коммит из другой ветки</td><td><code>cherry-pick -x</code></td><td>Дубликат изменения в истории</td></tr>
+        <tr><td>Повторяющийся конфликт при rebase</td><td><code>rerere.enabled true</code></td><td>Запоминает решение — надо быть уверенным в нём</td></tr>
+        <tr><td>Неизвестно, когда сломалось</td><td><code>bisect run</code> с тестом</td><td>Требует атомарных собираемых коммитов</td></tr>
+        <tr><td>Срочный фикс, main занята</td><td>Ветка от тега прода + портирование</td><td>Легко забыть портировать</td></tr>
+        <tr><td>Откат целой фичи</td><td><code>revert -m 1</code> merge-коммита</td><td>Повторное вливание через revert of revert</td></tr>
+        <tr><td>Ревью тормозит команду</td><td>Мелкие PR и договорённость о сроке ответа</td><td>Нужно резать задачи мельче</td></tr>
+        <tr><td>Решения забываются</td><td>Короткие записи решений в репозитории</td><td>Дисциплина писать их вовремя</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Типичные ошибки</h3><span class="badge b-tag">Таблица 18</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 18 · чего делать не стоит</caption>
+      <thead><tr><th>Ошибка</th><th>Последствие</th><th>Как правильно</th></tr></thead>
+      <tbody>
+        <tr><td><code>git add .</code> не глядя</td><td>В коммите отладка, чужие правки, секреты</td><td><code>git status</code>, <code>git diff</code>, <code>add -p</code></td></tr>
+        <tr><td><code>push --force</code> в общую ветку</td><td>Ломается работа всех, кто её забрал</td><td>Никогда; в своей — <code>--force-with-lease</code></td></tr>
+        <tr><td><code>reset --hard</code> с незакоммиченным</td><td>Правки исчезают без следа</td><td>Сначала <code>stash</code> или коммит</td></tr>
+        <tr><td>Долгоживущая ветка</td><td>Ад слияния и потеря актуальности</td><td>Мелкие шаги, флаги функциональности</td></tr>
+        <tr><td>Огромный pull request</td><td>Ревью превращается в «LGTM»</td><td>Резать по смыслу, отдельно рефакторинг</td></tr>
+        <tr><td>Форматирование вперемешку с логикой</td><td>Дифф нечитаем, ревью бесполезно</td><td>Отдельный коммит на форматирование</td></tr>
+        <tr><td>Коммит «фиксы»</td><td>История бесполезна при расследовании</td><td>Заголовок о смысле, тело о причине</td></tr>
+        <tr><td>Секрет в репозитории</td><td>Компрометация навсегда</td><td>Отозвать ключ; сканер секретов в CI</td></tr>
+        <tr><td>Hotfix не портирован в main</td><td>Баг возвращается в следующем релизе</td><td>Обязательный пункт в процессе</td></tr>
+        <tr><td>Merge-коммиты в истории от <code>pull</code></td><td>История нечитаема</td><td><code>pull.ff only</code> или <code>--rebase</code></td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 19</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 19 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Модель Git</td><td>Знает состояния файла и ветки</td><td>Понимает граф и переписывание истории</td><td>Объясняет модель другим, снимает страх</td></tr>
+        <tr><td>Ежедневная работа</td><td>Уверенный цикл без паники</td><td>Rebase, интерактивная уборка, stash</td><td>Восстановление в сложных ситуациях</td></tr>
+        <tr><td>Коммиты</td><td>Осмысленные сообщения</td><td>Атомарные, с причиной в теле</td><td>История как инструмент расследования</td></tr>
+        <tr><td>Ветвление</td><td>Работает по принятой схеме</td><td>Понимает, почему схема такая</td><td>Выбирает схему под условия команды</td></tr>
+        <tr><td>Ревью</td><td>Отвечает на замечания</td><td>Ревьюит по существу</td><td>Строит процесс и культуру ревью</td></tr>
+        <tr><td>Релизы</td><td>Знает, что такое тег</td><td>Делает релиз и hotfix</td><td>Отвечает за откаты и прослеживаемость</td></tr>
+        <tr><td>Автоматизация</td><td>Пользуется хуками</td><td>Настраивает хуки и защиту веток</td><td>Определяет, что и где проверяется</td></tr>
+        <tr><td>Знания команды</td><td>Читает документацию</td><td>Пишет описания PR</td><td>Фиксирует решения и выстраивает онбординг</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Команды по ситуациям</h2>
+    <p>Не полный справочник, а то, что нужно в момент, когда что-то пошло не так и думать некогда.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>«Я всё сломал»</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Спасение по ситуациям</span></div><pre><code><span class="cm"># Первое действие в любой непонятной ситуации — зафиксировать текущее состояние</span>
+git stash push -u -m <span class="st">"на всякий случай"</span>     <span class="cm"># -u включает неотслеживаемые файлы</span>
+
+<span class="cm"># Не понимаю, где я и что происходит</span>
+git status &amp;&amp; git log --oneline --graph --all -15 &amp;&amp; git branch -vv
+
+<span class="cm"># Случайно закоммитил не туда (в main вместо ветки)</span>
+git switch -c feature/правильная-ветка      <span class="cm"># коммиты уезжают с вами</span>
+git switch main &amp;&amp; git reset --hard origin/main
+
+<span class="cm"># Коммит ушёл в неправильную ветку и уже запушен</span>
+git switch правильная &amp;&amp; git cherry-pick &lt;hash&gt;
+git switch неправильная &amp;&amp; git revert &lt;hash&gt;
+
+<span class="cm"># Сделал reset --hard и потерял коммиты</span>
+git reflog &amp;&amp; git reset --hard HEAD@{1}
+
+<span class="cm"># Удалил ветку, которая была нужна</span>
+git reflog | grep &lt;branch&gt; &amp;&amp; git switch -c &lt;branch&gt; &lt;hash&gt;
+
+<span class="cm"># Rebase пошёл не так</span>
+git rebase --abort
+
+<span class="cm"># Слияние пошло не так</span>
+git merge --abort
+
+<span class="cm"># Затёр файл и не закоммитил</span>
+git restore path/to/file            <span class="cm"># из индекса или последнего коммита</span>
+git checkout &lt;hash&gt; -- path/to/file  <span class="cm"># из конкретного коммита</span>
+
+<span class="cm"># Совсем непонятно, что происходит: свежая копия рядом, ничего не ломая</span>
+git worktree add ../проект-проверка main</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Повседневные команды</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">То, что используется каждый день</span></div><pre><code><span class="cm"># Состояние и различия</span>
+git status -sb                       <span class="cm"># компактно</span>
+git diff                             <span class="cm"># не добавленное в индекс</span>
+git diff --staged                    <span class="cm"># то, что уйдёт в коммит</span>
+git diff main...HEAD                 <span class="cm"># что нового в ветке относительно main</span>
+git diff --stat                      <span class="cm"># только сводка по файлам</span>
+
+<span class="cm"># Коммиты</span>
+git add -p                           <span class="cm"># по кускам</span>
+git commit -m <span class="st">"feat(area): что делает"</span>
+git commit --amend --no-edit         <span class="cm"># дописать в последний (до пуша!)</span>
+git commit --fixup=&lt;hash&gt;            <span class="cm"># правка к конкретному коммиту</span>
+
+<span class="cm"># Ветки</span>
+git switch -c feature/PROJ-142
+git switch -                         <span class="cm"># вернуться в предыдущую ветку</span>
+git branch -vv
+git branch --merged main             <span class="cm"># что можно удалять</span>
+
+<span class="cm"># Синхронизация</span>
+git fetch --prune
+git pull --ff-only
+git push -u origin HEAD              <span class="cm"># запушить текущую ветку с тем же именем</span>
+git push --force-with-lease          <span class="cm"># после rebase своей ветки</span>
+
+<span class="cm"># История</span>
+git log --oneline --graph --decorate -20
+git log -p -- path/to/file           <span class="cm"># история файла с диффами</span>
+git log --follow --oneline -- file   <span class="cm"># с учётом переименований</span>
+git show &lt;hash&gt;                      <span class="cm"># коммит целиком</span>
+git shortlog -sn --since=<span class="st">'3 months'</span>  <span class="cm"># кто сколько коммитил</span>
+
+<span class="cm"># Временно отложить</span>
+git stash push -u -m <span class="st">"описание"</span>
+git stash list &amp;&amp; git stash pop</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Настройка один раз</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Конфигурация, которая экономит время и нервы</span></div><pre><code><span class="cm"># Личность — иначе коммиты будут от неизвестного автора</span>
+git config --global user.name <span class="st">"Ivan Ivanov"</span>
+git config --global user.email <span class="st">"ivan@example.com"</span>
+
+<span class="cm"># Поведение по умолчанию</span>
+git config --global init.defaultBranch main
+git config --global pull.ff only           <span class="cm"># никаких неожиданных merge при pull</span>
+git config --global push.default current   <span class="cm"># push отправляет текущую ветку</span>
+git config --global fetch.prune true        <span class="cm"># убирать ссылки на удалённые ветки</span>
+
+<span class="cm"># Запоминать разрешённые конфликты и применять повторно</span>
+git config --global rerere.enabled true
+
+<span class="cm"># Удобный вывод</span>
+git config --global log.date iso
+git config --global diff.algorithm histogram   <span class="cm"># более читаемые диффы</span>
+git config --global merge.conflictStyle zdiff3 <span class="cm"># показывать базовую версию в конфликте</span>
+
+<span class="cm"># Окончания строк: важно в смешанных командах (Windows + Linux)</span>
+git config --global core.autocrlf input        <span class="cm"># на macOS/Linux</span>
+<span class="cm"># git config --global core.autocrlf true       # на Windows</span>
+
+<span class="cm"># Полезные сокращения</span>
+git config --global alias.st <span class="st">"status -sb"</span>
+git config --global alias.lg <span class="st">"log --oneline --graph --decorate -20"</span>
+git config --global alias.last <span class="st">"log -1 --stat"</span>
+git config --global alias.unstage <span class="st">"restore --staged"</span>
+
+<span class="cm"># Глобальный игнор для мусора вашей ОС и редактора —</span>
+<span class="cm"># в .gitignore проекта таким файлам не место</span>
+git config --global core.excludesFile ~/.gitignore_global</code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Две настройки из списка стоят отдельного упоминания: <code>pull.ff only</code> убирает целый класс недоразумений с неожиданными merge-коммитами, а <code>merge.conflictStyle zdiff3</code> показывает при конфликте ещё и исходную версию — становится видно, что именно каждая сторона меняла, и разрешение перестаёт быть угадыванием.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас. Вопросы про Git на собеседовании почти всегда проверяют не знание флагов, а понимание модели и умение работать в команде: что вы делаете, когда что-то пошло не так, и как договариваетесь с людьми.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое коммит?</span><span class="aa">Снимок всего дерева файлов плюс ссылка на родителя, автора и сообщение. Git хранит именно снимки, а различия вычисляет при показе. Коммит неизменяем: любая «правка» коммита создаёт новый объект с новым хешем.</span></li>
+      <li><span class="qq">Что такое ветка?</span><span class="aa">Подвижный указатель на коммит — буквально файл с одним хешем. Поэтому создание и переключение веток почти бесплатны: копирования кода не происходит. Ветка «содержит» все коммиты, достижимые от неё по цепочке родителей.</span></li>
+      <li><span class="qq">Что такое HEAD?</span><span class="aa">Указатель на текущее положение: обычно на ветку, в которой вы работаете. Если переключиться прямо на коммит, HEAD оказывается «отсоединённым» — коммиты в этом состоянии не принадлежат ни одной ветке и легко теряются из виду, хотя и находятся через reflog.</span></li>
+      <li><span class="qq">Зачем нужен индекс?</span><span class="aa">Чтобы отделить «что изменено» от «что попадёт в коммит». Это позволяет собрать атомарный коммит из части правок — например, отделить исправление бага от случайно затронутого форматирования. Основной инструмент — <code>git add -p</code>.</span></li>
+      <li><span class="qq">Какие три состояния бывают у файла?</span><span class="aa">Изменён (правки в рабочем каталоге), подготовлен (добавлен в индекс), зафиксирован (в репозитории). Отдельно стоит неотслеживаемый файл — Git о нём ничего не знает, и <code>git clean</code> удалит его безвозвратно.</span></li>
+      <li><span class="qq">Как отменить правки в файле до коммита?</span><span class="aa"><code>git restore &lt;file&gt;</code> — вернёт содержимое из индекса или последнего коммита, правки пропадут безвозвратно. Если файл уже добавлен в индекс, сначала <code>git restore --staged &lt;file&gt;</code>. Это одна из немногих действительно необратимых операций, поэтому в сомнительных случаях лучше <code>stash</code>.</span></li>
+      <li><span class="qq">Зачем нужен <code>.gitignore</code> и почему он иногда не работает?</span><span class="aa">Он исключает файлы из отслеживания: зависимости, кэш, локальные настройки, секреты. Не работает он в одном случае — если файл уже отслеживается: правила касаются только новых файлов. Нужно убрать файл из индекса командой <code>git rm --cached</code>, и помнить, что из истории он при этом не исчезает.</span></li>
+      <li><span class="qq">Что такое fast-forward?</span><span class="aa">Слияние без создания коммита: основная ветка не двигалась, пока вы работали, поэтому её указатель просто передвигается вперёд и история остаётся линейной. Для веток задач часто запрещают его флагом <code>--no-ff</code>, чтобы факт вливания ветки был виден в истории.</span></li>
+      <li><span class="qq">Почему возникает конфликт слияния?</span><span class="aa">Потому что обе стороны изменили одни и те же строки, и Git не может решить, какой вариант верный. Это не поломка, а вопрос к человеку. Важно после разрешения не просто убрать маркеры, а перечитать фрагмент целиком и прогнать тесты: механическое «оставлю своё» молча удаляет чужую работу.</span></li>
+      <li><span class="qq">Как отменить начатое слияние?</span><span class="aa"><code>git merge --abort</code> — возвращает репозиторий в состояние до начала слияния. Аналогично работает <code>git rebase --abort</code>. Знание этих двух команд убирает страх начинать слияние: любой эксперимент обратим.</span></li>
+      <li><span class="qq">Каким должно быть сообщение коммита?</span><span class="aa">Заголовок в повелительном наклонении о смысле изменения, до примерно 72 символов, и тело с причиной: почему сделано так и какие варианты отвергнуты. Пересказывать дифф не нужно — он и так виден. Тест качества: поймёт ли человек через год по <code>git blame</code>, почему строка такая.</span></li>
+      <li><span class="qq">Что такое conventional commits?</span><span class="aa">Соглашение о формате заголовка: тип, область и описание — <code>feat(pricing): ...</code>, <code>fix(orders): ...</code>. Смысл не в красоте: по типам автоматически собирается changelog и определяется следующая версия по семантическому версионированию, а пометка о несовместимом изменении становится машиночитаемой.</span></li>
+      <li><span class="qq">Что значит «атомарный коммит»?</span><span class="aa">Одно логическое изменение, после которого проект собирается и тесты проходят. Это не про размер: правка в одну строку и рефакторинг на двести могут быть одинаково атомарными. Практическая ценность в расследованиях: по атомарной истории работает <code>bisect</code> и читается <code>blame</code>.</span></li>
+      <li><span class="qq">Чем <code>fetch</code> отличается от <code>pull</code>?</span><span class="aa"><code>fetch</code> скачивает изменения и обновляет только ссылки вида <code>origin/main</code> — ваши ветки не трогаются, это безопасно. <code>pull</code> дополнительно сливает изменения в текущую ветку, и именно второй шаг приносит неожиданности: неявный merge-коммит или конфликт посреди работы.</span></li>
+      <li><span class="qq">Что такое <code>origin</code>?</span><span class="aa">Имя удалённого репозитория по умолчанию — просто псевдоним для адреса. Их может быть несколько: например, <code>origin</code> для своего форка и <code>upstream</code> для исходного проекта. <code>origin/main</code> — это ваше локальное представление о состоянии ветки на сервере, обновляемое при <code>fetch</code>.</span></li>
+      <li><span class="qq">Почему нельзя делать <code>push --force</code> в общую ветку?</span><span class="aa">Потому что вы перепишете историю, которую другие уже забрали: их локальные ветки разойдутся с сервером, а чужие коммиты могут быть просто затёрты. В своей ветке задачи после rebase force-push нормален, но и там стоит использовать <code>--force-with-lease</code>, который откажется работать, если кто-то успел запушить туда изменения.</span></li>
+      <li><span class="qq">Как временно отложить незаконченную работу?</span><span class="aa"><code>git stash push -u -m "описание"</code> — прячет правки, включая неотслеживаемые файлы, и очищает рабочий каталог. Вернуть — <code>git stash pop</code>. Полезно при срочном переключении, но не стоит копить: stash легко забыть, и он не виден в обычной истории. Для долгого хранения лучше сделать коммит в отдельной ветке.</span></li>
+      <li><span class="qq">Как посмотреть, что изменилось в ветке относительно основной?</span><span class="aa"><code>git diff main...HEAD</code> с тремя точками — покажет только ваши изменения, не примешивая то, что появилось в <code>main</code> после ответвления. С двумя точками сравниваются текущие состояния веток, и это почти всегда не то, что нужно при подготовке к ревью.</span></li>
+      <li><span class="qq">Что делать, если случайно закоммитили не в ту ветку?</span><span class="aa">Если не запушено: создать правильную ветку из текущего состояния — коммиты «уедут» с вами, — затем вернуть исходную ветку назад через <code>reset --hard</code> к состоянию сервера. Если уже запушено, переносить через <code>cherry-pick</code> и отменять в неправильной ветке через <code>revert</code>.</span></li>
+      <li><span class="qq">Правда ли, что в Git можно потерять работу?</span><span class="aa">Закоммиченную — почти нет: даже «пропавшие» коммиты остаются в репозитории и находятся через <code>git reflog</code> в течение месяцев. По-настоящему теряются только незакоммиченные изменения — от <code>reset --hard</code>, <code>restore</code> и <code>clean</code>. Отсюда практическое правило: перед страшной операцией сделать коммит или stash.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Чем rebase отличается от merge?</span><span class="aa">Merge соединяет ветки, сохраняя историю и добавляя коммит слияния с двумя родителями. Rebase переносит ваши коммиты поверх новой базы, создавая их копии с новыми хешами, — история становится линейной. Отсюда и разница в применении: merge безопасен всегда, rebase — только для ещё не общей ветки.</span></li>
+      <li><span class="qq">В чём золотое правило rebase?</span><span class="aa">Не переписывать историю, которую уже видят другие. Как только ветку кто-то забрал, rebase в ней ломает чужие репозитории. Внутри своей ветки задачи rebase и интерактивная уборка — нормальная практика вплоть до момента, когда её начали ревьюить и на неё ссылаться.</span></li>
+      <li><span class="qq">Зачем нужен интерактивный rebase?</span><span class="aa">Чтобы привести ветку в порядок перед ревью: объединить коммиты-правки с исходными, переписать сообщения, поменять порядок, выбросить лишнее. Удобный приём — помечать правки через <code>commit --fixup</code> и затем схлопывать автоматически с <code>--autosquash</code>: ревьюер видит чистую последовательность логических изменений.</span></li>
+      <li><span class="qq">Чем <code>reset</code> отличается от <code>revert</code>?</span><span class="aa"><code>reset</code> сдвигает указатель ветки назад, переписывая историю; <code>revert</code> создаёт новый коммит, отменяющий изменения, история сохраняется. Пока коммиты только у вас — можно reset; как только опубликованы — только revert, иначе у коллег ломается ветка.</span></li>
+      <li><span class="qq">Чем отличаются <code>reset --soft</code>, <code>--mixed</code> и <code>--hard</code>?</span><span class="aa"><code>--soft</code> убирает коммит, оставляя изменения в индексе — удобно пересобрать коммит заново. <code>--mixed</code> (по умолчанию) оставляет изменения в рабочем каталоге, но убирает из индекса. <code>--hard</code> выбрасывает изменения совсем — единственный по-настоящему опасный вариант, потому что незакоммиченное не восстановить.</span></li>
+      <li><span class="qq">Что такое reflog и когда он спасает?</span><span class="aa">Локальный журнал перемещений HEAD и веток за последние примерно 90 дней. Он спасает после неудачного <code>reset --hard</code>, потерянной ветки, испорченного rebase: находите нужный хеш и создаёте от него ветку. Не спасает от потери незакоммиченных изменений — их в журнале никогда не было.</span></li>
+      <li><span class="qq">Как отменить уже влитую ветку?</span><span class="aa"><code>git revert -m 1 &lt;merge-commit&gt;</code>, где единица означает «считать основным первого родителя», то есть ветку, в которую вливали. Важный нюанс: чтобы влить эту ветку заново после исправления, придётся сначала отменить сам revert, иначе Git будет считать изменения уже применёнными.</span></li>
+      <li><span class="qq">Что такое cherry-pick и когда он уместен?</span><span class="aa">Перенос отдельного коммита в другую ветку — создаётся копия с новым хешем. Уместен для точечных случаев: перенести hotfix в релизную ветку или в main. Систематическое использование вместо слияний плодит дубликаты изменений в истории и усложняет понимание того, что где применено.</span></li>
+      <li><span class="qq">Какие бывают стратегии ветвления и как выбрать?</span><span class="aa">Trunk-based — только основная ветка, всё за флагами, требует сильных тестов. GitHub flow — короткие ветки задач от <code>main</code>, подходит большинству веб-проектов. Git flow — несколько долгоживущих веток, оправдан при поддержке нескольких версий. Выбор определяется частотой релизов и числом поддерживаемых версий, а не модой.</span></li>
+      <li><span class="qq">Чем плохи долгоживущие ветки?</span><span class="aa">Расхождение с основной растёт нелинейно: чем дольше ветка живёт, тем больше конфликтов и тем выше шанс, что кто-то параллельно переписал те же места. Плюс работа месяцами не проверяется в интеграции. Крупные изменения лучше делать в основной ветке маленькими совместимыми шагами за флагом.</span></li>
+      <li><span class="qq">Зачем нужны теги и какими они бывают?</span><span class="aa">Тег — неподвижная метка на коммите, отвечающая на вопрос «какой код сейчас в проде». Лёгкий тег — просто ссылка; аннотированный содержит автора, дату и сообщение и является полноценным объектом — для релизов используют его. По тегам собирается changelog и определяется, в какую версию попал фикс.</span></li>
+      <li><span class="qq">Как выкатить hotfix, если в main незаконченная работа?</span><span class="aa">Создать ветку от тега, который сейчас в проде, внести минимальное исправление с тестом, поставить новый patch-тег и выкатить. Затем обязательно перенести фикс в основную ветку через cherry-pick или merge — без этого следующий релиз вернёт баг. Это самая частая ошибка в работе с hotfix.</span></li>
+      <li><span class="qq">Каким должен быть размер pull request?</span><span class="aa">До 200–400 строк изменений. Дальше внимание ревьюера падает, а после тысячи строк честно прочитать код невозможно — появляется «LGTM», то есть отсутствие ревью при формальном его наличии. Если задача крупная, её режут по смыслу: отдельно рефакторинг, отдельно новая логика, отдельно миграции.</span></li>
+      <li><span class="qq">Что должно быть в описании pull request?</span><span class="aa">Что и зачем сделано, как проверить, какие приняты решения и что отвергнуто, какие есть риски. Это экономит время ревьюеру сейчас и человеку, который через год будет разбираться, почему код такой. Описание из одной строки «PROJ-142» перекладывает всю работу на читателя.</span></li>
+      <li><span class="qq">На что вы смотрите при код-ревью?</span><span class="aa">Сначала на правильность и полноту: решает ли код задачу, какие случаи пропущены. Затем безопасность (права на объект, экранирование), работа с данными (совместимость миграции, N+1, поведение при повторе), качество тестов и читаемость. Стиль не комментирую — это работа линтера, а не человека.</span></li>
+      <li><span class="qq">Как формулировать замечания на ревью?</span><span class="aa">О коде, а не об авторе. Явно разделять обязательное и желательное — иначе любое замечание читается как блокирующее. Там, где не уверен, задавать вопрос, а не утверждать. И отмечать удачные решения: это ничего не стоит и заметно меняет отношение к ревью в команде.</span></li>
+      <li><span class="qq">Что автоматизировать хуками, а что в CI?</span><span class="aa">В хуках — быстрое: синтаксис, форматирование с автоисправлением, проверка формата сообщения коммита, поиск отладочного вывода. В CI — долгое: статический анализ, тесты, аудит зависимостей, сканер секретов. Хук должен занимать секунды, иначе его начнут обходить ключом <code>--no-verify</code>.</span></li>
+      <li><span class="qq">Почему хуков недостаточно и нужна защита веток?</span><span class="aa">Потому что любой локальный хук отключается одним ключом, а хуки к тому же не копируются при клонировании. Гарантии дают только настройки репозитория: запрет прямого пуша в основную ветку, обязательный зелёный пайплайн, минимум одно одобрение, запрет force-push и удаления ветки.</span></li>
+      <li><span class="qq">Что делать с конфликтом в <code>composer.lock</code>?</span><span class="aa">Не править вручную: файл машинный и его ручное слияние приводит к несогласованному состоянию зависимостей. Взять версию основной ветки, затем заново применить своё изменение состава зависимостей и пересобрать lock. Аналогично с любыми сгенерированными файлами.</span></li>
+      <li><span class="qq">Как вы поддерживаете чистую историю?</span><span class="aa">Атомарные коммиты с осмысленными сообщениями, отдельные коммиты на форматирование и переименования, уборка ветки интерактивным rebase перед ревью, запрет неожиданных merge-коммитов от <code>pull</code> через <code>pull.ff only</code>. Цель не эстетика: по чистой истории работают <code>bisect</code> и <code>blame</code>, то есть расследование инцидентов.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Баг появился где-то за последние 400 коммитов. Как найдёте?</span><span class="aa">Свожу воспроизведение к скрипту или тесту, возвращающему код возврата, и запускаю <code>git bisect run</code> между заведомо рабочим тегом и текущим состоянием — это примерно девять проверок вместо четырёхсот. Найденный коммит смотрю целиком: дифф, сообщение, связанную задачу. Дальше при необходимости <code>blame</code> и <code>log -S</code> для контекста.</span></li>
+      <li><span class="qq">От чего зависит эффективность bisect?</span><span class="aa">От качества истории. Если коммиты неатомарны, половина не собирается, а в одном коммите смешаны фича и рефакторинг, двоичный поиск буксует и приводит к «виноват коммит на 2000 строк». Это главный практический аргумент за атомарные коммиты — не эстетика, а скорость расследования.</span></li>
+      <li><span class="qq">Как найти, когда в коде появилась конкретная строка или вызов?</span><span class="aa"><code>git log -S '&lt;строка&gt;'</code> ищет коммиты, где число вхождений изменилось, <code>-G</code> — то же по регулярному выражению. С флагом <code>-p</code> сразу видно контекст изменения. Это гораздо точнее, чем <code>blame</code>, когда строку несколько раз перемещали или переформатировали.</span></li>
+      <li><span class="qq">Как найти проблемные места в проекте по истории?</span><span class="aa">Посчитать частоту изменений файлов за период: файлы из верха списка — кандидаты в горячие точки. Пересечение высокой частоты изменений и высокой сложности почти всегда даёт места, где рождается большинство багов. Это хороший объективный аргумент при планировании рефакторинга.</span></li>
+      <li><span class="qq">Как выбрать процесс работы с репозиторием для команды?</span><span class="aa">От условий: частота релизов, число поддерживаемых версий, размер команды, зрелость тестов, наличие feature flags, требования к прослеживаемости. Для типичного веб-продукта — короткие ветки от <code>main</code>, PR с зелёным CI и одобрением, защита основной ветки, релиз по тегу. Дальше смотрю на метрики процесса, а не на соответствие схеме из статьи.</span></li>
+      <li><span class="qq">Какие метрики процесса разработки вы бы отслеживали?</span><span class="aa">Время жизни ветки, время от открытия PR до вливания, размер PR, частоту релизов, долю релизов с откатом и время восстановления. Они показывают, где именно затык: крупные задачи, медленное ревью или хрупкий релиз. Метрики про людей (число коммитов, строк) вредны — они поощряют имитацию.</span></li>
+      <li><span class="qq">Монорепозиторий или отдельные репозитории?</span><span class="aa">Монорепо выигрывает, когда изменения часто затрагивают несколько компонентов сразу: одно атомарное изменение вместо согласования нескольких PR и порядка выкатки. Платите размером клона, необходимостью собирать только изменённое и более сложным разграничением доступа. Отдельные репозитории естественны для продуктов с независимым жизненным циклом и разными командами.</span></li>
+      <li><span class="qq">Как ускорить ревью в команде?</span><span class="aa">Тремя вещами: уменьшить PR (это главное — режем задачи), договориться о сроке ответа и сделать ревью приоритетнее своей задачи, автоматизировать всё, что проверяет линтер. Плюс явно разделять блокирующие замечания и пожелания, иначе каждый комментарий останавливает вливание.</span></li>
+      <li><span class="qq">Что делать, если ревью превращается в конфликт?</span><span class="aa">Переводить из письменного в устный формат: пять минут разговора обычно закрывают то, что в комментариях идёт третий круг. Договориться заранее о тоне и о том, кто принимает решение при расхождении — владелец модуля или обсуждение с третьим человеком. И отделять вопросы вкуса от вопросов последствий: первые не стоят конфликта.</span></li>
+      <li><span class="qq">Что делать, если PR слишком большой?</span><span class="aa">Просить разделить и помогать это сделать: отдельно рефакторинг, отдельно новая логика, отдельно миграции и переименования. Если разделить действительно нельзя, менять формат: разбор голосом с автором вместо комментариев по диффу. Читать тысячу строк по диагонали и ставить одобрение — худший вариант из всех.</span></li>
+      <li><span class="qq">Как выглядит порядок действий при откате релиза?</span><span class="aa">Сначала восстановление: выкатка предыдущего тега образа или выключение функции флагом — это быстрее любой Git-операции. Если вернуться нельзя из-за применённой миграции, чиню вперёд hotfix-ом от тега прода. Когда виновата вся ветка — <code>revert -m 1</code> merge-коммита. Хронология фиксируется по ходу, разбор — после восстановления.</span></li>
+      <li><span class="qq">Почему совместимые миграции важны для отката?</span><span class="aa">Потому что откат кода не откатывает схему. Если миграция удалила колонку, предыдущая версия приложения на новой схеме не запустится, и быстрый откат становится невозможен — придётся чинить вперёд под давлением. Совместимые изменения схемы превращают откат из спецоперации в одну команду.</span></li>
+      <li><span class="qq">Кто-то сделал force push и затёр коммиты. Что делать?</span><span class="aa">Найти потерянные коммиты в reflog у того, кто забирал ветку до этого, или через поиск недостижимых объектов на сервере, и восстановить ветку по хешу. Затем закрыть возможность повторения: запрет force-push на защищённых ветках. Быстрая реакция важна — недостижимые объекты со временем удаляются сборкой мусора.</span></li>
+      <li><span class="qq">Как обеспечить прослеживаемость «задача → коммит → релиз»?</span><span class="aa">Идентификатор задачи в названии ветки и в сообщениях коммитов, аннотированные теги на релизы, changelog по conventional commits. Тогда на вопрос «в какой версии этот фикс» отвечает одна команда, а на вопрос «что вошло в релиз» — сравнение тегов. Для аудита этого обычно достаточно, а для поддержки — критично.</span></li>
+      <li><span class="qq">Как заходить в проект, где история — сплошные «фиксы»?</span><span class="aa">Не переписывать прошлое — это бессмысленно и опасно. Договориться о правилах с текущего момента: формат сообщений, атомарность, отдельные коммиты на форматирование. Подкрепить автоматикой: проверка формата сообщения хуком, шаблон описания PR. История выправляется за пару месяцев, а старая часть остаётся как есть.</span></li>
+      <li><span class="qq">Как фиксируются знания о принятых решениях?</span><span class="aa">Короткими записями решений в репозитории рядом с кодом: контекст, решение, последствия и отвергнутые варианты с причинами. Они ревьюются вместе с кодом и потому не устаревают отдельно. Плюс сообщения коммитов с причиной и комментарии со ссылкой на решение в неочевидных местах — они спасают от «оптимизаций», ломающих систему.</span></li>
+      <li><span class="qq">Как вы оцениваете качество онбординга?</span><span class="aa">По времени до первого осмысленного pull request. Если это первый день — проект поднимается по инструкции, правила описаны, задачи нарезаны понятно. Если неделя, проблема не в человеке: часть знаний живёт только в головах. Полезно, чтобы новичок правил документацию по ходу — он единственный видит пробелы свежим взглядом.</span></li>
+      <li><span class="qq">Что делать с веткой, которая живёт три месяца?</span><span class="aa">Признать, что дальше будет только хуже, и разбирать: выделить из неё части, совместимые с основной веткой, и вливать по одной, при необходимости за флагом функциональности. Регулярно подтягивать основную ветку в неё, чтобы конфликты решались порциями. И параллельно разбираться с причиной — обычно это слишком крупно нарезанная задача.</span></li>
+      <li><span class="qq">Нужны ли правила именования веток?</span><span class="aa">Минимальные и работающие на автоматику: тип и идентификатор задачи — <code>feature/PROJ-142-краткое-описание</code>. Это даёт связь с задачей, читаемый список веток и возможность автоматизировать привязку к тикету. Развёрнутые регламенты именования обычно не окупаются: их всё равно нарушают, а пользы сверх этого нет.</span></li>
+      <li><span class="qq">Как понять, что процесс работы с репозиторием не подходит команде?</span><span class="aa">По тому, что его регулярно обходят: прямые пуши «в порядке исключения», одобрения без чтения, ветки, висящие месяцами. Правильная реакция — не усиливать контроль, а выяснить причину: обычно это слишком крупные задачи, медленный CI или отсутствие договорённости о сроке ревью. Неудобный процесс всегда проигрывает срокам.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Git осваивается только руками, и лучше всего — на учебном репозитории, который не жалко сломать. Половина заданий выполняется именно там, вторая половина — на рабочем проекте.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Учебный репозиторий и пять поломок</h4>
+    <p>Создайте репозиторий с несколькими коммитами и намеренно сломайте его пятью способами: <code>reset --hard</code> с потерей коммитов, удаление ветки, испорченный rebase, коммит не в ту ветку, затёртый файл. Каждый раз восстанавливайтесь.</p>
+    <div class="box task"><span class="lbl">Результат</span>Исчезновение страха: вы знаете, что почти всё восстанавливается, и знаете как.</div>
+
+    <h4>2. Атомарные коммиты через <code>add -p</code></h4>
+    <p>Сделайте в файле три несвязанных изменения и разложите их на три коммита, не откатывая ничего. Затем напишите каждому сообщение с причиной, а не пересказом диффа.</p>
+    <div class="box task"><span class="lbl">Результат</span>Навык, который сразу улучшает историю и делает ревью в разы проще.</div>
+
+    <h4>3. Конфликт от начала до конца</h4>
+    <p>Смоделируйте конфликт: две ветки правят одни строки. Разрешите его, включив показ базовой версии, затем повторите с <code>merge --abort</code> и снова разрешите иначе.</p>
+    <div class="box task"><span class="lbl">Результат</span>Понимание, что конфликт — это вопрос, а не поломка, и что решение всегда обратимо.</div>
+
+    <h4>4. Гигиена репозитория</h4>
+    <p>Проверьте свой проект: есть ли в истории <code>.env</code>, зависимости, артефакты сборки; актуален ли <code>.gitignore</code>; настроены ли имя и почта; включён ли <code>pull.ff only</code>.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список находок и настроенная конфигурация. Если нашли секрет — его нужно отозвать, а не просто удалить.</div>
+
+    <h4>5. Разбор чужой истории</h4>
+    <p>Возьмите открытый проект и разберитесь: как устроены их ветки и теги, как выглядят сообщения коммитов, что вошло в последний релиз, кто основные авторы модуля.</p>
+    <div class="box task"><span class="lbl">Результат</span>Заметка о том, что стоит перенять, а что кажется лишним, — и первые навыки чтения истории.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Интерактивный rebase на реальной ветке</h4>
+    <p>Возьмите свою ветку с историей вида «фикс», «ещё фикс», «правка после ревью» и приведите её в порядок: объедините правки с исходными коммитами, перепишите сообщения, переставьте порядок.</p>
+    <div class="box task"><span class="lbl">Результат</span>Ветка из трёх-четырёх логических коммитов вместо пятнадцати случайных, готовая к ревью.</div>
+
+    <h4>7. Rebase против merge на практике</h4>
+    <p>Создайте одинаковую ситуацию дважды и разрешите её сначала merge, потом rebase. Сравните графы истории, попробуйте откатить фичу целиком в обоих вариантах.</p>
+    <div class="box task"><span class="lbl">Результат</span>Собственный обоснованный ответ на вопрос «что мы используем и почему», а не пересказ статьи.</div>
+
+    <h4>8. Спасательные операции</h4>
+    <p>Отработайте на учебном репозитории: восстановление после <code>reset --hard</code>, возврат удалённой ветки, отмена влитой ветки через <code>revert -m 1</code> и повторное её вливание.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отрепетированные действия, которые понадобятся под давлением, — и знание про revert of revert до того, как столкнётесь с ним в проде.</div>
+
+    <h4>9. Хуки и защита ветки</h4>
+    <p>Настройте хук с проверкой синтаксиса, автоформатированием и поиском отладочного вывода. Включите защиту основной ветки: запрет прямого пуша, обязательный CI, одно одобрение.</p>
+    <div class="box task"><span class="lbl">Результат</span>Работающая автоматика и понимание, что хук — удобство, а защита ветки — гарантия.</div>
+
+    <h4>10. Шаблоны и релизный цикл</h4>
+    <p>Заведите шаблон описания PR, файл владельцев модулей и правила именования веток. Проведите один полный цикл: релиз с тегом, hotfix от тега, портирование фикса в основную ветку.</p>
+    <div class="box task"><span class="lbl">Результат</span>Пройденный целиком релизный цикл — то, о чём чаще всего спрашивают на собеседовании middle.</div>
+
+    <h4>11. Ревью двадцати pull request</h4>
+    <p>Отревьюйте двадцать PR коллег, сознательно фокусируясь на правильности, безопасности и данных, а не на стиле. Разделяйте обязательные замечания и пожелания явными пометками.</p>
+    <div class="box task"><span class="lbl">Результат</span>Собственный чек-лист ревью из пяти пунктов и заметное ускорение обратной связи в команде.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Расследование через bisect</h4>
+    <p>Найдите в истории проекта изменение поведения и отыщите виновный коммит автоматическим bisect с тестом. Замерьте, сколько это заняло, и оцените, что мешало — качество истории или отсутствие быстрого теста.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отработанный приём и понимание, какие места истории мешают расследованию.</div>
+
+    <h4>13. Карта горячих точек проекта</h4>
+    <p>Постройте по истории список файлов с наибольшей частотой изменений за год, сопоставьте со сложностью и с местами прошлых инцидентов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Обоснованный числами список кандидатов на рефакторинг — аргумент, который работает в разговоре с руководством.</div>
+
+    <h4>14. Метрики процесса и их улучшение</h4>
+    <p>Соберите за квартал: среднее время жизни ветки, время от открытия PR до вливания, средний размер PR, частоту релизов. Найдите главный затык и предложите одно изменение процесса.</p>
+    <div class="box task"><span class="lbl">Результат</span>Числа до и после изменения — самый убедительный материал для senior-собеседования.</div>
+
+    <h4>15. Правила и онбординг</h4>
+    <p>Опишите правила работы с репозиторием, заведите первые три записи архитектурных решений по недавним спорным вопросам и проверьте инструкцию по запуску проекта на новом человеке.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документы, которые переживут вас в проекте, и измеренное время до первого PR нового разработчика.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час в будний день и пару часов в выходной — тема легче предыдущих по объёму, но требует именно практики: прочитанное про rebase забывается за неделю, сделанное руками остаётся.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Модель и уверенный цикл</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Объекты Git и три состояния файла, ежедневный цикл и <code>add -p</code>, <code>.gitignore</code>, ветки и виды слияния, конфликты и их разрешение, сообщения коммитов и conventional commits, работа с удалённым репозиторием.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: учебный репозиторий и пять поломок, атомарные коммиты, конфликт от начала до конца, гигиена репозитория, разбор чужой истории.</li>
+      <li>Настроить конфигурацию один раз: <code>pull.ff only</code>, <code>rerere</code>, <code>fetch.prune</code>, стиль конфликтов с базовой версией.</li>
+      <li>Неделю коммитить только через <code>git add -p</code> — привычка вырабатывается именно за это время.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Уверенность в повседневных операциях, атомарные коммиты с внятными сообщениями и отсутствие паники при конфликтах.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что такое коммит, ветка и HEAD?</li>
+      <li>Зачем нужен индекс?</li>
+      <li>Что такое fast-forward и когда его запрещают?</li>
+      <li>Чем <code>fetch</code> отличается от <code>pull</code>?</li>
+      <li>Каким должно быть сообщение коммита?</li>
+      <li>Что в Git действительно можно потерять?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · История и её переписывание</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Rebase против merge и золотое правило, интерактивный rebase с autosquash, <code>reset</code> во всех режимах, <code>revert</code>, <code>cherry-pick</code>, reflog и восстановление, <code>force-with-lease</code>, откат влитой ветки.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6–8: интерактивная уборка ветки, сравнение rebase и merge на одной ситуации, спасательные операции.</li>
+      <li>Отработать восстановление после <code>reset --hard</code> и удаления ветки до автоматизма — по три раза каждое.</li>
+      <li>Разобрать на учебном репозитории revert влитой ветки и её повторное вливание.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Умение приводить ветку в порядок перед ревью и восстанавливать репозиторий в любой типовой ситуации.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Чем rebase отличается от merge и в чём золотое правило?</li>
+      <li>Чем отличаются три режима <code>reset</code>?</li>
+      <li>Когда только <code>revert</code>, а когда можно <code>reset</code>?</li>
+      <li>Что такое reflog и от чего он не спасает?</li>
+      <li>Как откатить влитую ветку и что потом с повторным вливанием?</li>
+      <li>Зачем <code>--force-with-lease</code>?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Процесс: ветвление, релизы, ревью</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Стратегии ветвления и условия их применимости, вред долгоживущих веток, теги и семантическое версионирование, hotfix и портирование, размер и описание pull request, ревью по существу, хуки и защита веток.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 9–11: хуки и защита ветки, шаблоны и полный релизный цикл, двадцать проведённых ревью.</li>
+      <li>Посмотреть на свои последние десять PR: сколько строк, сколько прожили до вливания, есть ли описание.</li>
+      <li>Разобрать процесс своей команды по таблице факторов и найти одно несоответствие.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Пройденный релизный цикл с hotfix, настроенная автоматика и собственный чек-лист ревью.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Какие бывают стратегии ветвления и как выбрать?</li>
+      <li>Чем плохи долгоживущие ветки?</li>
+      <li>Как выкатить hotfix и что обязательно сделать после?</li>
+      <li>Каким должен быть размер PR и почему?</li>
+      <li>Что проверять при ревью и что не проверять?</li>
+      <li>Что автоматизировать хуками, а что защитой веток?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Расследование, процесс, люди</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Bisect и поиск по истории, карта горячих точек, выбор процесса под команду, монорепозиторий и его цена, культура ревью и её проблемы, порядок отката в инциденте, восстановление после force push, фиксация решений и онбординг.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: расследование через bisect, карта горячих точек, метрики процесса, правила и онбординг.</li>
+      <li>Написать три записи архитектурных решений по недавним спорным вопросам проекта.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ, с числами и процессом, а не с перечислением команд.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Карта проблемных мест проекта по данным истории, измеренные метрики процесса, описанные правила и первые записи решений.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как найти коммит, сломавший поведение, среди сотен?</li>
+      <li>От чего зависит эффективность bisect?</li>
+      <li>Какие метрики процесса разработки вы бы отслеживали?</li>
+      <li>Монорепозиторий или отдельные репозитории?</li>
+      <li>Как ускорить ревью в команде?</li>
+      <li>Каков порядок действий при откате релиза?</li>
+      <li>Как фиксируются знания о принятых решениях?</li>
+      <li>Как понять, что процесс не подходит команде?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы про Git и командную работу</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Отвечайте моделью, а не командой.</strong> «Rebase — это <code>git rebase</code>» ничего не показывает. «Rebase создаёт копии коммитов с новыми хешами поверх новой базы, поэтому в общей ветке он ломает чужие репозитории» — показывает понимание.</li>
+      <li><strong>Про Git спрашивают, чтобы проверить командную работу.</strong> Вопрос «что вы делаете при конфликте» — на самом деле про то, разберётесь ли вы сами и пойдёте ли уточнять у автора второй стороны. Отвечайте и про технику, и про взаимодействие.</li>
+      <li><strong>Называйте числа процесса.</strong> Сколько живут ветки, какого размера PR, за сколько отвечают на ревью, как часто релизите, сколько занимает откат. Это самый быстрый способ показать, что вы работали в живом процессе.</li>
+      <li><strong>Не защищайте догмы.</strong> «Только rebase» или «только merge» — слабые позиции. Сильная: «внутри своей ветки rebase, вливание merge без fast-forward, потому что так фича видна одним блоком и откатывается одним revert».</li>
+      <li><strong>Держите наготове историю спасения.</strong> Как восстановили потерянную работу, как откатывали релиз, как нашли причину через bisect. Такие истории отвечают сразу на несколько вопросов и запоминаются.</li>
+      <li><strong>Говорите о ревью как о процессе, а не о вкусах.</strong> Размер PR, срок ответа, разделение блокирующего и желательного, что автоматизировано. Это признак человека, который отвечал за скорость команды, а не только за свой код.</li>
+      <li><strong>Признавайте несовершенство процесса честно.</strong> «У нас ветки жили по две недели, я начал с разбиения задач и договорённости о сроке ревью, стало три дня» — гораздо сильнее, чем описание идеального процесса, которого не было.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Git и командная работа» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

@@ -1,0 +1,1631 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · образы · контейнеры · сборка и эксплуатация</p>
+  <h1>Docker</h1>
+  <p class="lead">Docker решает одну задачу: приложение вместе со своим окружением упаковывается в артефакт, который одинаково запускается на ноутбуке, в CI и на сервере. Всё остальное — слои, кэш сборки, тома, сети — это механика, которая нужна ровно постольку, поскольку она влияет на три вещи: скорость сборки, размер образа и поведение контейнера при остановке.</p>
+  <p class="lead">Основная часть проблем в реальных проектах происходит не от незнания команд, а от неверной модели происходящего. Контейнер считают лёгкой виртуальной машиной — и удивляются, что данные исчезли после пересоздания. Складывают команды в Dockerfile в удобном для чтения порядке — и получают пятиминутную пересборку при правке одной строки кода. Запускают PHP через оболочку — и процесс перестаёт получать сигнал остановки, из-за чего деплой каждый раз убивает воркеры на середине задачи.</p>
+  <p class="lead">Маршрут: модель образов и контейнеров, Dockerfile, слои и кэш, запуск, Compose → многоступенчатая сборка, PHP в контейнере, entrypoint и сигналы, сети и тома, конфигурация и секреты, healthcheck → BuildKit и кэш в CI, безопасность образов, реестр и теги, ресурсы и логи, отладка, оркестрация, антипаттерны. Смежные темы: <a href="infrastructure.html">инфраструктура и деплой</a> (пайплайн CI, выкладка без простоя, Kubernetes, бэкапы), <a href="performance.html">производительность</a> (OPcache, настройка FPM), <a href="security.html">безопасность</a>, <a href="observability.html">наблюдаемость</a>, <a href="async.html">асинхронный PHP</a> (воркеры и их остановка).</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Модель образов и контейнеров, Dockerfile и его инструкции, слои и кэш сборки, запуск контейнера, тома и переменные, Compose для локальной разработки.</span></div>
+    <div class="aud m"><b>Middle</b><span>Многоступенчатая сборка и размер образа, PHP-FPM и CLI в контейнере, entrypoint и PID 1, сигналы и остановка, сети и данные, секреты, healthcheck.</span></div>
+    <div class="aud s"><b>Senior</b><span>BuildKit и кэш в CI, воспроизводимость, безопасность образов, реестр и теги, ресурсы и лимиты, отладка в проде, выбор оркестратора, антипаттерны.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>18</i></span>
+    <span>Блоков кода: <i>18</i></span>
+    <span>Сравнительных таблиц: <i>26</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#model">Модель: образ, слой, контейнер</a></li>
+    <li><span class="tree">├─</span> <a href="#dockerfile">Dockerfile и его инструкции</a></li>
+    <li><span class="tree">├─</span> <a href="#layers">Слои и кэш сборки</a></li>
+    <li><span class="tree">├─</span> <a href="#run">Запуск контейнера</a></li>
+    <li><span class="tree">├─</span> <a href="#compose">Compose для разработки</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#multistage">Многоступенчатая сборка</a></li>
+    <li><span class="tree">├─</span> <a href="#php">PHP в контейнере</a></li>
+    <li><span class="tree">├─</span> <a href="#entrypoint">Entrypoint, PID 1 и сигналы</a></li>
+    <li><span class="tree">├─</span> <a href="#storage">Сети, тома и данные</a></li>
+    <li><span class="tree">├─</span> <a href="#config">Конфигурация и секреты</a></li>
+    <li><span class="tree">├─</span> <a href="#health">Healthcheck и порядок запуска</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#buildkit">BuildKit и кэш в CI</a></li>
+    <li><span class="tree">├─</span> <a href="#security">Безопасность образов</a></li>
+    <li><span class="tree">├─</span> <a href="#registry">Реестр, теги, версии</a></li>
+    <li><span class="tree">├─</span> <a href="#runtime">Ресурсы, лимиты, логи</a></li>
+    <li><span class="tree">├─</span> <a href="#debug">Отладка контейнеров</a></li>
+    <li><span class="tree">├─</span> <a href="#orchestration">Куда дальше: оркестрация</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Антипаттерны</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Шаблоны и команды</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · образы, контейнеры, сборка</p>
+    <h2>Junior: как устроен Docker и что происходит при сборке</h2>
+    <p>Первый уровень строит правильную модель происходящего: чем образ отличается от контейнера, почему контейнер — это процесс, а не машина, из чего состоит Dockerfile и почему порядок его строк влияет на время сборки сильнее, чем всё остальное вместе взятое.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="model">
+    <p class="path">junior / модель</p>
+    <div class="card-top"><h3>Модель: образ, слой, контейнер</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Образ — неизменяемый шаблон файловой системы, собранный из слоёв. Контейнер — запущенный процесс, которому этот образ подставлен как корневая файловая система, плюс тонкий записываемый слой сверху. Отсюда следуют почти все практические выводы: контейнеры дёшево создавать и удалять, а всё, что записано внутрь контейнера, исчезает вместе с ним.</p>
+
+    <div class="flow">
+      <div class="node">Dockerfile<small>рецепт сборки</small></div>
+      <span class="arr">→</span>
+      <div class="node">Слои<small>результат каждой инструкции</small></div>
+      <span class="arr">→</span>
+      <div class="node">Образ<small>неизменяемый артефакт с тегом</small></div>
+      <span class="arr">→</span>
+      <div class="node">Реестр<small>хранение и раздача</small></div>
+      <span class="arr">→</span>
+      <div class="node">Контейнер<small>процесс с записываемым слоем</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · словарь Docker</caption>
+      <thead><tr><th>Термин</th><th>Что это</th><th>Частое заблуждение</th></tr></thead>
+      <tbody>
+        <tr><td>Образ</td><td>Неизменяемый набор слоёв плюс метаданные запуска</td><td>«Образ — это работающая система»</td></tr>
+        <tr><td>Слой</td><td>Разница файловой системы после одной инструкции</td><td>«Удалённый в следующем слое файл исчезает из образа»</td></tr>
+        <tr><td>Контейнер</td><td>Процесс с изолированным пространством имён и своей корневой ФС</td><td>«Контейнер — лёгкая виртуальная машина»</td></tr>
+        <tr><td>Тег</td><td>Человекочитаемая ссылка на образ</td><td>«Тег неизменяем и всегда указывает на одно и то же»</td></tr>
+        <tr><td>Дайджест</td><td>Хеш содержимого образа</td><td>«Достаточно тега, чтобы получить тот же образ»</td></tr>
+        <tr><td>Реестр</td><td>Хранилище образов</td><td>«Реестр обязательно публичный»</td></tr>
+        <tr><td>Том</td><td>Хранилище данных вне слоёв контейнера</td><td>«Данные и так сохранятся»</td></tr>
+        <tr><td>Демон</td><td>Служба, которая собирает и запускает контейнеры</td><td>«Docker работает без привилегированного процесса»</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · контейнер против виртуальной машины</caption>
+      <thead><tr><th>Признак</th><th>Контейнер</th><th>Виртуальная машина</th></tr></thead>
+      <tbody>
+        <tr><td>Что изолируется</td><td>Процесс: пространства имён и ограничения ядра</td><td>Целая машина с собственным ядром</td></tr>
+        <tr><td>Ядро</td><td>Общее с хостом</td><td>Своё</td></tr>
+        <tr><td>Запуск</td><td>Доли секунды</td><td>Десятки секунд</td></tr>
+        <tr><td>Накладные расходы</td><td>Практически как у обычного процесса</td><td>Память и процессор под гостевую систему</td></tr>
+        <tr><td>Степень изоляции</td><td>Слабее: общая точка отказа — ядро</td><td>Сильнее</td></tr>
+        <tr><td>Совместимость</td><td>Только та же архитектура и семейство ядра</td><td>Любая гостевая система</td></tr>
+        <tr><td>Практический вывод</td><td>Одна задача на контейнер, состояние снаружи</td><td>Полноценная система со своим набором служб</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Слои только добавляются. Инструкция, удаляющая файл, создаёт новый слой, где файла нет, но сам файл остаётся в предыдущем слое и продолжает занимать место в образе — и, что важнее, остаётся доступным для извлечения. Отсюда правило: секрет, попавший в один слой, нельзя «удалить» следующей строкой. Он там навсегда, и вычистить его можно только пересборкой без этого шага.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем контейнер отличается от виртуальной машины?</b><br>Контейнер — это процесс на общем с хостом ядре, изолированный пространствами имён и ограниченный контрольными группами. Виртуальная машина запускает собственное ядро поверх гипервизора. Отсюда практическая разница: контейнер стартует за доли секунды и почти ничего не стоит по ресурсам, но изоляция слабее, а запустить систему с другим ядром в нём нельзя.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="dockerfile">
+    <p class="path">junior / сборка</p>
+    <div class="card-top"><h3>Dockerfile и его инструкции</h3><span class="badge b-1">Рецепт</span></div>
+    <p>Dockerfile — последовательность инструкций, каждая из которых порождает слой или меняет метаданные образа. Инструкций много, но в повседневной работе используется около десяти, и почти у каждой есть ловушка, о которую спотыкаются в первый раз.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · основные инструкции и их ловушки</caption>
+      <thead><tr><th>Инструкция</th><th>Что делает</th><th>Ловушка</th></tr></thead>
+      <tbody>
+        <tr><td><code>FROM</code></td><td>Базовый образ, начало этапа сборки</td><td>Тег <code>latest</code> делает сборку невоспроизводимой</td></tr>
+        <tr><td><code>RUN</code></td><td>Выполняет команду и фиксирует результат слоем</td><td>Каждый <code>RUN</code> — отдельный слой; кэш пакетов остаётся внутри</td></tr>
+        <tr><td><code>COPY</code></td><td>Копирует файлы из контекста сборки</td><td>Копирование всего проекта первым шагом убивает кэш</td></tr>
+        <tr><td><code>ADD</code></td><td>То же плюс распаковка архивов и загрузка по URL</td><td>Неявное поведение: почти всегда нужен <code>COPY</code></td></tr>
+        <tr><td><code>WORKDIR</code></td><td>Рабочий каталог для последующих инструкций</td><td><code>cd</code> внутри <code>RUN</code> не сохраняется между слоями</td></tr>
+        <tr><td><code>ENV</code></td><td>Переменная окружения в образе и в контейнере</td><td>Остаётся в метаданных образа: не для секретов</td></tr>
+        <tr><td><code>ARG</code></td><td>Переменная времени сборки</td><td>Видна в истории образа: не для секретов</td></tr>
+        <tr><td><code>EXPOSE</code></td><td>Документирует порт</td><td>Ничего не публикует наружу само по себе</td></tr>
+        <tr><td><code>USER</code></td><td>Пользователь для последующих команд и запуска</td><td>По умолчанию остаётся root</td></tr>
+        <tr><td><code>ENTRYPOINT</code></td><td>Основная исполняемая команда</td><td>В форме оболочки процесс не получает сигналы</td></tr>
+        <tr><td><code>CMD</code></td><td>Аргументы по умолчанию или команда</td><td>Перекрывается аргументами <code>docker run</code></td></tr>
+        <tr><td><code>HEALTHCHECK</code></td><td>Проверка живости контейнера</td><td>Тяжёлая проверка каждые пять секунд заметно грузит систему</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>Dockerfile</span><span class="r">Минимальный рабочий образ для PHP-приложения</span></div><pre><span class="cm"># Точная версия вместо latest: сборка должна быть воспроизводимой</span>
+<span class="kw">FROM</span> php:8.3-fpm-alpine
+
+<span class="cm"># Одна инструкция RUN вместо трёх: меньше слоёв, и кэш пакетного</span>
+<span class="cm"># менеджера удаляется в том же слое, где создан, — иначе он останется</span>
+<span class="cm"># в образе, даже если удалить его следующей строкой.</span>
+<span class="kw">RUN</span> apk add --no-cache icu-dev linux-headers \
+ &amp;&amp; docker-php-ext-install intl opcache pdo_mysql \
+ &amp;&amp; apk del linux-headers
+
+<span class="kw">WORKDIR</span> /app
+
+<span class="cm"># Сначала только манифесты зависимостей: слой с composer install</span>
+<span class="cm"># переиспользуется, пока не изменились сами зависимости.</span>
+<span class="kw">COPY</span> composer.json composer.lock ./
+<span class="kw">RUN</span> composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+<span class="cm"># И только потом исходники, которые меняются при каждом коммите</span>
+<span class="kw">COPY</span> . .
+<span class="kw">RUN</span> composer dump-autoload --optimize --classmap-authoritative
+
+<span class="cm"># Запуск не от root: у процесса не должно быть прав, которые ему не нужны</span>
+<span class="kw">USER</span> www-data
+
+<span class="cm"># Форма списка, а не строки: процесс запускается напрямую</span>
+<span class="cm"># и получает сигналы остановки от Docker.</span>
+<span class="kw">CMD</span> [<span class="st">"php-fpm"</span>]
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Файл <code>.dockerignore</code> нужен с первого дня и по важности идёт сразу за самим Dockerfile. Без него в контекст сборки уезжают <code>vendor</code>, <code>node_modules</code>, каталог <code>.git</code> и локальные дампы базы: сборка замедляется на передаче сотен мегабайт, а любое изменение в этих каталогах сбрасывает кэш слоёв. Правильный набор исключений экономит больше времени, чем все остальные оптимизации Dockerfile.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем <code>CMD</code> отличается от <code>ENTRYPOINT</code>?</b><br><code>ENTRYPOINT</code> задаёт саму исполняемую команду, <code>CMD</code> — аргументы по умолчанию к ней или команду, если <code>ENTRYPOINT</code> не задан. Аргументы <code>docker run</code> заменяют <code>CMD</code>, но не <code>ENTRYPOINT</code>. Практическая связка: <code>ENTRYPOINT</code> — скрипт подготовки окружения, <code>CMD</code> — команда по умолчанию, чтобы тот же образ можно было запустить и как веб-процесс, и как воркер, передав другую команду.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="layers">
+    <p class="path">junior / кэш</p>
+    <div class="card-top"><h3>Слои и кэш сборки</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Каждая инструкция сверяется с кэшем: если её входные данные не изменились, слой берётся готовым. Проверка идёт сверху вниз и останавливается на первом несовпадении — всё, что ниже, пересобирается заново. Из этого следует единственное правило порядка: редко меняющееся выше, часто меняющееся ниже.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · что сбрасывает кэш слоя</caption>
+      <thead><tr><th>Причина</th><th>Что именно сравнивается</th><th>Как избежать лишних сбросов</th></tr></thead>
+      <tbody>
+        <tr><td>Изменилась строка инструкции</td><td>Текст команды</td><td>Не менять порядок ради косметики</td></tr>
+        <tr><td>Изменились копируемые файлы</td><td>Содержимое и права файлов</td><td>Копировать манифесты отдельно от исходников</td></tr>
+        <tr><td>Пересобрался слой выше</td><td>Идентификатор родительского слоя</td><td>Стабильные шаги держать наверху</td></tr>
+        <tr><td>Изменился базовый образ</td><td>Дайджест <code>FROM</code></td><td>Фиксировать версию, обновлять осознанно</td></tr>
+        <tr><td>Изменилось значение <code>ARG</code></td><td>Аргумент, использованный в инструкции</td><td>Объявлять аргумент как можно ниже</td></tr>
+        <tr><td>Мусор в контексте сборки</td><td>Содержимое передаваемого каталога</td><td>Настроить <code>.dockerignore</code></td></tr>
+        <tr><td>Сборка на чистом агенте CI</td><td>Локального кэша просто нет</td><td>Внешний кэш через BuildKit</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>Dockerfile</span><span class="r">Один и тот же образ: две минуты против пяти секунд</span></div><pre><span class="cm"># ПЛОХО: любое изменение любого файла проекта заставляет</span>
+<span class="cm"># заново скачивать все зависимости</span>
+<span class="kw">COPY</span> . .
+<span class="kw">RUN</span> composer install --no-dev
+
+<span class="cm"># ХОРОШО: слой с зависимостями переиспользуется, пока не</span>
+<span class="cm"># изменились composer.json и composer.lock</span>
+<span class="kw">COPY</span> composer.json composer.lock ./
+<span class="kw">RUN</span> composer install --no-dev --no-scripts --no-autoloader
+<span class="kw">COPY</span> . .
+<span class="kw">RUN</span> composer dump-autoload --optimize
+
+<span class="cm"># Тот же принцип для фронтенда: сначала манифест, потом исходники</span>
+<span class="kw">COPY</span> package.json package-lock.json ./
+<span class="kw">RUN</span> npm ci
+<span class="kw">COPY</span> assets ./assets
+<span class="kw">RUN</span> npm run build
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Удаление файлов не уменьшает образ, если оно происходит в другом слое. Классическая ошибка — установить пакеты сборки в одном <code>RUN</code>, а удалить их в следующем: итоговый образ содержит и то, и другое. Правильно — устанавливать, использовать и удалять в пределах одной инструкции либо, что надёжнее, выносить сборку в отдельный этап многоступенчатой сборки и копировать в финальный образ только результат.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему сборка образа занимает пять минут при правке одной строки кода?</b><br>Потому что копирование исходников стоит выше установки зависимостей: изменение любого файла сбрасывает кэш этого слоя и всех последующих. Лечится порядком — сначала копируются только манифесты зависимостей и выполняется установка, затем копируется остальной код. Дополнительно проверяется <code>.dockerignore</code>: без него в контекст сборки попадают <code>vendor</code> и <code>.git</code>, и кэш сбрасывается на ровном месте.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="run">
+    <p class="path">junior / запуск</p>
+    <div class="card-top"><h3>Запуск контейнера</h3><span class="badge b-1">Практика</span></div>
+    <p>Контейнер живёт ровно столько, сколько работает его главный процесс. Это объясняет большинство недоумений новичка: контейнер «сразу упал», потому что команда завершилась; контейнер «не видно снаружи», потому что порт не опубликован; изменения «пропали», потому что записывались в слой контейнера, а не в том.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · жизненный цикл контейнера</caption>
+      <thead><tr><th>Состояние</th><th>Как попасть</th><th>Что происходит с данными</th></tr></thead>
+      <tbody>
+        <tr><td>Создан</td><td><code>docker create</code></td><td>Записываемый слой существует, процесс не запущен</td></tr>
+        <tr><td>Запущен</td><td><code>docker run</code>, <code>docker start</code></td><td>Работает главный процесс</td></tr>
+        <tr><td>Приостановлен</td><td><code>docker pause</code></td><td>Процессы заморожены, память сохранена</td></tr>
+        <tr><td>Остановлен</td><td><code>docker stop</code>: сигнал завершения, затем принудительный</td><td>Записываемый слой сохраняется</td></tr>
+        <tr><td>Удалён</td><td><code>docker rm</code>, флаг <code>--rm</code></td><td>Записываемый слой уничтожается, тома остаются</td></tr>
+        <tr><td>Перезапущен</td><td>Политика <code>--restart</code></td><td>Тот же контейнер, тот же записываемый слой</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Команды, которые нужны каждый день</span></div><pre><span class="cm"># Запуск с публикацией порта, томом и переменной окружения</span>
+docker run -d --name app \
+  -p 8080:80 \                    <span class="cm"># порт хоста : порт контейнера</span>
+  -v <span class="st">"$PWD"</span>:/app \                <span class="cm"># каталог хоста внутрь контейнера</span>
+  -e APP_ENV=dev \
+  --restart unless-stopped \
+  myapp:1.4.2
+
+<span class="cm"># Что вообще происходит</span>
+docker ps                          <span class="cm"># запущенные контейнеры</span>
+docker ps -a                       <span class="cm"># включая остановленные и упавшие</span>
+docker logs -f --tail 100 app      <span class="cm"># поток логов главного процесса</span>
+docker stats                       <span class="cm"># потребление процессора и памяти</span>
+
+<span class="cm"># Заглянуть внутрь работающего контейнера</span>
+docker exec -it app sh             <span class="cm"># оболочка в уже запущенном контейнере</span>
+docker inspect app                 <span class="cm"># полные метаданные: тома, сети, переменные</span>
+
+<span class="cm"># Контейнер падает при старте: логи упавшего никуда не деваются</span>
+docker logs app
+<span class="cm"># и можно запустить образ с другой командой, обойдя entrypoint</span>
+docker run --rm -it --entrypoint sh myapp:1.4.2
+
+<span class="cm"># Уборка: место кончается почти всегда из-за образов и кэша сборки</span>
+docker system df                   <span class="cm"># кто именно занял диск</span>
+docker system prune -a --volumes   <span class="cm"># удалит и неиспользуемые тома: осторожно</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · частые флаги запуска</caption>
+      <thead><tr><th>Флаг</th><th>Что делает</th><th>Когда нужен</th></tr></thead>
+      <tbody>
+        <tr><td><code>-d</code></td><td>Запуск в фоне</td><td>Служебные контейнеры</td></tr>
+        <tr><td><code>-it</code></td><td>Интерактивный терминал</td><td>Оболочка, отладка, консольные команды</td></tr>
+        <tr><td><code>--rm</code></td><td>Удалить контейнер после остановки</td><td>Разовые команды, чтобы не копить мусор</td></tr>
+        <tr><td><code>-p</code></td><td>Опубликовать порт на хосте</td><td>Доступ снаружи; без него порт виден только в сети Docker</td></tr>
+        <tr><td><code>-v</code></td><td>Подключить том или каталог хоста</td><td>Данные и локальная разработка</td></tr>
+        <tr><td><code>-e</code>, <code>--env-file</code></td><td>Переменные окружения</td><td>Конфигурация приложения</td></tr>
+        <tr><td><code>--network</code></td><td>Подключить к сети</td><td>Связь между контейнерами по имени</td></tr>
+        <tr><td><code>--restart</code></td><td>Политика перезапуска</td><td>Продакшен без оркестратора</td></tr>
+        <tr><td><code>-u</code></td><td>Пользователь процесса</td><td>Совпадение прав на файлы при монтировании</td></tr>
+        <tr><td><code>--entrypoint</code></td><td>Заменить точку входа</td><td>Отладка образа, который падает при старте</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Контейнер запускается и сразу останавливается. Почему?</b><br>Потому что завершился его главный процесс: команда отработала и вышла, конфигурация оказалась неверной, либо процесс упал с ошибкой. Первое действие — посмотреть <code>docker logs</code> у уже остановленного контейнера, они сохраняются. Если логи пусты, образ запускают с подменённой точкой входа и оболочкой, чтобы посмотреть изнутри, что происходит при старте.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="compose">
+    <p class="path">junior / compose</p>
+    <div class="card-top"><h3>Compose для разработки</h3><span class="badge b-1">Окружение</span></div>
+    <p>Compose описывает набор связанных контейнеров одним файлом: приложение, база, кэш, брокер. Его главная ценность для команды — воспроизводимое окружение, которое поднимается одной командой и одинаково устроено у всех, включая нового разработчика в первый день.</p>
+
+    <div class="code"><div class="bar"><span>compose.yaml</span><span class="r">Типичное окружение PHP-проекта</span></div><pre><span class="nm">services</span>:
+  <span class="nm">app</span>:
+    <span class="nm">build</span>:
+      <span class="nm">context</span>: .
+      <span class="nm">target</span>: dev          <span class="cm"># этап многоступенчатой сборки для разработки</span>
+    <span class="nm">volumes</span>:
+      <span class="cm"># Код монтируется внутрь: правка файла видна без пересборки</span>
+      - .:/app
+      <span class="cm"># А vendor остаётся в томе: иначе медленная файловая система хоста</span>
+      <span class="cm"># и перетирание того, что установлено в образе</span>
+      - vendor:/app/vendor
+    <span class="nm">environment</span>:
+      <span class="nm">APP_ENV</span>: dev
+      <span class="nm">DATABASE_URL</span>: mysql://app:secret@db:3306/app
+    <span class="nm">depends_on</span>:
+      <span class="nm">db</span>:
+        <span class="nm">condition</span>: service_healthy   <span class="cm"># ждём готовности, а не запуска</span>
+    <span class="nm">ports</span>:
+      - <span class="st">"8080:80"</span>
+
+  <span class="nm">db</span>:
+    <span class="nm">image</span>: mysql:8.4
+    <span class="nm">environment</span>:
+      <span class="nm">MYSQL_DATABASE</span>: app
+      <span class="nm">MYSQL_USER</span>: app
+      <span class="nm">MYSQL_PASSWORD</span>: secret
+      <span class="nm">MYSQL_ROOT_PASSWORD</span>: secret
+    <span class="nm">volumes</span>:
+      - db-data:/var/lib/mysql        <span class="cm"># данные переживают пересоздание</span>
+    <span class="nm">healthcheck</span>:
+      <span class="nm">test</span>: [<span class="st">"CMD"</span>, <span class="st">"mysqladmin"</span>, <span class="st">"ping"</span>, <span class="st">"-h"</span>, <span class="st">"localhost"</span>]
+      <span class="nm">interval</span>: 5s
+      <span class="nm">retries</span>: 10
+
+  <span class="nm">worker</span>:
+    <span class="nm">build</span>: { <span class="nm">context</span>: ., <span class="nm">target</span>: dev }
+    <span class="cm"># Тот же образ, другая команда — типичная схема для воркеров</span>
+    <span class="nm">command</span>: [<span class="st">"php"</span>, <span class="st">"bin/console"</span>, <span class="st">"messenger:consume"</span>, <span class="st">"async"</span>]
+    <span class="nm">volumes</span>:
+      - .:/app
+    <span class="nm">depends_on</span>:
+      - db
+
+<span class="nm">volumes</span>:
+  <span class="nm">db-data</span>:
+  <span class="nm">vendor</span>:
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · ключи compose, которые нужны сразу</caption>
+      <thead><tr><th>Ключ</th><th>Зачем</th><th>Частая ошибка</th></tr></thead>
+      <tbody>
+        <tr><td><code>build</code> и <code>image</code></td><td>Собрать свой образ или взять готовый</td><td>Собирать то, что есть в реестре готовым</td></tr>
+        <tr><td><code>volumes</code></td><td>Код внутрь, данные наружу</td><td>Монтировать код в проде «чтобы быстро поправить»</td></tr>
+        <tr><td><code>environment</code>, <code>env_file</code></td><td>Конфигурация сервиса</td><td>Хранить реальные пароли в репозитории</td></tr>
+        <tr><td><code>depends_on</code></td><td>Порядок запуска</td><td>Без <code>condition</code> ждёт только старта, а не готовности</td></tr>
+        <tr><td><code>healthcheck</code></td><td>Признак готовности сервиса</td><td>Проверка, которая всегда возвращает успех</td></tr>
+        <tr><td><code>command</code></td><td>Переопределить команду образа</td><td>Свой образ на каждую роль вместо одного</td></tr>
+        <tr><td><code>ports</code></td><td>Публикация на хост</td><td>Публиковать порт базы наружу без необходимости</td></tr>
+        <tr><td><code>profiles</code></td><td>Необязательные сервисы</td><td>Поднимать весь стек ради одной команды</td></tr>
+        <tr><td><code>restart</code></td><td>Политика перезапуска</td><td>Бесконечный перезапуск скрывает ошибку конфигурации</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Compose — инструмент разработки и небольших установок, а не оркестратор. У него нет ни выкладки без простоя, ни распределения по нескольким машинам, ни автоматического восстановления при падении узла. Это не недостаток: для локального окружения и одиночного сервера его достаточно, а когда перечисленное действительно требуется, разговор идёт уже про <a href="infrastructure.html">Kubernetes и его цену</a>.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как контейнеры находят друг друга?</b><br>По имени сервиса внутри общей сети: Compose создаёт сеть и регистрирует в её DNS каждый сервис, поэтому приложение обращается к базе по адресу <code>db</code>, а не по IP. Публиковать порт на хост для этого не нужно: <code>ports</code> открывает доступ снаружи, а между собой контейнеры общаются напрямую по внутренней сети.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card lvl-j" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Проверка</span></div>
+    <p>Что должно быть понятно перед переходом на следующий уровень.</p>
+    <ul class="check">
+      <li>Объяснить разницу между образом, слоем и контейнером.</li>
+      <li>Назвать три отличия контейнера от виртуальной машины и практические следствия каждого.</li>
+      <li>Объяснить, почему удалённый в следующем слое файл остаётся в образе.</li>
+      <li>Перечислить основные инструкции Dockerfile и ловушку каждой.</li>
+      <li>Объяснить разницу между <code>CMD</code> и <code>ENTRYPOINT</code>.</li>
+      <li>Расставить инструкции так, чтобы кэш зависимостей переиспользовался.</li>
+      <li>Назвать, что сбрасывает кэш слоя, и зачем нужен <code>.dockerignore</code>.</li>
+      <li>Разобраться, почему контейнер завершился сразу после запуска.</li>
+      <li>Отличить публикацию порта от связи контейнеров по внутренней сети.</li>
+      <li>Понимать, что записанное в контейнер исчезает, а записанное в том — нет.</li>
+      <li>Поднять окружение из приложения и базы одним файлом compose.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · сборка для прода и поведение контейнера</p>
+    <h2>Middle: рабочий образ и предсказуемая эксплуатация</h2>
+    <p>Уровень, на котором образ перестаёт быть «лишь бы запускалось». Появляются многоступенчатая сборка, осознанный выбор базового образа, корректная остановка процессов, разделение данных и кода, работа с секретами и проверки готовности сервисов.</p>
+  </div>
+
+  <!-- 7 -->
+  <article class="card" id="multistage">
+    <p class="path">middle / сборка</p>
+    <div class="card-top"><h3>Многоступенчатая сборка</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Инструменты сборки нужны только во время сборки: компиляторы, Composer, Node, заголовочные файлы. В финальном образе они бесполезны и вредны — увеличивают размер и расширяют поверхность атаки. Многоступенчатая сборка решает это буквально: в одном файле описывается несколько этапов, а в итоговый образ копируется только результат.</p>
+
+    <div class="code"><div class="bar"><span>Dockerfile</span><span class="r">Три этапа: зависимости, сборка ресурсов, финальный образ</span></div><pre><span class="cm"># ---------- Этап 1: PHP-зависимости ----------</span>
+<span class="kw">FROM</span> composer:2 <span class="kw">AS</span> vendor
+
+<span class="kw">WORKDIR</span> /app
+<span class="kw">COPY</span> composer.json composer.lock ./
+<span class="cm"># --no-dev критично: dev-зависимости в проде не нужны и опасны</span>
+<span class="kw">RUN</span> composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+<span class="kw">COPY</span> . .
+<span class="kw">RUN</span> composer dump-autoload --optimize --classmap-authoritative
+
+<span class="cm"># ---------- Этап 2: фронтенд ----------</span>
+<span class="kw">FROM</span> node:22-alpine <span class="kw">AS</span> assets
+
+<span class="kw">WORKDIR</span> /app
+<span class="kw">COPY</span> package.json package-lock.json ./
+<span class="kw">RUN</span> npm ci
+<span class="kw">COPY</span> assets ./assets
+<span class="kw">RUN</span> npm run build
+
+<span class="cm"># ---------- Этап 3: то, что поедет в прод ----------</span>
+<span class="kw">FROM</span> php:8.3-fpm-alpine <span class="kw">AS</span> prod
+
+<span class="kw">RUN</span> apk add --no-cache icu \
+ &amp;&amp; apk add --no-cache --virtual .build-deps icu-dev linux-headers \
+ &amp;&amp; docker-php-ext-install intl opcache pdo_mysql \
+ &amp;&amp; apk del .build-deps          <span class="cm"># удаление в том же слое, где установка</span>
+
+<span class="kw">WORKDIR</span> /app
+
+<span class="cm"># Из этапов копируется только результат: ни Composer, ни Node,</span>
+<span class="cm"># ни исходников фронтенда в финальном образе нет.</span>
+<span class="kw">COPY</span> --from=vendor --chown=www-data:www-data /app /app
+<span class="kw">COPY</span> --from=assets --chown=www-data:www-data /app/public/build /app/public/build
+
+<span class="kw">COPY</span> docker/php/opcache.ini /usr/local/etc/php/conf.d/
+<span class="kw">COPY</span> --chmod=755 docker/entrypoint.sh /usr/local/bin/entrypoint
+
+<span class="kw">USER</span> www-data
+<span class="kw">ENTRYPOINT</span> [<span class="st">"entrypoint"</span>]
+<span class="kw">CMD</span> [<span class="st">"php-fpm"</span>]
+
+<span class="cm"># ---------- Этап для разработки ----------</span>
+<span class="cm"># Наследуется от prod и добавляет то, что в проде не нужно.</span>
+<span class="cm"># Собирается только при явном указании: --target dev</span>
+<span class="kw">FROM</span> prod <span class="kw">AS</span> dev
+
+<span class="kw">USER</span> root
+<span class="kw">RUN</span> apk add --no-cache $PHPIZE_DEPS linux-headers \
+ &amp;&amp; pecl install xdebug \
+ &amp;&amp; docker-php-ext-enable xdebug
+<span class="kw">USER</span> www-data
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · чем уменьшают образ</caption>
+      <thead><tr><th>Приём</th><th>Что даёт</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Многоступенчатая сборка</td><td>Самый большой выигрыш: инструментов сборки нет в итоге</td><td>Немного сложнее Dockerfile</td></tr>
+        <tr><td>Компактный базовый образ</td><td>Десятки мегабайт вместо сотен</td><td>Другая libc, отличия в отладочных утилитах</td></tr>
+        <tr><td>Установка и очистка в одном слое</td><td>Кэш пакетов не остаётся в образе</td><td>Длинные инструкции <code>RUN</code></td></tr>
+        <tr><td>Установка без dev-зависимостей</td><td>Меньше кода и уязвимостей</td><td>Нужен отдельный образ для тестов</td></tr>
+        <tr><td>Файл <code>.dockerignore</code></td><td>Меньше контекст, быстрее сборка</td><td>Нужно поддерживать список</td></tr>
+        <tr><td>Общий базовый слой у сервисов</td><td>Реестр и узлы качают его один раз</td><td>Дисциплина версий базового образа</td></tr>
+        <tr><td>Отказ от лишних инструментов внутри</td><td>Меньше поверхность атаки</td><td>Отлаживать сложнее, нужен отдельный приём</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Этап для разработки удобно наследовать от продового, а не собирать параллельно: тогда локально работает ровно тот образ, что поедет в прод, плюс отладочные расширения. Это убирает целый класс сюрпризов вида «на моей машине работает» — расхождение остаётся только в том, что явно добавлено в dev-этапе, и этот список всегда перед глазами.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужна многоступенчатая сборка?</b><br>Чтобы инструменты сборки не попадали в итоговый образ. Composer, Node, компиляторы и заголовочные файлы нужны только для получения артефакта; в финальный образ копируется результат, а всё остальное остаётся в промежуточных этапах. Выигрыш двойной: размер сокращается в разы, и в проде нет ни одного инструмента, которым можно воспользоваться при взломе.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="php">
+    <p class="path">middle / PHP</p>
+    <div class="card-top"><h3>PHP в контейнере</h3><span class="badge b-2">Стек</span></div>
+    <p>У официальных образов PHP несколько вариантов, и выбор между ними влияет и на размер, и на способ подключения веб-сервера. Отдельная тема — настройки, которые в контейнере задаются иначе, чем на обычном сервере: конфигурация уезжает в образ, а не правится на месте.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · варианты официальных образов PHP</caption>
+      <thead><tr><th>Вариант</th><th>Что внутри</th><th>Когда брать</th></tr></thead>
+      <tbody>
+        <tr><td><code>cli</code></td><td>Только интерпретатор</td><td>Воркеры, команды, задачи по расписанию</td></tr>
+        <tr><td><code>fpm</code></td><td>Менеджер процессов FastCGI</td><td>Веб под nginx: основной вариант для прода</td></tr>
+        <tr><td><code>apache</code></td><td>PHP плюс встроенный веб-сервер</td><td>Быстрый старт, простые установки</td></tr>
+        <tr><td><code>alpine</code></td><td>Компактная база</td><td>Когда важен размер и стек проверен</td></tr>
+        <tr><td><code>bookworm</code> и подобные</td><td>База на Debian</td><td>Проще с расширениями и отладкой</td></tr>
+        <tr><td>Сторонние образы «всё в одном»</td><td>Nginx, PHP, supervisor вместе</td><td>Обычно не стоит: несколько служб в контейнере</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Alpine или Debian</strong> — вопрос, который возникает в каждом проекте. Alpine даёт меньший образ, но использует другую реализацию стандартной библиотеки, из-за чего часть расширений и сторонних бинарников собирается сложнее, а редкие проблемы с производительностью встречаются на нестандартных нагрузках. Практическое правило: если стек типовой и всё собирается — берите компактный вариант; если начинается борьба с расширениями, время инженера дороже трёхсот мегабайт.</p>
+
+    <div class="code"><div class="bar"><span>ini + Dockerfile</span><span class="r">Настройки, без которых прод-образ неполон</span></div><pre><span class="cm">; docker/php/opcache.ini — кэш байткода включён и прогрет.</span>
+<span class="cm">; В контейнере файлы неизменяемы, поэтому проверку времени</span>
+<span class="cm">; модификации можно отключить: это заметный выигрыш.</span>
+opcache.enable=1
+opcache.validate_timestamps=0
+opcache.memory_consumption=256
+opcache.max_accelerated_files=20000
+<span class="cm">; Кэш путей: без него каждый include делает системные вызовы</span>
+realpath_cache_size=4096k
+realpath_cache_ttl=600
+
+<span class="cm">; docker/php/php.ini — прод-профиль</span>
+display_errors=Off
+<span class="cm">; Логи идут в поток ошибок: их подхватит драйвер логов Docker</span>
+error_log=/dev/stderr
+memory_limit=256M
+expose_php=Off
+
+<span class="cm"># В Dockerfile конфигурация копируется, а не правится на месте:</span>
+<span class="cm"># изменение настроек — это новый образ и новый деплой.</span>
+<span class="kw">COPY</span> docker/php/opcache.ini /usr/local/etc/php/conf.d/10-opcache.ini
+<span class="kw">COPY</span> docker/php/php.ini     /usr/local/etc/php/conf.d/20-app.ini
+
+<span class="cm"># Число дочерних процессов FPM подбирается под лимит памяти</span>
+<span class="cm"># контейнера, а не под память хоста: иначе OOM.</span>
+<span class="kw">COPY</span> docker/php/pool.conf   /usr/local/etc/php-fpm.d/zz-app.conf
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Один контейнер — один процесс. Связка nginx и PHP-FPM в одном контейнере под управлением супервизора кажется удобной, но ломает модель: падение одного процесса не видно оркестратору, логи смешиваются, обновлять части по отдельности нельзя, а сигнал остановки получает супервизор, а не приложение. Правильная схема — два контейнера в одной сети, где nginx обращается к FPM по имени сервиса.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как настроить PHP-FPM внутри контейнера?</b><br>Число дочерних процессов считается от лимита памяти самого контейнера, а не от памяти хоста: типичное значение — лимит, делённый на реальное потребление одного процесса, с запасом. Настройки кладутся файлами в образ, а не правятся внутри работающего контейнера. Кэш байткода включается с отключённой проверкой времени модификации, поскольку файлы в образе не меняются, а логи направляются в стандартные потоки.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="entrypoint">
+    <p class="path">middle / процессы</p>
+    <div class="card-top"><h3>Entrypoint, PID 1 и сигналы</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Главный процесс контейнера получает первый идентификатор процесса, и у этого есть последствия: он обязан корректно реагировать на сигнал завершения и, если порождает дочерние процессы, забирать их после смерти. Ошибки здесь не видны на разработке и стабильно проявляются в проде — воркер убивается на середине задачи при каждом деплое.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Entrypoint и почему форма записи имеет значение</span></div><pre><span class="cm">#!/bin/sh</span>
+<span class="cm"># docker/entrypoint.sh — подготовка окружения перед стартом</span>
+<span class="kw">set</span> -e
+
+<span class="cm"># Здесь уместны быстрые и идемпотентные вещи: прогрев кэша,</span>
+<span class="cm"># проверка обязательных переменных, права на каталоги.</span>
+<span class="kw">if</span> [ -z <span class="st">"$DATABASE_URL"</span> ]; <span class="kw">then</span>
+  <span class="kw">echo</span> <span class="st">"DATABASE_URL не задан"</span> &gt;&amp;2
+  <span class="kw">exit</span> 1
+<span class="kw">fi</span>
+
+php bin/console cache:warmup --no-interaction
+
+<span class="cm"># Миграции здесь запускать НЕ нужно: контейнеров несколько,</span>
+<span class="cm"># и они стартуют одновременно. Миграции — отдельный шаг деплоя.</span>
+
+<span class="cm"># exec заменяет процесс оболочки процессом приложения:</span>
+<span class="cm"># приложение становится PID 1 и получает сигналы напрямую.</span>
+<span class="cm"># Без exec оболочка остаётся PID 1 и сигналы не передаёт.</span>
+<span class="kw">exec</span> <span class="st">"$@"</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · форма записи команды и её последствия</caption>
+      <thead><tr><th>Запись</th><th>Что реально запускается</th><th>Получает ли сигнал остановки</th></tr></thead>
+      <tbody>
+        <tr><td><code>CMD php-fpm</code></td><td>Оболочка, внутри неё процесс</td><td>Нет: сигнал получает оболочка</td></tr>
+        <tr><td><code>CMD ["php-fpm"]</code></td><td>Процесс напрямую</td><td>Да</td></tr>
+        <tr><td><code>ENTRYPOINT ["sh", "script.sh"]</code> без <code>exec</code></td><td>Оболочка остаётся главной</td><td>Нет</td></tr>
+        <tr><td>Скрипт с <code>exec "$@"</code></td><td>Процесс заменяет оболочку</td><td>Да</td></tr>
+        <tr><td>Супервизор нескольких служб</td><td>Супервизор</td><td>Зависит от его настройки, обычно частично</td></tr>
+        <tr><td>Запуск с <code>--init</code></td><td>Минимальный init, затем процесс</td><td>Да, плюс уборка процессов-сирот</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Корректная остановка</strong> устроена так: команда остановки посылает главному процессу сигнал завершения и ждёт заданное время, по умолчанию около десяти секунд; если процесс не вышел, он убивается принудительно. Для веб-процесса этого обычно достаточно, а для воркера очереди — нет: длинная задача не успевает доработать. Поэтому воркеры проектируют так, чтобы они завершали текущее сообщение и выходили сами, а таймаут остановки поднимают до разумного предела.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Запуск миграций базы данных в точке входа контейнера. При масштабировании в три экземпляра три контейнера стартуют одновременно и выполняют миграции параллельно, что в лучшем случае даёт ошибку блокировки, а в худшем — частично применённую схему. Миграции — отдельный шаг процесса выкладки, выполняемый один раз; подробности — в конспекте по <a href="infrastructure.html">инфраструктуре и деплою</a>.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему воркер не завершается корректно при остановке контейнера?</b><br>Почти всегда потому, что главный процесс — оболочка, а не приложение: команда записана строкой, а не списком, или скрипт точки входа запускает процесс без <code>exec</code>. Сигнал завершения приходит оболочке и до приложения не доходит, поэтому через таймаут процесс убивается принудительно вместе с недоработанной задачей. Лечится формой списка и <code>exec</code> в конце скрипта, а для долгих задач — увеличенным таймаутом остановки.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="storage">
+    <p class="path">middle / данные и сеть</p>
+    <div class="card-top"><h3>Сети, тома и данные</h3><span class="badge b-2">Состояние</span></div>
+    <p>Контейнер эфемерен по замыслу: его удаляют и создают заново при каждом обновлении. Всё, что должно пережить это удаление, обязано лежать вне контейнера. Второй вопрос той же темы — как контейнеры видят друг друга и что из этого доступно снаружи.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · где живут данные</caption>
+      <thead><tr><th>Способ</th><th>Что это</th><th>Когда применять</th><th>Подводный камень</th></tr></thead>
+      <tbody>
+        <tr><td>Слой контейнера</td><td>Записываемый слой поверх образа</td><td>Временные файлы, ничего важного</td><td>Исчезает вместе с контейнером</td></tr>
+        <tr><td>Именованный том</td><td>Хранилище под управлением Docker</td><td>Базы данных, загруженные файлы</td><td>Не виден в каталоге проекта, нужна отдельная процедура резервных копий</td></tr>
+        <tr><td>Монтирование каталога хоста</td><td>Каталог хоста внутрь контейнера</td><td>Локальная разработка</td><td>Права и владелец файлов, медленно на некоторых системах</td></tr>
+        <tr><td>Временная файловая система в памяти</td><td>Каталог в оперативной памяти</td><td>Кэш, сессии, чувствительные временные файлы</td><td>Расходует память контейнера</td></tr>
+        <tr><td>Внешнее хранилище</td><td>Объектное хранилище или сетевой диск</td><td>Пользовательские файлы в проде</td><td>Требует настройки доступа и обработки отказов</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Правило простое:</strong> состояние не живёт в контейнере. Загруженные пользователями файлы уходят в объектное хранилище, данные базы — в том или во внешнюю управляемую базу, кэш — в Redis. Тогда любой контейнер можно убить и пересоздать в любой момент, а именно на этом построены и выкладка без простоя, и горизонтальное масштабирование.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · сети контейнеров</caption>
+      <thead><tr><th>Режим</th><th>Как работает</th><th>Когда нужен</th></tr></thead>
+      <tbody>
+        <tr><td>Мост, своя сеть</td><td>Изолированная сеть с DNS по именам сервисов</td><td>Значение по умолчанию для всех проектов</td></tr>
+        <tr><td>Мост по умолчанию</td><td>Общая сеть без разрешения имён</td><td>Не использовать: связь только по адресам</td></tr>
+        <tr><td>Сеть хоста</td><td>Пространство имён сети хоста напрямую</td><td>Редко: высокие требования к сети, отладка</td></tr>
+        <tr><td>Без сети</td><td>Сетевого доступа нет</td><td>Изолированные вычислительные задачи</td></tr>
+        <tr><td>Несколько сетей</td><td>Контейнер подключён к нескольким</td><td>Разделение внешнего и внутреннего контура</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Тома и сети: то, что спрашивают на практике</span></div><pre><span class="cm"># Внутри сети контейнеры обращаются друг к другу по имени сервиса</span>
+docker network create app-net
+docker run -d --name db  --network app-net mysql:8.4
+docker run -d --name app --network app-net -p 8080:80 myapp:1.4.2
+<span class="cm"># приложение подключается к базе по адресу db:3306, порт наружу не нужен</span>
+
+<span class="cm"># Именованный том переживает пересоздание контейнера</span>
+docker volume create db-data
+docker run -d --name db -v db-data:/var/lib/mysql mysql:8.4
+docker rm -f db                      <span class="cm"># контейнера нет</span>
+docker volume ls                     <span class="cm"># том на месте, данные целы</span>
+
+<span class="cm"># Резервная копия тома: том сам по себе никуда не копируется</span>
+docker run --rm -v db-data:/data -v <span class="st">"$PWD"</span>:/backup alpine \
+  tar czf /backup/db-data.tgz -C /data .
+
+<span class="cm"># Права при монтировании каталога хоста: файлы создаются от</span>
+<span class="cm"># пользователя контейнера, и снаружи они могут оказаться чужими</span>
+docker run --rm -u <span class="st">"$(id -u):$(id -g)"</span> -v <span class="st">"$PWD"</span>:/app -w /app \
+  composer:2 install
+
+<span class="cm"># Что именно смонтировано в работающий контейнер</span>
+docker inspect -f <span class="st">'{{ json .Mounts }}'</span> app
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Именованный том не входит в резервные копии автоматически и не удаляется вместе с контейнером — это одновременно и защита от потери данных, и источник двух типичных проблем. Первая: диск на сервере заканчивается из-за забытых томов от удалённых окружений. Вторая: команда полной очистки с флагом удаления томов сносит вместе с мусором и рабочую базу. Поэтому у томов с данными должно быть понятное имя и явная процедура копирования.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Куда девать данные, если контейнеры пересоздаются?</b><br>Наружу: база — в именованный том или во внешнюю управляемую базу, пользовательские файлы — в объектное хранилище, кэш и сессии — в Redis. Внутри контейнера остаются только код и временные файлы. Это условие, без которого не работают ни выкладка без простоя, ни горизонтальное масштабирование: любой экземпляр должен быть заменяем без потерь.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="config">
+    <p class="path">middle / конфигурация</p>
+    <div class="card-top"><h3>Конфигурация и секреты</h3><span class="badge b-2">Настройки</span></div>
+    <p>Один и тот же образ должен работать в тестовой среде и в проде — отличаться может только конфигурация, приходящая снаружи. Отсюда два следствия: настройки передаются переменными окружения или файлами, а секреты не попадают в образ ни при каких обстоятельствах.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · способы передать настройки и их безопасность</caption>
+      <thead><tr><th>Способ</th><th>Виден в образе</th><th>Виден в метаданных</th><th>Когда уместен</th></tr></thead>
+      <tbody>
+        <tr><td><code>ENV</code> в Dockerfile</td><td>Да</td><td>Да</td><td>Неизменяемые несекретные значения</td></tr>
+        <tr><td><code>ARG</code> при сборке</td><td>Нет</td><td>Да, в истории</td><td>Версии, флаги сборки. Не для секретов</td></tr>
+        <tr><td>Переменные при запуске</td><td>Нет</td><td>Да, в описании контейнера</td><td>Обычная конфигурация окружения</td></tr>
+        <tr><td>Файл переменных</td><td>Нет</td><td>Значения — да</td><td>Локальная разработка</td></tr>
+        <tr><td>Секреты сборки BuildKit</td><td>Нет</td><td>Нет</td><td>Токен приватного репозитория при сборке</td></tr>
+        <tr><td>Секреты оркестратора</td><td>Нет</td><td>Нет</td><td>Прод: пароли, ключи, сертификаты</td></tr>
+        <tr><td>Хранилище секретов</td><td>Нет</td><td>Нет</td><td>Прод с ротацией и аудитом доступа</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>Dockerfile + bash</span><span class="r">Секрет при сборке, который не остаётся в образе</span></div><pre><span class="cm"># ПЛОХО: токен навсегда останется в истории образа,</span>
+<span class="cm"># и его увидит любой, кто скачает образ из реестра.</span>
+<span class="kw">ARG</span> COMPOSER_AUTH
+<span class="kw">RUN</span> composer install
+
+<span class="cm"># ХОРОШО: секрет монтируется только на время выполнения инструкции</span>
+<span class="cm"># и в слои не попадает.</span>
+<span class="kw">RUN</span> --mount=type=secret,id=composer_auth,target=/root/.composer/auth.json \
+    composer install --no-dev
+
+<span class="cm"># Сборка с передачей секрета из файла или переменной:</span>
+<span class="cm">#   docker build --secret id=composer_auth,src=auth.json .</span>
+
+<span class="cm"># Проверка, что секрет никуда не утёк: история слоёв</span>
+docker history --no-trunc myapp:1.4.2 | grep -i token
+
+<span class="cm"># И полный список переменных, видимых в метаданных образа</span>
+docker inspect -f <span class="st">'{{ json .Config.Env }}'</span> myapp:1.4.2
+</pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Файл с реальными паролями, скопированный в образ «чтобы работало на сервере». Образ уезжает в реестр, реестр доступен всей команде и агентам сборки, а слой с секретом остаётся в нём навсегда — удаление файла следующей инструкцией ничего не меняет. Если такое случилось, единственный корректный порядок действий: сменить сам секрет, а потом уже пересобирать образы и чистить реестр.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как передать пароль базы в контейнер?</b><br>Никогда не в образ. В проде — механизмом секретов оркестратора или внешним хранилищем, откуда значение попадает в переменную окружения или в файл при запуске. Если секрет нужен именно на этапе сборки, например токен приватного репозитория, используется механизм секретов BuildKit: он монтирует значение на время инструкции и не оставляет его в слоях.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="health">
+    <p class="path">middle / готовность</p>
+    <div class="card-top"><h3>Healthcheck и порядок запуска</h3><span class="badge b-2">Надёжность</span></div>
+    <p>Запущенный контейнер и готовый к работе контейнер — разные вещи. База принимает соединения не сразу, приложение прогревает кэш, воркер подключается к брокеру. Без явной проверки готовности зависящие сервисы стартуют раньше времени и падают, а балансировщик отправляет трафик в ещё не готовый экземпляр.</p>
+
+    <div class="code"><div class="bar"><span>Dockerfile + compose.yaml</span><span class="r">Проверка готовности и ожидание зависимостей</span></div><pre><span class="cm"># Проверка должна быть дешёвой и проверять реальную готовность,</span>
+<span class="cm"># а не факт, что процесс жив: подключение к базе, доступность кэша.</span>
+<span class="kw">HEALTHCHECK</span> --interval=10s --timeout=3s --start-period=30s --retries=3 \
+  CMD php bin/console app:health || exit 1
+
+<span class="cm"># start-period важен: пока приложение стартует, неудачные</span>
+<span class="cm"># проверки не считаются отказом и не вызывают перезапуск.</span>
+
+<span class="cm"># В compose зависимость ждёт именно готовности:</span>
+<span class="nm">services</span>:
+  <span class="nm">app</span>:
+    <span class="nm">depends_on</span>:
+      <span class="nm">db</span>:
+        <span class="nm">condition</span>: service_healthy
+      <span class="nm">redis</span>:
+        <span class="nm">condition</span>: service_started
+
+<span class="cm"># Но полагаться только на порядок запуска нельзя: база может</span>
+<span class="cm"># упасть и позже. Приложение обязано переживать недоступность</span>
+<span class="cm"># зависимости и переподключаться, а не падать навсегда.</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · виды проверок и их назначение</caption>
+      <thead><tr><th>Проверка</th><th>Отвечает на вопрос</th><th>Что делают при отказе</th><th>Типичная ошибка</th></tr></thead>
+      <tbody>
+        <tr><td>Живость</td><td>Процесс не завис?</td><td>Перезапускают контейнер</td><td>Проверяет зависимости и вызывает лавину перезапусков</td></tr>
+        <tr><td>Готовность</td><td>Можно слать трафик?</td><td>Убирают из балансировки</td><td>Всегда возвращает успех</td></tr>
+        <tr><td>Стартовая</td><td>Приложение ещё запускается?</td><td>Ждут, не считая отказом</td><td>Не задана, и медленный старт считают падением</td></tr>
+        <tr><td>Глубокая</td><td>Все зависимости доступны?</td><td>Показывают на дашборде</td><td>Ставят как проверку живости</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Проверка живости не должна ходить в базу. Если она это делает, кратковременная недоступность базы приводит к тому, что все экземпляры приложения признаются мёртвыми и перезапускаются одновременно — вместо частичной деградации получается полный отказ, который сам себя поддерживает. Живость отвечает только за собственный процесс, а состояние зависимостей — предмет проверки готовности и мониторинга.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Приложение стартует раньше базы и падает. Как правильно решить?</b><br>Двумя способами одновременно. На уровне запуска — проверкой готовности зависимости и ожиданием её здорового состояния. На уровне приложения — устойчивостью к недоступности: повторные попытки подключения с задержкой вместо падения. Второе важнее: порядок запуска решает проблему только в момент старта, а база может стать недоступной в любой момент работы.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card lvl-m" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Проверка</span></div>
+    <p>Что должно быть в рабочем арсенале.</p>
+    <ul class="check">
+      <li>Написать многоступенчатую сборку и объяснить, что и зачем копируется между этапами.</li>
+      <li>Назвать приёмы уменьшения образа в порядке их эффективности.</li>
+      <li>Выбрать между вариантами официальных образов PHP и обосновать выбор базы.</li>
+      <li>Объяснить, почему nginx и PHP-FPM живут в разных контейнерах.</li>
+      <li>Настроить кэш байткода и число процессов FPM исходя из лимита контейнера.</li>
+      <li>Объяснить разницу между формой строки и формой списка в <code>CMD</code>.</li>
+      <li>Написать точку входа с <code>exec</code> и объяснить, почему он обязателен.</li>
+      <li>Назвать, почему миграции не запускают в точке входа контейнера.</li>
+      <li>Развести данные и контейнер: том, объектное хранилище, внешняя база.</li>
+      <li>Объяснить, как контейнеры находят друг друга и когда нужна публикация порта.</li>
+      <li>Перечислить способы передать секрет и сказать, какие оставляют след в образе.</li>
+      <li>Отличить проверку живости от проверки готовности и объяснить цену их путаницы.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · сборка в CI, безопасность, эксплуатация</p>
+    <h2>Senior: воспроизводимость, риски и жизнь образа в проде</h2>
+    <p>На этом уровне вопросы смещаются от «как собрать» к «как собирать быстро и одинаково», «что именно мы выкатываем» и «что делать, когда контейнер ведёт себя не так». Плюс решение, которое дороже всех остальных: нужен ли вообще оркестратор.</p>
+  </div>
+
+  <!-- 14 -->
+  <article class="card" id="buildkit">
+    <p class="path">senior / сборка</p>
+    <div class="card-top"><h3>BuildKit и кэш в CI</h3><span class="badge b-3">Скорость</span></div>
+    <p>На локальной машине кэш слоёв есть всегда, на агенте CI — почти никогда: каждая сборка стартует на чистой машине. Отсюда типичная ситуация, когда локально сборка занимает пятнадцать секунд, а в пайплайне — шесть минут, и половина этого времени уходит на повторную загрузку зависимостей.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · стратегии кэширования сборки</caption>
+      <thead><tr><th>Стратегия</th><th>Как работает</th><th>Плюсы и минусы</th></tr></thead>
+      <tbody>
+        <tr><td>Локальный кэш слоёв</td><td>Кэш демона на машине сборки</td><td>Бесплатно, но на чистом агенте отсутствует</td></tr>
+        <tr><td>Кэш из реестра</td><td>Слои предыдущей сборки скачиваются как кэш</td><td>Работает на любом агенте, стоит трафика</td></tr>
+        <tr><td>Встроенный кэш в образе</td><td>Метаданные кэша внутри опубликованного образа</td><td>Просто, но увеличивает образ</td></tr>
+        <tr><td>Кэш-монтирование</td><td>Каталог кэша пакетного менеджера между сборками</td><td>Сильно ускоряет установку зависимостей, не попадает в слои</td></tr>
+        <tr><td>Кэш агента CI</td><td>Каталог сохраняется средствами CI</td><td>Зависит от платформы, легко разрастается</td></tr>
+        <tr><td>Собственный сборщик</td><td>Постоянный агент с прогретым кэшем</td><td>Быстро, но нужен уход и изоляция сборок</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>Dockerfile + bash</span><span class="r">Кэш-монтирование и внешний кэш реестра</span></div><pre><span class="cm"># Кэш пакетного менеджера сохраняется между сборками, но не</span>
+<span class="cm"># попадает в слои образа: и быстро, и без лишнего веса.</span>
+<span class="kw">RUN</span> --mount=type=cache,target=/root/.composer/cache \
+    composer install --no-dev --prefer-dist
+
+<span class="kw">RUN</span> --mount=type=cache,target=/root/.npm \
+    npm ci
+
+<span class="cm"># Сборка в CI с кэшем, который хранится в реестре образов:</span>
+<span class="cm"># следующий запуск на чистом агенте переиспользует слои.</span>
+docker buildx build \
+  --tag registry.example.com/app:<span class="st">"$GIT_SHA"</span> \
+  --tag registry.example.com/app:latest \
+  --cache-from type=registry,ref=registry.example.com/app:buildcache \
+  --cache-to   type=registry,ref=registry.example.com/app:buildcache,mode=max \
+  --build-arg APP_VERSION=<span class="st">"$GIT_SHA"</span> \
+  --push .
+
+<span class="cm"># Проверка, что кэш действительно сработал: в выводе сборки</span>
+<span class="cm"># у переиспользованных шагов стоит отметка CACHED.</span>
+</pre></div>
+
+    <p><strong>Воспроизводимость</strong> — вторая половина темы. Сборка одного и того же коммита через месяц должна давать функционально тот же образ, а этому мешают три вещи: плавающие теги базовых образов, установка пакетов без фиксации версий и загрузка файлов по внешним ссылкам во время сборки. Первое лечится фиксацией базового образа по дайджесту, второе — файлами блокировки версий, третье — переносом артефактов в свой реестр.</p>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Тег образа стоит делать из хеша коммита, а не только из номера версии: тогда по любому работающему контейнеру мгновенно восстанавливается, какой именно код внутри. Дополнительно полезно записать хеш коммита и время сборки в метки образа — это стоит одной строки и много раз окупается при разборе инцидента, когда нужно понять, что именно выкачено на конкретном узле.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Сборка в CI занимает шесть минут, локально — пятнадцать секунд. Что делать?</b><br>Причина обычно в отсутствии кэша на чистом агенте. Решается внешним кэшем: слои предыдущей сборки подтягиваются из реестра, а каталоги пакетных менеджеров подключаются кэш-монтированием, чтобы зависимости не скачивались заново. Параллельно проверяются порядок слоёв и содержимое контекста сборки — часто половина времени уходит на передачу того, что должно быть исключено.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="security">
+    <p class="path">senior / безопасность</p>
+    <div class="card-top"><h3>Безопасность образов</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Контейнер не является границей безопасности сам по себе: ядро общее с хостом, и ошибка в изоляции означает выход наружу. Практическая работа сводится к сокращению того, что находится внутри образа, и того, что процесс внутри вправе делать.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · риски и меры</caption>
+      <thead><tr><th>Риск</th><th>Чем плох</th><th>Мера</th></tr></thead>
+      <tbody>
+        <tr><td>Процесс работает от root</td><td>Захват процесса даёт полные права внутри, а при ошибке изоляции — и снаружи</td><td>Отдельный пользователь и <code>USER</code> в Dockerfile</td></tr>
+        <tr><td>Лишние пакеты в образе</td><td>Уязвимости и готовый инструментарий для атакующего</td><td>Минимальная база, многоступенчатая сборка</td></tr>
+        <tr><td>Устаревший базовый образ</td><td>Известные уязвимости остаются годами</td><td>Регулярная пересборка, обновление дайджеста</td></tr>
+        <tr><td>Секреты в слоях</td><td>Достаются из любого скачанного образа</td><td>Секреты сборки, проверка истории образа</td></tr>
+        <tr><td>Привилегированный режим</td><td>Практически снимает изоляцию</td><td>Не использовать; выдавать точечные возможности</td></tr>
+        <tr><td>Монтирование сокета демона</td><td>Доступ к сокету равносилен правам root на хосте</td><td>Не монтировать; для сборки — отдельный подход</td></tr>
+        <tr><td>Записываемая корневая ФС</td><td>Атакующий может изменить код внутри контейнера</td><td>Запуск с доступом только на чтение плюс тома для записи</td></tr>
+        <tr><td>Образы из непроверенных источников</td><td>Закладки и неизвестное содержимое</td><td>Официальные образы, свой реестр, проверка подписи</td></tr>
+        <tr><td>Отсутствие сканирования</td><td>Об уязвимостях узнают из новостей</td><td>Сканирование в пайплайне с порогом на критичные</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>Dockerfile + bash</span><span class="r">Непривилегированный запуск и проверка образа</span></div><pre><span class="cm"># Пользователь создаётся явно, с фиксированным идентификатором:</span>
+<span class="cm"># так права на смонтированные тома предсказуемы.</span>
+<span class="kw">RUN</span> addgroup -g 1000 app &amp;&amp; adduser -u 1000 -G app -s /bin/sh -D app
+
+<span class="cm"># Каталоги, куда приложение обязано писать, готовятся заранее,</span>
+<span class="cm"># потому что корневая ФС в проде запускается только на чтение.</span>
+<span class="kw">RUN</span> mkdir -p /app/var &amp;&amp; chown -R app:app /app/var
+
+<span class="kw">USER</span> app
+
+<span class="cm"># Запуск с урезанными правами: без новых привилегий,</span>
+<span class="cm"># корневая ФС только для чтения, запись — только в тома.</span>
+docker run -d --name app \
+  --read-only \
+  --tmpfs /tmp \
+  -v app-var:/app/var \
+  --security-opt no-new-privileges \
+  --cap-drop ALL \
+  --memory 512m --cpus 1 \
+  myapp:1.4.2
+
+<span class="cm"># Проверки перед публикацией образа</span>
+docker scout cves myapp:1.4.2          <span class="cm"># известные уязвимости</span>
+docker history --no-trunc myapp:1.4.2  <span class="cm"># следы секретов в слоях</span>
+docker inspect -f <span class="st">'{{ .Config.User }}'</span> myapp:1.4.2   <span class="cm"># не пусто и не root</span>
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Монтирование сокета демона внутрь контейнера — самая недооценённая дыра. Это обычно делают ради сборки образов из пайплайна или ради агента мониторинга, а по факту выдают контейнеру возможность запустить на хосте что угодно с правами root: достаточно попросить демон создать привилегированный контейнер с примонтированной корневой файловой системой. Если такая возможность нужна, вопрос решается отдельным сборщиком без доступа к сокету, а не удобным ярлыком.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как сделать образ безопаснее?</b><br>Сократить содержимое и права. Минимальная база и многоступенчатая сборка убирают лишние пакеты; отдельный непривилегированный пользователь и запуск без новых привилегий ограничивают процесс; корневая файловая система монтируется только для чтения, а запись разрешена в конкретные тома. Сверху — сканирование уязвимостей в пайплайне с порогом на критичные и регулярная пересборка ради обновлений базового образа.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="registry">
+    <p class="path">senior / реестр</p>
+    <div class="card-top"><h3>Реестр, теги, версии</h3><span class="badge b-3">Артефакты</span></div>
+    <p>Реестр — это хранилище артефактов выкладки, и относиться к нему нужно так же, как к репозиторию кода: с понятной схемой именования, сроком хранения и ответом на вопрос «что именно сейчас работает в проде».</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · схемы тегирования</caption>
+      <thead><tr><th>Схема</th><th>Пример смысла</th><th>Плюс</th><th>Минус</th></tr></thead>
+      <tbody>
+        <tr><td>Плавающий <code>latest</code></td><td>Последняя сборка</td><td>Удобно локально</td><td>Непонятно, что развёрнуто; невоспроизводимо</td></tr>
+        <tr><td>Хеш коммита</td><td>Точный код внутри</td><td>Однозначность и простой откат</td><td>Нечитаемо для человека</td></tr>
+        <tr><td>Семантическая версия</td><td>Релиз продукта</td><td>Понятно людям и внешним потребителям</td><td>Нужна дисциплина выставления версий</td></tr>
+        <tr><td>Ветка или окружение</td><td>Текущее состояние стенда</td><td>Удобно для тестовых сред</td><td>Плавающий тег: тот же риск, что у <code>latest</code></td></tr>
+        <tr><td>Дайджест</td><td>Конкретный образ по содержимому</td><td>Абсолютная воспроизводимость</td><td>Совсем нечитаемо, нужен инструментарий</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Рабочая комбинация</strong> — несколько тегов на один образ: хеш коммита как основной идентификатор, семантическая версия для релизов и плавающий тег окружения для удобства. Разворачивается при этом всегда неизменяемый тег или дайджест, а не плавающий: иначе перезапуск контейнера через неделю может незаметно поднять другую версию кода.</p>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Заведите правило хранения с первого дня: сборки веток удаляются через несколько недель, релизные образы живут долго. Реестр без ротации растёт линейно и однажды упирается в квоту ровно в момент выкладки исправления, а разбираться, что можно удалить, приходится в самое неподходящее время.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему не стоит выкатывать образ с тегом <code>latest</code>?</b><br>Потому что тег — подвижная ссылка. Непонятно, какой код работает в проде; перезапуск контейнера может подтянуть другую версию; откат превращается в угадывание. Развёртывают неизменяемый идентификатор — хеш коммита или дайджест, — а читаемые теги вешают дополнительно, для людей и для внешних потребителей образа.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="runtime">
+    <p class="path">senior / эксплуатация</p>
+    <div class="card-top"><h3>Ресурсы, лимиты, логи</h3><span class="badge b-3">Продакшен</span></div>
+    <p>Контейнер без лимитов может съесть всю память узла и утащить за собой соседей. Контейнер с неверными лимитами убивается ядром в самый нагруженный момент. Между этими крайностями и находится настройка ресурсов, а рядом — вопрос, куда деваются логи, если их никто не собирает.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · ресурсы и поведение при их исчерпании</caption>
+      <thead><tr><th>Ресурс</th><th>Что происходит при превышении</th><th>Как заметить</th><th>Что настроить</th></tr></thead>
+      <tbody>
+        <tr><td>Память</td><td>Процесс убивается ядром без предупреждения</td><td>Код завершения 137, записи о нехватке памяти в журнале хоста</td><td>Лимит с запасом, согласованный с настройками приложения</td></tr>
+        <tr><td>Процессор</td><td>Процесс не убивается, а замедляется</td><td>Рост задержек при спокойном мониторинге ошибок</td><td>Квота и запрос ресурсов, ориентируясь на профиль нагрузки</td></tr>
+        <tr><td>Диск</td><td>Запись перестаёт работать по всему узлу</td><td>Ошибки записи, переполненные логи и кэш сборки</td><td>Ротация логов, уборка образов, вынос данных в тома</td></tr>
+        <tr><td>Дескрипторы</td><td>Соединения перестают устанавливаться</td><td>Ошибки «слишком много открытых файлов»</td><td>Лимиты процесса, закрытие соединений в коде</td></tr>
+        <tr><td>Процессы</td><td>Нельзя создать новый процесс</td><td>Сбои при запуске команд внутри контейнера</td><td>Лимит числа процессов, уборка процессов-сирот</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Лимит памяти и настройки приложения должны быть согласованы.</strong> Классическая авария: контейнеру выдали 512 мегабайт, а FPM настроен на двадцать дочерних процессов по сто мегабайт — под нагрузкой ядро убивает контейнер, оркестратор его перезапускает, нагрузка перетекает на соседей, и они падают следом. Число процессов считается от лимита контейнера, а не от объёма памяти сервера, и с запасом на пики.</p>
+
+    <div class="code"><div class="bar"><span>bash + compose.yaml</span><span class="r">Лимиты, ротация логов, диагностика после падения</span></div><pre><span class="cm"># Логи по умолчанию пишутся в файл на хосте и не ротируются:</span>
+<span class="cm"># один разговорчивый контейнер способен занять весь диск.</span>
+<span class="nm">services</span>:
+  <span class="nm">app</span>:
+    <span class="nm">image</span>: registry.example.com/app:1.4.2
+    <span class="nm">deploy</span>:
+      <span class="nm">resources</span>:
+        <span class="nm">limits</span>: { <span class="nm">cpus</span>: <span class="st">"1.0"</span>, <span class="nm">memory</span>: 512M }
+    <span class="nm">logging</span>:
+      <span class="nm">driver</span>: json-file
+      <span class="nm">options</span>: { <span class="nm">max-size</span>: <span class="st">"10m"</span>, <span class="nm">max-file</span>: <span class="st">"3"</span> }
+
+<span class="cm"># Приложение пишет в стандартные потоки, а не в файлы внутри</span>
+<span class="cm"># контейнера: сбор логов — задача платформы, а не приложения.</span>
+
+<span class="cm"># Контейнер перезапустился — почему?</span>
+docker inspect -f <span class="st">'{{ .State.ExitCode }} {{ .State.OOMKilled }}'</span> app
+<span class="cm"># 137 и true означают, что процесс убит из-за нехватки памяти</span>
+
+docker inspect -f <span class="st">'{{ .RestartCount }}'</span> app     <span class="cm"># сколько раз уже падал</span>
+docker stats --no-stream app                       <span class="cm"># текущее потребление</span>
+
+<span class="cm"># Куда уходит диск</span>
+docker system df -v | head -30
+</pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Контейнер периодически перезапускается с кодом 137. Что это значит?</b><br>Процесс убит по сигналу принудительного завершения, и почти всегда причина — нехватка памяти: контейнер превысил лимит, и его снял механизм ядра. Проверяется признаком в описании контейнера и записями журнала хоста. Дальше сравниваются лимит и реальное потребление, а настройки приложения — число процессов FPM, размер кэша байткода, объём выборок — приводятся в соответствие с лимитом.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card" id="debug">
+    <p class="path">senior / отладка</p>
+    <div class="card-top"><h3>Отладка контейнеров</h3><span class="badge b-3">Диагностика</span></div>
+    <p>Отладка в контейнере отличается тем, что привычных инструментов внутри обычно нет: минимальный образ не содержит ни сетевых утилит, ни редактора. Это правильно с точки зрения безопасности и неудобно ровно в тот момент, когда что-то сломалось, поэтому набор приёмов стоит освоить заранее.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 19 · симптом и первое действие</caption>
+      <thead><tr><th>Симптом</th><th>Вероятная причина</th><th>Первое действие</th></tr></thead>
+      <tbody>
+        <tr><td>Контейнер сразу завершается</td><td>Главный процесс отработал или упал</td><td><code>docker logs</code>, затем запуск с подменённой точкой входа</td></tr>
+        <tr><td>Логи пусты</td><td>Приложение пишет в файл внутри контейнера</td><td>Перенаправить вывод в стандартные потоки</td></tr>
+        <tr><td>Порт недоступен снаружи</td><td>Порт не опубликован или процесс слушает только локальный адрес</td><td><code>docker port</code>, проверить адрес привязки в конфигурации</td></tr>
+        <tr><td>Не находит соседний сервис</td><td>Контейнеры в разных сетях</td><td><code>docker network inspect</code></td></tr>
+        <tr><td>Ошибка прав на файлы</td><td>Несовпадение идентификаторов пользователя при монтировании</td><td>Сравнить владельца файлов и пользователя процесса</td></tr>
+        <tr><td>Изменения кода не видны</td><td>Код скопирован в образ, а не смонтирован</td><td>Проверить список монтирований</td></tr>
+        <tr><td>Образ неожиданно вырос</td><td>Мусор в слоях или в контексте</td><td><code>docker history</code>, проверить <code>.dockerignore</code></td></tr>
+        <tr><td>Работает локально, падает в проде</td><td>Разные теги образа или переменные окружения</td><td>Сравнить дайджесты образов и переменные</td></tr>
+        <tr><td>Внутри нет нужной утилиты</td><td>Минимальный образ</td><td>Отладочный контейнер в тех же пространствах имён</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Приёмы, когда внутри образа ничего нет</span></div><pre><span class="cm"># Отладочный контейнер в сетевом пространстве проблемного:</span>
+<span class="cm"># инструменты берём из другого образа, целевой не трогаем.</span>
+docker run --rm -it --network container:app nicolaka/netshoot \
+  sh -c <span class="st">"nslookup db; curl -v http://db:3306"</span>
+
+<span class="cm"># Файловая система контейнера доступна снаружи целиком</span>
+docker cp app:/app/var/log/app.log ./app.log
+docker diff app          <span class="cm"># что изменилось относительно образа</span>
+
+<span class="cm"># Сравнение того, что реально выкачено, с тем, что ожидалось</span>
+docker inspect -f <span class="st">'{{ .Image }}'</span> app
+docker image inspect registry.example.com/app:1.4.2 -f <span class="st">'{{ .RepoDigests }}'</span>
+
+<span class="cm"># Из чего состоит образ и какой слой всё утяжелил</span>
+docker history myapp:1.4.2
+
+<span class="cm"># Запуск образа в обход точки входа, когда он падает при старте</span>
+docker run --rm -it --entrypoint sh myapp:1.4.2
+
+<span class="cm"># Проверка окружения ровно так, как его видит приложение</span>
+docker exec app env | sort
+docker exec app php -i | grep -E <span class="st">"opcache.enable|memory_limit"</span>
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Договоритесь в команде, что диагностика прода — это отдельный отладочный контейнер, подключаемый к пространствам имён проблемного, а не установка утилит внутрь работающего. Установка пакетов в живой контейнер меняет то, что вы отлаживаете, не переживает перезапуск и создаёт соблазн «оставить, пока работает». Отладочный образ с полным набором инструментов при этом никогда не попадает в прод.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как отладить контейнер, внутри которого нет ни одной утилиты?</b><br>Запустить рядом контейнер с инструментами, подключив его к сетевому пространству проблемного: тогда проверки DNS и соединений выполняются ровно в его сетевом окружении. Файлы копируются наружу штатной командой, изменения относительно образа видны отдельной командой, а если контейнер падает при старте, образ запускается с подменённой точкой входа и оболочкой.</div>
+  </article>
+
+  <!-- 19 -->
+  <article class="card" id="orchestration">
+    <p class="path">senior / масштаб</p>
+    <div class="card-top"><h3>Куда дальше: оркестрация</h3><span class="badge b-3">Выбор</span></div>
+    <p>Docker решает задачу упаковки и запуска на одной машине. Как только требуются несколько узлов, выкладка без простоя, автоматическое восстановление и распределение нагрузки, нужен слой поверх — и вопрос из технического становится организационным: у оркестратора есть постоянная стоимость владения.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 20 · варианты запуска в проде</caption>
+      <thead><tr><th>Вариант</th><th>Что даёт</th><th>Чего не даёт</th><th>Кому подходит</th></tr></thead>
+      <tbody>
+        <tr><td>Compose на одном сервере</td><td>Простота, один файл, понятная отладка</td><td>Отказоустойчивость, выкладка без простоя из коробки</td><td>Небольшие проекты и внутренние сервисы</td></tr>
+        <tr><td>Compose плюс обратный прокси</td><td>Выкладку без простоя можно организовать вручную</td><td>Автоматическое восстановление узла</td><td>Проекты, где один сервер справляется</td></tr>
+        <tr><td>Управляемый сервис контейнеров</td><td>Запуск без своего оркестратора</td><td>Гибкость и переносимость</td><td>Команды без выделенной эксплуатации</td></tr>
+        <tr><td>Kubernetes</td><td>Полный набор: масштабирование, восстановление, выкладки</td><td>Простоту: нужен человек, который его знает</td><td>Много сервисов, несколько команд, реальная нагрузка</td></tr>
+        <tr><td>Serverless-контейнеры</td><td>Оплата по факту, нет управления узлами</td><td>Долгоживущие процессы и точный контроль</td><td>Пиковые и редкие нагрузки</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Практический критерий</strong> звучит так: оркестратор оправдан, когда его функции нужны постоянно, а не однажды. Если сервисов три, обновления раз в неделю и один сервер держит нагрузку с запасом, Compose и обратный прокси дадут тот же результат в разы дешевле. Разбор Kubernetes и цены его внедрения — в конспекте по <a href="infrastructure.html">инфраструктуре и деплою</a>.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Можно ли использовать Compose в проде?</b><br>Можно, если понимать ограничения: одна машина, нет автоматического восстановления и распределения нагрузки, выкладка без простоя делается вручную через обратный прокси и параллельный запуск новой версии. Для небольшого проекта это честный и дешёвый вариант. Переходить к оркестратору стоит тогда, когда его возможности требуются регулярно, а не ради галочки в резюме.</div>
+  </article>
+
+  <!-- 20 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / антипаттерны</p>
+    <div class="card-top"><h3>Антипаттерны</h3><span class="badge b-3">Разбор</span></div>
+    <p>Набор решений, которые встречаются в реальных проектах и предсказуемо заканчиваются медленными сборками, потерянными данными или уязвимостями. Полезен как чек-лист при ревью чужого Dockerfile.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 21 · антипаттерны и чем они заканчиваются</caption>
+      <thead><tr><th>Антипаттерн</th><th>Чем заканчивается</th><th>Замена</th></tr></thead>
+      <tbody>
+        <tr><td>Несколько служб в одном контейнере</td><td>Смешанные логи, невидимые падения, сложные обновления</td><td>Контейнер на процесс, связь по сети</td></tr>
+        <tr><td>Копирование всего проекта первым шагом</td><td>Кэш сбрасывается при любой правке</td><td>Сначала манифесты зависимостей</td></tr>
+        <tr><td>Тег <code>latest</code> в базовом образе и в выкладке</td><td>Невоспроизводимость и неизвестная версия в проде</td><td>Фиксация версии и дайджеста, тег из хеша коммита</td></tr>
+        <tr><td>Секреты в <code>ENV</code>, <code>ARG</code> или файлах образа</td><td>Утечка через реестр, следы в истории слоёв</td><td>Секреты сборки и механизмы оркестратора</td></tr>
+        <tr><td>Запуск от root по умолчанию</td><td>Расширение последствий любой уязвимости</td><td>Отдельный пользователь и урезанные права</td></tr>
+        <tr><td>Данные в слое контейнера</td><td>Потеря при первом же обновлении</td><td>Тома и внешние хранилища</td></tr>
+        <tr><td>Миграции в точке входа</td><td>Параллельный запуск на нескольких экземплярах</td><td>Отдельный шаг выкладки</td></tr>
+        <tr><td>Команда в форме строки</td><td>Процесс не получает сигнал остановки</td><td>Форма списка и <code>exec</code> в скрипте</td></tr>
+        <tr><td>Монтирование кода в проде</td><td>Образ перестаёт быть источником истины</td><td>Код только внутри образа</td></tr>
+        <tr><td>Сокет демона внутрь контейнера</td><td>Фактические права root на хосте</td><td>Отдельный сборщик без доступа к сокету</td></tr>
+        <tr><td>Логи в файлы внутри контейнера</td><td>Логи теряются, диск заполняется</td><td>Вывод в стандартные потоки, сбор платформой</td></tr>
+        <tr><td>Контейнеры без лимитов</td><td>Один сервис утаскивает весь узел</td><td>Лимиты, согласованные с настройками приложения</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Отдельно стоит «починить прямо в контейнере»: зайти внутрь, поправить конфигурацию или код и оставить так до следующего деплоя. Изменение исчезнет при первом же перезапуске, причём в самый неудобный момент и без всякой связи с исходной задачей, а пока оно живёт — прод отличается от образа, и любая диагностика вводит в заблуждение. Правильный путь всегда один: правка в репозитории, сборка, выкладка.</div>
+  </article>
+
+  <!-- 21 -->
+  <article class="card lvl-s" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Проверка</span></div>
+    <p>Что должно быть в арсенале.</p>
+    <ul class="check">
+      <li>Ускорить сборку в CI внешним кэшем и кэш-монтированием зависимостей.</li>
+      <li>Назвать три причины невоспроизводимой сборки и способ устранения каждой.</li>
+      <li>Перечислить меры сокращения содержимого образа и прав процесса.</li>
+      <li>Объяснить, чем опасно монтирование сокета демона внутрь контейнера.</li>
+      <li>Настроить запуск с корневой файловой системой только для чтения.</li>
+      <li>Выстроить схему тегов, по которой видно, что именно работает в проде.</li>
+      <li>Обосновать правило хранения образов в реестре.</li>
+      <li>Согласовать лимит памяти контейнера с настройками приложения.</li>
+      <li>Опознать падение из-за нехватки памяти и объяснить код завершения 137.</li>
+      <li>Настроить ротацию логов и объяснить, почему приложение пишет в потоки.</li>
+      <li>Провести диагностику контейнера без утилит внутри.</li>
+      <li>Выбрать между Compose и оркестратором по постоянству потребности.</li>
+      <li>Найти в чужом Dockerfile пять антипаттернов и объяснить последствия.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Сводки для повторения перед собеседованием и для быстрой проверки чужого Dockerfile на ревью.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Задача → команда</h3><span class="badge b-tag">Таблица 22</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 22 · что запускать, когда нужно разобраться</caption>
+      <thead><tr><th>Задача</th><th>Команда</th><th>На что смотреть</th></tr></thead>
+      <tbody>
+        <tr><td>Что запущено</td><td><code>docker ps -a</code></td><td>Статус, код завершения, время рестарта</td></tr>
+        <tr><td>Почему упал</td><td><code>docker logs --tail 200 app</code></td><td>Последние строки перед остановкой</td></tr>
+        <tr><td>Убит по памяти?</td><td><code>docker inspect -f '{{ .State.OOMKilled }}' app</code></td><td>Признак и код 137</td></tr>
+        <tr><td>Сколько потребляет</td><td><code>docker stats --no-stream</code></td><td>Память относительно лимита</td></tr>
+        <tr><td>Что смонтировано</td><td><code>docker inspect -f '{{ json .Mounts }}' app</code></td><td>Тома, каталоги хоста, режим доступа</td></tr>
+        <tr><td>Какие переменные видит приложение</td><td><code>docker exec app env</code></td><td>Отличия от ожидаемых</td></tr>
+        <tr><td>В какой сети контейнер</td><td><code>docker network inspect app-net</code></td><td>Список участников сети</td></tr>
+        <tr><td>Из чего собран образ</td><td><code>docker history --no-trunc image</code></td><td>Тяжёлые слои, следы секретов</td></tr>
+        <tr><td>Что изменилось в контейнере</td><td><code>docker diff app</code></td><td>Файлы, записанные мимо томов</td></tr>
+        <tr><td>Куда ушло место</td><td><code>docker system df -v</code></td><td>Образы, тома, кэш сборки</td></tr>
+        <tr><td>Какой именно образ работает</td><td><code>docker inspect -f '{{ .Image }}' app</code></td><td>Совпадение дайджеста с ожидаемым</td></tr>
+        <tr><td>Запустить в обход точки входа</td><td><code>docker run --rm -it --entrypoint sh image</code></td><td>Поведение при старте</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Коды завершения и сигналы</h3><span class="badge b-tag">Таблица 23</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 23 · что означает код остановки контейнера</caption>
+      <thead><tr><th>Код</th><th>Что произошло</th><th>Куда смотреть</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Главный процесс завершился штатно</td><td>Команда отработала и вышла — это нормально для разовых задач</td></tr>
+        <tr><td>1</td><td>Ошибка приложения</td><td>Логи приложения, конфигурация</td></tr>
+        <tr><td>125</td><td>Ошибка самого демона при запуске</td><td>Синтаксис команды, доступность образа</td></tr>
+        <tr><td>126</td><td>Команда найдена, но не может быть выполнена</td><td>Права на исполнение у файла точки входа</td></tr>
+        <tr><td>127</td><td>Команда не найдена</td><td>Опечатка, отсутствие оболочки в минимальном образе</td></tr>
+        <tr><td>137</td><td>Принудительное завершение, чаще всего нехватка памяти</td><td>Лимит памяти, настройки приложения</td></tr>
+        <tr><td>139</td><td>Обращение к недопустимой памяти</td><td>Несовместимое расширение, повреждённый бинарник</td></tr>
+        <tr><td>143</td><td>Штатный сигнал завершения</td><td>Обычная остановка: контейнер остановили</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Инструкции Dockerfile целиком</h3><span class="badge b-tag">Таблица 24</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 24 · полный список, включая редкие</caption>
+      <thead><tr><th>Инструкция</th><th>Назначение</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td><code>FROM</code></td><td>Базовый образ и начало этапа</td><td>Может повторяться: это и есть многоступенчатая сборка</td></tr>
+        <tr><td><code>RUN</code></td><td>Команда на этапе сборки</td><td>Поддерживает монтирование кэша и секретов</td></tr>
+        <tr><td><code>COPY</code></td><td>Копирование из контекста или другого этапа</td><td>Флаги владельца и прав экономят отдельный <code>RUN</code></td></tr>
+        <tr><td><code>ADD</code></td><td>Копирование с распаковкой и загрузкой</td><td>Предпочитайте <code>COPY</code>, кроме распаковки архива</td></tr>
+        <tr><td><code>WORKDIR</code></td><td>Рабочий каталог</td><td>Создаётся автоматически</td></tr>
+        <tr><td><code>ENV</code></td><td>Переменная окружения образа</td><td>Видна в метаданных</td></tr>
+        <tr><td><code>ARG</code></td><td>Переменная времени сборки</td><td>Область действия ограничена этапом</td></tr>
+        <tr><td><code>EXPOSE</code></td><td>Документирование порта</td><td>Не публикует порт</td></tr>
+        <tr><td><code>USER</code></td><td>Пользователь для команд и запуска</td><td>Пользователь должен существовать</td></tr>
+        <tr><td><code>ENTRYPOINT</code></td><td>Основная команда</td><td>Форма списка обязательна для сигналов</td></tr>
+        <tr><td><code>CMD</code></td><td>Аргументы по умолчанию</td><td>Перекрывается аргументами запуска</td></tr>
+        <tr><td><code>LABEL</code></td><td>Метаданные образа</td><td>Хеш коммита, версия, ответственный</td></tr>
+        <tr><td><code>VOLUME</code></td><td>Точка монтирования</td><td>Делает каталог анонимным томом — часто мешает</td></tr>
+        <tr><td><code>HEALTHCHECK</code></td><td>Проверка живости</td><td>Учитывайте стоимость проверки</td></tr>
+        <tr><td><code>STOPSIGNAL</code></td><td>Сигнал остановки</td><td>Нужен процессам с нестандартной обработкой</td></tr>
+        <tr><td><code>SHELL</code></td><td>Оболочка для формы строки</td><td>Редко, в основном на Windows</td></tr>
+        <tr><td><code>ONBUILD</code></td><td>Отложенная инструкция для дочерних образов</td><td>Неявное поведение, лучше избегать</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Экосистема вокруг Docker</h3><span class="badge b-tag">Таблица 25</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 25 · что ещё встречается в вакансиях и проектах</caption>
+      <thead><tr><th>Инструмент</th><th>Что это</th><th>Зачем знать</th></tr></thead>
+      <tbody>
+        <tr><td>containerd</td><td>Среда выполнения контейнеров нижнего уровня</td><td>Именно её использует Kubernetes; Docker — надстройка</td></tr>
+        <tr><td>BuildKit</td><td>Современный движок сборки</td><td>Кэш-монтирование, секреты, параллельные этапы</td></tr>
+        <tr><td>Podman</td><td>Запуск контейнеров без демона</td><td>Совместим по командам, популярен из-за отсутствия привилегированной службы</td></tr>
+        <tr><td>Buildah и Kaniko</td><td>Сборка образов без демона</td><td>Сборка внутри кластера без доступа к сокету</td></tr>
+        <tr><td>OCI</td><td>Стандарт формата образов и среды выполнения</td><td>Образы переносимы между инструментами</td></tr>
+        <tr><td>Docker Desktop</td><td>Локальная среда с виртуальной машиной</td><td>Отсюда особенности производительности монтирования на macOS и Windows</td></tr>
+        <tr><td>Dive</td><td>Анализ слоёв образа</td><td>Быстро находит, что раздуло образ</td></tr>
+        <tr><td>Trivy и подобные</td><td>Сканеры уязвимостей</td><td>Шаг проверки в пайплайне</td></tr>
+        <tr><td>Testcontainers</td><td>Контейнеры для интеграционных тестов</td><td>Настоящая база в тестах вместо заглушек</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Чего ждут по грейдам</h3><span class="badge b-tag">Таблица 26</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 26 · ожидания на собеседовании</caption>
+      <thead><tr><th>Тема</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Модель</td><td>Отличает образ и контейнер</td><td>Понимает слои и кэш</td><td>Объясняет изоляцию и её границы</td></tr>
+        <tr><td>Сборка</td><td>Пишет рабочий Dockerfile</td><td>Многоступенчатая сборка, размер образа</td><td>Кэш в CI, воспроизводимость</td></tr>
+        <tr><td>Запуск</td><td>Порты, тома, переменные</td><td>Сигналы, точка входа, готовность</td><td>Лимиты, поведение при отказах</td></tr>
+        <tr><td>Данные</td><td>Знает, что контейнер эфемерен</td><td>Разводит тома и внешние хранилища</td><td>Проектирует состояние вне контейнеров</td></tr>
+        <tr><td>Безопасность</td><td>Не кладёт секреты в образ</td><td>Непривилегированный пользователь</td><td>Урезанные права, сканирование, реестр</td></tr>
+        <tr><td>Эксплуатация</td><td>Читает логи</td><td>Диагностирует падения</td><td>Выбирает способ запуска и обосновывает цену</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ШАБЛОНЫ ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Шаблоны и команды</h2>
+    <p>Готовые файлы, которые закрывают типовой PHP-проект: исключения контекста, окружение для прода, пайплайн сборки и чек-лист готовности образа.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Файл .dockerignore</h3><span class="badge b-tag">Шаблон</span></div>
+    <p>Пишется первым, до Dockerfile. Всё, что не нужно внутри образа, не должно даже попадать в контекст сборки: это и скорость, и сохранность кэша, и защита от случайного копирования лишнего.</p>
+    <div class="code"><div class="bar"><span>.dockerignore</span><span class="r">Минимальный разумный набор</span></div><pre><span class="cm"># Зависимости ставятся внутри образа, а не копируются снаружи</span>
+vendor/
+node_modules/
+
+<span class="cm"># История репозитория весит больше самого проекта</span>
+.git/
+.github/
+
+<span class="cm"># Локальное окружение и секреты</span>
+.env
+.env.*
+!.env.example
+docker-compose.override.yaml
+
+<span class="cm"># Результаты работы и мусор</span>
+var/
+public/build/
+tests/
+*.log
+*.sql
+*.sqlite
+.phpunit.result.cache
+coverage/
+
+<span class="cm"># Служебные файлы редакторов и системы</span>
+.idea/
+.vscode/
+.DS_Store
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Compose для прода на одном сервере</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>compose.prod.yaml</span><span class="r">Образ из реестра, лимиты, ротация логов, без монтирования кода</span></div><pre><span class="nm">services</span>:
+  <span class="nm">nginx</span>:
+    <span class="nm">image</span>: nginx:1.27-alpine
+    <span class="nm">depends_on</span>:
+      <span class="nm">app</span>: { <span class="nm">condition</span>: service_healthy }
+    <span class="nm">ports</span>: [<span class="st">"80:80"</span>, <span class="st">"443:443"</span>]
+    <span class="nm">volumes</span>:
+      <span class="cm"># Конфигурация — только для чтения; статика приходит из образа app</span>
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - static:/app/public:ro
+    <span class="nm">restart</span>: unless-stopped
+
+  <span class="nm">app</span>:
+    <span class="cm"># Неизменяемый тег: что именно выкачено, видно всегда</span>
+    <span class="nm">image</span>: registry.example.com/app:${APP_VERSION:?version required}
+    <span class="nm">environment</span>:
+      <span class="nm">APP_ENV</span>: prod
+    <span class="nm">env_file</span>: [/etc/app/app.env]      <span class="cm"># секреты вне репозитория</span>
+    <span class="nm">volumes</span>:
+      - static:/app/public                <span class="cm"># отдаём статику nginx</span>
+      - app-var:/app/var                  <span class="cm"># кэш и логи приложения</span>
+    <span class="nm">healthcheck</span>:
+      <span class="nm">test</span>: [<span class="st">"CMD"</span>, <span class="st">"php"</span>, <span class="st">"bin/console"</span>, <span class="st">"app:health"</span>]
+      <span class="nm">interval</span>: 10s
+      <span class="nm">start_period</span>: 30s
+    <span class="nm">deploy</span>:
+      <span class="nm">resources</span>:
+        <span class="nm">limits</span>: { <span class="nm">memory</span>: 512M, <span class="nm">cpus</span>: <span class="st">"1.0"</span> }
+    <span class="nm">logging</span>:
+      <span class="nm">driver</span>: json-file
+      <span class="nm">options</span>: { <span class="nm">max-size</span>: <span class="st">"10m"</span>, <span class="nm">max-file</span>: <span class="st">"3"</span> }
+    <span class="nm">restart</span>: unless-stopped
+
+  <span class="nm">worker</span>:
+    <span class="nm">image</span>: registry.example.com/app:${APP_VERSION:?version required}
+    <span class="nm">command</span>: [<span class="st">"php"</span>, <span class="st">"bin/console"</span>, <span class="st">"messenger:consume"</span>, <span class="st">"async"</span>, <span class="st">"--time-limit=3600"</span>]
+    <span class="nm">env_file</span>: [/etc/app/app.env]
+    <span class="cm"># Длинным задачам нужно время на корректное завершение</span>
+    <span class="nm">stop_grace_period</span>: 60s
+    <span class="nm">restart</span>: unless-stopped
+
+<span class="nm">volumes</span>:
+  <span class="nm">static</span>:
+  <span class="nm">app-var</span>:
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Сборка и публикация в CI</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>GitHub Actions</span><span class="r">Кэш из реестра, теги из коммита, проверка образа</span></div><pre><span class="nm">name</span>: build
+
+<span class="nm">on</span>:
+  <span class="nm">push</span>:
+    <span class="nm">branches</span>: [main]
+
+<span class="nm">jobs</span>:
+  <span class="nm">image</span>:
+    <span class="nm">runs-on</span>: ubuntu-latest
+    <span class="nm">permissions</span>: { <span class="nm">contents</span>: read, <span class="nm">packages</span>: write }
+    <span class="nm">steps</span>:
+      - <span class="nm">uses</span>: actions/checkout@v4
+
+      <span class="cm"># buildx нужен для внешнего кэша и монтирования кэша сборки</span>
+      - <span class="nm">uses</span>: docker/setup-buildx-action@v3
+
+      - <span class="nm">uses</span>: docker/login-action@v3
+        <span class="nm">with</span>:
+          <span class="nm">registry</span>: ghcr.io
+          <span class="nm">username</span>: ${{ github.actor }}
+          <span class="nm">password</span>: ${{ secrets.GITHUB_TOKEN }}
+
+      - <span class="nm">uses</span>: docker/build-push-action@v6
+        <span class="nm">with</span>:
+          <span class="nm">context</span>: .
+          <span class="nm">target</span>: prod
+          <span class="nm">push</span>: true
+          <span class="cm"># Основной тег — хеш коммита, читаемый — дополнительно</span>
+          <span class="nm">tags</span>: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
+          <span class="nm">cache-from</span>: type=gha
+          <span class="nm">cache-to</span>: type=gha,mode=max
+          <span class="nm">labels</span>: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      <span class="cm"># Проверки образа до выкладки: пользователь не root,</span>
+      <span class="cm"># критичных уязвимостей нет, секретов в истории слоёв нет.</span>
+      - <span class="nm">name</span>: verify image
+        <span class="nm">run</span>: |
+          IMAGE=ghcr.io/${{ github.repository }}:${{ github.sha }}
+          test "$(docker image inspect -f '{{ .Config.User }}' "$IMAGE")" != ""
+          docker run --rm aquasec/trivy image --exit-code 1 --severity CRITICAL "$IMAGE"
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Команды на каждый день</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Сборка, запуск, уборка</span></div><pre><span class="cm"># Сборка нужного этапа и запуск команды в разовом контейнере</span>
+docker build --target dev -t app:dev .
+docker run --rm -it -v <span class="st">"$PWD"</span>:/app app:dev php bin/console cache:clear
+
+<span class="cm"># Compose: поднять, пересобрать, посмотреть, зайти</span>
+docker compose up -d --build
+docker compose ps
+docker compose logs -f app
+docker compose exec app sh
+docker compose run --rm app composer install
+
+<span class="cm"># Остановить и удалить окружение, но сохранить данные</span>
+docker compose down
+<span class="cm"># То же самое вместе с томами — данные будут потеряны</span>
+docker compose down -v
+
+<span class="cm"># Обновление прода на одном сервере</span>
+export APP_VERSION=1.4.2
+docker compose -f compose.prod.yaml pull
+docker compose -f compose.prod.yaml up -d --no-deps app worker
+
+<span class="cm"># Уборка: сначала посмотреть, потом удалять</span>
+docker system df
+docker image prune -a --filter <span class="st">"until=720h"</span>
+docker builder prune --keep-storage 10GB
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Чек-лист прод-образа</h3><span class="badge b-tag">Проверка</span></div>
+    <ul class="check">
+      <li>Базовый образ зафиксирован версией, а не тегом <code>latest</code>.</li>
+      <li>Есть <code>.dockerignore</code>, и в контекст не уезжают <code>vendor</code>, <code>node_modules</code> и <code>.git</code>.</li>
+      <li>Манифесты зависимостей копируются отдельно от исходников.</li>
+      <li>Сборка многоступенчатая: Composer и Node не попадают в финальный образ.</li>
+      <li>Зависимости ставятся без dev-пакетов, автозагрузчик оптимизирован.</li>
+      <li>Установка и очистка пакетов происходят в одной инструкции.</li>
+      <li>Процесс запускается не от root, пользователь создан явно.</li>
+      <li>Команда записана формой списка, скрипт точки входа заканчивается <code>exec</code>.</li>
+      <li>Миграции не выполняются при старте контейнера.</li>
+      <li>Секретов нет ни в <code>ENV</code>, ни в <code>ARG</code>, ни в слоях — проверено историей образа.</li>
+      <li>Кэш байткода включён, проверка времени модификации отключена.</li>
+      <li>Число процессов FPM согласовано с лимитом памяти контейнера.</li>
+      <li>Логи идут в стандартные потоки, ротация настроена на уровне драйвера.</li>
+      <li>Есть проверка готовности, отличная от проверки живости.</li>
+      <li>Данные вынесены в тома или внешние хранилища.</li>
+      <li>Образ помечен хешем коммита, выкладка идёт по неизменяемому тегу.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Docker спрашивают почти на каждом собеседовании, и почти всегда — на понимание модели, а не на знание флагов. Сильный ответ объясняет, что происходит и какие из этого следствия.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">База</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое Docker и какую задачу он решает?</span><span class="aa">Инструмент упаковки приложения вместе с его окружением в образ, который одинаково запускается на любой машине с совместимым ядром. Решает проблему расхождения сред: то, что собрано и протестировано в CI, в проде запускается тем же артефактом, а не собирается заново по инструкции из вики.</span></li>
+      <li><span class="qq">Чем образ отличается от контейнера?</span><span class="aa">Образ — неизменяемый шаблон файловой системы из слоёв. Контейнер — запущенный процесс, которому этот образ подставлен как корневая файловая система, плюс тонкий записываемый слой сверху. Из одного образа запускается сколько угодно контейнеров, и все изменения каждого живут в его собственном слое.</span></li>
+      <li><span class="qq">Чем контейнер отличается от виртуальной машины?</span><span class="aa">Контейнер — процесс на общем с хостом ядре, изолированный пространствами имён и ограниченный контрольными группами. У виртуальной машины своё ядро поверх гипервизора. Контейнер стартует за доли секунды и почти ничего не стоит, но изоляция слабее и другое ядро в нём не запустить.</span></li>
+      <li><span class="qq">Что такое слой образа?</span><span class="aa">Разница файловой системы после одной инструкции сборки. Слои переиспользуются между образами и кэшируются, поэтому повторная сборка быстрая. Важное следствие: слои только добавляются, и файл, удалённый следующей инструкцией, остаётся в предыдущем слое вместе со всем содержимым.</span></li>
+      <li><span class="qq">Почему нельзя «удалить» секрет следующей строкой Dockerfile?</span><span class="aa">Потому что он остаётся в слое, где появился, и достаётся из образа любым, кто его скачал. Единственный корректный ответ на такую утечку — сменить сам секрет, а потом пересобрать образ без этого шага и почистить реестр.</span></li>
+      <li><span class="qq">Что делает <code>.dockerignore</code>?</span><span class="aa">Исключает файлы из контекста сборки, который целиком передаётся демону. Без него уезжают <code>vendor</code>, <code>node_modules</code> и <code>.git</code>: сборка замедляется на передаче сотен мегабайт, а изменения в этих каталогах сбрасывают кэш слоёв. По влиянию на скорость это второй по важности файл после самого Dockerfile.</span></li>
+      <li><span class="qq">Чем <code>COPY</code> отличается от <code>ADD</code>?</span><span class="aa"><code>COPY</code> просто копирует файлы из контекста. <code>ADD</code> дополнительно умеет распаковывать архивы и скачивать по ссылке, и именно неявность этого поведения делает его плохим выбором по умолчанию. Практическое правило: всегда <code>COPY</code>, кроме случая распаковки локального архива.</span></li>
+      <li><span class="qq">Чем <code>CMD</code> отличается от <code>ENTRYPOINT</code>?</span><span class="aa"><code>ENTRYPOINT</code> — сама команда, <code>CMD</code> — аргументы к ней по умолчанию. Аргументы запуска заменяют <code>CMD</code>, но не <code>ENTRYPOINT</code>. Типичная связка: точка входа — скрипт подготовки окружения, команда — веб-процесс по умолчанию, чтобы тем же образом запускать и воркер, передав другую команду.</span></li>
+      <li><span class="qq">Почему сборка долгая при правке одной строки кода?</span><span class="aa">Потому что копирование исходников стоит выше установки зависимостей, и правка любого файла сбрасывает кэш этого слоя и всех следующих. Лечится порядком: сначала копируются манифесты зависимостей и выполняется установка, потом весь остальной код. Плюс проверяется <code>.dockerignore</code>.</span></li>
+      <li><span class="qq">Что делает <code>EXPOSE</code>?</span><span class="aa">Только документирует порт в метаданных образа. Наружу порт не публикуется: для этого нужен флаг публикации при запуске или соответствующий ключ в compose. Внутри общей сети контейнеры и без этого обращаются друг к другу по любому порту.</span></li>
+      <li><span class="qq">Как контейнеры находят друг друга?</span><span class="aa">По имени сервиса в общей пользовательской сети: у неё есть встроенное разрешение имён. Публикация порта на хост для этого не нужна и в проде часто вредна — база не должна торчать наружу, если к ней ходит только приложение.</span></li>
+      <li><span class="qq">Почему контейнер сразу завершается после запуска?</span><span class="aa">Потому что завершился его главный процесс: команда отработала, конфигурация неверна или процесс упал. Контейнер живёт ровно столько, сколько живёт этот процесс. Первое действие — прочитать логи остановленного контейнера, они сохраняются.</span></li>
+      <li><span class="qq">Куда деваются данные при удалении контейнера?</span><span class="aa">Всё, что записано в слой контейнера, исчезает. Переживает удаление только то, что лежит в томе или во внешнем хранилище. Отсюда правило: база, загруженные файлы и всё, что нельзя потерять, живёт вне контейнера.</span></li>
+      <li><span class="qq">Чем именованный том отличается от монтирования каталога хоста?</span><span class="aa">Том управляется Docker, лежит в его каталоге и удобен для данных: он не зависит от структуры проекта и переживает пересоздание контейнера. Монтирование каталога хоста показывает контейнеру ваш рабочий каталог — это инструмент разработки, дающий мгновенное отражение правок, но приносящий вопросы прав и скорости.</span></li>
+      <li><span class="qq">Зачем нужен Docker Compose?</span><span class="aa">Чтобы описать набор связанных сервисов одним файлом и поднимать окружение одной командой: приложение, база, кэш, брокер, воркеры. Главная ценность — одинаковое окружение у всей команды и у нового человека в первый день.</span></li>
+      <li><span class="qq">Что делает <code>depends_on</code>?</span><span class="aa">Задаёт порядок запуска. Сам по себе он дожидается только старта контейнера, а не готовности сервиса, поэтому приложение может обратиться к ещё не поднявшейся базе. Ожидание готовности включается условием на здоровье сервиса, а надёжность всё равно обеспечивается повторными попытками подключения в приложении.</span></li>
+      <li><span class="qq">Как посмотреть, что происходит внутри работающего контейнера?</span><span class="aa">Логи главного процесса, выполнение команды внутри с интерактивной оболочкой, полные метаданные с томами и переменными, текущее потребление ресурсов. Если контейнер уже упал, логи всё равно доступны, а образ можно запустить с подменённой точкой входа.</span></li>
+      <li><span class="qq">Что такое тег образа?</span><span class="aa">Читаемая ссылка на образ, которую можно переназначить: сегодня она указывает на один образ, завтра на другой. Поэтому в проде разворачивают неизменяемый идентификатор — хеш коммита или дайджест, — а плавающие теги оставляют для удобства.</span></li>
+      <li><span class="qq">Где хранятся образы?</span><span class="aa">Локально в хранилище демона и в реестре — публичном или собственном. Реестр играет роль хранилища артефактов выкладки, поэтому у него должны быть схема именования, права доступа и правило хранения, иначе он однажды упирается в квоту в самый неподходящий момент.</span></li>
+      <li><span class="qq">Как освободить место, которое занял Docker?</span><span class="aa">Сначала посмотреть, кто именно его занял: образы, тома, кэш сборки. Потом удалять адресно — неиспользуемые образы старше нужного срока и кэш сборки. Массовая очистка с удалением томов опасна: вместе с мусором она снесёт и данные базы, если они лежат в томе.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Механика</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Зачем нужна многоступенчатая сборка?</span><span class="aa">Чтобы инструменты сборки не попадали в итоговый образ: Composer, Node, компиляторы нужны только для получения артефакта. В финальный этап копируется результат, остальное остаётся в промежуточных. Выигрыш в размере и в безопасности: в проде нет инструментов, которыми можно воспользоваться при взломе.</span></li>
+      <li><span class="qq">Как уменьшить образ?</span><span class="aa">По убыванию эффекта: многоступенчатая сборка, компактная база, установка и очистка в одной инструкции, отказ от dev-зависимостей, правильный <code>.dockerignore</code>. Отдельно полезен общий базовый слой у сервисов: узлы и реестр качают его один раз.</span></li>
+      <li><span class="qq">Alpine или образ на Debian?</span><span class="aa">Alpine меньше, но использует другую стандартную библиотеку, из-за чего часть расширений и сторонних бинарников собирается сложнее. Если стек типовой и всё собирается — берите компактный вариант; если начинается борьба с расширениями, время инженера дороже нескольких сотен мегабайт.</span></li>
+      <li><span class="qq">Почему nginx и PHP-FPM держат в разных контейнерах?</span><span class="aa">Потому что модель — один процесс на контейнер. В одном контейнере падение одной службы не видно снаружи, логи смешиваются, обновлять части по отдельности нельзя, а сигнал остановки получает супервизор. Два контейнера в общей сети решают это без потерь: nginx обращается к FPM по имени сервиса.</span></li>
+      <li><span class="qq">Как настроить число процессов FPM в контейнере?</span><span class="aa">От лимита памяти контейнера, а не от памяти хоста: лимит делится на реальное потребление процесса с запасом на пики. Несогласованность здесь даёт классическую аварию — контейнер убивается ядром под нагрузкой, перезапускается, нагрузка перетекает на соседей.</span></li>
+      <li><span class="qq">Почему процесс не получает сигнал остановки?</span><span class="aa">Потому что главный процесс — оболочка: команда записана строкой, а не списком, или скрипт точки входа запускает приложение без <code>exec</code>. Сигнал приходит оболочке и дальше не идёт, поэтому через таймаут процесс убивают принудительно. Лечится формой списка и <code>exec</code> в конце скрипта.</span></li>
+      <li><span class="qq">Что такое PID 1 и почему это важно?</span><span class="aa">Главный процесс контейнера получает первый идентификатор и вместе с ним обязанности init: реагировать на сигнал завершения и забирать процессы-сироты. Обычные приложения к этому не готовы, поэтому при порождении дочерних процессов накапливаются зомби; решается запуском с минимальным init.</span></li>
+      <li><span class="qq">Как корректно останавливать воркер очереди?</span><span class="aa">Воркер должен доработать текущее сообщение и выйти сам, получив сигнал завершения. Для этого он обязан быть главным процессом, а таймаут остановки — превышать типичное время задачи. Дополнительно помогает ограничение времени жизни воркера: он периодически завершается сам, что заодно снимает вопрос утечек памяти.</span></li>
+      <li><span class="qq">Почему миграции не запускают в точке входа?</span><span class="aa">Потому что экземпляров несколько и они стартуют одновременно: миграции пойдут параллельно, дав в лучшем случае ошибку блокировки, в худшем — частично применённую схему. Миграции — отдельный шаг выкладки, выполняемый один раз перед или после переключения трафика.</span></li>
+      <li><span class="qq">Где хранить состояние приложения?</span><span class="aa">Вне контейнера: база — во внешней управляемой базе или в томе, пользовательские файлы — в объектном хранилище, сессии и кэш — в Redis. Только при этом условии контейнер можно убить и пересоздать в любой момент, а на этом строятся и выкладка без простоя, и горизонтальное масштабирование.</span></li>
+      <li><span class="qq">Как передать секрет в образ при сборке?</span><span class="aa">Механизмом секретов BuildKit: значение монтируется на время выполнения инструкции и в слои не попадает. Аргумент сборки для этого не годится — он остаётся в истории образа. В рантайме секреты приходят из механизма оркестратора или внешнего хранилища.</span></li>
+      <li><span class="qq">Чем проверка живости отличается от проверки готовности?</span><span class="aa">Живость отвечает на вопрос, не завис ли процесс, и при отказе контейнер перезапускают. Готовность отвечает, можно ли слать трафик, и при отказе экземпляр убирают из балансировки. Путаница дорого стоит: проверка живости, ходящая в базу, превращает кратковременную недоступность базы в одновременный перезапуск всех экземпляров.</span></li>
+      <li><span class="qq">Зачем нужен период прогрева у проверки?</span><span class="aa">Чтобы неудачные проверки во время старта не считались отказом. Без него приложение с медленным запуском попадает в цикл: не успело прогреться — признано мёртвым — перезапущено — снова не успело. Внешне это выглядит как случайные падения на ровном месте.</span></li>
+      <li><span class="qq">Как контейнер получает конфигурацию?</span><span class="aa">Снаружи: переменными окружения, файлами переменных или смонтированными конфигурационными файлами. Один и тот же образ должен работать во всех средах — различаться может только конфигурация. Настройки, зашитые в образ на этапе сборки, ломают это свойство и заставляют собирать отдельный образ на каждую среду.</span></li>
+      <li><span class="qq">Почему в проде не монтируют код внутрь контейнера?</span><span class="aa">Потому что образ перестаёт быть источником истины: то, что выкачено, отличается от того, что собрано и протестировано. Пропадает воспроизводимость, откат становится непредсказуемым, а правки «прямо на сервере» исчезают при следующем перезапуске. Монтирование кода — приём исключительно для разработки.</span></li>
+      <li><span class="qq">Что происходит при <code>docker stop</code>?</span><span class="aa">Главному процессу посылается сигнал завершения, и демон ждёт заданное время, по умолчанию около десяти секунд. Если процесс не вышел, он убивается принудительно. Отсюда требования: приложение должно обрабатывать сигнал, а для долгих задач нужно увеличивать период ожидания.</span></li>
+      <li><span class="qq">Как ускорить сборку?</span><span class="aa">Порядком слоёв, чтобы кэш зависимостей переиспользовался; исключением мусора из контекста; кэш-монтированием каталогов пакетных менеджеров; вынесением тяжёлых шагов в отдельные этапы, которые пересобираются реже. В CI дополнительно подключается внешний кэш, потому что на чистом агенте локального кэша нет.</span></li>
+      <li><span class="qq">Как отлаживать сборку, которая падает на середине?</span><span class="aa">Запустить контейнер из последнего успешно собранного слоя и повторить шаг руками: так видно реальное окружение, в котором инструкция выполняется. Полезно также временно разбить длинную инструкцию на части, чтобы понять, какая именно команда падает, и посмотреть подробный вывод сборки.</span></li>
+      <li><span class="qq">Зачем контейнеру непривилегированный пользователь?</span><span class="aa">Чтобы захват процесса не давал полных прав внутри контейнера, а при ошибке в изоляции — и на хосте. Пользователь создаётся явно с фиксированным идентификатором, каталоги для записи готовятся заранее, а сам запуск идёт с урезанным набором возможностей.</span></li>
+      <li><span class="qq">Что не так с образами «всё в одном»?</span><span class="aa">В них несколько служб под супервизором, из-за чего теряется наблюдаемость: падение одной службы не видно, логи смешаны, обновить часть нельзя, остановка обрабатывается супервизором, а не приложением. Такие образы удобны на старте и становятся источником непонятных проблем ровно тогда, когда нагрузка вырастет.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Эксплуатация</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как ускорить сборку образа в CI?</span><span class="aa">Подключить внешний кэш: слои предыдущей сборки берутся из реестра или из кэша платформы, а каталоги пакетных менеджеров монтируются кэш-монтированием, чтобы зависимости не скачивались заново. Параллельно проверяются порядок слоёв и контекст сборки — часто половина времени уходит на передачу того, что должно быть исключено.</span></li>
+      <li><span class="qq">Что делает сборку невоспроизводимой?</span><span class="aa">Плавающие теги базовых образов, установка пакетов без фиксации версий и загрузка файлов по внешним ссылкам во время сборки. Лечится фиксацией базового образа по дайджесту, файлами блокировки версий и переносом внешних артефактов в свой реестр.</span></li>
+      <li><span class="qq">Зачем фиксировать базовый образ по дайджесту?</span><span class="aa">Потому что тег подвижен: под тем же именем через месяц окажется другой образ, и сборка того же коммита даст другой результат. Дайджест указывает на конкретное содержимое. Цена — обновления безопасности нужно подтягивать осознанно, отдельным изменением, что как раз и является плюсом: обновление становится видимым в истории.</span></li>
+      <li><span class="qq">Является ли контейнер границей безопасности?</span><span class="aa">Сам по себе — нет: ядро общее с хостом, и ошибка в изоляции означает выход наружу. Контейнер уменьшает поверхность атаки, но не заменяет виртуализацию там, где выполняется недоверенный код. Практическая работа сводится к сокращению содержимого образа и прав процесса.</span></li>
+      <li><span class="qq">Чем опасно монтирование сокета демона в контейнер?</span><span class="aa">Это фактически выдача прав root на хосте: имея доступ к сокету, можно попросить демон запустить привилегированный контейнер с примонтированной корневой файловой системой. Такое встречается ради сборки из пайплайна или агентов мониторинга, и решать эти задачи нужно иначе — сборщиком без доступа к сокету.</span></li>
+      <li><span class="qq">Что даёт запуск с корневой файловой системой только для чтения?</span><span class="aa">Атакующий не может изменить код или положить свой файл в контейнер, а случайная запись мимо томов перестаёт быть незаметной. Требует заранее подготовить каталоги для записи и вынести их в тома или временную файловую систему в памяти — это же полезно и с точки зрения понимания, куда приложение вообще пишет.</span></li>
+      <li><span class="qq">Как построить схему тегов?</span><span class="aa">Основной идентификатор — хеш коммита, дополнительно семантическая версия для релизов и плавающий тег окружения для удобства. Развёртывается всегда неизменяемый тег или дайджест. Метаданные с хешем коммита и временем сборки записываются метками образа — это многократно окупается при разборе инцидента.</span></li>
+      <li><span class="qq">Зачем реестру правило хранения?</span><span class="aa">Потому что он растёт линейно и однажды упирается в квоту ровно в момент выкладки исправления. Работающая схема: образы веток удаляются через несколько недель, релизные живут долго. Разбираться, что можно удалить, лучше заранее и правилом, а не вручную во время инцидента.</span></li>
+      <li><span class="qq">Как согласовать лимиты контейнера с настройками приложения?</span><span class="aa">Считать от лимита: число процессов FPM, размер кэша байткода и пулов соединений выводятся из памяти, доступной контейнеру, с запасом на пики. Иначе контейнер убивается ядром под нагрузкой, перезапускается и перекладывает нагрузку на соседей, порождая каскад.</span></li>
+      <li><span class="qq">Контейнер перезапускается с кодом 137. Что это?</span><span class="aa">Принудительное завершение, почти всегда из-за нехватки памяти: превышен лимит, и процесс снят механизмом ядра. Подтверждается признаком в описании контейнера и записями журнала хоста. Дальше сравниваются лимит и реальное потребление и правятся настройки приложения.</span></li>
+      <li><span class="qq">Куда должны идти логи из контейнера?</span><span class="aa">В стандартные потоки вывода и ошибок, откуда их забирает драйвер логов и система сбора. Запись в файлы внутри контейнера означает, что логи исчезнут вместе с ним и одновременно займут диск. Ротация настраивается на уровне драйвера, иначе один разговорчивый сервис заполняет узел.</span></li>
+      <li><span class="qq">Как диагностировать контейнер без утилит внутри?</span><span class="aa">Запустить рядом отладочный контейнер, подключив его к сетевому пространству проблемного: проверки DNS и соединений выполняются в его сетевом окружении. Файлы копируются наружу штатной командой, изменения относительно образа видны отдельной командой. Устанавливать пакеты в живой контейнер не нужно: это меняет то, что вы отлаживаете.</span></li>
+      <li><span class="qq">Работает локально, падает в проде. Как искать?</span><span class="aa">Сравнить три вещи: дайджест образа, переменные окружения и смонтированные тома. В подавляющем большинстве случаев расхождение именно там — другой тег, отсутствующая переменная, конфигурация, которая локально приходит из смонтированного файла, а в проде отсутствует. Одинаковый образ и разное поведение почти всегда означают разное окружение.</span></li>
+      <li><span class="qq">Что проверять при ревью чужого Dockerfile?</span><span class="aa">Фиксацию базового образа, порядок слоёв и наличие <code>.dockerignore</code>, многоступенчатую сборку, отсутствие dev-зависимостей и секретов, непривилегированного пользователя, форму записи команды, отсутствие миграций в точке входа, работу с логами. Этих пунктов хватает, чтобы поймать большую часть проблем.</span></li>
+      <li><span class="qq">Можно ли использовать Compose в проде?</span><span class="aa">Да, с пониманием ограничений: одна машина, нет автоматического восстановления и распределения нагрузки, выкладка без простоя делается вручную через обратный прокси и параллельный запуск новой версии. Для небольшого проекта это честный дешёвый вариант, который не требует отдельного специалиста.</span></li>
+      <li><span class="qq">Когда пора переходить к оркестратору?</span><span class="aa">Когда его функции нужны постоянно: несколько узлов, регулярные выкладки без простоя, автоматическое восстановление, масштабирование под нагрузку, несколько команд с общими ресурсами. Если сервисов три и один сервер держит нагрузку с запасом, оркестратор добавит стоимость владения без соразмерной пользы.</span></li>
+      <li><span class="qq">Как организовать выкладку без простоя без Kubernetes?</span><span class="aa">Обратным прокси перед приложением: поднимается новая версия рядом, проходит проверку готовности, трафик переключается, старая версия останавливается с запасом времени на завершение запросов. Миграции при этом выполняются отдельным шагом и должны быть совместимы с обеими версиями кода.</span></li>
+      <li><span class="qq">Как тестировать код, зависящий от базы, с помощью контейнеров?</span><span class="aa">Поднимать настоящую базу в контейнере на время тестов, а не подменять её заглушками: поведение транзакций, блокировок и типов данных заглушкой не воспроизводится. Контейнер поднимается на прогон, данные изолируются по тестам, а образ базы фиксируется той же версией, что и в проде.</span></li>
+      <li><span class="qq">Чем containerd отличается от Docker?</span><span class="aa">Containerd — среда выполнения нижнего уровня, которая непосредственно запускает контейнеры, Docker — надстройка с интерфейсом командной строки, сборкой и сетевой обвязкой. Kubernetes работает с containerd напрямую, поэтому знание, что образ и рантайм описаны стандартом, помогает не путать инструмент с самой технологией.</span></li>
+      <li><span class="qq">Какие антипаттерны вы встречали чаще всего?</span><span class="aa">Несколько служб в одном контейнере, копирование всего проекта первым шагом, тег <code>latest</code> в проде, секреты в слоях, запуск от root, данные в контейнере, миграции в точке входа и правки прямо внутри работающего контейнера. У каждого есть предсказуемое последствие, и на ревью они ловятся за пару минут.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== СПРАВОЧНИК: ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Задания рассчитаны на реальный проект: почти каждое начинается с того, что вы открываете свой Dockerfile или compose-файл. Если контейнеров в проекте нет, подойдёт любое приложение на PHP с базой.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Основы</span></div>
+    <h4>1. Собрать образ с нуля</h4>
+    <p>Напишите Dockerfile для своего приложения без копирования готового шаблона: база, расширения, зависимости, запуск. Добейтесь, чтобы контейнер стартовал и отвечал на запрос.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание, из чего состоит образ, вместо копирования чужого файла с непонятными строками.</div>
+    <h4>2. Замерить кэш</h4>
+    <p>Замерьте время пересборки при правке одной строки кода. Переставьте копирование манифестов выше копирования исходников и замерьте снова. Добавьте <code>.dockerignore</code> и замерьте в третий раз.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Числа вместо теории: обычно разница между первым и третьим замером десятикратная.</div>
+    <h4>3. Потерять и сохранить данные</h4>
+    <p>Запустите базу без тома, создайте таблицу, удалите контейнер и убедитесь, что данных нет. Повторите с именованным томом. Сделайте резервную копию тома в архив.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Личный опыт потери данных в безопасной обстановке и готовая процедура копирования.</div>
+    <h4>4. Поднять окружение</h4>
+    <p>Опишите в compose приложение, базу и кэш, свяжите их по именам сервисов, добавьте проверку готовности базы. Проверьте, что окружение поднимается одной командой на чистой машине.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Рабочее окружение, которое можно отдать новому человеку в первый день.</div>
+    <h4>5. Разобрать падение</h4>
+    <p>Сломайте контейнер намеренно тремя способами: неверная команда запуска, отсутствующая переменная окружения, занятый порт. Для каждого найдите причину по логам и метаданным.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Три знакомых симптома вместо паники при первом падении в проде.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Механика</span></div>
+    <h4>6. Многоступенчатая сборка</h4>
+    <p>Перепишите образ на несколько этапов: зависимости, сборка фронтенда, финальный образ. Сравните размер до и после и посмотрите историю слоёв, чтобы найти оставшийся мусор.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Обычно кратное уменьшение размера и понимание, что именно занимало место.</div>
+    <h4>7. Проверить сигналы</h4>
+    <p>Запустите воркер командой в форме строки и остановите контейнер, замерив время. Перепишите в форму списка с <code>exec</code> в точке входа и повторите. Убедитесь, что задача успевает завершиться.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Наглядная разница между корректной остановкой и убийством процесса по таймауту.</div>
+    <h4>8. Убрать root</h4>
+    <p>Создайте в образе пользователя, переключитесь на него и найдите все места, где приложению не хватает прав. Подготовьте каталоги заранее и запустите контейнер с корневой файловой системой только для чтения.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Точное знание, куда приложение пишет, и заметно уменьшенные последствия любой уязвимости.</div>
+    <h4>9. Проверки готовности</h4>
+    <p>Добавьте в приложение две проверки: живость без обращения к зависимостям и готовность с их проверкой. Погасите базу и убедитесь, что контейнер не перезапускается, а лишь выходит из балансировки.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Отказ зависимости перестаёт превращаться в лавину перезапусков.</div>
+    <h4>10. Секрет в слоях</h4>
+    <p>Соберите образ, передав токен аргументом сборки, и найдите его в истории образа. Перепишите на механизм секретов сборки и убедитесь, что след исчез.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Практическая демонстрация, почему аргумент сборки не годится для секретов.</div>
+    <h4>11. Лимиты и падение по памяти</h4>
+    <p>Поставьте контейнеру заведомо низкий лимит памяти и добейтесь падения под нагрузкой. Найдите признак нехватки памяти и код завершения, затем подберите согласованные лимит и настройки приложения.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Узнаваемый симптом и метод подбора лимитов вместо значений наугад.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Инженерия</span></div>
+    <h4>12. Кэш в пайплайне</h4>
+    <p>Замерьте время сборки в CI на чистом агенте. Подключите внешний кэш и кэш-монтирование зависимостей, замерьте снова. Проверьте по выводу сборки, какие шаги действительно взялись из кэша.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Сокращение времени пайплайна, которое чувствует вся команда каждый день.</div>
+    <h4>13. Аудит образа</h4>
+    <p>Прогоните продовый образ через сканер уязвимостей и анализ слоёв. Проверьте пользователя, историю на следы секретов и наличие инструментов сборки. Составьте список правок и внесите их.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Список конкретных проблем вместо общего ощущения, что «с образом всё нормально».</div>
+    <h4>14. Выкладка без простоя</h4>
+    <p>Настройте на одном сервере обновление через обратный прокси: новая версия поднимается рядом, проходит проверку готовности, трафик переключается. Проверьте нагрузочным запросом, что запросы не теряются.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Работающая выкладка без простоя без оркестратора и понимание, чего она стоит.</div>
+    <h4>15. Ревью чужого Dockerfile</h4>
+    <p>Возьмите Dockerfile из другого проекта или из открытого репозитория и найдите в нём не менее пяти проблем, объяснив последствие каждой. Предложите исправленный вариант.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Готовый навык для ревью и убедительный материал для разговора на собеседовании.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== ФИНАЛ: ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час-полтора в будний день. Тема практическая до предела: почти каждый пункт закрывается изменением в собственном Dockerfile или compose-файле, а не чтением документации.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Модель и сборка</h3><span class="badge b-1">База</span></div>
+    <h4>Задачи недели</h4>
+    <p>Построить правильную модель происходящего и научиться собирать образ осознанно, а не копированием чужого файла.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Написать Dockerfile для своего приложения с нуля (задание 1).</li>
+      <li>Замерить влияние порядка слоёв и <code>.dockerignore</code> на время сборки (задание 2).</li>
+      <li>Разобрать историю слоёв своего образа и найти, что занимает место.</li>
+      <li>Проверить, что произойдёт при удалении контейнера с данными и без тома (задание 3).</li>
+      <li>Объяснить вслух разницу между образом, слоем и контейнером.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Собственный образ, который собирается за секунды при правке кода, и понимание, почему именно так.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Окружение</h3><span class="badge b-2">Практика</span></div>
+    <h4>Задачи недели</h4>
+    <p>Собрать воспроизводимое окружение и разобраться с тем, как контейнеры связаны и где живут данные.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Описать окружение из приложения, базы и кэша с проверкой готовности (задание 4).</li>
+      <li>Сломать контейнер тремя способами и найти причину по логам (задание 5).</li>
+      <li>Перевести образ на многоступенчатую сборку и сравнить размер (задание 6).</li>
+      <li>Разделить nginx и PHP-FPM на два контейнера, если они были вместе.</li>
+      <li>Проверить, что в контейнере не остаётся ничего, что нельзя потерять.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Окружение, которое поднимается одной командой, и образ без инструментов сборки внутри.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Поведение в проде</h3><span class="badge b-2">Надёжность</span></div>
+    <h4>Задачи недели</h4>
+    <p>Закрыть вещи, которые не видны на разработке и стабильно проявляются под нагрузкой: сигналы, права, проверки, лимиты.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Проверить корректную остановку воркера и починить форму записи команды (задание 7).</li>
+      <li>Перевести образ на непривилегированного пользователя и режим только для чтения (задание 8).</li>
+      <li>Развести проверки живости и готовности и проверить поведение при падении базы (задание 9).</li>
+      <li>Подобрать лимиты и воспроизвести падение по памяти (задание 11).</li>
+      <li>Настроить ротацию логов и убедиться, что приложение пишет в стандартные потоки.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Контейнер, который корректно останавливается, не работает от root и предсказуемо ведёт себя под нагрузкой.</p>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Пайплайн и безопасность</h3><span class="badge b-3">Финиш</span></div>
+    <h4>Задачи недели</h4>
+    <p>Довести сборку до состояния, в котором её не стыдно показать, и выстроить путь образа от коммита до сервера.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Подключить внешний кэш сборки в CI и замерить эффект (задание 12).</li>
+      <li>Проверить, не утёк ли секрет в слои, и перейти на секреты сборки (задание 10).</li>
+      <li>Провести аудит образа сканером и анализом слоёв (задание 13).</li>
+      <li>Настроить схему тегов и правило хранения в реестре.</li>
+      <li>Организовать выкладку без простоя через обратный прокси (задание 14) и провести ревью чужого Dockerfile (задание 15).</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Готовность обсуждать не команды, а решения: воспроизводимость, безопасность, стоимость эксплуатации и выбор способа запуска.</p>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что помогает на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Отвечайте моделью, а не флагами.</strong> «Контейнер — это процесс, а не машина» объясняет сразу и эфемерность данных, и скорость старта, и слабую изоляцию. Перечисление ключей командной строки не объясняет ничего.</li>
+      <li><strong>Приводите числа.</strong> «Перенесли копирование манифестов выше и сократили сборку с пяти минут до сорока секунд» звучит несопоставимо убедительнее общих слов про кэш слоёв.</li>
+      <li><strong>Знайте, что происходит при остановке.</strong> Вопрос про сигналы и корректное завершение воркеров задают часто, и он мгновенно отделяет тех, кто эксплуатировал контейнеры в проде, от тех, кто только запускал их локально.</li>
+      <li><strong>Помните про секреты в слоях.</strong> Это самая частая реальная утечка, и правильный ответ включает не только «не класть», но и порядок действий, если уже положили: сначала сменить секрет, потом пересобирать.</li>
+      <li><strong>Не защищайте оркестратор ради оркестратора.</strong> Сильный ответ на вопрос про Kubernetes часто звучит как «для этого проекта он не нужен, и вот почему». Умение назвать стоимость владения ценится выше знания манифестов.</li>
+      <li><strong>Различайте живость и готовность.</strong> Пример с проверкой живости, ходящей в базу, и последующей лавиной перезапусков — короткая история, которая показывает продовый опыт лучше длинных рассуждений.</li>
+      <li><strong>Будьте готовы к ревью на месте.</strong> Часто дают Dockerfile и просят найти проблемы. Порядок разбора простой: база и фиксация версии, порядок слоёв, многоступенчатость, пользователь, секреты, форма команды, данные и логи.</li>
+      <li><strong>Признавайте границы.</strong> Docker не решает вопросы отказоустойчивости и балансировки, а контейнер не является границей безопасности сам по себе. Кандидат, который это проговаривает, вызывает больше доверия, чем тот, кто описывает контейнеры как универсальное решение.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Docker» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

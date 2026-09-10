@@ -1,0 +1,1629 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · каталог решений · GoF и не только</p>
+  <h1>Паттерны проектирования</h1>
+  <p class="lead">Паттерн — не рецепт и не украшение кода, а название для повторяющегося решения, у которого есть известная область применимости и известная цена. Практическая ценность каталога в двух вещах: он даёт словарь, на котором двое разработчиков договариваются за одну фразу вместо получаса объяснений, и он избавляет от изобретения заново конструкции, чьи слабые места уже описаны за тридцать лет до вас.</p>
+  <p class="lead">Обратная сторона видна в любом проекте, где каталог прочитали слишком рано: фабрика фабрик, интерфейс на каждый класс, семь уровней декораторов вокруг одного HTTP-клиента. Паттерн не делает код лучше сам по себе — он обменивает простоту на возможность менять одну конкретную вещь дешевле. Если эта вещь не меняется, обмен убыточен. Поэтому весь конспект построен вокруг вопроса «какая ось изменения здесь настоящая», а не вокруг заучивания диаграмм.</p>
+  <p class="lead">Маршрут: зачем паттерны и когда они вредят, классификация, порождающие, одиночка и его цена, структурные → поведенческие, паттерн против возможности языка, паттерны внутри фреймворков → выбор по оси изменения, цена абстракции, рефакторинг к паттернам и обратно, корпоративные и инфраструктурные паттерны, антипаттерны. Смежные темы: <a href="patterns.html">паттерны и архитектура кода</a> (SOLID, слои, DDD, работа с легаси), <a href="oop.html">ООП в PHP</a> (интерфейсы, композиция, объекты-значения), <a href="orm.html">ORM и Doctrine</a>, <a href="system-design.html">system design</a>, <a href="testing.html">тестирование</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Зачем нужен каталог, классификация GoF, порождающие паттерны, одиночка и его альтернативы, базовые структурные: адаптер, фасад, декоратор, заместитель.</span></div>
+    <div class="aud m"><b>Middle</b><span>Поведенческие паттерны, композиция объектов и обход структур, паттерн против возможности языка, где паттерны уже реализованы в Symfony, Laravel и Doctrine.</span></div>
+    <div class="aud s"><b>Senior</b><span>Выбор паттерна по оси изменения, цена абстракции и правило трёх, рефакторинг к паттернам и обратно, корпоративные и распределённые паттерны, антипаттерны применения.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>16</i></span>
+    <span>Блоков кода: <i>15</i></span>
+    <span>Сравнительных таблиц: <i>26</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#why">Зачем каталог паттернов</a></li>
+    <li><span class="tree">├─</span> <a href="#classification">Классификация и карта GoF</a></li>
+    <li><span class="tree">├─</span> <a href="#creational">Порождающие паттерны</a></li>
+    <li><span class="tree">├─</span> <a href="#singleton">Одиночка и его цена</a></li>
+    <li><span class="tree">├─</span> <a href="#structural">Структурные паттерны</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#behavioral">Поведенческие: варианты алгоритма</a></li>
+    <li><span class="tree">├─</span> <a href="#notification">Поведенческие: оповещение и цепочки</a></li>
+    <li><span class="tree">├─</span> <a href="#traversal">Обход структур и снимки состояния</a></li>
+    <li><span class="tree">├─</span> <a href="#language">Паттерн против возможности языка</a></li>
+    <li><span class="tree">├─</span> <a href="#frameworks">Паттерны внутри фреймворков</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#choice">Выбор паттерна по оси изменения</a></li>
+    <li><span class="tree">├─</span> <a href="#cost">Цена абстракции и правило трёх</a></li>
+    <li><span class="tree">├─</span> <a href="#refactoring">Рефакторинг к паттернам и обратно</a></li>
+    <li><span class="tree">├─</span> <a href="#enterprise">Корпоративные паттерны</a></li>
+    <li><span class="tree">├─</span> <a href="#distributed">Паттерны распределённых систем</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Антипаттерны применения</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Шаблоны кода</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · словарь и базовые конструкции</p>
+    <h2>Junior: что такое паттерн и из чего состоит каталог</h2>
+    <p>Первый уровень отвечает на два вопроса: зачем вообще нужен общий словарь решений и как устроен классический каталог. Здесь же разбираются паттерны, которые встречаются в любом проекте на второй день работы, — фабрики, обёртки и печально известный одиночка.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="why">
+    <p class="path">junior / зачем</p>
+    <div class="card-top"><h3>Зачем каталог паттернов</h3><span class="badge b-1">Мотивация</span></div>
+    <p>Паттерн — это описание пары «повторяющаяся проблема и проверенное решение» с именем. Имя и есть главная ценность: фраза «здесь стратегия» передаёт коллеге структуру, точки расширения и ожидаемое поведение за секунду. Без общего словаря то же самое объясняется абзацем текста, и половина смысла теряется.</p>
+
+    <p>Вторая ценность — предупреждения. Каталог описывает не только устройство решения, но и его слабые места: сколько классов появится, что станет труднее читать, какая гибкость окажется невостребованной. Разработчик, который изобретает конструкцию сам, получает её сильные стороны сразу, а слабые — через полгода.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · когда паттерн помогает, а когда мешает</caption>
+      <thead><tr><th>Ситуация</th><th>Паттерн уместен</th><th>Паттерн лишний</th></tr></thead>
+      <tbody>
+        <tr><td>Число вариантов поведения</td><td>Есть три и больше, появляются новые</td><td>Ровно один и других не предвидится</td></tr>
+        <tr><td>Частота изменений</td><td>Место правится регулярно</td><td>Код не менялся два года</td></tr>
+        <tr><td>Источник требования</td><td>Известна ось изменения из предметной области</td><td>«Вдруг понадобится»</td></tr>
+        <tr><td>Читаемость после введения</td><td>Логика становится локальной и явной</td><td>Поток управления размазывается по пяти файлам</td></tr>
+        <tr><td>Тестируемость</td><td>Появляется точка подмены</td><td>Тесты приходится писать на инфраструктуру паттерна</td></tr>
+        <tr><td>Команда</td><td>Название узнаваемо и объясняет замысел</td><td>Паттерн знает только автор кода</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Практический критерий,</strong> к которому сводится большая часть темы: паттерн вводится тогда, когда без него изменение требует правки нескольких мест сразу. Если очередная задача каждый раз заставляет добавить условие в три разных метода — ось изменения найдена и паттерн окупится. Если такого опыта ещё нет, введение паттерна — это ставка на предположение, а не решение проблемы.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Проектирование «по каталогу»: разработчик прочитал книгу и раскладывает задачу по знакомым именам ещё до того, как понял, что в ней меняется. Симптом — интерфейс с одной реализацией у каждого класса, фабрика, создающая единственный тип, и стратегия с единственным вариантом. Такой код выглядит грамотным на ревью и стоит вдвое дороже в поддержке, потому что каждое изменение проходит через лишние слои.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужны паттерны проектирования?</b><br>Для двух вещей: общего словаря в команде и готового знания о цене решения. Имя паттерна передаёт структуру и точки расширения одной фразой, а описание предупреждает о слабых местах, которые иначе обнаруживаются через полгода эксплуатации. При этом паттерн — не цель: он оправдан, когда есть реальная ось изменения, и вреден, когда вводится «на будущее».</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="classification">
+    <p class="path">junior / классификация</p>
+    <div class="card-top"><h3>Классификация и карта GoF</h3><span class="badge b-1">Каталог</span></div>
+    <p>Классический каталог делит двадцать три паттерна на три группы по тому, что именно они изолируют: создание объектов, их соединение в структуры или распределение поведения. Деление условное, но полезное на собеседовании и при поиске решения: сначала определяется группа, потом внутри неё выбирается конкретный паттерн.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · три группы и что они варьируют</caption>
+      <thead><tr><th>Группа</th><th>Что изолирует</th><th>Типичный признак задачи</th><th>Сколько в каталоге</th></tr></thead>
+      <tbody>
+        <tr><td>Порождающие</td><td>Способ создания объекта</td><td>Конструирование сложное или зависит от условий</td><td>5</td></tr>
+        <tr><td>Структурные</td><td>Способ соединения объектов</td><td>Нужно приспособить, обернуть или скрыть устройство</td><td>7</td></tr>
+        <tr><td>Поведенческие</td><td>Распределение обязанностей и поток управления</td><td>Варианты алгоритма, реакции на события, обход структур</td><td>11</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · полная карта каталога GoF</caption>
+      <thead><tr><th>Паттерн</th><th>Группа</th><th>Одной строкой</th><th>Частота в PHP-проектах</th></tr></thead>
+      <tbody>
+        <tr><td>Фабричный метод</td><td>Порождающий</td><td>Наследник решает, какой объект создать</td><td>Высокая</td></tr>
+        <tr><td>Абстрактная фабрика</td><td>Порождающий</td><td>Семейство согласованных объектов за одним контрактом</td><td>Низкая</td></tr>
+        <tr><td>Строитель</td><td>Порождающий</td><td>Пошаговое создание сложного объекта</td><td>Средняя</td></tr>
+        <tr><td>Прототип</td><td>Порождающий</td><td>Новый объект копированием готового</td><td>Низкая</td></tr>
+        <tr><td>Одиночка</td><td>Порождающий</td><td>Единственный экземпляр с глобальным доступом</td><td>Высокая и чаще вредная</td></tr>
+        <tr><td>Адаптер</td><td>Структурный</td><td>Приспособить чужой интерфейс к своему</td><td>Очень высокая</td></tr>
+        <tr><td>Мост</td><td>Структурный</td><td>Развести абстракцию и реализацию по двум осям</td><td>Низкая</td></tr>
+        <tr><td>Компоновщик</td><td>Структурный</td><td>Единый интерфейс для узла и листа дерева</td><td>Средняя</td></tr>
+        <tr><td>Декоратор</td><td>Структурный</td><td>Добавить поведение, не меняя класс</td><td>Очень высокая</td></tr>
+        <tr><td>Фасад</td><td>Структурный</td><td>Простой вход в сложную подсистему</td><td>Высокая</td></tr>
+        <tr><td>Приспособленец</td><td>Структурный</td><td>Разделяемое состояние для множества мелких объектов</td><td>Очень низкая</td></tr>
+        <tr><td>Заместитель</td><td>Структурный</td><td>Подставной объект с тем же интерфейсом</td><td>Высокая</td></tr>
+        <tr><td>Цепочка обязанностей</td><td>Поведенческий</td><td>Запрос идёт по обработчикам до первого подходящего</td><td>Высокая</td></tr>
+        <tr><td>Команда</td><td>Поведенческий</td><td>Действие как объект: очередь, повтор, отмена</td><td>Высокая</td></tr>
+        <tr><td>Интерпретатор</td><td>Поведенческий</td><td>Вычисление выражений по грамматике</td><td>Очень низкая</td></tr>
+        <tr><td>Итератор</td><td>Поведенческий</td><td>Последовательный обход без раскрытия устройства</td><td>Высокая, встроен в язык</td></tr>
+        <tr><td>Посредник</td><td>Поведенческий</td><td>Связи «каждый с каждым» через одного участника</td><td>Средняя</td></tr>
+        <tr><td>Хранитель</td><td>Поведенческий</td><td>Снимок состояния для отката</td><td>Низкая</td></tr>
+        <tr><td>Наблюдатель</td><td>Поведенческий</td><td>Оповещение подписчиков о событии</td><td>Очень высокая</td></tr>
+        <tr><td>Состояние</td><td>Поведенческий</td><td>Поведение меняется вместе со статусом объекта</td><td>Средняя</td></tr>
+        <tr><td>Стратегия</td><td>Поведенческий</td><td>Взаимозаменяемые варианты алгоритма</td><td>Очень высокая</td></tr>
+        <tr><td>Шаблонный метод</td><td>Поведенческий</td><td>Общий каркас, различаются отдельные шаги</td><td>Высокая</td></tr>
+        <tr><td>Посетитель</td><td>Поведенческий</td><td>Новая операция над структурой без правки её классов</td><td>Низкая</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Каталог написан для языков, где нет замыканий, перечислений и первоклассных функций. Часть паттернов в современном PHP сжимается до нескольких строк: стратегия часто становится замыканием, итератор — генератором, состояние — перечислением с методами. Это не отменяет паттерн, а меняет его форму: важно узнавать замысел, а не искать в коде диаграмму из книги.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какие бывают группы паттернов и чем они отличаются?</b><br>Порождающие изолируют способ создания объекта, структурные — способ соединения объектов, поведенческие — распределение обязанностей и поток управления. Практическая польза деления в том, что оно сужает поиск: сначала понимаешь, что именно тебе мешает — создание, соединение или ветвление поведения, — и дальше выбираешь внутри группы.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="creational">
+    <p class="path">junior / порождающие</p>
+    <div class="card-top"><h3>Порождающие паттерны</h3><span class="badge b-1">Создание</span></div>
+    <p>Все порождающие паттерны решают одну проблему: код, который использует объект, не должен знать, как этот объект собирается. Как только создание становится сложным — зависит от условий, требует нескольких шагов, тянет за собой зависимости, — оно расползается по вызывающим местам и дублируется.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · порождающие паттерны в сравнении</caption>
+      <thead><tr><th>Паттерн</th><th>Решает</th><th>Форма в PHP</th><th>Когда не нужен</th></tr></thead>
+      <tbody>
+        <tr><td>Именованный конструктор</td><td>Несколько осмысленных способов создать объект</td><td>Статический метод <code>fromString</code>, <code>fromArray</code></td><td>Создание одно и очевидно</td></tr>
+        <tr><td>Простая фабрика</td><td>Выбор класса по значению</td><td>Один класс с методом и <code>match</code></td><td>Вариант всего один</td></tr>
+        <tr><td>Фабричный метод</td><td>Наследник определяет создаваемый тип</td><td>Абстрактный метод в базовом классе</td><td>Нет иерархии создателей</td></tr>
+        <tr><td>Абстрактная фабрика</td><td>Семейство согласованных объектов</td><td>Интерфейс с несколькими методами создания</td><td>Семейство одно, вариантов нет</td></tr>
+        <tr><td>Строитель</td><td>Пошаговая сборка сложного объекта</td><td>Цепочка методов и финальный <code>build</code></td><td>Полей мало, хватает конструктора</td></tr>
+        <tr><td>Прототип</td><td>Дорогое создание, дешёвое копирование</td><td><code>clone</code> с реализованным <code>__clone</code></td><td>Создание и так дешёвое</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">От условия в вызывающем коде к фабрике</span></div><pre><span class="cm">// Было: выбор реализации размазан по вызывающим местам</span>
+<span class="kw">if</span> (<span class="nm">$type</span> === <span class="st">&quot;sms&quot;</span>) {
+    <span class="nm">$sender</span> = <span class="kw">new</span> <span class="nm">SmsSender</span>(<span class="nm">$this</span>-&gt;smsClient, <span class="nm">$this</span>-&gt;logger);
+} <span class="kw">elseif</span> (<span class="nm">$type</span> === <span class="st">&quot;email&quot;</span>) {
+    <span class="nm">$sender</span> = <span class="kw">new</span> <span class="nm">EmailSender</span>(<span class="nm">$this</span>-&gt;mailer, <span class="nm">$this</span>-&gt;templates);
+}
+<span class="cm">// ...и такой же блок ещё в трёх местах. Новый канал — четыре правки.</span>
+
+<span class="cm">// Стало: одно место знает про соответствие, остальные — про контракт</span>
+<span class="kw">final class</span> <span class="nm">NotificationSenderFactory</span>
+{
+    <span class="cm">// Реализации приходят из контейнера уже собранными:</span>
+    <span class="cm">// фабрика решает «какой», а не «из чего собрать».</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">ServiceLocator</span> <span class="nm">$senders</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">for</span>(<span class="nm">Channel</span> <span class="nm">$channel</span>): <span class="nm">NotificationSender</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;senders-&gt;<span class="fn">get</span>(<span class="nm">$channel</span>-&gt;value);
+    }
+}
+
+<span class="cm">// Фабричный метод: создание оставлено наследнику,</span>
+<span class="cm">// базовый класс задаёт алгоритм и не знает конкретного типа.</span>
+<span class="kw">abstract class</span> <span class="nm">ReportJob</span>
+{
+    <span class="kw">abstract protected function</span> <span class="fn">createFormatter</span>(): <span class="nm">Formatter</span>;
+
+    <span class="kw">public function</span> <span class="fn">run</span>(<span class="nm">Period</span> <span class="nm">$period</span>): <span class="nm">File</span>
+    {
+        <span class="nm">$rows</span> = <span class="nm">$this</span>-&gt;<span class="fn">collect</span>(<span class="nm">$period</span>);
+
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;<span class="fn">createFormatter</span>()-&gt;<span class="fn">format</span>(<span class="nm">$rows</span>);
+    }
+}
+</pre></div>
+
+    <p><strong>Строитель</strong> оправдан там, где объект собирается из многих необязательных частей и порядок сборки имеет значение: запрос к внешнему API, конфигурация отчёта, письмо с вложениями и условным содержимым. Признак, по которому его вводят, — конструктор, у которого больше пяти параметров и половина из них <code>null</code> в большинстве вызовов.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Строитель: собрать сложный объект и проверить инвариант один раз</span></div><pre><span class="kw">final class</span> <span class="nm">ReportRequestBuilder</span>
+{
+    <span class="kw">private</span> ?<span class="nm">Period</span> <span class="nm">$period</span> = <span class="kw">null</span>;
+    <span class="kw">private array</span> <span class="nm">$filters</span> = [];
+    <span class="kw">private</span> <span class="nm">Format</span> <span class="nm">$format</span> = <span class="nm">Format</span>::<span class="nm">Csv</span>;
+
+    <span class="kw">public function</span> <span class="fn">for</span>(<span class="nm">Period</span> <span class="nm">$period</span>): <span class="kw">static</span>
+    {
+        <span class="nm">$clone</span> = <span class="kw">clone</span> <span class="nm">$this</span>;      <span class="cm">// неизменяемый строитель: безопасно переиспользовать</span>
+        <span class="nm">$clone</span>-&gt;period = <span class="nm">$period</span>;
+
+        <span class="kw">return</span> <span class="nm">$clone</span>;
+    }
+
+    <span class="kw">public function</span> <span class="fn">filterBy</span>(<span class="kw">string</span> <span class="nm">$field</span>, <span class="kw">mixed</span> <span class="nm">$value</span>): <span class="kw">static</span>
+    {
+        <span class="nm">$clone</span> = <span class="kw">clone</span> <span class="nm">$this</span>;
+        <span class="nm">$clone</span>-&gt;filters[<span class="nm">$field</span>] = <span class="nm">$value</span>;
+
+        <span class="kw">return</span> <span class="nm">$clone</span>;
+    }
+
+    <span class="cm">// Инвариант проверяется в одной точке, а не в каждом сеттере</span>
+    <span class="kw">public function</span> <span class="fn">build</span>(): <span class="nm">ReportRequest</span>
+    {
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;period === <span class="kw">null</span>) {
+            <span class="kw">throw new</span> <span class="nm">\LogicException</span>(<span class="st">&quot;Период обязателен&quot;</span>);
+        }
+
+        <span class="kw">return new</span> <span class="nm">ReportRequest</span>(<span class="nm">$this</span>-&gt;period, <span class="nm">$this</span>-&gt;filters, <span class="nm">$this</span>-&gt;format);
+    }
+}
+</pre></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>В PHP большая часть потребности в порождающих паттернах закрывается двумя вещами: именованными конструкторами и контейнером внедрения зависимостей. Контейнер — это и есть промышленная фабрика: он умеет собирать графы объектов, разрешать зависимости и отдавать разные реализации по конфигурации. Своя фабрика нужна, когда выбор зависит от данных времени выполнения, а не от конфигурации приложения.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем фабричный метод отличается от абстрактной фабрики?</b><br>Фабричный метод — один метод создания, который переопределяет наследник: варьируется один продукт внутри иерархии создателей. Абстрактная фабрика — интерфейс с несколькими методами, создающий семейство согласованных между собой объектов, чтобы нельзя было смешать части разных семейств. На практике в PHP первый встречается регулярно, вторая — редко и обычно там, где приложение работает с несколькими взаимоисключающими наборами реализаций.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="singleton">
+    <p class="path">junior / одиночка</p>
+    <div class="card-top"><h3>Одиночка и его цена</h3><span class="badge b-must">Разбор</span></div>
+    <p>Одиночка гарантирует единственный экземпляр класса и даёт к нему глобальный доступ. Первая половина обещания иногда полезна, вторая — источник почти всех проблем: глобальный доступ означает, что зависимость не видна в сигнатурах, не подменяется в тестах и может использоваться откуда угодно.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Одиночка и то, чем его заменяют</span></div><pre><span class="cm">// Классическая реализация: экземпляр один, доступ отовсюду</span>
+<span class="kw">final class</span> <span class="nm">Config</span>
+{
+    <span class="kw">private static</span> ?<span class="kw">self</span> <span class="nm">$instance</span> = <span class="kw">null</span>;
+
+    <span class="kw">private function</span> <span class="fn">__construct</span>(<span class="kw">private array</span> <span class="nm">$values</span>) {}
+
+    <span class="kw">public static function</span> <span class="fn">getInstance</span>(): <span class="kw">self</span>
+    {
+        <span class="kw">return</span> <span class="kw">self</span>::<span class="nm">$instance</span> ??= <span class="kw">new</span> <span class="kw">self</span>(<span class="fn">require</span> <span class="st">&quot;config.php&quot;</span>);
+    }
+}
+
+<span class="cm">// Проблема видна в вызывающем коде:</span>
+<span class="kw">final class</span> <span class="nm">InvoiceService</span>
+{
+    <span class="kw">public function</span> <span class="fn">issue</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="nm">Invoice</span>
+    {
+        <span class="cm">// Зависимость от конфигурации спрятана внутри метода:</span>
+        <span class="cm">// её не видно в конструкторе и нельзя подменить в тесте.</span>
+        <span class="nm">$vat</span> = <span class="nm">Config</span>::<span class="fn">getInstance</span>()-&gt;<span class="fn">get</span>(<span class="st">&quot;vat_rate&quot;</span>);
+
+        <span class="kw">return new</span> <span class="nm">Invoice</span>(<span class="nm">$order</span>, <span class="nm">$vat</span>);
+    }
+}
+
+<span class="cm">// Замена: единственность обеспечивает контейнер,</span>
+<span class="cm">// а зависимость становится явной и подменяемой.</span>
+<span class="kw">final class</span> <span class="nm">InvoiceService</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">TaxPolicy</span> <span class="nm">$taxPolicy</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">issue</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="nm">Invoice</span>
+    {
+        <span class="kw">return new</span> <span class="nm">Invoice</span>(<span class="nm">$order</span>, <span class="nm">$this</span>-&gt;taxPolicy-&gt;<span class="fn">rateFor</span>(<span class="nm">$order</span>));
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · чем плох одиночка и чем его заменить</caption>
+      <thead><tr><th>Проблема</th><th>Как проявляется</th><th>Замена</th></tr></thead>
+      <tbody>
+        <tr><td>Скрытая зависимость</td><td>В конструкторе пусто, а класс зависит от пяти сервисов</td><td>Внедрение через конструктор</td></tr>
+        <tr><td>Невозможность подмены</td><td>Тест вынужден поднимать настоящую реализацию</td><td>Интерфейс плюс подстановка двойника</td></tr>
+        <tr><td>Глобальное состояние</td><td>Тесты влияют друг на друга через общий экземпляр</td><td>Объект с временем жизни запроса</td></tr>
+        <tr><td>Неявное время инициализации</td><td>Первый вызов тянет тяжёлую загрузку в случайном месте</td><td>Отложенный заместитель, созданный контейнером</td></tr>
+        <tr><td>Долгоживущие процессы</td><td>Состояние протекает между запросами в воркере</td><td>Пересоздание сервисов на каждый запрос</td></tr>
+        <tr><td>Конкурентность</td><td>Общий изменяемый экземпляр становится точкой гонки</td><td>Неизменяемый объект или экземпляр на задачу</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Единственность экземпляра и глобальная точка доступа — разные требования, и почти всегда нужно только первое. Контейнер внедрения зависимостей по умолчанию отдаёт один и тот же экземпляр сервиса, то есть даёт единственность без глобального доступа: зависимость остаётся видимой в конструкторе и подменяемой в тестах. Отдельно стоит помнить про долгоживущие процессы — там любой хранимый в статике объект живёт между запросами со всем накопленным состоянием, о чём подробнее в конспекте по <a href="async.html">асинхронному PHP</a>.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему одиночку считают антипаттерном?</b><br>Не за единственность, а за глобальный доступ. Класс, вызывающий <code>getInstance</code> внутри метода, скрывает свою зависимость: её не видно в конструкторе, её нельзя подменить в тесте, и она превращается в общее изменяемое состояние, из-за которого тесты начинают влиять друг на друга. Единственность экземпляра при этом прекрасно обеспечивается контейнером, поэтому от паттерна остаётся только его цена.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="structural">
+    <p class="path">junior / структурные</p>
+    <div class="card-top"><h3>Структурные паттерны</h3><span class="badge b-1">Обёртки</span></div>
+    <p>Четыре самых частых структурных паттерна снаружи выглядят одинаково — объект, который держит внутри другой объект. Различаются они замыслом, и путаница между ними — классический источник вопросов на собеседовании.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · четыре обёртки и их замысел</caption>
+      <thead><tr><th>Паттерн</th><th>Интерфейс обёртки</th><th>Зачем</th><th>Пример</th></tr></thead>
+      <tbody>
+        <tr><td>Адаптер</td><td>Отличается от обёрнутого</td><td>Приспособить чужой контракт к своему</td><td>Обёртка над SDK платёжного провайдера</td></tr>
+        <tr><td>Декоратор</td><td>Совпадает с обёрнутым</td><td>Добавить поведение, сохранив контракт</td><td>Кэш, логирование, повторы поверх сервиса</td></tr>
+        <tr><td>Заместитель</td><td>Совпадает с обёрнутым</td><td>Управлять доступом к объекту</td><td>Ленивая загрузка, проверка прав, удалённый вызов</td></tr>
+        <tr><td>Фасад</td><td>Новый, более простой</td><td>Скрыть сложность подсистемы</td><td>Один метод вместо пяти вызовов подряд</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Декоратор: поведение добавляется без правки класса</span></div><pre><span class="kw">interface</span> <span class="nm">ExchangeRates</span>
+{
+    <span class="kw">public function</span> <span class="fn">rateFor</span>(<span class="nm">Currency</span> <span class="nm">$from</span>, <span class="nm">Currency</span> <span class="nm">$to</span>): <span class="nm">Rate</span>;
+}
+
+<span class="cm">// Базовая реализация ничего не знает ни о кэше, ни о логах</span>
+<span class="kw">final class</span> <span class="nm">HttpExchangeRates</span> <span class="kw">implements</span> <span class="nm">ExchangeRates</span> { <span class="cm">/* ... */</span> }
+
+<span class="kw">final class</span> <span class="nm">CachedExchangeRates</span> <span class="kw">implements</span> <span class="nm">ExchangeRates</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">ExchangeRates</span> <span class="nm">$inner</span>,   <span class="cm">// тот же интерфейс — ключ паттерна</span>
+        <span class="kw">private readonly</span> <span class="nm">CacheInterface</span> <span class="nm">$cache</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">rateFor</span>(<span class="nm">Currency</span> <span class="nm">$from</span>, <span class="nm">Currency</span> <span class="nm">$to</span>): <span class="nm">Rate</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;cache-&gt;<span class="fn">get</span>(
+            <span class="st">&quot;rate.{$from-&gt;code}.{$to-&gt;code}&quot;</span>,
+            <span class="kw">fn</span>() =&gt; <span class="nm">$this</span>-&gt;inner-&gt;<span class="fn">rateFor</span>(<span class="nm">$from</span>, <span class="nm">$to</span>),
+        );
+    }
+}
+
+<span class="cm">// Декораторы складываются как матрёшка, порядок имеет значение:</span>
+<span class="cm">// здесь повторы происходят до кэширования, а логируется весь результат.</span>
+<span class="nm">$rates</span> = <span class="kw">new</span> <span class="nm">LoggedExchangeRates</span>(
+    <span class="kw">new</span> <span class="nm">CachedExchangeRates</span>(
+        <span class="kw">new</span> <span class="nm">RetryingExchangeRates</span>(
+            <span class="kw">new</span> <span class="nm">HttpExchangeRates</span>(<span class="nm">$client</span>),
+        ),
+        <span class="nm">$cache</span>,
+    ),
+    <span class="nm">$logger</span>,
+);
+</pre></div>
+
+    <p><strong>Заместитель</strong> отличается от декоратора намерением: он не добавляет новое поведение, а управляет доступом к настоящему объекту. Отсюда его разновидности, каждая из которых встречается в реальных проектах чаще, чем кажется.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · разновидности заместителя</caption>
+      <thead><tr><th>Вид</th><th>Что делает</th><th>Где встречается в PHP</th></tr></thead>
+      <tbody>
+        <tr><td>Ленивый</td><td>Откладывает создание настоящего объекта</td><td>Прокси-объекты Doctrine для связей</td></tr>
+        <tr><td>Защитный</td><td>Проверяет права перед вызовом</td><td>Обёртка с проверкой доступа к сервису</td></tr>
+        <tr><td>Удалённый</td><td>Скрывает сетевой вызов за локальным интерфейсом</td><td>Клиент внешнего API за доменным контрактом</td></tr>
+        <tr><td>Кэширующий</td><td>Возвращает сохранённый результат</td><td>Часто оформляется как декоратор</td></tr>
+        <tr><td>Логирующий и измеряющий</td><td>Снимает метрики вокруг вызова</td><td>Обёртки, создаваемые контейнером</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Фасад</strong> — единственный из четырёх, кто меняет интерфейс на более простой и не обязан ничего сохранять. Он полезен на границе с чужой подсистемой и вреден внутри своего кода, если превращается в класс на тридцать методов, через который проходит вообще всё: тогда это уже не фасад, а точка сцепления всего со всем.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем декоратор отличается от адаптера и заместителя?</b><br>Интерфейсом и замыслом. Адаптер меняет интерфейс: приспосабливает чужой контракт к нужному. Декоратор сохраняет интерфейс и добавляет поведение — кэш, логирование, повторы, — поэтому декораторы складываются друг на друга. Заместитель тоже сохраняет интерфейс, но не добавляет функциональности, а управляет доступом: откладывает создание, проверяет права, скрывает сетевой вызов.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card lvl-j" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Проверка</span></div>
+    <p>Что должно быть понятно перед переходом на следующий уровень.</p>
+    <ul class="check">
+      <li>Объяснить, зачем нужен каталог паттернов, кроме «так принято писать».</li>
+      <li>Назвать признак, по которому паттерн окупается, и признак преждевременного применения.</li>
+      <li>Перечислить три группы GoF и сказать, что варьирует каждая.</li>
+      <li>Назвать по три паттерна из каждой группы и объяснить их одной строкой.</li>
+      <li>Выбрать между именованным конструктором, фабрикой и строителем для конкретной задачи.</li>
+      <li>Объяснить разницу между фабричным методом и абстрактной фабрикой.</li>
+      <li>Сказать, почему претензии к одиночке относятся к глобальному доступу, а не к единственности.</li>
+      <li>Заменить обращение к статическому экземпляру внедрением зависимости.</li>
+      <li>Различить адаптер, декоратор, заместитель и фасад по интерфейсу и замыслу.</li>
+      <li>Собрать цепочку декораторов и объяснить, почему их порядок важен.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · поведение и форма в современном PHP</p>
+    <h2>Middle: поведенческие паттерны и их реальная форма</h2>
+    <p>Поведенческих паттернов в каталоге больше всего, потому что именно поведение чаще всего и меняется. Уровень посвящён им, а также вопросу, который каталог не поднимает: во что превращается паттерн в языке с замыканиями, перечислениями и генераторами и где он уже реализован за вас во фреймворке.</p>
+  </div>
+
+  <!-- 7 -->
+  <article class="card" id="behavioral">
+    <p class="path">middle / варианты поведения</p>
+    <div class="card-top"><h3>Поведенческие: варианты алгоритма</h3><span class="badge b-2">Ядро</span></div>
+    <p>Четыре паттерна этой группы отвечают на один вопрос — как избавиться от ветвления, которое приходится править при каждом новом варианте, — но выбирают разные точки приложения силы: целый алгоритм, отдельные его шаги, поведение при смене статуса или само действие как объект.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · четыре способа убрать ветвление</caption>
+      <thead><tr><th>Паттерн</th><th>Что становится объектом</th><th>Признак задачи</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Стратегия</td><td>Целый алгоритм</td><td>Варианты расчёта, доставки, скидки</td><td>Класс на вариант, нужна точка выбора</td></tr>
+        <tr><td>Шаблонный метод</td><td>Отдельные шаги общего каркаса</td><td>Три почти одинаковых импорта</td><td>Наследование и жёсткая связь с базовым классом</td></tr>
+        <tr><td>Состояние</td><td>Поведение при конкретном статусе</td><td>Проверки статуса в десяти методах</td><td>Класс на состояние, переходы нужно где-то держать</td></tr>
+        <tr><td>Команда</td><td>Само действие с параметрами</td><td>Действие нужно отложить, повторить, отменить</td><td>Больше классов, косвенность вызова</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Стратегия: от match по типу к набору реализаций</span></div><pre><span class="cm">// Было: метод растёт при каждом новом способе доставки</span>
+<span class="kw">public function</span> <span class="fn">cost</span>(<span class="nm">Order</span> <span class="nm">$order</span>, <span class="kw">string</span> <span class="nm">$method</span>): <span class="nm">Money</span>
+{
+    <span class="kw">return match</span> (<span class="nm">$method</span>) {
+        <span class="st">&quot;pickup&quot;</span>  =&gt; <span class="nm">Money</span>::<span class="fn">zero</span>(),
+        <span class="st">&quot;courier&quot;</span> =&gt; <span class="nm">$this</span>-&gt;<span class="fn">courierCost</span>(<span class="nm">$order</span>),
+        <span class="st">&quot;post&quot;</span>    =&gt; <span class="nm">$this</span>-&gt;<span class="fn">postCost</span>(<span class="nm">$order</span>),
+        <span class="cm">// ...и такой же match ещё в трёх местах: сроки, доступность, текст</span>
+    };
+}
+
+<span class="cm">// Стало: вариант — это объект, знающий про свой способ всё</span>
+<span class="kw">interface</span> <span class="nm">ShippingMethod</span>
+{
+    <span class="kw">public function</span> <span class="fn">supports</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="kw">bool</span>;
+    <span class="kw">public function</span> <span class="fn">cost</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="nm">Money</span>;
+    <span class="kw">public function</span> <span class="fn">estimate</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="nm">\DateInterval</span>;
+}
+
+<span class="kw">final class</span> <span class="nm">CourierShipping</span> <span class="kw">implements</span> <span class="nm">ShippingMethod</span> { <span class="cm">/* ... */</span> }
+
+<span class="kw">final class</span> <span class="nm">ShippingCalculator</span>
+{
+    <span class="cm">// Реализации собирает контейнер: новый способ — новый класс,</span>
+    <span class="cm">// существующие файлы не трогаются.</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly iterable</span> <span class="nm">$methods</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">cheapestFor</span>(<span class="nm">Order</span> <span class="nm">$order</span>): <span class="nm">Money</span>
+    {
+        <span class="nm">$costs</span> = [];
+
+        <span class="kw">foreach</span> (<span class="nm">$this</span>-&gt;methods <span class="kw">as</span> <span class="nm">$method</span>) {
+            <span class="kw">if</span> (<span class="nm">$method</span>-&gt;<span class="fn">supports</span>(<span class="nm">$order</span>)) {
+                <span class="nm">$costs</span>[] = <span class="nm">$method</span>-&gt;<span class="fn">cost</span>(<span class="nm">$order</span>);
+            }
+        }
+
+        <span class="kw">return</span> <span class="nm">Money</span>::<span class="fn">min</span>(...<span class="nm">$costs</span>);
+    }
+}
+</pre></div>
+
+    <p><strong>Стратегия окупается не первым вариантом, а вторым использованием того же различия.</strong> Пока способ доставки влияет только на цену, хватает <code>match</code> в одном методе. Как только он влияет ещё и на сроки, доступность и текст в письме, ветвления начинают расходиться: где-то забыли добавить новый вариант, где-то условие сформулировано иначе. Именно этот момент — сигнал, а не появление второго варианта как такового.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Состояние: поведение переезжает из условий в перечисление</span></div><pre><span class="cm">// Классическая форма паттерна — класс на каждое состояние.</span>
+<span class="cm">// В PHP роль диспетчера часто берёт перечисление с методами:</span>
+<span class="cm">// невозможных значений не существует, а поведение лежит рядом.</span>
+<span class="kw">enum</span> <span class="nm">OrderStatus</span>: <span class="kw">string</span>
+{
+    <span class="kw">case</span> <span class="nm">Draft</span>     = <span class="st">&quot;draft&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Confirmed</span> = <span class="st">&quot;confirmed&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Shipped</span>   = <span class="st">&quot;shipped&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Canceled</span>  = <span class="st">&quot;canceled&quot;</span>;
+
+    <span class="kw">public function</span> <span class="fn">allowsEditing</span>(): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span> === <span class="kw">self</span>::<span class="nm">Draft</span>;
+    }
+
+    <span class="kw">public function</span> <span class="fn">canTransitionTo</span>(<span class="kw">self</span> <span class="nm">$next</span>): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="fn">in_array</span>(<span class="nm">$next</span>, <span class="kw">match</span> (<span class="nm">$this</span>) {
+            <span class="kw">self</span>::<span class="nm">Draft</span>     =&gt; [<span class="kw">self</span>::<span class="nm">Confirmed</span>, <span class="kw">self</span>::<span class="nm">Canceled</span>],
+            <span class="kw">self</span>::<span class="nm">Confirmed</span> =&gt; [<span class="kw">self</span>::<span class="nm">Shipped</span>, <span class="kw">self</span>::<span class="nm">Canceled</span>],
+            <span class="kw">self</span>::<span class="nm">Shipped</span>, <span class="kw">self</span>::<span class="nm">Canceled</span> =&gt; [],
+        }, <span class="kw">true</span>);
+    }
+}
+
+<span class="cm">// Полноценные классы состояний нужны, когда у состояния есть</span>
+<span class="cm">// собственные данные и зависимости: тогда перечисление не тянет.</span>
+<span class="kw">interface</span> <span class="nm">SubscriptionState</span>
+{
+    <span class="kw">public function</span> <span class="fn">charge</span>(<span class="nm">Subscription</span> <span class="nm">$s</span>): <span class="nm">ChargeResult</span>;
+    <span class="kw">public function</span> <span class="fn">cancel</span>(<span class="nm">Subscription</span> <span class="nm">$s</span>): <span class="kw">void</span>;
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · стратегия, состояние и шаблонный метод: как не спутать</caption>
+      <thead><tr><th>Вопрос</th><th>Стратегия</th><th>Состояние</th><th>Шаблонный метод</th></tr></thead>
+      <tbody>
+        <tr><td>Кто выбирает вариант</td><td>Вызывающий код или конфигурация</td><td>Сам объект по своему статусу</td><td>Определяется классом-наследником</td></tr>
+        <tr><td>Меняется ли в рантайме</td><td>Да, подстановкой</td><td>Да, при смене состояния</td><td>Нет, фиксируется наследованием</td></tr>
+        <tr><td>Знают ли варианты друг о друге</td><td>Нет</td><td>Часто да: задают переходы</td><td>Нет</td></tr>
+        <tr><td>Механизм</td><td>Композиция</td><td>Композиция или перечисление</td><td>Наследование</td></tr>
+        <tr><td>Риск</td><td>Точка выбора превращается в новый <code>match</code></td><td>Логика переходов расползается по состояниям</td><td>Жёсткая связь наследников с базовым классом</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Команда</strong> превращает вызов в объект: у действия появляются имя, данные и возможность быть отложенным. В PHP-проектах паттерн живёт под другими названиями — сообщение в шине, задача в очереди, объект запроса в обработчике. Признак, что он нужен: действие должно выполняться не здесь и не сейчас, повторяться при сбое или откатываться.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем стратегия отличается от состояния?</b><br>Структура похожа — объект с подставляемой реализацией, — но различается управление. Стратегию выбирает вызывающий код или конфигурация, и варианты друг о друге не знают. Состояние объект меняет сам в зависимости от своего статуса, и состояния обычно знают о допустимых переходах между собой. Отсюда разные риски: у стратегии — разрастание точки выбора, у состояния — размазанная логика переходов.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="notification">
+    <p class="path">middle / оповещение</p>
+    <div class="card-top"><h3>Поведенческие: оповещение и цепочки</h3><span class="badge b-2">Связи</span></div>
+    <p>Вторая группа поведенческих паттернов решает задачу связей между объектами: как сообщить о факте, не зная получателей, как пропустить запрос через набор обработчиков и как развязать участников, которые иначе знали бы друг о друге все.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · наблюдатель, цепочка и посредник</caption>
+      <thead><tr><th>Признак</th><th>Наблюдатель</th><th>Цепочка обязанностей</th><th>Посредник</th></tr></thead>
+      <tbody>
+        <tr><td>Кто кого знает</td><td>Источник не знает подписчиков</td><td>Звено знает только следующее</td><td>Все знают только посредника</td></tr>
+        <tr><td>Сколько получателей отработает</td><td>Все подписчики</td><td>До первого подходящего или все по очереди</td><td>Решает посредник</td></tr>
+        <tr><td>Порядок важен</td><td>Обычно нет</td><td>Да, определяет результат</td><td>Задаётся посредником</td></tr>
+        <tr><td>Можно прервать</td><td>Редко</td><td>Да, это суть паттерна</td><td>Да</td></tr>
+        <tr><td>Форма в PHP</td><td>Диспетчер событий фреймворка</td><td>Middleware, пайплайн проверок</td><td>Шина команд, координатор процесса</td></tr>
+        <tr><td>Главный риск</td><td>Неявный поток управления</td><td>Забытое звено ломает всю цепочку молча</td><td>Посредник разрастается в божественный объект</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Цепочка обязанностей в форме middleware</span></div><pre><span class="kw">interface</span> <span class="nm">Middleware</span>
+{
+    <span class="cm">// Каждое звено решает: обработать, передать дальше или прервать</span>
+    <span class="kw">public function</span> <span class="fn">process</span>(<span class="nm">Request</span> <span class="nm">$request</span>, <span class="kw">callable</span> <span class="nm">$next</span>): <span class="nm">Response</span>;
+}
+
+<span class="kw">final class</span> <span class="nm">RateLimiter</span> <span class="kw">implements</span> <span class="nm">Middleware</span>
+{
+    <span class="kw">public function</span> <span class="fn">process</span>(<span class="nm">Request</span> <span class="nm">$request</span>, <span class="kw">callable</span> <span class="nm">$next</span>): <span class="nm">Response</span>
+    {
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;limiter-&gt;<span class="fn">exceeded</span>(<span class="nm">$request</span>-&gt;<span class="fn">clientId</span>())) {
+            <span class="kw">return new</span> <span class="nm">Response</span>(status: 429);   <span class="cm">// прерываем цепочку</span>
+        }
+
+        <span class="kw">return</span> <span class="nm">$next</span>(<span class="nm">$request</span>);
+    }
+}
+
+<span class="kw">final class</span> <span class="nm">Pipeline</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly array</span> <span class="nm">$middlewares</span>) {}
+
+    <span class="kw">public function</span> <span class="fn">handle</span>(<span class="nm">Request</span> <span class="nm">$request</span>, <span class="kw">callable</span> <span class="nm">$handler</span>): <span class="nm">Response</span>
+    {
+        <span class="cm">// Сворачиваем список в матрёшку замыканий: последнее звено</span>
+        <span class="cm">// вызывается первым, поэтому массив разворачивается с конца.</span>
+        <span class="nm">$next</span> = <span class="fn">array_reduce</span>(
+            <span class="fn">array_reverse</span>(<span class="nm">$this</span>-&gt;middlewares),
+            <span class="kw">fn</span>(<span class="kw">callable</span> <span class="nm">$next</span>, <span class="nm">Middleware</span> <span class="nm">$m</span>) =&gt; <span class="kw">fn</span>(<span class="nm">Request</span> <span class="nm">$r</span>) =&gt; <span class="nm">$m</span>-&gt;<span class="fn">process</span>(<span class="nm">$r</span>, <span class="nm">$next</span>),
+            <span class="nm">$handler</span>,
+        );
+
+        <span class="kw">return</span> <span class="nm">$next</span>(<span class="nm">$request</span>);
+    }
+}
+</pre></div>
+
+    <p><strong>Наблюдатель</strong> в чистом виде — объект со списком подписчиков и методом уведомления — в прикладном коде почти не пишут: его роль играет диспетчер событий фреймворка. Замысел от этого не меняется: источник публикует факт, не зная, кто на него отреагирует. Отсюда и главный риск — поток управления перестаёт читаться по коду, потому что список реакций собирается конфигурацией.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Событие описывает уже случившийся факт, а не команду. Слушатель, который отменяет заказ внутри обработчика события «заказ создан», превращает оповещение в скрытый поток управления: по коду создания заказа невозможно понять, что произойдёт дальше. Практическое правило: если действие обязательно и его результат важен вызывающему коду — это вызов сервиса или команда, а не событие; события остаются для необязательных побочных эффектов.</div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Посредник, который начинал с развязки трёх объектов, а через год знает про пятнадцать сервисов и содержит половину бизнес-логики. Формально связей «каждый с каждым» больше нет, фактически появился единственный класс, который правится в каждой задаче и который невозможно протестировать по частям. Признак вырождения — методы посредника перестали быть про координацию и начали содержать правила предметной области.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда событие, а когда прямой вызов?</b><br>Прямой вызов — когда действие обязательно, его результат нужен вызывающему коду и порядок важен: списать деньги, зарезервировать товар. Событие — когда факт уже произошёл и реакции необязательны и независимы: отправить письмо, обновить статистику, начислить бонусы. Ошибка в обе стороны заметна: обязательное действие в слушателе тихо теряется, а необязательное в основном потоке роняет операцию из-за недоступности почты.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="traversal">
+    <p class="path">middle / структуры</p>
+    <div class="card-top"><h3>Обход структур и снимки состояния</h3><span class="badge b-2">Редкие, но нужные</span></div>
+    <p>Оставшиеся паттерны каталога встречаются реже, и именно поэтому их полезно узнавать: когда задача действительно такая, самостоятельно изобретённое решение обычно хуже. Ниже — те, что всё-таки появляются в прикладном PHP, и те, что честнее считать экзотикой.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · редкие паттерны и признак их задачи</caption>
+      <thead><tr><th>Паттерн</th><th>Признак, что он нужен</th><th>Форма в PHP</th><th>Если применить зря</th></tr></thead>
+      <tbody>
+        <tr><td>Итератор</td><td>Обход не должен раскрывать устройство коллекции</td><td><code>IteratorAggregate</code>, генератор</td><td>Лишний класс вокруг массива</td></tr>
+        <tr><td>Компоновщик</td><td>Узел и лист обрабатываются одинаково</td><td>Общий интерфейс для группы и элемента</td><td>Дерево там, где хватало списка</td></tr>
+        <tr><td>Посетитель</td><td>Операций много, типов мало и они стабильны</td><td>Метод <code>accept</code> и класс на операцию</td><td>Добавление типа ломает всех посетителей</td></tr>
+        <tr><td>Хранитель</td><td>Нужен откат к прежнему состоянию</td><td>Снимок в виде неизменяемого объекта</td><td>Дублирование данных без пользы</td></tr>
+        <tr><td>Мост</td><td>Две независимые оси изменения</td><td>Абстракция с подставляемой реализацией</td><td>Две иерархии там, где меняется одна ось</td></tr>
+        <tr><td>Приспособленец</td><td>Миллионы мелких объектов не помещаются в память</td><td>Разделяемое неизменяемое состояние</td><td>Преждевременная оптимизация и связность</td></tr>
+        <tr><td>Интерпретатор</td><td>Есть собственный язык выражений</td><td>Дерево узлов с методом вычисления</td><td>Свой язык там, где хватало конфигурации</td></tr>
+        <tr><td>Прототип</td><td>Создание дороже копирования</td><td><code>clone</code> с корректным <code>__clone</code></td><td>Поверхностное копирование и общие ссылки</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Итератор и компоновщик: обход дерева без знания устройства</span></div><pre><span class="cm">// Компоновщик: лист и узел реализуют один интерфейс,</span>
+<span class="cm">// поэтому вызывающий код не различает «элемент» и «группу».</span>
+<span class="kw">interface</span> <span class="nm">CatalogNode</span>
+{
+    <span class="kw">public function</span> <span class="fn">title</span>(): <span class="kw">string</span>;
+    <span class="kw">public function</span> <span class="fn">productCount</span>(): <span class="kw">int</span>;
+}
+
+<span class="kw">final class</span> <span class="nm">Product</span> <span class="kw">implements</span> <span class="nm">CatalogNode</span>
+{
+    <span class="kw">public function</span> <span class="fn">productCount</span>(): <span class="kw">int</span> { <span class="kw">return</span> 1; }
+}
+
+<span class="kw">final class</span> <span class="nm">Category</span> <span class="kw">implements</span> <span class="nm">CatalogNode</span>, <span class="nm">\IteratorAggregate</span>
+{
+    <span class="cm">/** @param list&lt;CatalogNode&gt; $children */</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly string</span> <span class="nm">$title</span>,
+        <span class="kw">private readonly array</span> <span class="nm">$children</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">productCount</span>(): <span class="kw">int</span>
+    {
+        <span class="cm">// Рекурсия по одному интерфейсу: ветвления по типу нет</span>
+        <span class="kw">return</span> <span class="fn">array_sum</span>(
+            <span class="fn">array_map</span>(<span class="kw">fn</span>(<span class="nm">CatalogNode</span> <span class="nm">$n</span>) =&gt; <span class="nm">$n</span>-&gt;<span class="fn">productCount</span>(), <span class="nm">$this</span>-&gt;children),
+        );
+    }
+
+    <span class="cm">// Итератор в современном PHP — это генератор: обход описан</span>
+    <span class="cm">// как последовательность, память под всё дерево не выделяется.</span>
+    <span class="kw">public function</span> <span class="fn">getIterator</span>(): <span class="nm">\Generator</span>
+    {
+        <span class="kw">foreach</span> (<span class="nm">$this</span>-&gt;children <span class="kw">as</span> <span class="nm">$child</span>) {
+            <span class="kw">yield</span> <span class="nm">$child</span>;
+
+            <span class="kw">if</span> (<span class="nm">$child</span> <span class="kw">instanceof</span> <span class="nm">\Traversable</span>) {
+                <span class="kw">yield from</span> <span class="nm">$child</span>;
+            }
+        }
+    }
+}
+</pre></div>
+
+    <p><strong>Посетитель</strong> заслуживает отдельного предупреждения. Он дёшев, когда набор типов стабилен, а операций над ними много: отчёты, экспорт в разные форматы, вычисления по дереву. Но он обменивает лёгкость добавления операции на тяжесть добавления типа: новый узел заставляет править каждого посетителя. В прикладном коде, где типы предметной области как раз добавляются регулярно, эта сделка чаще всего невыгодна.</p>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Прежде чем вводить компоновщик или посетителя, проверьте, не решается ли задача одним рекурсивным методом. Дерево категорий с подсчётом товаров не требует иерархии классов, если группа и элемент по-настоящему различаются: <code>match</code> по двум типам читается лучше, чем интерфейс с методом, который у листа всегда возвращает единицу. Паттерн окупается с третьей-четвёртой операцией над структурой, а не с первой.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда нужен посетитель и в чём его недостаток?</b><br>Когда над устойчивым набором типов нужно много разных операций и не хочется добавлять их в сами классы: вычисления по дереву, экспорт в разные форматы. Недостаток зеркальный: добавление операции дёшево, а добавление типа заставляет править всех посетителей сразу. Поэтому он уместен для стабильных структур вроде дерева выражений и плохо подходит для растущей доменной модели.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="language">
+    <p class="path">middle / язык</p>
+    <div class="card-top"><h3>Паттерн против возможности языка</h3><span class="badge b-2">Форма</span></div>
+    <p>Каталог написан для языка без замыканий, перечислений, генераторов и первоклассных функций. Многое из того, что там требует иерархии классов, в современном PHP выражается парой строк. Знать паттерн всё равно полезно — по нему понятен замысел, — но воспроизводить книжную структуру буквально обычно означает писать лишний код.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · во что превращается паттерн в современном PHP</caption>
+      <thead><tr><th>Паттерн</th><th>Книжная форма</th><th>Форма в PHP</th><th>Когда всё-таки нужны классы</th></tr></thead>
+      <tbody>
+        <tr><td>Стратегия</td><td>Интерфейс и класс на вариант</td><td>Замыкание или первоклассный вызываемый метод</td><td>У варианта есть зависимости, имя и тесты</td></tr>
+        <tr><td>Состояние</td><td>Класс на каждое состояние</td><td>Перечисление с методами</td><td>У состояния есть данные и зависимости</td></tr>
+        <tr><td>Итератор</td><td>Классы итератора и коллекции</td><td>Генератор, <code>yield from</code></td><td>Обход сложный и переиспользуется</td></tr>
+        <tr><td>Команда</td><td>Класс с методом выполнения</td><td>Объект-сообщение плюс обработчик</td><td>Практически всегда: нужны сериализация и очередь</td></tr>
+        <tr><td>Наблюдатель</td><td>Список подписчиков внутри субъекта</td><td>Диспетчер событий фреймворка</td><td>Своя реализация почти никогда не нужна</td></tr>
+        <tr><td>Шаблонный метод</td><td>Абстрактный класс с шагами</td><td>Метод, принимающий замыкания шагов</td><td>Шагов много и они переопределяются группами</td></tr>
+        <tr><td>Одиночка</td><td>Статический экземпляр</td><td>Сервис в контейнере</td><td>Никогда в прикладном коде</td></tr>
+        <tr><td>Прототип</td><td>Метод копирования</td><td><code>clone</code> и <code>__clone</code></td><td>Есть вложенные изменяемые объекты</td></tr>
+        <tr><td>Декоратор</td><td>Класс-обёртка</td><td>Он же: язык здесь ничего не упрощает</td><td>Всегда, форма не меняется</td></tr>
+        <tr><td>Приспособленец</td><td>Пул разделяемых объектов</td><td>Неизменяемые объекты-значения</td><td>Только при доказанной проблеме с памятью</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Одна и та же стратегия в трёх формах</span></div><pre><span class="cm">// 1. Замыкание — когда вариант это одна операция без зависимостей</span>
+<span class="nm">$sorters</span> = [
+    <span class="st">&quot;price&quot;</span>  =&gt; <span class="kw">fn</span>(<span class="nm">Product</span> <span class="nm">$a</span>, <span class="nm">Product</span> <span class="nm">$b</span>) =&gt; <span class="nm">$a</span>-&gt;price &lt;=&gt; <span class="nm">$b</span>-&gt;price,
+    <span class="st">&quot;rating&quot;</span> =&gt; <span class="kw">fn</span>(<span class="nm">Product</span> <span class="nm">$a</span>, <span class="nm">Product</span> <span class="nm">$b</span>) =&gt; <span class="nm">$b</span>-&gt;rating &lt;=&gt; <span class="nm">$a</span>-&gt;rating,
+];
+<span class="fn">usort</span>(<span class="nm">$products</span>, <span class="nm">$sorters</span>[<span class="nm">$sort</span>]);
+
+<span class="cm">// 2. Первоклассный вызываемый метод — когда логика уже живёт в классе</span>
+<span class="nm">$validators</span> = [
+    <span class="nm">$this</span>-&gt;<span class="fn">checkStock</span>(...),
+    <span class="nm">$this</span>-&gt;<span class="fn">checkAddress</span>(...),
+];
+
+<span class="cm">// 3. Классы — когда у варианта есть зависимости, имя и собственные тесты.</span>
+<span class="cm">// Замыкание с тремя внедрёнными сервисами внутри — признак,</span>
+<span class="cm">// что пора возвращаться к полноценной реализации интерфейса.</span>
+<span class="kw">final class</span> <span class="nm">PromoDiscount</span> <span class="kw">implements</span> <span class="nm">DiscountPolicy</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">PromoRepository</span> <span class="nm">$promos</span>,
+        <span class="kw">private readonly</span> <span class="nm">Clock</span> <span class="nm">$clock</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">apply</span>(<span class="nm">Cart</span> <span class="nm">$cart</span>): <span class="nm">Money</span> { <span class="cm">/* ... */</span> }
+}
+</pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Граница между замыканием и классом проходит по трём признакам: есть ли у варианта зависимости, нужно ли его называть в предметных терминах и требуются ли ему отдельные тесты. Замыкание на две строки в конфигурации сортировки — правильное решение; замыкание на сорок строк, захватывающее пять переменных из внешней области, — это класс, который постеснялись создать.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Нужны ли паттерны в языке с замыканиями и перечислениями?</b><br>Нужны как словарь и как знание о замысле, но не как обязательная структура классов. Стратегия часто становится замыканием, состояние — перечислением с методами, итератор — генератором. Меняется форма, а не решаемая проблема, поэтому на ревью правильный вопрос не «где здесь паттерн», а «какая ось изменения выделена и оправдана ли её цена».</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="frameworks">
+    <p class="path">middle / фреймворки</p>
+    <div class="card-top"><h3>Паттерны внутри фреймворков</h3><span class="badge b-2">Практика</span></div>
+    <p>Большая часть каталога уже реализована в инструментах, которыми вы пользуетесь ежедневно. Умение назвать паттерн за знакомым механизмом полезно вдвойне: на собеседовании это сильный ответ, а в работе — способ понять поведение библиотеки, не читая её исходники целиком.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · где паттерны живут в PHP-стеке</caption>
+      <thead><tr><th>Механизм</th><th>Паттерн</th><th>Что из этого следует</th></tr></thead>
+      <tbody>
+        <tr><td>Контейнер внедрения зависимостей</td><td>Фабрика и заместитель</td><td>Своя фабрика нужна только для выбора по данным времени выполнения</td></tr>
+        <tr><td>Middleware в HTTP-ядре</td><td>Цепочка обязанностей</td><td>Порядок регистрации определяет поведение</td></tr>
+        <tr><td>Диспетчер событий</td><td>Наблюдатель</td><td>Поток управления не виден в коде, нужна дисциплина именования</td></tr>
+        <tr><td>Шина команд и сообщений</td><td>Команда и посредник</td><td>Действие становится сериализуемым объектом</td></tr>
+        <tr><td>Прокси-объекты Doctrine</td><td>Ленивый заместитель</td><td>Обращение к полю может вызвать запрос к базе</td></tr>
+        <tr><td>Doctrine и репозитории</td><td>Data Mapper, Unit of Work, Identity Map</td><td>Изменения сохраняются пачкой при <code>flush</code></td></tr>
+        <tr><td>Eloquent</td><td>Active Record</td><td>Модель знает про хранение: удобно и труднее тестировать</td></tr>
+        <tr><td>Фасады Laravel</td><td>Локатор служб, не классический фасад</td><td>Скрытая зависимость, требует осторожности в тестах</td></tr>
+        <tr><td>Twig и его расширения</td><td>Декоратор и стратегия</td><td>Поведение шаблонизатора расширяется без правки ядра</td></tr>
+        <tr><td>PSR-совместимый кэш и логгер</td><td>Адаптер</td><td>Реализация меняется без правки прикладного кода</td></tr>
+        <tr><td>Обработчики форм и валидаторы</td><td>Компоновщик и стратегия</td><td>Правила собираются из мелких переиспользуемых частей</td></tr>
+        <tr><td>Миграции и сидеры</td><td>Команда</td><td>Каждое изменение схемы — отдельный исполняемый объект</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Фасады Laravel — не фасад из каталога, а локатор служб со статическим доступом. Разница практическая: классический фасад упрощает интерфейс подсистемы и остаётся обычным объектом с явными зависимостями, а локатор даёт глобальный доступ к контейнеру и тем самым скрывает зависимость класса. Это тот же компромисс, что и у одиночки, и в тестах он проявляется одинаково.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Приведите пример паттерна из фреймворка, с которым работаете.</b><br>Сильный ответ называет механизм и следствие, а не только имя. Например: middleware — цепочка обязанностей, поэтому порядок регистрации определяет, увидит ли ограничитель запросов уже аутентифицированного пользователя. Или прокси-объекты Doctrine — ленивый заместитель, поэтому обращение к полю связанной сущности может неожиданно выполнить запрос и породить N+1.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card lvl-m" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Проверка</span></div>
+    <p>Что должно быть в рабочем арсенале.</p>
+    <ul class="check">
+      <li>Заменить разрастающийся <code>match</code> набором реализаций и объяснить, когда это оправдано.</li>
+      <li>Различить стратегию, состояние и шаблонный метод по тому, кто выбирает вариант.</li>
+      <li>Перевести проверки статуса в перечисление с поведением и назвать предел этого приёма.</li>
+      <li>Объяснить, зачем действие превращают в объект, и назвать три формы команды в PHP.</li>
+      <li>Собрать пайплайн middleware и объяснить, почему порядок звеньев меняет результат.</li>
+      <li>Сформулировать правило выбора между событием и прямым вызовом.</li>
+      <li>Назвать признак вырождения посредника в божественный объект.</li>
+      <li>Объяснить, при каких условиях посетитель выгоден, а при каких — обуза.</li>
+      <li>Реализовать обход дерева генератором вместо собственного класса итератора.</li>
+      <li>Назвать три признака, по которым замыкание пора превращать в класс.</li>
+      <li>Указать паттерн за пятью механизмами своего фреймворка и следствие из каждого.</li>
+      <li>Объяснить, почему фасады Laravel — не фасад из каталога.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · выбор, цена, эволюция</p>
+    <h2>Senior: когда паттерн вводят, когда убирают и сколько он стоит</h2>
+    <p>На этом уровне интерес смещается с устройства паттернов на решения вокруг них: как выбрать нужный по характеру изменений, как посчитать цену абстракции, как безопасно ввести паттерн в работающий код и как убрать тот, что не оправдался. Плюс два слоя каталога за пределами GoF — корпоративный и распределённый.</p>
+  </div>
+
+  <!-- 13 -->
+  <article class="card" id="choice">
+    <p class="path">senior / выбор</p>
+    <div class="card-top"><h3>Выбор паттерна по оси изменения</h3><span class="badge b-3">Метод</span></div>
+    <p>Паттерн выбирают не по красоте структуры, а по тому, что именно в этом коде меняется чаще всего. Формулировка «здесь меняется X, и я хочу, чтобы изменение X стоило одну правку в одном месте» — рабочий способ выйти на нужное решение без перебора каталога.</p>
+
+    <div class="formula">ось изменения → точка подстановки → паттерн<span>сначала определяется, что меняется, и только потом подбирается конструкция</span></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · от оси изменения к паттерну</caption>
+      <thead><tr><th>Что меняется</th><th>Точка подстановки</th><th>Паттерн</th></tr></thead>
+      <tbody>
+        <tr><td>Способ выполнить операцию</td><td>Реализация одного метода</td><td>Стратегия</td></tr>
+        <tr><td>Отдельные шаги общего процесса</td><td>Хуки внутри каркаса</td><td>Шаблонный метод</td></tr>
+        <tr><td>Поведение в зависимости от статуса</td><td>Объект состояния</td><td>Состояние</td></tr>
+        <tr><td>Набор реакций на факт</td><td>Список подписчиков</td><td>Наблюдатель</td></tr>
+        <tr><td>Набор проверок или преобразований</td><td>Звенья цепочки</td><td>Цепочка обязанностей</td></tr>
+        <tr><td>Кто именно создаётся</td><td>Точка создания</td><td>Фабрика</td></tr>
+        <tr><td>Из чего собирается сложный объект</td><td>Шаги сборки</td><td>Строитель</td></tr>
+        <tr><td>Дополнительные обязанности вокруг вызова</td><td>Обёртки над контрактом</td><td>Декоратор</td></tr>
+        <tr><td>Внешняя система за контрактом</td><td>Реализация порта</td><td>Адаптер</td></tr>
+        <tr><td>Когда и где выполнить действие</td><td>Объект действия</td><td>Команда</td></tr>
+        <tr><td>Правила отбора данных</td><td>Объект-условие</td><td>Спецификация</td></tr>
+        <tr><td>Операции над стабильной структурой</td><td>Класс операции</td><td>Посетитель</td></tr>
+        <tr><td>Ничего не меняется годами</td><td>Не нужна</td><td>Никакой</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · от запаха кода к решению</caption>
+      <thead><tr><th>Запах</th><th>Что он означает</th><th>Чем лечится</th></tr></thead>
+      <tbody>
+        <tr><td>Одинаковый <code>match</code> в нескольких методах</td><td>Ось изменения найдена, но не выделена</td><td>Стратегия или полиморфизм</td></tr>
+        <tr><td>Проверки статуса по всему классу</td><td>Состояние не является объектом</td><td>Состояние или перечисление с поведением</td></tr>
+        <tr><td>Конструктор на десять параметров</td><td>Сборка сложнее, чем кажется</td><td>Строитель или разделение объекта</td></tr>
+        <tr><td>Библиотека упоминается в двадцати файлах</td><td>Внешняя зависимость протекла внутрь</td><td>Адаптер и порт</td></tr>
+        <tr><td>После операции идёт «ещё пять действий»</td><td>Побочные эффекты вшиты в основной поток</td><td>Наблюдатель или события домена</td></tr>
+        <tr><td>Условие дублируется в запросе и в проверке</td><td>Правило не имеет имени</td><td>Спецификация</td></tr>
+        <tr><td>Кэш и логирование внутри бизнес-класса</td><td>Смешаны обязанности</td><td>Декоратор</td></tr>
+        <tr><td>Три почти одинаковых обработчика импорта</td><td>Каркас общий, шаги разные</td><td>Шаблонный метод</td></tr>
+        <tr><td>Класс знает про десять сервисов</td><td>Слишком много обязанностей</td><td>Разделение, а не новый паттерн</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Последняя строка предыдущей таблицы важнее остальных: не каждый запах лечится паттерном. Класс с десятью зависимостями не нужно оборачивать в посредника или фасад — его нужно разделить. Введение паттерна поверх плохой декомпозиции даёт то же самое количество обязанностей, но теперь ещё и распределённых по нескольким файлам, где их труднее увидеть.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы выбираете подходящий паттерн?</b><br>Не перебором каталога, а от изменения. Сначала формулирую, что именно в этом месте меняется и как часто: способ расчёта, набор реакций, состав сборки, внешняя система. Потом смотрю, какая точка подстановки делает это изменение локальным. Имя паттерна появляется в конце и нужно в основном для разговора с командой — если ось изменения не сформулирована, любое название будет угадыванием.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="cost">
+    <p class="path">senior / цена</p>
+    <div class="card-top"><h3>Цена абстракции и правило трёх</h3><span class="badge b-3">Экономика</span></div>
+    <p>У каждого паттерна есть постоянные издержки: больше файлов, больше косвенности, длиннее путь от точки входа до реальной логики. Эти издержки платятся всегда, а выгода приходит только при изменении. Отсюда простой критерий: паттерн выгоден, если ожидаемое число изменений по его оси больше, чем стоимость самой абстракции.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · что именно оплачивается при введении паттерна</caption>
+      <thead><tr><th>Издержка</th><th>В чём проявляется</th><th>Кто платит</th></tr></thead>
+      <tbody>
+        <tr><td>Косвенность</td><td>Чтобы понять поведение, нужно открыть три файла</td><td>Каждый читающий код, включая автора через полгода</td></tr>
+        <tr><td>Число сущностей</td><td>Интерфейс, реализации, точка выбора, тесты на каждую</td><td>Тот, кто добавляет новый вариант</td></tr>
+        <tr><td>Порог входа</td><td>Новичок не понимает, где начинается выполнение</td><td>Команда при онбординге</td></tr>
+        <tr><td>Ложная гибкость</td><td>Расширение возможно не там, где потребовалось</td><td>Тот, кто вынужден ломать абстракцию</td></tr>
+        <tr><td>Сопротивление удалению</td><td>Паттерн выглядит «правильным» и его жалко убирать</td><td>Проект целиком</td></tr>
+        <tr><td>Диагностика</td><td>Трассировка стека вдвое длиннее, отладка медленнее</td><td>Дежурный во время инцидента</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Правило трёх</strong> — практичный компромисс между преждевременным обобщением и вечным дублированием: первый случай пишется прямо, второй копируется с осознанием дублирования, а на третьем выделяется абстракция. Смысл в том, что только к третьему разу видно, что в этих случаях действительно общее, а что различается. Абстракция, выведенная из двух примеров, почти всегда обобщает не по той оси.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · признаки неудачной абстракции</caption>
+      <thead><tr><th>Признак</th><th>Что произошло</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>У интерфейса одна реализация третий год</td><td>Ось изменения не подтвердилась</td><td>Свернуть обратно в конкретный класс</td></tr>
+        <tr><td>Реализации выбрасывают «не поддерживается»</td><td>Контракт шире реального сходства</td><td>Разделить интерфейс</td></tr>
+        <tr><td>При добавлении варианта правятся ещё три файла</td><td>Паттерн не закрыл ту ось, ради которой вводился</td><td>Пересмотреть точку подстановки</td></tr>
+        <tr><td>Флаг в сигнатуре, меняющий поведение метода</td><td>Внутри прячется вторая реализация</td><td>Разделить на два метода или две стратегии</td></tr>
+        <tr><td>Параметры интерфейса растут под конкретную реализацию</td><td>Абстракция протекает</td><td>Вернуть детали в реализацию</td></tr>
+        <tr><td>Никто в команде не может объяснить замысел</td><td>Паттерн введён по привычке</td><td>Упростить до конкретного кода</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Сформулируйте вслух предложение: «Этот интерфейс существует, чтобы можно было дёшево менять ___». Если вместо конкретной оси изменения получается «чтобы код был гибким» или «чтобы соблюсти принцип», абстракция не нужна. Тот же приём работает и на ревью чужого кода: вопрос звучит нейтрально и почти всегда быстро выводит на суть.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как понять, что паттерн здесь лишний?</b><br>По трём признакам: у абстракции годами одна реализация, добавление нового варианта всё равно требует правок в нескольких местах, и никто в команде не может назвать ось изменения, ради которой она заведена. Проверочная формулировка — «этот интерфейс нужен, чтобы дёшево менять что именно». Если ответа нет, конструкцию стоит свернуть обратно в конкретный класс: удалять абстракцию дешевле, чем её поддерживать.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="refactoring">
+    <p class="path">senior / эволюция</p>
+    <div class="card-top"><h3>Рефакторинг к паттернам и обратно</h3><span class="badge b-3">Техника</span></div>
+    <p>В работающем проекте паттерны не проектируют заранее — к ним приходят, когда очередная задача упирается в одно и то же место. Важна техника: переход должен состоять из мелких шагов, каждый из которых оставляет код работающим и проверяемым тестами.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Замена условий полиморфизмом: четыре безопасных шага</span></div><pre><span class="cm">// Шаг 0. Исходное состояние: правила в условиях, тесты есть только</span>
+<span class="cm">// на публичный метод — этого достаточно, чтобы начать.</span>
+<span class="kw">public function</span> <span class="fn">discountFor</span>(<span class="nm">Customer</span> <span class="nm">$c</span>, <span class="nm">Cart</span> <span class="nm">$cart</span>): <span class="nm">Money</span>
+{
+    <span class="kw">if</span> (<span class="nm">$c</span>-&gt;<span class="fn">isVip</span>()) {
+        <span class="kw">return</span> <span class="nm">$cart</span>-&gt;<span class="fn">total</span>()-&gt;<span class="fn">percent</span>(15);
+    }
+
+    <span class="kw">if</span> (<span class="nm">$c</span>-&gt;<span class="fn">isEmployee</span>()) {
+        <span class="kw">return</span> <span class="nm">$cart</span>-&gt;<span class="fn">total</span>()-&gt;<span class="fn">percent</span>(30);
+    }
+
+    <span class="kw">return</span> <span class="nm">Money</span>::<span class="fn">zero</span>();
+}
+
+<span class="cm">// Шаг 1. Каждая ветка становится отдельным приватным методом.</span>
+<span class="cm">// Поведение не меняется, тесты остаются зелёными.</span>
+
+<span class="cm">// Шаг 2. Методы переезжают в классы с общим интерфейсом.</span>
+<span class="kw">interface</span> <span class="nm">DiscountPolicy</span>
+{
+    <span class="kw">public function</span> <span class="fn">appliesTo</span>(<span class="nm">Customer</span> <span class="nm">$c</span>): <span class="kw">bool</span>;
+    <span class="kw">public function</span> <span class="fn">amount</span>(<span class="nm">Cart</span> <span class="nm">$cart</span>): <span class="nm">Money</span>;
+}
+
+<span class="cm">// Шаг 3. Условия заменяются перебором политик. Старый метод</span>
+<span class="cm">// остаётся на месте и делегирует — вызывающий код не трогаем.</span>
+<span class="kw">public function</span> <span class="fn">discountFor</span>(<span class="nm">Customer</span> <span class="nm">$c</span>, <span class="nm">Cart</span> <span class="nm">$cart</span>): <span class="nm">Money</span>
+{
+    <span class="kw">foreach</span> (<span class="nm">$this</span>-&gt;policies <span class="kw">as</span> <span class="nm">$policy</span>) {
+        <span class="kw">if</span> (<span class="nm">$policy</span>-&gt;<span class="fn">appliesTo</span>(<span class="nm">$c</span>)) {
+            <span class="kw">return</span> <span class="nm">$policy</span>-&gt;<span class="fn">amount</span>(<span class="nm">$cart</span>);
+        }
+    }
+
+    <span class="kw">return</span> <span class="nm">Money</span>::<span class="fn">zero</span>();
+}
+
+<span class="cm">// Шаг 4. Только теперь — тесты на каждую политику отдельно</span>
+<span class="cm">// и удаление тестов, которые проверяли ветвление изнутри.</span>
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · движение в обе стороны</caption>
+      <thead><tr><th>Направление</th><th>Повод</th><th>Первый шаг</th><th>Риск</th></tr></thead>
+      <tbody>
+        <tr><td>К стратегии</td><td>Одинаковое ветвление в нескольких методах</td><td>Выделить каждую ветку в метод</td><td>Точка выбора превращается в новый <code>match</code></td></tr>
+        <tr><td>К состоянию</td><td>Проверки статуса по всему классу</td><td>Собрать переходы в одно перечисление</td><td>Переходы расползаются по состояниям</td></tr>
+        <tr><td>К декоратору</td><td>Кэш и логи внутри бизнес-логики</td><td>Выделить интерфейс базовой операции</td><td>Порядок обёрток меняет поведение молча</td></tr>
+        <tr><td>К адаптеру</td><td>Библиотека упоминается по всему коду</td><td>Описать нужный вам контракт</td><td>Контракт копирует чужое API вместо своего</td></tr>
+        <tr><td>От паттерна к коду</td><td>Одна реализация третий год</td><td>Встроить реализацию в вызывающий класс</td><td>Удаление задевает тесты, написанные на абстракцию</td></tr>
+        <tr><td>От наследования к композиции</td><td>Базовый класс правится ради наследников</td><td>Вынести общее поведение в зависимость</td><td>Временный рост числа классов</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Тесты пишутся на поведение через публичную границу, а не на устройство паттерна. Набор тестов, где каждая стратегия проверяется отдельно, а сценария целиком нет, превращает любой обратный рефакторинг в переписывание тестов — и потому в аргумент «трогать нельзя». Правильная опора для перехода — тесты, которые не знают, есть внутри паттерн или нет. Подробнее о таком разделении — в конспекте по <a href="testing.html">тестированию</a>.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как ввести паттерн в работающий код, не сломав его?</b><br>Мелкими шагами с зелёными тестами после каждого. Сначала выделяю ветки в отдельные методы, потом переношу их в классы с общим интерфейсом, потом заменяю условие перебором реализаций, оставляя старый метод как точку входа. Вызывающий код не трогается до самого конца, а тесты пишутся на поведение через публичную границу — тогда и обратный ход, если абстракция не оправдается, остаётся дешёвым.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="enterprise">
+    <p class="path">senior / корпоративные</p>
+    <div class="card-top"><h3>Корпоративные паттерны</h3><span class="badge b-3">Слой данных</span></div>
+    <p>Каталог GoF описывает отношения между объектами и ничего не говорит про базу, транзакции и слои приложения. Эту часть закрывает второй каталог — паттернов корпоративных приложений. В PHP он важнее первого: почти всё, что в проекте называют архитектурой, состоит именно из этих конструкций.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 19 · корпоративные паттерны в PHP-проекте</caption>
+      <thead><tr><th>Паттерн</th><th>Что делает</th><th>Где встречается</th><th>Чем оборачивается злоупотребление</th></tr></thead>
+      <tbody>
+        <tr><td>Data Mapper</td><td>Разводит объект предметной области и его хранение</td><td>Doctrine</td><td>Больше кода для простых сущностей</td></tr>
+        <tr><td>Active Record</td><td>Объект сам умеет сохраняться</td><td>Eloquent</td><td>Домен зависит от базы, тесты требуют хранилища</td></tr>
+        <tr><td>Репозиторий</td><td>Доступ к данным за контрактом коллекции</td><td>Обе ORM, свои реализации</td><td>Класс с сорока методами вида <code>findByXAndY</code></td></tr>
+        <tr><td>Unit of Work</td><td>Пачка изменений сохраняется атомарно</td><td>Doctrine, <code>flush</code></td><td>Неожиданное сохранение всего изменённого разом</td></tr>
+        <tr><td>Identity Map</td><td>Одна сущность — один объект за запрос</td><td>Doctrine</td><td>Утечка памяти в долгих процессах</td></tr>
+        <tr><td>Ленивая загрузка</td><td>Данные подгружаются при обращении</td><td>Прокси связей</td><td>N+1 запросов на ровном месте</td></tr>
+        <tr><td>Сервисный слой</td><td>Сценарии приложения поверх домена</td><td>Прикладные сервисы, обработчики команд</td><td>Анемичный домен: вся логика уехала в сервисы</td></tr>
+        <tr><td>Объект передачи данных</td><td>Плоская структура для границы системы</td><td>Ответы API, входные запросы</td><td>Дублирование модели ради дублирования</td></tr>
+        <tr><td>Спецификация</td><td>Правило отбора как объект</td><td>Фильтры, проверки прав</td><td>Своя система запросов поверх ORM</td></tr>
+        <tr><td>Реестр</td><td>Глобальная точка доступа к общим объектам</td><td>Легаси-код</td><td>Тот же одиночка с теми же проблемами</td></tr>
+        <tr><td>Шлюз</td><td>Обёртка над внешней системой или таблицей</td><td>Клиенты API, отдельные запросы</td><td>Тонкий слой без пользы поверх готового SDK</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Выбор между Data Mapper и Active Record</strong> — самое заметное архитектурное решение этого слоя, и оно не сводится к «Doctrine лучше». Active Record выигрывает на CRUD-приложениях: меньше кода, быстрее разработка, всё под рукой. Data Mapper выигрывает там, где есть настоящая предметная логика с инвариантами, которую хочется тестировать без базы. Ошибка обычно не в выборе, а в попытке построить сложный домен поверх Active Record и потом удивляться, что модель знает про хранение.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Репозиторий — не «класс с запросами», а коллекция сущностей с точки зрения домена. Признак вырождения — методы вида <code>findActiveByCategoryAndPriceRangeOrderedByRating</code>, которые множатся с каждым экраном интерфейса. Лечится двумя способами: спецификациями для отбора внутри домена и отдельными объектами-запросами для чтения на экраны, что заодно разводит модель записи и модель чтения. Подробнее о репозиториях и связанных ловушках — в конспекте по <a href="orm.html">ORM и Doctrine</a>.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем Data Mapper отличается от Active Record?</b><br>Тем, кто знает про хранение. В Active Record сущность сама умеет сохраняться и наследуется от базового класса ORM — быстро для CRUD, но домен становится зависим от базы, а тесты требуют хранилища. В Data Mapper объект предметной области ничего не знает о базе, отображением занимается отдельный слой — больше кода, зато инварианты и логика тестируются без инфраструктуры. Выбор определяется тем, есть ли в приложении настоящая доменная логика.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="distributed">
+    <p class="path">senior / распределённые</p>
+    <div class="card-top"><h3>Паттерны распределённых систем</h3><span class="badge b-3">Инфраструктура</span></div>
+    <p>Третий слой каталога появился, когда приложения перестали быть одним процессом. Эти паттерны решают проблемы, которых у GoF не было вовсе: сеть ненадёжна, ответ может не прийти, а операция может выполниться дважды. На собеседованиях уровня Senior их спрашивают чаще классических.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 20 · инфраструктурные паттерны и их задача</caption>
+      <thead><tr><th>Паттерн</th><th>Проблема</th><th>Решение одной строкой</th><th>Где разобран подробнее</th></tr></thead>
+      <tbody>
+        <tr><td>Повтор с задержкой</td><td>Временный сбой внешней системы</td><td>Повторить, увеличивая паузу и добавляя разброс</td><td><a href="fintech.html">Финтех</a>, <a href="messaging.html">очереди</a></td></tr>
+        <tr><td>Предохранитель</td><td>Лежащий сервис съедает все воркеры</td><td>Разомкнуть вызовы после порога ошибок</td><td><a href="system-design.html">System design</a></td></tr>
+        <tr><td>Переборка</td><td>Один медленный сосед тормозит всё</td><td>Разделить пулы ресурсов по назначению</td><td><a href="system-design.html">System design</a></td></tr>
+        <tr><td>Идемпотентный обработчик</td><td>Сообщение доставлено дважды</td><td>Ключ операции и уникальный индекс</td><td><a href="fintech.html">Финтех</a></td></tr>
+        <tr><td>Outbox</td><td>Событие потеряно или опубликовано без фиксации</td><td>Писать событие той же транзакцией</td><td><a href="messaging.html">Брокеры сообщений</a></td></tr>
+        <tr><td>Сага</td><td>Транзакции через границы сервисов не существует</td><td>Шаги с компенсациями вместо отката</td><td><a href="fintech.html">Финтех</a></td></tr>
+        <tr><td>CQRS</td><td>Модель записи неудобна для чтения</td><td>Развести модели команд и запросов</td><td><a href="patterns.html">Архитектура кода</a></td></tr>
+        <tr><td>Порты и адаптеры</td><td>Инфраструктура протекает в домен</td><td>Контракт со стороны домена, реализация снаружи</td><td><a href="patterns.html">Архитектура кода</a></td></tr>
+        <tr><td>Кэш рядом с вызовом</td><td>Повторные дорогие обращения</td><td>Декоратор с кэшированием поверх порта</td><td><a href="performance.html">Производительность</a></td></tr>
+        <tr><td>Ограничитель запросов</td><td>Перегрузка своей или чужой системы</td><td>Лимит на клиента с явным кодом ответа</td><td><a href="http-api.html">HTTP и API</a></td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Общее у всей группы</strong> — они описывают поведение при отказе, а не структуру классов. Поэтому и вводят их не по каталогу, а по инциденту: предохранитель появляется после первого раза, когда лежащий провайдер выел пул воркеров, идемпотентный обработчик — после первого двойного списания. Это редкий случай, когда «преждевременное» применение оправдано: у некоторых из них цена ошибки такова, что закладывать их лучше сразу.</p>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Классические и инфраструктурные паттерны хорошо сочетаются: предохранитель, повторы и кэш естественно оформляются декораторами поверх одного порта. Это даёт полезное свойство — базовая реализация остаётся чистой и тестируется без инфраструктуры, а поведение при отказах собирается конфигурацией контейнера и меняется без правки бизнес-кода.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какие паттерны вы применяете при интеграции с внешним сервисом?</b><br>Со стороны структуры — порт с адаптером, чтобы чужое API не протекало в домен, и декораторы поверх него для повторов, предохранителя, кэша и метрик. Со стороны поведения — идемпотентность операций и явная обработка неизвестного результата при таймауте. Такое разделение оставляет базовую реализацию тестируемой без сети, а политику отказов — настраиваемой без правки кода.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / антипаттерны</p>
+    <div class="card-top"><h3>Антипаттерны применения</h3><span class="badge b-3">Разбор</span></div>
+    <p>Отдельная категория проблем возникает не от незнания паттернов, а от их применения. Это код, который проходит ревью, выглядит грамотно и стоит вдвое дороже в поддержке.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 21 · антипаттерны вокруг каталога</caption>
+      <thead><tr><th>Антипаттерн</th><th>Как выглядит</th><th>Чем заканчивается</th><th>Лечение</th></tr></thead>
+      <tbody>
+        <tr><td>Паттерн ради паттерна</td><td>Интерфейс с единственной реализацией у каждого класса</td><td>Двойная правка при любом изменении</td><td>Свернуть до конкретного класса</td></tr>
+        <tr><td>Фабрика фабрик</td><td>Слой создания поверх слоя создания</td><td>Никто не понимает, откуда берётся объект</td><td>Контейнер и именованные конструкторы</td></tr>
+        <tr><td>Божественный посредник</td><td>Координатор с бизнес-логикой на тысячу строк</td><td>Правится в каждой задаче, не тестируется</td><td>Разделить по сценариям</td></tr>
+        <tr><td>Анемичная модель</td><td>Сущности без поведения, логика в сервисах</td><td>Инварианты не защищены, правила дублируются</td><td>Вернуть поведение к данным</td></tr>
+        <tr><td>Дырявая абстракция</td><td>В интерфейсе появляются детали одной реализации</td><td>Подмена реализации перестаёт работать</td><td>Пересмотреть контракт</td></tr>
+        <tr><td>Слои ради слоёв</td><td>Контроллер зовёт сервис, тот — другой сервис, тот — репозиторий, и все просто пробрасывают</td><td>Пять файлов на одно изменение</td><td>Убрать слои без ответственности</td></tr>
+        <tr><td>Событийный лабиринт</td><td>Слушатели, порождающие события для слушателей</td><td>Поток управления невозможно проследить</td><td>Явные вызовы для обязательных действий</td></tr>
+        <tr><td>Декоратор без границ</td><td>Шесть обёрток, порядок которых никто не помнит</td><td>Поведение зависит от конфигурации контейнера</td><td>Сократить набор, зафиксировать порядок тестом</td></tr>
+        <tr><td>Наследование вместо стратегии</td><td>Иерархия на десять классов ради одного отличия</td><td>Правка базового класса задевает всех</td><td>Композиция с подставляемой реализацией</td></tr>
+        <tr><td>Спекулятивная гибкость</td><td>Точки расширения «на будущее»</td><td>Расширять приходится не там, где заложено</td><td>Правило трёх и удаление лишнего</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Отдельно стоит культ каталога на ревью: комментарий «здесь нужен паттерн X» без объяснения, какая ось изменения его оправдывает. Такой комментарий формально невозможно оспорить — паттерн из книги, книга авторитетная, — и в результате в код попадают абстракции, которые никто не заказывал. Работающая практика: любое требование ввести паттерн сопровождается фразой «чтобы дёшево менять ___», иначе оно не принимается.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Приведите пример, когда паттерн навредил.</b><br>Сильный ответ — из собственного опыта и с числами: сколько файлов приходилось открывать, чтобы понять поведение, сколько правок требовало изменение, ради которого абстракция и заводилась. Типичный сюжет: интерфейс и фабрика заведены под будущего второго поставщика, второй поставщик пришёл через два года и потребовал другого контракта, так что абстракцию всё равно переписали, а два года её просто обходили.</div>
+  </article>
+
+  <!-- 19 -->
+  <article class="card lvl-s" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Проверка</span></div>
+    <p>Что должно быть в арсенале.</p>
+    <ul class="check">
+      <li>Выводить паттерн из оси изменения, а не подбирать из каталога.</li>
+      <li>Назвать по запаху кода подходящее решение и случаи, где паттерн не поможет.</li>
+      <li>Перечислить издержки абстракции и сказать, кто именно их платит.</li>
+      <li>Обосновать правило трёх и объяснить, почему абстракция из двух примеров обычно неверна.</li>
+      <li>Найти признаки неудачной абстракции и предложить сворачивание.</li>
+      <li>Провести замену условий полиморфизмом мелкими шагами с зелёными тестами.</li>
+      <li>Объяснить, почему тесты пишутся на поведение, а не на устройство паттерна.</li>
+      <li>Развести Data Mapper и Active Record по применимости, а не по предпочтению.</li>
+      <li>Назвать признак вырождения репозитория и способы его лечения.</li>
+      <li>Перечислить инфраструктурные паттерны и сказать, какую проблему отказа решает каждый.</li>
+      <li>Собрать порт с декораторами повторов, предохранителя и кэша.</li>
+      <li>Назвать пять антипаттернов применения и как каждый выглядит в коде.</li>
+      <li>Сформулировать требование к паттерну на ревью через фразу «чтобы дёшево менять ___».</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Сводки для повторения перед собеседованием и для быстрой проверки собственных решений на ревью.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Похожие пары</h3><span class="badge b-tag">Таблица 22</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 22 · паттерны, которые путают, и признак различия</caption>
+      <thead><tr><th>Пара</th><th>Общее</th><th>Ключевое различие</th></tr></thead>
+      <tbody>
+        <tr><td>Стратегия и состояние</td><td>Подставляемая реализация поведения</td><td>Стратегию выбирает вызывающий код, состояние объект меняет сам</td></tr>
+        <tr><td>Стратегия и шаблонный метод</td><td>Варьируется поведение</td><td>Композиция и подмена в рантайме против наследования</td></tr>
+        <tr><td>Декоратор и заместитель</td><td>Обёртка с тем же интерфейсом</td><td>Декоратор добавляет поведение, заместитель управляет доступом</td></tr>
+        <tr><td>Декоратор и адаптер</td><td>Оборачивают другой объект</td><td>Декоратор сохраняет интерфейс, адаптер его меняет</td></tr>
+        <tr><td>Адаптер и фасад</td><td>Скрывают чужое устройство</td><td>Адаптер подгоняет под существующий контракт, фасад придумывает новый и более простой</td></tr>
+        <tr><td>Компоновщик и декоратор</td><td>Рекурсивная структура объектов</td><td>Компоновщик про дерево «часть-целое», декоратор про наслоение обязанностей</td></tr>
+        <tr><td>Наблюдатель и посредник</td><td>Развязывают участников</td><td>Наблюдатель рассылает факт всем, посредник управляет взаимодействием</td></tr>
+        <tr><td>Цепочка и декоратор</td><td>Цепочка объектов вокруг вызова</td><td>Звено цепочки может прервать обработку, декоратор обязан передать дальше</td></tr>
+        <tr><td>Фабрика и строитель</td><td>Прячут создание</td><td>Фабрика решает «какой класс», строитель — «из каких частей»</td></tr>
+        <tr><td>Команда и стратегия</td><td>Поведение как объект</td><td>Команда несёт данные и предназначена для отложенного выполнения</td></tr>
+        <tr><td>Репозиторий и шлюз</td><td>Слой доступа к данным</td><td>Репозиторий говорит о сущностях домена, шлюз — о таблице или API</td></tr>
+        <tr><td>Одиночка и реестр</td><td>Глобальный доступ</td><td>Одиночка про единственность, реестр про поиск по имени; проблемы одинаковые</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Паттерны и SOLID</h3><span class="badge b-tag">Таблица 23</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 23 · какой принцип стоит за паттерном</caption>
+      <thead><tr><th>Принцип</th><th>Что требует</th><th>Паттерны, которые его реализуют</th></tr></thead>
+      <tbody>
+        <tr><td>Единственная ответственность</td><td>У класса одна причина для изменения</td><td>Стратегия, команда, декоратор, спецификация</td></tr>
+        <tr><td>Открытость и закрытость</td><td>Расширять без правки существующего кода</td><td>Стратегия, наблюдатель, цепочка, посетитель</td></tr>
+        <tr><td>Подстановка</td><td>Наследника можно поставить вместо базового типа</td><td>Шаблонный метод, компоновщик, пустой объект</td></tr>
+        <tr><td>Разделение интерфейсов</td><td>Узкие контракты вместо универсальных</td><td>Адаптер, фасад, порты и адаптеры</td></tr>
+        <tr><td>Инверсия зависимостей</td><td>Зависеть от абстракции, а не от реализации</td><td>Фабрика, адаптер, внедрение зависимостей</td></tr>
+      </tbody>
+    </table></div>
+    <p>Связь работает в обе стороны и полезна на собеседовании: вопрос про SOLID почти всегда закрывается примером паттерна, а вопрос про паттерн — упоминанием принципа, который он обслуживает. Подробный разбор самих принципов — в конспекте по <a href="patterns.html">архитектуре кода</a>.</p>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Как тестировать паттерн</h3><span class="badge b-tag">Таблица 24</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 24 · что проверять в каждом случае</caption>
+      <thead><tr><th>Паттерн</th><th>Что тестировать</th><th>Чего не делать</th></tr></thead>
+      <tbody>
+        <tr><td>Стратегия</td><td>Каждую реализацию отдельно плюс выбор варианта</td><td>Проверять, что вызвался конкретный класс</td></tr>
+        <tr><td>Декоратор</td><td>Что обёртка добавляет поведение и передаёт вызов дальше</td><td>Дублировать тесты базовой реализации</td></tr>
+        <tr><td>Цепочка</td><td>Прерывание на нужном звене и порядок звеньев</td><td>Тестировать только звенья по отдельности</td></tr>
+        <tr><td>Наблюдатель</td><td>Что событие опубликовано; слушателей — отдельно</td><td>Проверять весь каскад реакций в одном тесте</td></tr>
+        <tr><td>Состояние</td><td>Матрицу допустимых и запрещённых переходов</td><td>Тестировать только счастливый путь</td></tr>
+        <tr><td>Фабрика</td><td>Соответствие входного значения созданному типу</td><td>Проверять внутренности созданного объекта</td></tr>
+        <tr><td>Строитель</td><td>Обязательные поля и невозможность собрать неполный объект</td><td>Тестировать каждый метод-сеттер отдельно</td></tr>
+        <tr><td>Адаптер</td><td>Преобразование форматов и обработку ошибок чужого API</td><td>Ходить в настоящий внешний сервис</td></tr>
+        <tr><td>Команда</td><td>Что обработчик выполняет действие и идемпотентен</td><td>Проверять сериализацию как основное поведение</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что спрашивают на собеседовании</h3><span class="badge b-tag">Таблица 25</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 25 · частота вопросов и что усиливает ответ</caption>
+      <thead><tr><th>Тема</th><th>Частота</th><th>Что превращает ответ в сильный</th></tr></thead>
+      <tbody>
+        <tr><td>Стратегия</td><td>Очень высокая</td><td>Пример из своего кода и момент, когда она окупилась</td></tr>
+        <tr><td>Декоратор против заместителя</td><td>Высокая</td><td>Разница по замыслу, а не по структуре</td></tr>
+        <tr><td>Одиночка</td><td>Высокая</td><td>Претензия к глобальному доступу, а не к единственности</td></tr>
+        <tr><td>Фабрики</td><td>Высокая</td><td>Упоминание контейнера как промышленной фабрики</td></tr>
+        <tr><td>Наблюдатель и события</td><td>Высокая</td><td>Правило выбора между событием и прямым вызовом</td></tr>
+        <tr><td>Репозиторий и ORM</td><td>Высокая</td><td>Признак вырождения и способ лечения</td></tr>
+        <tr><td>Состояние</td><td>Средняя</td><td>Перечисление с поведением как форма в PHP</td></tr>
+        <tr><td>Посетитель</td><td>Средняя</td><td>Честный рассказ о его недостатке</td></tr>
+        <tr><td>Инфраструктурные паттерны</td><td>Средняя и растущая</td><td>Связь с конкретным инцидентом</td></tr>
+        <tr><td>Когда паттерн не нужен</td><td>Высокая на Senior</td><td>Пример, где вы его убрали, а не только ввели</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Типичные ошибки реализации</h3><span class="badge b-tag">Таблица 26</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 26 · как паттерн ломают в PHP-коде</caption>
+      <thead><tr><th>Паттерн</th><th>Ошибка</th><th>Последствие</th></tr></thead>
+      <tbody>
+        <tr><td>Стратегия</td><td>Точка выбора зашита в тот же класс, что и использование</td><td>Новый вариант всё равно требует правки старого файла</td></tr>
+        <tr><td>Декоратор</td><td>Обёртка реализует не тот же интерфейс, а свой</td><td>Складывать декораторы больше нельзя</td></tr>
+        <tr><td>Декоратор</td><td>Внутри обёртки меняется семантика вызова</td><td>Подмена перестаёт быть прозрачной, ломается подстановка</td></tr>
+        <tr><td>Фабрика</td><td>Фабрика сама собирает зависимости через <code>new</code></td><td>Дублирование контейнера и невозможность подмены</td></tr>
+        <tr><td>Строитель</td><td>Изменяемый строитель переиспользуется между вызовами</td><td>Второй объект наследует настройки первого</td></tr>
+        <tr><td>Наблюдатель</td><td>Слушатель бросает исключение и роняет основной поток</td><td>Отправка письма ломает оформление заказа</td></tr>
+        <tr><td>Цепочка</td><td>Звено забывает вызвать следующий обработчик</td><td>Запрос тихо исчезает без ошибки</td></tr>
+        <tr><td>Состояние</td><td>Переходы описаны в вызывающем коде, а не в состоянии</td><td>Возвращается то самое ветвление, ради которого всё делалось</td></tr>
+        <tr><td>Компоновщик</td><td>Лист выбрасывает исключение на методах узла</td><td>Нарушение подстановки, проверки типа у клиента</td></tr>
+        <tr><td>Пустой объект</td><td>Заглушка молча скрывает настоящую ошибку</td><td>Проблема всплывает далеко от места возникновения</td></tr>
+        <tr><td>Прототип</td><td>Поверхностное копирование вложенных объектов</td><td>Копия и оригинал делят изменяемое состояние</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ШАБЛОНЫ ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Шаблоны кода</h2>
+    <p>Заготовки в той форме, в которой паттерны действительно живут в современном PHP-проекте: с контейнером, атрибутами и типами, а не с диаграммами из книги.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Стратегия через контейнер</h3><span class="badge b-tag">Шаблон</span></div>
+    <p>Ключевая деталь — точка выбора не должна знать список реализаций. Иначе новый вариант всё равно требует правки старого файла, и половина смысла паттерна теряется.</p>
+    <div class="code"><div class="bar"><span>PHP + YAML</span><span class="r">Набор реализаций собирается автоматически</span></div><pre><span class="cm">// Реализации помечаются атрибутом — регистрация не требуется</span>
+#[<span class="nm">AutoconfigureTag</span>(<span class="st">&quot;app.discount_policy&quot;</span>)]
+<span class="kw">interface</span> <span class="nm">DiscountPolicy</span>
+{
+    <span class="kw">public function</span> <span class="fn">appliesTo</span>(<span class="nm">Customer</span> <span class="nm">$customer</span>): <span class="kw">bool</span>;
+    <span class="kw">public function</span> <span class="fn">amount</span>(<span class="nm">Cart</span> <span class="nm">$cart</span>): <span class="nm">Money</span>;
+}
+
+<span class="kw">final class</span> <span class="nm">DiscountCalculator</span>
+{
+    <span class="cm">/** @param iterable&lt;DiscountPolicy&gt; $policies */</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        #[<span class="nm">AutowireIterator</span>(<span class="st">&quot;app.discount_policy&quot;</span>)]
+        <span class="kw">private readonly iterable</span> <span class="nm">$policies</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">bestFor</span>(<span class="nm">Customer</span> <span class="nm">$customer</span>, <span class="nm">Cart</span> <span class="nm">$cart</span>): <span class="nm">Money</span>
+    {
+        <span class="nm">$best</span> = <span class="nm">Money</span>::<span class="fn">zero</span>();
+
+        <span class="kw">foreach</span> (<span class="nm">$this</span>-&gt;policies <span class="kw">as</span> <span class="nm">$policy</span>) {
+            <span class="kw">if</span> (!<span class="nm">$policy</span>-&gt;<span class="fn">appliesTo</span>(<span class="nm">$customer</span>)) {
+                <span class="kw">continue</span>;
+            }
+
+            <span class="nm">$amount</span> = <span class="nm">$policy</span>-&gt;<span class="fn">amount</span>(<span class="nm">$cart</span>);
+            <span class="nm">$best</span> = <span class="nm">$amount</span>-&gt;<span class="fn">greaterThan</span>(<span class="nm">$best</span>) ? <span class="nm">$amount</span> : <span class="nm">$best</span>;
+        }
+
+        <span class="kw">return</span> <span class="nm">$best</span>;
+    }
+}
+
+<span class="cm"># Тот же приём без атрибутов, конфигурацией:</span>
+<span class="cm"># services:</span>
+<span class="cm">#     _instanceof:</span>
+<span class="cm">#         App\Discount\DiscountPolicy:</span>
+<span class="cm">#             tags: [app.discount_policy]</span>
+<span class="cm">#     App\Discount\DiscountCalculator:</span>
+<span class="cm">#         arguments: [!tagged_iterator app.discount_policy]</span>
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Декоратор в контейнере</h3><span class="badge b-tag">Шаблон</span></div>
+    <p>Обёртки подключаются конфигурацией, поэтому бизнес-код о них не знает вовсе. Порядок задаётся приоритетом и обязательно фиксируется тестом: молчаливая перестановка кэша и повторов меняет поведение системы.</p>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Кэш, повторы и метрики поверх одного порта</span></div><pre>#[<span class="nm">AsDecorator</span>(decorates: <span class="nm">ExchangeRates</span>::<span class="kw">class</span>, priority: 10)]
+<span class="kw">final class</span> <span class="nm">CachedExchangeRates</span> <span class="kw">implements</span> <span class="nm">ExchangeRates</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        #[<span class="nm">AutowireDecorated</span>] <span class="kw">private readonly</span> <span class="nm">ExchangeRates</span> <span class="nm">$inner</span>,
+        <span class="kw">private readonly</span> <span class="nm">CacheInterface</span> <span class="nm">$cache</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">rateFor</span>(<span class="nm">Currency</span> <span class="nm">$from</span>, <span class="nm">Currency</span> <span class="nm">$to</span>): <span class="nm">Rate</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;cache-&gt;<span class="fn">get</span>(
+            <span class="st">&quot;rate.{$from-&gt;code}.{$to-&gt;code}&quot;</span>,
+            <span class="kw">fn</span>() =&gt; <span class="nm">$this</span>-&gt;inner-&gt;<span class="fn">rateFor</span>(<span class="nm">$from</span>, <span class="nm">$to</span>),
+        );
+    }
+}
+
+<span class="cm">// Тест, закрепляющий порядок обёрток: без него перестановка</span>
+<span class="cm">// приоритетов проходит ревью незаметно и меняет поведение.</span>
+<span class="kw">public function</span> <span class="fn">testRetriesHappenBeforeCaching</span>(): <span class="kw">void</span>
+{
+    <span class="nm">$rates</span> = <span class="nm">$this</span>-&gt;container-&gt;<span class="fn">get</span>(<span class="nm">ExchangeRates</span>::<span class="kw">class</span>);
+
+    <span class="nm">$this</span>-&gt;<span class="fn">assertInstanceOf</span>(<span class="nm">CachedExchangeRates</span>::<span class="kw">class</span>, <span class="nm">$rates</span>);
+    <span class="nm">$this</span>-&gt;<span class="fn">assertInstanceOf</span>(<span class="nm">RetryingExchangeRates</span>::<span class="kw">class</span>, <span class="nm">$rates</span>-&gt;<span class="fn">inner</span>());
+}
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Спецификация</h3><span class="badge b-tag">Шаблон</span></div>
+    <p>Правило отбора получает имя и перестаёт дублироваться между проверкой в коде и условием в запросе. Второй метод — перевод в критерий базы — и есть то, ради чего паттерн обычно вводят.</p>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Одно правило для проверки объекта и для запроса</span></div><pre><span class="kw">interface</span> <span class="nm">Specification</span>
+{
+    <span class="kw">public function</span> <span class="fn">isSatisfiedBy</span>(<span class="nm">Customer</span> <span class="nm">$customer</span>): <span class="kw">bool</span>;
+    <span class="kw">public function</span> <span class="fn">toCriteria</span>(): <span class="nm">Criteria</span>;
+}
+
+<span class="kw">final class</span> <span class="nm">LoyalCustomer</span> <span class="kw">implements</span> <span class="nm">Specification</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly int</span> <span class="nm">$minOrders</span> = 5,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">isSatisfiedBy</span>(<span class="nm">Customer</span> <span class="nm">$customer</span>): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="nm">$customer</span>-&gt;<span class="fn">completedOrders</span>() &gt;= <span class="nm">$this</span>-&gt;minOrders;
+    }
+
+    <span class="cm">// Та же логика в терминах хранилища: правило одно,</span>
+    <span class="cm">// поэтому список на экране и проверка в домене не разъезжаются.</span>
+    <span class="kw">public function</span> <span class="fn">toCriteria</span>(): <span class="nm">Criteria</span>
+    {
+        <span class="kw">return</span> <span class="nm">Criteria</span>::<span class="fn">create</span>()-&gt;<span class="fn">andWhere</span>(
+            <span class="nm">Criteria</span>::<span class="fn">expr</span>()-&gt;<span class="fn">gte</span>(<span class="st">&quot;completedOrders&quot;</span>, <span class="nm">$this</span>-&gt;minOrders),
+        );
+    }
+}
+
+<span class="cm">// Композиция правил вместо копирования условий</span>
+<span class="nm">$spec</span> = <span class="kw">new</span> <span class="nm">AndSpecification</span>(
+    <span class="kw">new</span> <span class="nm">LoyalCustomer</span>(minOrders: 10),
+    <span class="kw">new</span> <span class="nm">RegisteredBefore</span>(<span class="nm">$date</span>),
+);
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Команда и обработчик</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Действие как объект: очередь, повтор, тестируемость</span></div><pre><span class="cm">// Команда — неизменяемые данные без поведения и зависимостей:</span>
+<span class="cm">// её сериализуют в очередь, значит внутри не должно быть сервисов.</span>
+<span class="kw">final readonly class</span> <span class="nm">CancelOrder</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public</span> <span class="nm">OrderId</span> <span class="nm">$orderId</span>,
+        <span class="kw">public string</span> <span class="nm">$reason</span>,
+        <span class="kw">public string</span> <span class="nm">$idempotencyKey</span>,
+    ) {}
+}
+
+#[<span class="nm">AsMessageHandler</span>]
+<span class="kw">final class</span> <span class="nm">CancelOrderHandler</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">OrderRepository</span> <span class="nm">$orders</span>,
+        <span class="kw">private readonly</span> <span class="nm">RefundService</span> <span class="nm">$refunds</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">CancelOrder</span> <span class="nm">$command</span>): <span class="kw">void</span>
+    {
+        <span class="nm">$order</span> = <span class="nm">$this</span>-&gt;orders-&gt;<span class="fn">lockById</span>(<span class="nm">$command</span>-&gt;orderId);
+
+        <span class="cm">// Обработчик обязан быть идемпотентным: сообщение</span>
+        <span class="cm">// доставляется как минимум один раз, а значит иногда дважды.</span>
+        <span class="kw">if</span> (<span class="nm">$order</span>-&gt;<span class="fn">isCanceled</span>()) {
+            <span class="kw">return</span>;
+        }
+
+        <span class="nm">$order</span>-&gt;<span class="fn">cancel</span>(<span class="nm">$command</span>-&gt;reason);
+        <span class="nm">$this</span>-&gt;refunds-&gt;<span class="fn">requestFor</span>(<span class="nm">$order</span>, <span class="nm">$command</span>-&gt;idempotencyKey);
+    }
+}
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Пустой объект и его границы</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Поведение по умолчанию вместо проверок на null</span></div><pre><span class="kw">interface</span> <span class="nm">Notifier</span>
+{
+    <span class="kw">public function</span> <span class="fn">notify</span>(<span class="nm">User</span> <span class="nm">$user</span>, <span class="nm">Message</span> <span class="nm">$message</span>): <span class="kw">void</span>;
+}
+
+<span class="cm">// Уместно: отсутствие уведомлений — нормальный режим работы,</span>
+<span class="cm">// например в тестовой среде или при отключённом канале.</span>
+<span class="kw">final class</span> <span class="nm">NullNotifier</span> <span class="kw">implements</span> <span class="nm">Notifier</span>
+{
+    <span class="kw">public function</span> <span class="fn">notify</span>(<span class="nm">User</span> <span class="nm">$user</span>, <span class="nm">Message</span> <span class="nm">$message</span>): <span class="kw">void</span>
+    {
+        <span class="cm">// намеренно ничего не делает</span>
+    }
+}
+
+<span class="cm">// Неуместно: заглушка вместо отсутствующих данных.</span>
+<span class="cm">// Пустой клиент с нулевым балансом скроет ошибку загрузки,</span>
+<span class="cm">// и она всплывёт в отчёте через неделю, а не при обращении.</span>
+<span class="kw">final class</span> <span class="nm">NullCustomer</span> <span class="kw">extends</span> <span class="nm">Customer</span>
+{
+    <span class="kw">public function</span> <span class="fn">balance</span>(): <span class="nm">Money</span> { <span class="kw">return</span> <span class="nm">Money</span>::<span class="fn">zero</span>(); }
+}
+
+<span class="cm">// Правило: пустой объект — для необязательного поведения,</span>
+<span class="cm">// исключение — для отсутствующих данных, без которых работать нельзя.</span>
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Чек-лист перед введением паттерна</h3><span class="badge b-tag">Проверка</span></div>
+    <ul class="check">
+      <li>Сформулирована ось изменения: «чтобы дёшево менять ___».</li>
+      <li>Есть подтверждение из истории задач, что эта ось действительно меняется.</li>
+      <li>Вариантов уже три или второй-третий на подходе, а не «может быть».</li>
+      <li>Понятно, кто выбирает вариант: вызывающий код, конфигурация или сам объект.</li>
+      <li>Точка выбора не требует правки при добавлении нового варианта.</li>
+      <li>Проверено, не решает ли задачу возможность языка: замыкание, перечисление, генератор.</li>
+      <li>Проверено, не реализован ли паттерн уже во фреймворке.</li>
+      <li>Названо, что станет труднее: сколько файлов открывать, чтобы понять поведение.</li>
+      <li>Тесты пишутся на поведение через публичную границу, а не на устройство паттерна.</li>
+      <li>Есть представление, как свернуть абстракцию обратно, если она не оправдается.</li>
+      <li>Имя в коде отражает предметную область, а не название паттерна из книги.</li>
+      <li>Решение объяснимо коллеге одной фразой без ссылки на авторитет каталога.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Паттерны — тема, где легко отвечать пересказом книги. Сильный ответ содержит две вещи, которых в книге нет: форму паттерна в современном PHP и его цену.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">База</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое паттерн проектирования?</span><span class="aa">Описание повторяющейся проблемы и проверенного решения с именем и известной областью применимости. Ценность в общем словаре: фраза «здесь стратегия» передаёт структуру и точки расширения за секунду. Вторая ценность — готовое знание о слабых местах решения.</span></li>
+      <li><span class="qq">Зачем нужны паттерны, если код и так работает?</span><span class="aa">Чтобы изменения стоили дешевле там, где они действительно происходят. Паттерн выделяет ось изменения, чтобы добавление варианта требовало одной правки, а не пяти. Если ось изменения не найдена, паттерн только добавляет косвенности и не окупается.</span></li>
+      <li><span class="qq">Какие есть группы паттернов?</span><span class="aa">Порождающие изолируют создание объектов, структурные — их соединение, поведенческие — распределение обязанностей и поток управления. Деление помогает искать решение: сначала понимаешь, что мешает — создание, соединение или ветвление, — потом выбираешь внутри группы.</span></li>
+      <li><span class="qq">Назовите порождающие паттерны.</span><span class="aa">Фабричный метод, абстрактная фабрика, строитель, прототип, одиночка. В PHP к ним примыкают именованные конструкторы и контейнер внедрения зависимостей, который фактически выполняет роль промышленной фабрики для всего приложения.</span></li>
+      <li><span class="qq">Чем фабричный метод отличается от абстрактной фабрики?</span><span class="aa">Фабричный метод — один метод создания, переопределяемый наследником: варьируется один продукт. Абстрактная фабрика — интерфейс с несколькими методами, создающий семейство согласованных объектов, чтобы нельзя было смешать части из разных семейств. В PHP первое встречается регулярно, второе редко.</span></li>
+      <li><span class="qq">Что такое именованный конструктор?</span><span class="aa">Статический метод создания с говорящим именем вместо публичного конструктора: <code>Money::fromDecimalString</code>, <code>Email::fromString</code>. Он объясняет смысл аргументов, позволяет иметь несколько способов создания и оставляет свободу менять сигнатуру конструктора, не ломая вызывающий код.</span></li>
+      <li><span class="qq">Когда нужен строитель?</span><span class="aa">Когда объект собирается из многих необязательных частей и порядок сборки важен: запрос к API, конфигурация отчёта, письмо с вложениями. Практический признак — конструктор с шестью параметрами, половина из которых в большинстве вызовов равна <code>null</code>. Инвариант при этом проверяется один раз в методе сборки.</span></li>
+      <li><span class="qq">Что такое прототип?</span><span class="aa">Создание нового объекта копированием готового, когда конструирование дороже копирования. В PHP это <code>clone</code>, и главная тонкость — поверхностность копирования: вложенные объекты остаются общими, поэтому при наличии изменяемого состояния нужно реализовать <code>__clone</code>.</span></li>
+      <li><span class="qq">Почему одиночку считают проблемой?</span><span class="aa">Из-за глобального доступа, а не из-за единственности. Класс, вызывающий <code>getInstance</code> внутри метода, скрывает зависимость: её не видно в конструкторе, нельзя подменить в тесте, и она превращается в общее изменяемое состояние. Единственность прекрасно обеспечивает контейнер.</span></li>
+      <li><span class="qq">Чем заменить одиночку?</span><span class="aa">Внедрением зависимости через конструктор: контейнер по умолчанию отдаёт один и тот же экземпляр сервиса, то есть даёт единственность без глобального доступа. Зависимость остаётся видимой и подменяемой, а в долгоживущих процессах не превращается в состояние, протекающее между запросами.</span></li>
+      <li><span class="qq">Что такое адаптер?</span><span class="aa">Обёртка, приводящая чужой интерфейс к нужному вам. Типичное применение — SDK внешнего сервиса за собственным доменным контрактом: тогда замена поставщика затрагивает один класс, а не двадцать файлов, где раньше упоминалась библиотека.</span></li>
+      <li><span class="qq">Что такое декоратор?</span><span class="aa">Обёртка с тем же интерфейсом, добавляющая поведение вокруг вызова: кэш, логирование, повторы, метрики. Поскольку интерфейс сохраняется, декораторы складываются друг на друга, а базовая реализация остаётся чистой и ничего о них не знает.</span></li>
+      <li><span class="qq">Что такое заместитель и какие у него виды?</span><span class="aa">Объект с тем же интерфейсом, управляющий доступом к настоящему. Виды: ленивый — откладывает создание, как прокси-объекты Doctrine; защитный — проверяет права; удалённый — прячет сетевой вызов; кэширующий и измеряющий. Новой функциональности он не добавляет, в этом отличие от декоратора.</span></li>
+      <li><span class="qq">Чем декоратор отличается от адаптера и заместителя?</span><span class="aa">Интерфейсом и замыслом. Адаптер меняет интерфейс, декоратор его сохраняет и добавляет поведение, заместитель сохраняет и управляет доступом. Структурно все трое — объект внутри объекта, поэтому на собеседовании ждут именно объяснения через намерение.</span></li>
+      <li><span class="qq">Что такое фасад?</span><span class="aa">Простой вход в сложную подсистему: один метод вместо пяти вызовов подряд. Он не обязан сохранять исходный интерфейс и полезен на границе с чужим кодом. Вырождается, когда превращается в класс на тридцать методов, через который проходит вообще всё.</span></li>
+      <li><span class="qq">Что такое компоновщик?</span><span class="aa">Единый интерфейс для отдельного элемента и группы элементов, благодаря чему вызывающий код обходит дерево, не различая узел и лист. Классические примеры — дерево категорий, вложенные правила валидации, составные фильтры.</span></li>
+      <li><span class="qq">Что такое стратегия?</span><span class="aa">Взаимозаменяемые варианты алгоритма за общим интерфейсом: способ доставки, расчёт скидки, формат экспорта. Вводится, когда одинаковое ветвление появляется в нескольких методах: тогда новый вариант становится новым классом вместо правки трёх существующих файлов.</span></li>
+      <li><span class="qq">Что такое наблюдатель?</span><span class="aa">Оповещение подписчиков о произошедшем факте без знания о том, кто на него отреагирует. В PHP-проектах его роль почти всегда играет диспетчер событий фреймворка. Цена — поток управления перестаёт читаться по коду, потому что список реакций собирается конфигурацией.</span></li>
+      <li><span class="qq">Что такое шаблонный метод?</span><span class="aa">Общий каркас алгоритма в базовом классе, где отдельные шаги переопределяются наследниками: три почти одинаковых импорта, различающихся разбором строки. Отличие от стратегии — механизм наследования вместо композиции, поэтому вариант нельзя подменить в рантайме.</span></li>
+      <li><span class="qq">Когда паттерн применять не нужно?</span><span class="aa">Когда ось изменения не подтверждена опытом: вариант один, код не менялся год, а обоснование звучит как «вдруг понадобится». Признаки преждевременности — интерфейс с единственной реализацией, фабрика для одного класса, стратегия с одним вариантом. Цена косвенности платится сразу, а выгода может не наступить никогда.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Механика</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Чем стратегия отличается от состояния?</span><span class="aa">Управлением. Стратегию выбирает вызывающий код или конфигурация, варианты друг о друге не знают. Состояние объект меняет сам по своему статусу, и состояния обычно знают о допустимых переходах. Риски тоже разные: у стратегии разрастается точка выбора, у состояния — логика переходов.</span></li>
+      <li><span class="qq">Чем стратегия отличается от шаблонного метода?</span><span class="aa">Механизмом. Стратегия — композиция: реализация подставляется и меняется в рантайме. Шаблонный метод — наследование: варианты фиксируются на этапе написания и жёстко связаны с базовым классом, поэтому его изменение задевает всех наследников. При прочих равных предпочтительна композиция.</span></li>
+      <li><span class="qq">Как реализовать состояние в современном PHP?</span><span class="aa">Чаще всего перечислением с методами: допустимые переходы и поведение живут рядом со значением, а невозможных статусов не существует на уровне типов. Полноценные классы состояний нужны, когда у состояния есть собственные данные или зависимости, которые в перечисление не помещаются.</span></li>
+      <li><span class="qq">Зачем превращать действие в объект?</span><span class="aa">Чтобы его можно было отложить, поставить в очередь, повторить после сбоя, залогировать или отменить. В PHP это сообщение шины, задача очереди или объект запроса с обработчиком. Обязательное условие — обработчик идемпотентен, потому что доставка «как минимум один раз» означает повторы.</span></li>
+      <li><span class="qq">Как устроена цепочка обязанностей в вебе?</span><span class="aa">Как middleware: каждое звено получает запрос и функцию перехода к следующему, может обработать, передать дальше или прервать цепочку. Порядок регистрации определяет поведение, а самая частая ошибка — звено, забывшее вызвать следующий обработчик: запрос исчезает молча.</span></li>
+      <li><span class="qq">Когда использовать событие, а когда прямой вызов?</span><span class="aa">Прямой вызов — когда действие обязательно, его результат нужен вызывающему коду и порядок важен. Событие — когда факт уже случился, а реакции необязательны и независимы. Ошибка в любую сторону заметна: обязательное действие в слушателе тихо теряется, а необязательное в основном потоке роняет операцию.</span></li>
+      <li><span class="qq">Чем наблюдатель отличается от посредника?</span><span class="aa">Наблюдатель рассылает факт всем подписчикам и не управляет ими. Посредник знает участников и координирует их взаимодействие, заменяя связи «каждый с каждым». Отсюда и разные риски: у наблюдателя — неявный поток управления, у посредника — вырождение в божественный объект с бизнес-логикой.</span></li>
+      <li><span class="qq">В чём недостаток посетителя?</span><span class="aa">Он делает дешёвым добавление операции и дорогим добавление типа: новый узел структуры требует правки всех посетителей. Поэтому он хорош для стабильных структур — дерево выражений, разбор формата — и плох для доменной модели, куда типы добавляются регулярно.</span></li>
+      <li><span class="qq">Всегда ли нужен компоновщик для дерева?</span><span class="aa">Нет. Если операций над структурой одна-две, обычный рекурсивный метод с <code>match</code> по двум типам читается лучше, чем интерфейс, у которого лист возвращает константу. Паттерн окупается с третьей-четвёртой операцией или когда клиентский код действительно не должен различать узел и лист.</span></li>
+      <li><span class="qq">Когда замыкание вместо класса, а когда наоборот?</span><span class="aa">Замыкание — когда вариант это одна операция без зависимостей, живущая в конфигурации: сравнение для сортировки, простое преобразование. Класс — когда у варианта есть зависимости, ему нужно предметное имя и отдельные тесты. Замыкание на сорок строк, захватывающее пять переменных, — это класс, который постеснялись создать.</span></li>
+      <li><span class="qq">Какие паттерны в PHP выродились в возможности языка?</span><span class="aa">Итератор стал генератором, состояние часто — перечислением с методами, стратегия — замыканием или первоклассным вызываемым методом, одиночка — сервисом в контейнере. Замысел при этом сохраняется: важно узнавать решаемую проблему, а не искать в коде диаграмму из книги.</span></li>
+      <li><span class="qq">Какие паттерны вы видите в своём фреймворке?</span><span class="aa">Контейнер — фабрика и заместитель, middleware — цепочка обязанностей, диспетчер событий — наблюдатель, шина сообщений — команда, прокси-объекты ORM — ленивый заместитель, PSR-совместимые кэш и логгер — адаптеры. Сильный ответ добавляет следствие: например, порядок middleware определяет, увидит ли ограничитель уже аутентифицированного пользователя.</span></li>
+      <li><span class="qq">Фасады Laravel — это паттерн фасад?</span><span class="aa">Нет, это локатор служб со статическим доступом к контейнеру. Классический фасад упрощает интерфейс подсистемы и остаётся обычным объектом с явными зависимостями. Локатор же скрывает зависимость класса, и в тестах это проявляется так же, как с одиночкой.</span></li>
+      <li><span class="qq">Какой паттерн стоит за прокси-объектами Doctrine?</span><span class="aa">Ленивый заместитель: вместо связанной сущности подставляется объект того же типа, который загружает данные при первом обращении к полю. Практическое следствие — обращение к свойству может выполнить запрос, и именно отсюда берётся N+1 при обходе коллекции.</span></li>
+      <li><span class="qq">Зачем нужен репозиторий, если есть ORM?</span><span class="aa">Чтобы домен говорил о коллекции сущностей, а не о запросах: <code>findActiveSubscribers</code> вместо построителя запроса в сервисе. Плюс это точка подмены в тестах. Вырождается он в класс с сорока методами <code>findByXAndY</code>, что лечится спецификациями и отдельными объектами-запросами для чтения.</span></li>
+      <li><span class="qq">Что такое Unit of Work?</span><span class="aa">Паттерн, при котором изменения накапливаются и сохраняются одной атомарной пачкой. В Doctrine это происходит при <code>flush</code>: менеджер отслеживает изменённые сущности и генерирует запросы сам. Следствие — забытый <code>flush</code> теряет изменения, а неожиданный сохраняет то, что править не собирались.</span></li>
+      <li><span class="qq">Что такое спецификация и зачем она?</span><span class="aa">Правило отбора, оформленное объектом с именем: проверка объекта в памяти и то же условие для запроса к базе живут в одном месте и не разъезжаются. Правила комбинируются логическими операциями, поэтому вместо копирования условий появляется композиция.</span></li>
+      <li><span class="qq">Когда уместен пустой объект?</span><span class="aa">Когда отсутствие поведения — нормальный режим: отключённый канал уведомлений, пустой сборщик метрик в тестах. Неуместен как заглушка вместо отсутствующих данных: пустой клиент с нулевым балансом скрывает ошибку загрузки, и она всплывает далеко от места возникновения.</span></li>
+      <li><span class="qq">Почему важен порядок декораторов?</span><span class="aa">Потому что он определяет поведение: кэш поверх повторов сохраняет уже успешный результат, а повторы поверх кэша будут повторять и обращения к кэшу. При настройке через контейнер порядок задаётся приоритетами и молча меняется при правке конфигурации, поэтому его фиксируют тестом.</span></li>
+      <li><span class="qq">Как тестировать код с паттернами?</span><span class="aa">Через поведение на публичной границе, а не через устройство. Реализации стратегий проверяются по отдельности, но обязателен и тест сценария целиком, иначе любой обратный рефакторинг превращается в переписывание тестов. Проверки вида «был вызван такой-то класс» привязывают тесты к структуре и мешают её менять.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Решения</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как вы выбираете паттерн?</span><span class="aa">От оси изменения, а не перебором каталога. Сначала формулирую, что именно здесь меняется и как часто, потом ищу точку подстановки, которая делает изменение локальным, и только в конце появляется имя паттерна — оно нужно для разговора с командой. Если ось изменения назвать не получается, любой выбор будет угадыванием.</span></li>
+      <li><span class="qq">Что такое правило трёх?</span><span class="aa">Первый случай пишется прямо, второй копируется с осознанием дублирования, на третьем выделяется абстракция. Смысл в том, что только к третьему разу видно, что действительно общее, а что различается. Абстракция из двух примеров почти всегда обобщает не по той оси и потом мешает.</span></li>
+      <li><span class="qq">Сколько стоит абстракция?</span><span class="aa">Косвенность при чтении, лишние сущности с их тестами, порог входа для новых людей, более длинные трассировки при отладке и сопротивление удалению — паттерн выглядит правильным, и его жалко убирать. Издержки платятся постоянно, а выгода приходит только при изменении по заложенной оси.</span></li>
+      <li><span class="qq">Как понять, что абстракция неудачная?</span><span class="aa">У интерфейса годами одна реализация; реализации выбрасывают «не поддерживается»; добавление варианта всё равно требует правок в нескольких файлах; в сигнатурах появляются детали одной конкретной реализации. Проверочная фраза — «этот интерфейс нужен, чтобы дёшево менять ___»; отсутствие ответа и есть диагноз.</span></li>
+      <li><span class="qq">Как ввести паттерн в работающий код?</span><span class="aa">Мелкими шагами с зелёными тестами: выделить ветки в методы, перенести их в классы с общим интерфейсом, заменить условие перебором реализаций, оставив прежний метод точкой входа. Вызывающий код трогается последним. Такая последовательность делает дешёвым и обратный ход.</span></li>
+      <li><span class="qq">Как убрать паттерн, который не оправдался?</span><span class="aa">Встроить единственную реализацию обратно в вызывающий класс, удалить интерфейс и точку выбора, затем убрать тесты, которые проверяли устройство, а не поведение. Главное препятствие обычно не техническое: конструкция выглядит «правильной», и её удаление приходится обосновывать так же, как введение.</span></li>
+      <li><span class="qq">Почему тесты мешают убирать абстракции?</span><span class="aa">Потому что часто написаны на устройство: моки конкретных интерфейсов, проверки «был вызван такой-то класс». Такие тесты фиксируют структуру, и любое её изменение выглядит как поломка. Опора для рефакторинга — тесты на поведение через публичную границу, которые не знают, есть внутри паттерн или нет.</span></li>
+      <li><span class="qq">Data Mapper или Active Record?</span><span class="aa">По характеру приложения. Active Record выигрывает на CRUD: меньше кода, быстрее разработка. Data Mapper выигрывает там, где есть настоящая доменная логика с инвариантами, которую нужно тестировать без базы. Типичная ошибка — строить сложный домен поверх Active Record и удивляться, что модель знает про хранение.</span></li>
+      <li><span class="qq">Что такое анемичная модель и всегда ли это плохо?</span><span class="aa">Сущности без поведения, вся логика в сервисах. Плохо, когда у домена есть инварианты: они перестают защищаться и дублируются по сервисам. Нормально, когда предметной логики почти нет и приложение по сути перекладывает данные, — тогда доменная модель была бы церемонией ради церемонии.</span></li>
+      <li><span class="qq">Как не дать репозиторию выродиться?</span><span class="aa">Разделить чтение и запись: репозиторий говорит о сущностях и их сохранении, а списки для экранов собираются отдельными объектами-запросами, которым не нужны сущности целиком. Правила отбора выносятся в спецификации, чтобы не плодить методы вида <code>findActiveByCategoryAndPriceRange</code>.</span></li>
+      <li><span class="qq">Когда оправдан CQRS?</span><span class="aa">Когда модель записи и модель чтения расходятся по-настоящему: запись защищает инварианты, чтение обслуживает десяток разных экранов с агрегатами. Начинать стоит с разделения в коде без отдельных хранилищ; отдельная база для чтения добавляет согласованность в конечном счёте и оправдана только при доказанной нагрузке.</span></li>
+      <li><span class="qq">Зачем нужны порты и адаптеры?</span><span class="aa">Чтобы контракт задавал домен, а инфраструктура его реализовывала, а не наоборот. Тогда чужое API не протекает внутрь, реализацию можно подменить в тестах, а поведение при отказах — повторы, предохранитель, кэш — добавляется декораторами поверх порта без правки бизнес-кода.</span></li>
+      <li><span class="qq">Какие паттерны нужны при интеграции с внешним сервисом?</span><span class="aa">Структурно — порт с адаптером и декораторы для повторов, предохранителя, кэша и метрик. Поведенчески — идемпотентность операций и явная обработка неизвестного результата при таймауте. Такое разделение оставляет базовую реализацию тестируемой без сети, а политику отказов — настраиваемой.</span></li>
+      <li><span class="qq">Что делает предохранитель и когда его вводить?</span><span class="aa">Размыкает вызовы к сервису после превышения доли ошибок, чтобы лежащая зависимость не съедала пул воркеров и не превращала частичный отказ в полный. Вводят обычно после первого такого инцидента, но для критичных внешних зависимостей разумно закладывать сразу — цена ошибки слишком высока.</span></li>
+      <li><span class="qq">Что такое идемпотентный обработчик и зачем он?</span><span class="aa">Обработчик, для которого повторная обработка того же сообщения ничего не меняет. Он необходим, потому что очереди дают доставку «как минимум один раз», а сеть — неизвестные результаты. Технически это ключ операции с уникальным индексом плюс проверка текущего состояния перед действием.</span></li>
+      <li><span class="qq">Зачем сага, если есть транзакции?</span><span class="aa">Потому что транзакции не пересекают границу сервиса или внешней системы: двухфазная фиксация с чужим провайдером невозможна. Сага заменяет откат компенсирующими действиями и требует упорядочить шаги по обратимости — необратимые последними. Остаточные расхождения ловит сверка.</span></li>
+      <li><span class="qq">Приведите пример, когда паттерн навредил.</span><span class="aa">Сильный ответ — из своего опыта с цифрами: сколько файлов нужно открыть, чтобы понять поведение, и сколько правок потребовало изменение, ради которого абстракция заводилась. Типичный сюжет — интерфейс под будущего второго поставщика, который через два года пришёл с другим контрактом, так что абстракцию всё равно переписали.</span></li>
+      <li><span class="qq">Как вы относитесь к требованию «примени паттерн» на ревью?</span><span class="aa">Принимаю его только вместе с осью изменения: «чтобы дёшево менять ___». Без этого комментарий опирается на авторитет каталога и не обсуждается по существу, а в код попадают абстракции, которых никто не заказывал. Обратное требование — обосновать удаление абстракции — работает по тем же правилам.</span></li>
+      <li><span class="qq">Как называть классы: по паттерну или по домену?</span><span class="aa">По домену, за редкими исключениями. <code>PromoDiscount</code> говорит, что делает класс, а <code>DiscountStrategyImpl</code> — только то, какую книгу читал автор. Имена паттернов уместны там, где они стали частью словаря инфраструктуры: <code>CachedExchangeRates</code>, <code>OrderRepository</code>, обработчик команды.</span></li>
+      <li><span class="qq">Как понять, что проект переусложнён паттернами?</span><span class="aa">По измеримым признакам: сколько файлов открывает разработчик, чтобы проследить простой сценарий; сколько абстракций имеют единственную реализацию; сколько времени занимает онбординг до первой самостоятельной задачи. Если типичное изменение всё равно задевает пять файлов, гибкость заложена не там, где она нужна.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== СПРАВОЧНИК: ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Задания рассчитаны на собственный код: каталог запоминается не с третьего прочтения, а с первого раза, когда паттерн ввели в свой проект и увидели, что именно он изменил.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Основы</span></div>
+    <h4>1. Найти паттерны в своём коде</h4>
+    <p>Пройдитесь по одному модулю проекта и выпишите конструкции, которые уже являются паттернами, даже если так не назывались: обёртки, наборы реализаций, обработчики событий. Дайте каждой правильное имя.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание, что паттерны в проекте уже есть, и словарь для их обсуждения.</div>
+    <h4>2. Три обёртки</h4>
+    <p>Напишите для одного сервиса адаптер, декоратор и заместитель. Сформулируйте для каждого, что он меняет: интерфейс, поведение или доступ. Попробуйте сложить два декоратора и поменять их местами.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Различия трёх похожих паттернов, проверенные руками, а не запомненные по определению.</div>
+    <h4>3. Убрать статический доступ</h4>
+    <p>Найдите класс, который внутри метода обращается к статическому экземпляру или фасаду. Внедрите зависимость через конструктор и напишите тест с подстановкой двойника — до и после.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Наглядная разница между скрытой и явной зависимостью на своём коде.</div>
+    <h4>4. Конструктор на десять параметров</h4>
+    <p>Найдите класс со сложным созданием и напишите для него строитель с проверкой обязательных полей в методе сборки. Сравните читаемость вызывающего кода до и после.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Готовый пример, где паттерн действительно упростил вызывающий код.</div>
+    <h4>5. Определить группу</h4>
+    <p>Возьмите десять паттернов из полной карты каталога и, не подглядывая, распределите по группам и объясните каждый одной строкой. Проверьте себя по таблице.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Быстрая диагностика пробелов перед секцией про паттерны на собеседовании.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Механика</span></div>
+    <h4>6. Ветвление в стратегию</h4>
+    <p>Найдите одинаковый <code>match</code> или цепочку условий, повторяющуюся в нескольких методах. Замените набором реализаций, собираемым контейнером. Убедитесь, что добавление варианта не требует правки существующих файлов.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Проверка главного обещания паттерна: новый вариант — только новый класс.</div>
+    <h4>7. Статус в перечисление</h4>
+    <p>Соберите все проверки статуса одной сущности и перенесите поведение и матрицу переходов в перечисление. Напишите тест на запрещённый переход.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Исчезнувшие ветвления и невозможность перевести объект в некорректное состояние.</div>
+    <h4>8. Пайплайн из middleware</h4>
+    <p>Реализуйте цепочку из трёх звеньев: ограничитель, аутентификация, логирование. Поменяйте порядок и объясните, что изменилось в поведении. Добавьте звено, забывающее вызвать следующий обработчик, и посмотрите на результат.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание, почему порядок звеньев — часть архитектуры, а не деталь конфигурации.</div>
+    <h4>9. Декораторы вместо смешанных обязанностей</h4>
+    <p>Найдите сервис, внутри которого есть кэширование или логирование. Вынесите их в декораторы, подключаемые контейнером. Зафиксируйте порядок обёрток тестом.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Чистая базовая реализация и политика, настраиваемая без правки кода.</div>
+    <h4>10. Паттерн против замыкания</h4>
+    <p>Возьмите одну стратегию и реализуйте её тремя способами: замыканием, первоклассным вызываемым методом и классом. Решите, какой вариант уместен, и сформулируйте критерий выбора своими словами.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Личное правило, где проходит граница между лаконичностью и полноценным классом.</div>
+    <h4>11. Разбор фреймворка</h4>
+    <p>Найдите в исходниках своего фреймворка реализацию любого паттерна из каталога и разберите её: какой интерфейс, где точка расширения, какие следствия для прикладного кода.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Готовый развёрнутый пример для собеседования и лучшее понимание инструмента.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Дизайн</span></div>
+    <h4>12. Аудит абстракций</h4>
+    <p>Составьте список интерфейсов модуля и для каждого укажите число реализаций и дату появления второй. Для тех, где реализация одна больше года, сформулируйте ось изменения — или запланируйте сворачивание.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Измеримая картина того, какая часть гибкости проекта оказалась невостребованной.</div>
+    <h4>13. Обратный рефакторинг</h4>
+    <p>Возьмите одну неоправдавшуюся абстракцию из предыдущего задания и уберите её: встройте реализацию, удалите интерфейс и тесты на устройство. Замерьте, сколько файлов стало нужно открывать для понимания сценария.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Практика удаления абстракций, которой обычно не хватает, — вводить умеют все.</div>
+    <h4>14. Порт с декораторами</h4>
+    <p>Оформите интеграцию с внешним сервисом как порт с адаптером и наденьте сверху декораторы повторов, предохранителя и метрик. Проверьте тестами, что базовая реализация не знает о них ничего.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Схема, которая одинаково работает для платёжного провайдера, почты и любого чужого API.</div>
+    <h4>15. Правило команды</h4>
+    <p>Сформулируйте и обсудите с командой правило, при каком условии в проекте вводится новая абстракция и при каком — удаляется. Проверьте его на трёх последних задачах: что бы оно изменило.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Общий критерий вместо спора вкусов на каждом ревью.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== ФИНАЛ: ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час-полтора в будний день. Тема почти бесполезна в пересказе: каждый пункт стоит закрывать не чтением, а изменением в своём коде, пусть даже небольшим.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Словарь</h3><span class="badge b-1">База</span></div>
+    <h4>Задачи недели</h4>
+    <p>Научиться называть то, что уже написано, и различать паттерны, которые снаружи выглядят одинаково.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Найти в своём модуле конструкции, которые уже являются паттернами, и назвать их (задание 1).</li>
+      <li>Написать адаптер, декоратор и заместитель для одного сервиса (задание 2).</li>
+      <li>Разобрать полную карту каталога и распределить десять паттернов по группам вслепую (задание 5).</li>
+      <li>Заменить обращение к статическому экземпляру внедрением зависимости (задание 3).</li>
+      <li>Сформулировать для трёх мест в коде фразу «эта абстракция нужна, чтобы дёшево менять ___».</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Уверенный разговор о базовых паттернах на своём коде вместо пересказа определений.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Поведение</h3><span class="badge b-2">Механика</span></div>
+    <h4>Задачи недели</h4>
+    <p>Разобраться с самой большой группой каталога и научиться убирать ветвления, которые расходятся по коду.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Заменить повторяющееся ветвление набором реализаций, собираемым контейнером (задание 6).</li>
+      <li>Перенести проверки статуса в перечисление с матрицей переходов (задание 7).</li>
+      <li>Собрать пайплайн из трёх middleware и поэкспериментировать с порядком (задание 8).</li>
+      <li>Разобраться, где в проекте события используются вместо прямых вызовов, и оценить, правильно ли.</li>
+      <li>Проверить себя вопросами про стратегию, состояние и шаблонный метод и объяснить различия вслух.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Умение выбрать между четырьмя способами убрать ветвление и обосновать выбор.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Форма в PHP</h3><span class="badge b-2">Практика</span></div>
+    <h4>Задачи недели</h4>
+    <p>Перестать воспроизводить книжные диаграммы и научиться видеть паттерны в инструментах, которыми пользуетесь.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Реализовать одну стратегию тремя способами и выработать критерий выбора (задание 10).</li>
+      <li>Вынести кэш и логирование из бизнес-сервиса в декораторы (задание 9).</li>
+      <li>Разобрать реализацию одного паттерна в исходниках фреймворка (задание 11).</li>
+      <li>Заменить собственный класс итератора генератором и сравнить объём кода.</li>
+      <li>Выписать пять механизмов своего стека и назвать паттерн и следствие для каждого.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Каталог перестаёт быть теорией: за каждым знакомым механизмом появляется узнаваемое имя и понятная цена.</p>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Решения</h3><span class="badge b-3">Финиш</span></div>
+    <h4>Задачи недели</h4>
+    <p>Перейти от применения паттернов к решениям об их введении, удалении и цене.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Провести аудит абстракций модуля с числом реализаций и датами (задание 12).</li>
+      <li>Убрать одну неоправдавшуюся абстракцию целиком (задание 13).</li>
+      <li>Оформить интеграцию как порт с декораторами повторов и предохранителя (задание 14).</li>
+      <li>Сформулировать с командой правило введения и удаления абстракций (задание 15).</li>
+      <li>Подготовить два рассказа для собеседования: где паттерн окупился и где его пришлось убрать.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Готовность обсуждать паттерны в терминах осей изменения, цены и обратимости, а не структуры из книги.</p>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что помогает на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Отвечайте задачей, а не структурой.</strong> «Стратегия — это интерфейс и несколько реализаций» — уровень учебника. Сильный ответ начинается с проблемы: одинаковое ветвление разошлось по трём методам, и каждый новый вариант забывали добавить в одном из них.</li>
+      <li><strong>Называйте форму в современном PHP.</strong> Упоминание, что состояние часто становится перечислением с методами, а итератор — генератором, сразу отличает практика от человека, который читал книгу и не писал код.</li>
+      <li><strong>Всегда называйте цену.</strong> У любого паттерна она есть: больше файлов, длиннее путь до логики, сложнее отладка. Кандидат, который сам говорит про издержки, выглядит убедительнее того, кто перечисляет одни достоинства.</li>
+      <li><strong>Держите наготове историю про удаление.</strong> Ввести паттерн умеют все, рассказать, как убрали неоправдавшуюся абстракцию и что это дало, — единицы. Это один из самых сильных ответов на вопрос про архитектурный опыт.</li>
+      <li><strong>Не путайте похожие пары.</strong> Декоратор и заместитель, стратегия и состояние, адаптер и фасад — самые частые уточняющие вопросы. Различие объясняется через замысел, а не через диаграмму.</li>
+      <li><strong>Знайте паттерны своего фреймворка.</strong> Вопрос «какие паттерны вы видите в Symfony или Laravel» встречается постоянно, а хороший ответ добавляет следствие: порядок middleware, ленивые прокси и N+1, скрытые зависимости при статическом доступе.</li>
+      <li><strong>Будьте готовы отказаться от паттерна.</strong> На задачу «спроектируйте это» сильный ход — сказать, что здесь достаточно одного класса, и назвать условие, при котором появится абстракция. Переусложняют на собеседованиях гораздо чаще, чем недоусложняют.</li>
+      <li><strong>Помните про инфраструктурный слой.</strong> На уровне Senior повторы, предохранитель, идемпотентность и сага спрашивают чаще, чем посетителя и приспособленца. Их полезно уметь связать с конкретным инцидентом из своего опыта.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Паттерны проектирования» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

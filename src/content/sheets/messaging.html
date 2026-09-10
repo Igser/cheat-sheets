@@ -1,0 +1,1489 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · очереди · асинхронная обработка</p>
+  <h1>Брокеры сообщений и очереди</h1>
+  <p class="lead">Очередь появляется в проекте в тот момент, когда становится ясно: результат операции не обязан быть готов к моменту ответа. Письмо, отчёт, обработка загруженного файла, уведомление партнёра, пересчёт индекса — всё это можно сделать позже, освободив запрос пользователя и заодно пережив пик нагрузки.</p>
+  <p class="lead">Взамен вы получаете новую систему со своими правилами. Сообщение может прийти дважды. Порядок не гарантирован, как только воркеров становится больше одного. Обработчик падает, и сообщение возвращается — снова и снова. Брокер лежит, а транзакция уже закоммичена. Всё это не редкие аварии, а нормальный режим работы, и код должен быть к нему готов с первого дня.</p>
+  <p class="lead">Конспект идёт от базовых понятий к эксплуатации: producer и consumer, подтверждения, Symfony Messenger и Laravel Queues, RabbitMQ → семантика доставки, идемпотентность, outbox, повторы и DLQ, Kafka и партиции, выбор брокера → контракты сообщений, паттерны обмена, мониторинг лага и разбор отказов. Смежные темы: <a href="system-design.html">System Design</a>, <a href="php.html">PHP</a>, <a href="infrastructure.html">инфраструктура</a>, <a href="symfony.html">Symfony</a>, <a href="laravel.html">Laravel</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Зачем очередь, producer и consumer, подтверждения и prefetch, воркеры в PHP, RabbitMQ и обменники, первые грабли.</span></div>
+    <div class="aud m"><b>Middle</b><span>Семантика доставки и идемпотентность, outbox, повторы и DLQ, Kafka и партиции, выбор брокера, порядок и конкурентность.</span></div>
+    <div class="aud s"><b>Senior</b><span>Контракты сообщений и их эволюция, паттерны обмена, мониторинг и масштабирование, отказы и реплей, когда очередь не нужна.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>16</i></span>
+    <span>Блоков кода: <i>21</i></span>
+    <span>Сравнительных таблиц: <i>18</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#why">Зачем нужна очередь</a></li>
+    <li><span class="tree">├─</span> <a href="#concepts">Базовые понятия</a></li>
+    <li><span class="tree">├─</span> <a href="#php">Очереди в PHP</a></li>
+    <li><span class="tree">├─</span> <a href="#rabbit">RabbitMQ: обменники и очереди</a></li>
+    <li><span class="tree">├─</span> <a href="#pitfalls">Первые грабли</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#delivery">Семантика доставки</a></li>
+    <li><span class="tree">├─</span> <a href="#outbox">Outbox и двойная запись</a></li>
+    <li><span class="tree">├─</span> <a href="#retries">Повторы, DLQ, отравленные сообщения</a></li>
+    <li><span class="tree">├─</span> <a href="#kafka">Kafka: лог и партиции</a></li>
+    <li><span class="tree">├─</span> <a href="#choose">Выбор брокера</a></li>
+    <li><span class="tree">├─</span> <a href="#ordering">Порядок и конкурентность</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#contracts">Контракты сообщений</a></li>
+    <li><span class="tree">├─</span> <a href="#patterns">Паттерны обмена</a></li>
+    <li><span class="tree">├─</span> <a href="#ops">Эксплуатация и мониторинг</a></li>
+    <li><span class="tree">├─</span> <a href="#failures">Отказы и реплей</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Когда очередь не нужна</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Команды по ситуациям</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · основы</p>
+    <h2>Junior: как устроена очередь</h2>
+    <p>Первое, что нужно понять про очереди: они не ускоряют работу, а переносят её во времени. Пользователь получает ответ быстрее, но задача никуда не делась — она стоит в очереди и ждёт свободного воркера. Всё остальное — подтверждения, повторы, DLQ — следствия этой простой идеи.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="why">
+    <p class="path">junior / зачем</p>
+    <div class="card-top"><h3>Зачем нужна очередь</h3><span class="badge b-1">База</span></div>
+    <p>Очередь решает три задачи: убирает долгие операции из времени ответа, сглаживает пики нагрузки и развязывает части системы, чтобы отказ одной не останавливал другую. И приносит одну проблему — результат становится отложенным, а значит, его надо где-то показывать и как-то контролировать.</p>
+
+    <div class="flow" role="img" aria-label="Запрос, публикация сообщения, брокер, воркер, результат">
+      <div class="node">Запрос<small>отвечаем сразу</small></div><span class="arr">→</span>
+      <div class="node">Producer<small>кладёт сообщение</small></div><span class="arr">→</span>
+      <div class="node">Брокер<small>хранит очередь</small></div><span class="arr">→</span>
+      <div class="node">Consumer<small>воркер обрабатывает</small></div><span class="arr">→</span>
+      <div class="node">Эффект<small>письмо, отчёт, вебхук</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · что выносить в очередь, а что нет</caption>
+      <thead><tr><th>Выносить</th><th>Оставлять в запросе</th></tr></thead>
+      <tbody>
+        <tr><td>Отправку писем и уведомлений</td><td>Всё, от чего зависит ответ пользователю</td></tr>
+        <tr><td>Генерацию отчётов и выгрузок</td><td>Проверку прав и валидацию</td></tr>
+        <tr><td>Обработку загруженных файлов и картинок</td><td>Списание денег, когда пользователь ждёт результата оплаты</td></tr>
+        <tr><td>Вызовы внешних API, не влияющие на ответ</td><td>Операции короче 100 мс — накладные расходы больше выигрыша</td></tr>
+        <tr><td>Индексацию для поиска</td><td>Изменения, результат которых пользователь должен увидеть сразу</td></tr>
+        <tr><td>Массовые рассылки</td><td>Транзакционную запись, определяющую успех операции</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Про сглаживание пиков.</strong> Это второй по важности эффект после разгрузки запроса. Если в пиковый час приходит в десять раз больше событий, чем обычно, синхронная обработка требует десятикратного запаса мощности, который остальные двадцать три часа простаивает. Очередь позволяет держать постоянное число воркеров: в пик очередь растёт, потом рассасывается. Цена — задержка обработки в пиковые часы, и её нужно осознанно принять.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Очередь не бесплатна. Вместе с ней в систему приходят: дубликаты сообщений, отсутствие гарантий порядка, новый компонент, который может лежать, необходимость мониторить глубину и возраст очереди, отдельные процессы-воркеры, которые нужно перезапускать при деплое, и отложенный результат, который надо показывать пользователю. Если операция занимает 50 мс, всё это не окупается.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда нужна очередь?</b><br>Когда результат операции не обязан быть готов к моменту ответа: письма, отчёты, обработка файлов, синхронизация с внешними системами. Дополнительно она сглаживает пики, превращая всплеск нагрузки в очередь работ, и развязывает компоненты. Плата — дубликаты, отсутствие порядка, отложенный результат и новый объект эксплуатации. Для операции в десятки миллисекунд это не окупается.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="concepts">
+    <p class="path">junior / словарь</p>
+    <div class="card-top"><h3>Базовые понятия</h3><span class="badge b-1">База</span></div>
+    <p>Терминов немного, но их путают постоянно — особенно очередь и топик, подтверждение и получение, отклонение и повтор. Разобравшись с ними один раз, вы будете понимать документацию любого брокера.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · словарь очередей</caption>
+      <thead><tr><th>Термин</th><th>Что означает</th></tr></thead>
+      <tbody>
+        <tr><td>Producer</td><td>Тот, кто публикует сообщение</td></tr>
+        <tr><td>Consumer</td><td>Тот, кто читает и обрабатывает</td></tr>
+        <tr><td>Брокер</td><td>Посредник, который хранит и доставляет сообщения</td></tr>
+        <tr><td>Очередь</td><td>Буфер сообщений; каждое достаётся одному потребителю</td></tr>
+        <tr><td>Топик / обменник</td><td>Точка публикации, откуда сообщение попадает в одну или несколько очередей</td></tr>
+        <tr><td>Ack (подтверждение)</td><td>«Обработал успешно, можно удалять»</td></tr>
+        <tr><td>Nack / reject</td><td>«Не смог»: вернуть в очередь или отправить в DLQ</td></tr>
+        <tr><td>Prefetch</td><td>Сколько сообщений брокер отдаёт воркеру заранее</td></tr>
+        <tr><td>DLQ</td><td>Отдельная очередь для сообщений, которые не удалось обработать</td></tr>
+        <tr><td>Lag / глубина</td><td>Сколько сообщений ждёт обработки</td></tr>
+        <tr><td>Возраст сообщения</td><td>Сколько ждёт самое старое — важнее глубины</td></tr>
+        <tr><td>Retention</td><td>Сколько брокер хранит сообщение после обработки</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Подтверждение: главный механизм надёжности</span></div><pre><code>Что происходит при обработке одного сообщения:
+
+  1. Брокер отдаёт сообщение воркеру и помечает его как «в работе»
+     (другим потребителям оно не достанется)
+  2. Воркер обрабатывает
+  3. Успех  → ack:  брокер удаляет сообщение
+     Ошибка → nack: брокер возвращает его в очередь или шлёт в DLQ
+     Воркер умер, не ответив → брокер вернёт сообщение по таймауту
+
+Ключевое следствие пункта 3: если процесс упал ПОСЛЕ выполнения работы,
+но ДО подтверждения — сообщение придёт снова, и работа выполнится дважды.
+Поэтому обработчик обязан быть идемпотентным. Это не редкий случай:
+так происходит при каждом жёстком перезапуске воркера.
+
+Ошибка новичка — подтверждать сообщение сразу при получении
+(«автоподтверждение»): тогда падение обработчика означает потерю сообщения
+без следа. Подтверждать нужно после успешного выполнения работы.</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Параметр prefetch (сколько сообщений выдаётся воркеру заранее) влияет на равномерность нагрузки сильнее, чем кажется. Большое значение означает, что один воркер забрал сотню сообщений и обрабатывает их последовательно, пока остальные простаивают, а при его падении вся сотня возвращается разом. Для медленных обработчиков разумное значение — от 1 до 10.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что произойдёт, если воркер упадёт во время обработки?</b><br>Брокер не получит подтверждения и через таймаут вернёт сообщение в очередь — его возьмёт другой воркер. Это правильное поведение: сообщение не теряется. Обратная сторона в том, что если падение случилось после выполнения работы, но до подтверждения, работа выполнится повторно. Поэтому обработчик обязан быть идемпотентным, а автоподтверждение при получении использовать нельзя — оно теряет сообщения.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="php">
+    <p class="path">junior / практика</p>
+    <div class="card-top"><h3>Очереди в PHP</h3><span class="badge b-1">База</span></div>
+    <p>В PHP-мире работа с очередями почти всегда идёт через абстракцию фреймворка — Symfony Messenger или Laravel Queues. Это удобно: транспорт меняется настройкой, а код обработчика остаётся тем же. Важно понимать, что абстракция скрывает, а не отменяет свойства брокера.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сообщение и обработчик: минимальный набор</span></div><pre><code>&lt;?php
+<span class="cm">// Сообщение — простой неизменяемый объект с данными, которые нужны обработчику.</span>
+<span class="cm">// Важно: только идентификаторы и значения, никаких сущностей ORM и объектов-сервисов.</span>
+<span class="kw">final readonly class</span> <span class="nm">SendOrderReceipt</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public string</span> $orderId,
+        <span class="kw">public string</span> $eventId,      <span class="cm">// ключ дедупликации — обязателен</span>
+    ) {}
+}
+
+<span class="cm">// Обработчик получает сообщение и делает работу</span>
+<span class="kw">final class</span> <span class="nm">SendOrderReceiptHandler</span>
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">SendOrderReceipt</span> $message): <span class="nm">void</span>
+    {
+        <span class="cm">// Данные читаем свежими: между публикацией и обработкой прошло время,</span>
+        <span class="cm">// и состояние могло измениться</span>
+        $order = $this-&gt;orders-&gt;<span class="fn">find</span>($message-&gt;orderId);
+
+        <span class="kw">if</span> ($order === <span class="kw">null</span>) {
+            <span class="kw">return</span>;              <span class="cm">// заказ удалён — не ошибка, просто нечего делать</span>
+        }
+
+        $this-&gt;mailer-&gt;<span class="fn">sendReceipt</span>($order);
+    }
+}
+
+<span class="cm">// Публикация из сценария</span>
+$this-&gt;bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> <span class="nm">SendOrderReceipt</span>($order-&gt;id, $eventId));</code></pre></div>
+
+    <div class="code"><div class="bar"><span>yaml + bash</span><span class="r">Транспорты, повторы и запуск воркеров</span></div><pre><code><span class="cm"># config/packages/messenger.yaml</span>
+framework:
+  messenger:
+    transports:
+      async:
+        dsn: <span class="st">'%env(MESSENGER_TRANSPORT_DSN)%'</span>
+        retry_strategy:
+          max_retries: 3
+          delay: 1000            <span class="cm"># первая задержка, мс</span>
+          multiplier: 3          <span class="cm"># 1с → 3с → 9с: экспонента</span>
+        options:
+          queue_name: default
+
+      <span class="cm"># Отдельный транспорт для важного: OTP не должен стоять за рассылкой</span>
+      critical:
+        dsn: <span class="st">'%env(MESSENGER_TRANSPORT_DSN)%'</span>
+        options: { queue_name: critical }
+
+      failed: <span class="st">'doctrine://default?queue_name=failed'</span>   <span class="cm"># DLQ</span>
+
+    failure_transport: failed
+    routing:
+      App\Message\SendOrderReceipt: async
+      App\Message\SendOtp: critical
+
+<span class="cm"># Запуск воркера: лимиты обязательны — PHP не рассчитан на вечные процессы</span>
+php bin/console messenger:consume async critical \
+    --time-limit=3600 --memory-limit=192M --limit=1000 -vv
+
+<span class="cm"># Разбор неудачных сообщений</span>
+php bin/console messenger:failed:show           <span class="cm"># что застряло</span>
+php bin/console messenger:failed:retry          <span class="cm"># повторить после исправления</span>
+php bin/console messenger:failed:remove &lt;id&gt;    <span class="cm"># выбросить безнадёжное</span></code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Класть в сообщение сущность ORM или большой объект. Сообщение сериализуется и живёт в брокере минуты или часы: за это время объект успевает измениться, а его структура — поменяться при следующем релизе, после чего старые сообщения перестают разбираться. В сообщение кладут идентификаторы и минимум значений; актуальные данные обработчик читает сам.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что должно быть в сообщении?</b><br>Идентификаторы и минимальный набор значений, нужных обработчику, плюс идентификатор события для дедупликации. Не сущности ORM и не большие документы: сообщение живёт в брокере и переживает релизы, поэтому его формат — это контракт. Актуальное состояние обработчик читает сам, потому что между публикацией и обработкой оно могло измениться.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="rabbit">
+    <p class="path">junior / rabbitmq</p>
+    <div class="card-top"><h3>RabbitMQ: обменники и очереди</h3><span class="badge b-1">База</span></div>
+    <p>RabbitMQ — самый распространённый брокер в PHP-проектах. Его ключевая идея: producer публикует не в очередь, а в <strong>обменник</strong>, а тот по правилам раскладывает сообщение по очередям. Это позволяет менять маршрутизацию, не трогая код отправителя.</p>
+
+    <div class="flow" role="img" aria-label="Publisher, exchange, binding, очереди, consumers">
+      <div class="node">Publisher<small>публикует с routing key</small></div><span class="arr">→</span>
+      <div class="node">Exchange<small>решает, куда положить</small></div><span class="arr">→</span>
+      <div class="node">Binding<small>правило связи</small></div><span class="arr">→</span>
+      <div class="node">Queue<small>буфер сообщений</small></div><span class="arr">→</span>
+      <div class="node">Consumer<small>воркер</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · типы обменников</caption>
+      <thead><tr><th>Тип</th><th>Как маршрутизирует</th><th>Когда применять</th></tr></thead>
+      <tbody>
+        <tr><td><code>direct</code></td><td>Точное совпадение ключа маршрутизации</td><td>Задача идёт в конкретную очередь</td></tr>
+        <tr><td><code>topic</code></td><td>Шаблон с масками: <code>order.*.created</code></td><td>Гибкая подписка на классы событий</td></tr>
+        <tr><td><code>fanout</code></td><td>Во все связанные очереди, ключ игнорируется</td><td>Событие интересно всем подписчикам</td></tr>
+        <tr><td><code>headers</code></td><td>По заголовкам сообщения</td><td>Редко: когда ключа недостаточно</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Что важно настроить и как посмотреть состояние</span></div><pre><code><span class="cm"># Долговечность: без неё всё исчезнет при перезапуске брокера</span>
+<span class="cm">#   durable queue      — очередь переживает рестарт</span>
+<span class="cm">#   persistent message — само сообщение пишется на диск</span>
+<span class="cm">#   publisher confirms — брокер подтверждает приём отправителю</span>
+<span class="cm"># Все три нужны вместе: любой пропущенный пункт означает потерю сообщений.</span>
+
+<span class="cm"># Состояние очередей: глубина и число потребителей</span>
+rabbitmqctl list_queues name messages messages_unacknowledged consumers
+
+<span class="cm"># Кто и куда связан</span>
+rabbitmqctl list_bindings
+rabbitmqctl list_exchanges name type
+
+<span class="cm"># Настройка DLQ: очередь с указанием, куда отправлять отклонённое</span>
+<span class="cm">#   x-dead-letter-exchange: dlx</span>
+<span class="cm">#   x-message-ttl: 86400000        (сутки — потом в DLQ)</span>
+<span class="cm">#   x-max-length: 100000           (защита от бесконечного роста)</span>
+
+<span class="cm"># Тревожные признаки в выводе list_queues:</span>
+<span class="cm">#   messages растёт, consumers = 0        → воркеры не запущены или упали</span>
+<span class="cm">#   messages_unacknowledged большое       → воркеры взяли и не отвечают (зависли)</span>
+<span class="cm">#   messages стабильно растёт при consumers &gt; 0 → не справляемся, нужно больше воркеров</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Три настройки долговечности работают только вместе. Долговечная очередь без постоянных сообщений теряет содержимое при перезапуске брокера; постоянные сообщения без подтверждений публикации означают, что отправитель не узнает о потере при сетевом сбое. Проверять это нужно явно: перезапустить брокер под нагрузкой на тестовом стенде и посчитать сообщения до и после.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем в RabbitMQ обменник, если можно писать прямо в очередь?</b><br>Обменник отделяет отправителя от получателей: producer публикует событие с ключом маршрутизации и ничего не знает о том, кто его слушает. Добавить второго подписчика — значит создать очередь и привязку, код отправителя не меняется. Типы обменников задают правило: точное совпадение, шаблон с масками или рассылка во все очереди.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="pitfalls">
+    <p class="path">junior / грабли</p>
+    <div class="card-top"><h3>Первые грабли</h3><span class="badge b-1">База</span></div>
+    <p>Набор ошибок, которые совершают почти все при первом внедрении очередей. Хорошая новость: они известны заранее, и каждая закрывается несколькими строками кода или одной настройкой.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · типовые ошибки первого внедрения</caption>
+      <thead><tr><th>Ошибка</th><th>Что происходит</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>Автоподтверждение при получении</td><td>Падение воркера теряет сообщение</td><td>Подтверждать после успешной обработки</td></tr>
+        <tr><td>Обработчик не идемпотентен</td><td>Повтор создаёт второй эффект</td><td>Дедупликация по идентификатору события</td></tr>
+        <tr><td>Сущность ORM в сообщении</td><td>Старые сообщения не разбираются после релиза</td><td>Только идентификаторы и значения</td></tr>
+        <tr><td>Одна очередь на всё</td><td>OTP стоит за ночной рассылкой</td><td>Разделение по важности и по каналу</td></tr>
+        <tr><td>Нет ограничения повторов</td><td>«Отравленное» сообщение крутится вечно</td><td>Лимит попыток и DLQ</td></tr>
+        <tr><td>Повторы без задержки</td><td>Внешний сервис добивается повторами</td><td>Экспонента с джиттером</td></tr>
+        <tr><td>Воркеры не перезапускаются при деплое</td><td>Фон работает на старом коде неделями</td><td>Остановка воркеров в процедуре деплоя</td></tr>
+        <tr><td>Нет мониторинга</td><td>О проблеме узнают от пользователей</td><td>Алерт на возраст сообщения и на DLQ</td></tr>
+        <tr><td>Публикация до коммита транзакции</td><td>Обработчик не находит запись</td><td>Публиковать после коммита или через outbox</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Гонка публикации: классическая ошибка, которую трудно поймать</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: сообщение уходит внутри транзакции</span>
+$this-&gt;db-&gt;<span class="fn">beginTransaction</span>();
+$this-&gt;orders-&gt;<span class="fn">save</span>($order);
+$this-&gt;bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> <span class="nm">SendOrderReceipt</span>($order-&gt;id));  <span class="cm">// ← уже в брокере</span>
+$this-&gt;db-&gt;<span class="fn">commit</span>();                                       <span class="cm">// ← а коммит ещё не прошёл</span>
+
+<span class="cm">// Воркер может забрать сообщение за миллисекунды — раньше коммита —</span>
+<span class="cm">// и не найти заказ в базе. На локальной машине это почти не воспроизводится,</span>
+<span class="cm">// а в проде под нагрузкой случается регулярно.</span>
+
+<span class="cm">// ЛУЧШЕ: публикация после коммита</span>
+$this-&gt;db-&gt;<span class="fn">transactional</span>(<span class="kw">fn</span> () =&gt; $this-&gt;orders-&gt;<span class="fn">save</span>($order));
+$this-&gt;bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> <span class="nm">SendOrderReceipt</span>($order-&gt;id));
+
+<span class="cm">// Но и здесь есть окно: процесс может умереть между коммитом и публикацией,</span>
+<span class="cm">// и сообщение не уйдёт никогда. Полное решение — outbox (см. следующий уровень).</span>
+<span class="cm">// В Symfony промежуточный вариант — отправка после коммита через middleware,</span>
+<span class="cm">// который откладывает публикацию до успешного завершения транзакции.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Воркер обрабатывает сообщение и не находит запись в базе. Почему?</b><br>Скорее всего, сообщение опубликовано внутри транзакции, а воркер забрал его раньше коммита — типичная гонка, которая почти не воспроизводится локально и стабильно случается под нагрузкой. Лечится публикацией после коммита, а надёжно — паттерном outbox, где событие пишется в ту же транзакцию, а отправкой занимается отдельный процесс.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Понимаю, что очередь переносит работу, а не ускоряет её</li>
+        <li>Знаю, что выносить в фон, а что оставлять в запросе</li>
+        <li>Различаю очередь и топик, ack и получение</li>
+        <li>Подтверждаю сообщение после обработки, а не при получении</li>
+        <li>Понимаю смысл prefetch и не ставлю его большим</li>
+        <li>Кладу в сообщение идентификаторы, а не сущности</li>
+      </ul>
+      <ul class="check">
+        <li>Знаю типы обменников RabbitMQ и их назначение</li>
+        <li>Настраиваю долговечность очереди, сообщений и подтверждения публикации</li>
+        <li>Читаю состояние очередей: глубина, необработанные, число потребителей</li>
+        <li>Разделяю очереди по важности</li>
+        <li>Публикую сообщение после коммита транзакции</li>
+        <li>Запускаю воркеры с лимитами по времени, памяти и числу задач</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Лучшее упражнение на этом уровне — поднять RabbitMQ локально и сломать его четырьмя способами: убить воркер во время обработки, перезапустить брокер с непостоянными сообщениями, опубликовать внутри транзакции, отправить сообщение, которое всегда падает. Каждый случай даёт понимание, которое не появляется от чтения.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · надёжность</p>
+    <h2>Middle: доставка, повторы, выбор брокера</h2>
+    <p>Middle отвечает за то, чтобы система вела себя предсказуемо при сбоях: сообщение не терялось, повтор не создавал второго эффекта, отравленное сообщение не блокировало очередь, а выбор брокера был обоснован задачей, а не привычкой.</p>
+  </div>
+
+  <!-- 6 -->
+  <article class="card" id="delivery">
+    <p class="path">middle / гарантии</p>
+    <div class="card-top"><h3>Семантика доставки</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Три варианта гарантий, из которых на практике используется один. Понимание, почему именно один, — базовое требование к middle-разработчику.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · три семантики доставки</caption>
+      <thead><tr><th>Семантика</th><th>Что означает</th><th>Как достигается</th><th>Где применима</th></tr></thead>
+      <tbody>
+        <tr><td>At-most-once</td><td>Может потеряться, дублей нет</td><td>Подтверждение до обработки</td><td>Метрики, необязательная телеметрия</td></tr>
+        <tr><td>At-least-once</td><td>Не теряется, но может прийти дважды</td><td>Подтверждение после обработки</td><td>Практически всё</td></tr>
+        <tr><td>Exactly-once</td><td>Ровно один раз «на кончиках» недостижимо</td><td>At-least-once + дедупликация</td><td>Достигается на стороне потребителя</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Почему exactly-once не существует.</strong> Отправитель не может отличить «сообщение не дошло» от «дошло, но подтверждение потерялось». Любой выбор в этой ситуации даёт либо потерю, либо дубликат. Поэтому на практике берут at-least-once и делают эффект идемпотентным: снаружи это выглядит как «ровно один раз», хотя доставок было несколько. Некоторые брокеры предлагают «exactly-once» внутри себя — это транзакционность внутри брокера, а не гарантия для вашего побочного эффекта вроде отправки письма.</p>
+
+    <div class="code"><div class="bar"><span>php + sql</span><span class="r">Идемпотентный обработчик: единственный надёжный способ</span></div><pre><code><span class="cm">-- Таблица обработанных событий. Уникальный индекс — вся суть механизма.</span>
+CREATE TABLE processed_events (
+    event_id     CHAR(36) PRIMARY KEY,
+    handler      VARCHAR(120) NOT NULL,
+    processed_at DATETIME(3) NOT NULL,
+    UNIQUE KEY uniq_event_handler (event_id, handler)
+);
+<span class="cm">-- Пара (событие, обработчик): одно событие может обрабатываться разными</span>
+<span class="cm">-- подписчиками, и каждый должен выполниться ровно один раз.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Вставка отметки и эффект — в одной транзакции</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">OrderPaid</span> $message): <span class="nm">void</span>
+{
+    <span class="kw">try</span> {
+        $this-&gt;db-&gt;<span class="fn">transactional</span>(<span class="kw">function</span> () <span class="kw">use</span> ($message) {
+            <span class="cm">// Вставка падает по уникальному индексу, если уже обрабатывали.</span>
+            <span class="cm">// Проверка отдельным SELECT ненадёжна: два воркера пройдут её одновременно.</span>
+            $this-&gt;processed-&gt;<span class="fn">insert</span>($message-&gt;eventId, <span class="kw">self</span>::<span class="kw">class</span>);
+
+            <span class="cm">// Эффект — в той же транзакции, иначе отметка и работа разъедутся</span>
+            $this-&gt;<span class="fn">applyEffect</span>($message);
+        });
+    } <span class="kw">catch</span> (<span class="nm">UniqueConstraintViolationException</span>) {
+        $this-&gt;logger-&gt;<span class="fn">info</span>(<span class="st">'duplicate skipped'</span>, [<span class="st">'event_id'</span> =&gt; $message-&gt;eventId]);
+
+        <span class="kw">return</span>;                    <span class="cm">// подтверждаем: работа уже сделана</span>
+    }
+}
+
+<span class="cm">// Отдельный случай — эффект вне базы: отправка письма, вызов внешнего API.</span>
+<span class="cm">// Транзакцией его не охватить, поэтому порядок такой:</span>
+<span class="cm">//   1) отметить «начали» с уникальным индексом,</span>
+<span class="cm">//   2) выполнить внешний вызов с ключом идемпотентности на его стороне,</span>
+<span class="cm">//   3) отметить «завершили».</span>
+<span class="cm">// Застрявшие в состоянии «начали» разбираются отдельной проверкой:</span>
+<span class="cm">// узнать у провайдера, прошла операция или нет.</span>
+
+<span class="cm">// Уборка таблицы обязательна: она растёт вечно.</span>
+<span class="cm">// Удаляем записи старше срока хранения сообщений в брокере с запасом.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как добиться обработки ровно один раз?</b><br>Строго говоря — никак: отправитель не отличает потерю сообщения от потери подтверждения, поэтому выбор всегда между потерей и дублем. Практически берут at-least-once и дедуплицируют на стороне потребителя по стабильному идентификатору события: вставка отметки с уникальным индексом в той же транзакции, что и эффект. Проверка «а не обрабатывали ли уже» отдельным запросом не годится — два воркера пройдут её одновременно.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card" id="outbox">
+    <p class="path">middle / согласованность</p>
+    <div class="card-top"><h3>Outbox и двойная запись</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Проблема двойной записи: нужно атомарно сохранить данные в базу и отправить сообщение в брокер, но это две разные системы без общей транзакции. Что бы вы ни делали, между ними есть момент, в который процесс может умереть.</p>
+
+    <div class="flow" role="img" aria-label="Транзакция с outbox, релей, брокер, идемпотентный потребитель">
+      <div class="node">Транзакция<small>данные + outbox</small></div><span class="arr">→</span>
+      <div class="node">Релей<small>читает неопубликованные</small></div><span class="arr">→</span>
+      <div class="node">Брокер<small>at-least-once</small></div><span class="arr">→</span>
+      <div class="node">Потребитель<small>дедуплицирует</small></div>
+    </div>
+
+    <div class="code"><div class="bar"><span>sql</span><span class="r">Таблица outbox рядом с бизнес-данными</span></div><pre><code>CREATE TABLE outbox (
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id      CHAR(36)     NOT NULL UNIQUE,   <span class="cm">-- ключ дедупликации</span>
+    aggregate_id  VARCHAR(64)  NOT NULL,          <span class="cm">-- он же ключ партиционирования</span>
+    type          VARCHAR(120) NOT NULL,          <span class="cm">-- order.paid</span>
+    version       SMALLINT     NOT NULL DEFAULT 1,<span class="cm">-- версия схемы сообщения</span>
+    payload       JSON         NOT NULL,
+    created_at    DATETIME(3)  NOT NULL,
+    published_at  DATETIME(3)  NULL,
+    attempts      SMALLINT     NOT NULL DEFAULT 0,
+
+    INDEX idx_unpublished (published_at, id)      <span class="cm">-- релей читает только неотправленные</span>
+);</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Запись в транзакции и процесс-релей</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Бизнес-операция и событие — атомарно, одной транзакцией</span>
+$this-&gt;db-&gt;<span class="fn">transactional</span>(<span class="kw">function</span> () <span class="kw">use</span> ($order) {
+    $this-&gt;orders-&gt;<span class="fn">save</span>($order);
+    $this-&gt;outbox-&gt;<span class="fn">add</span>(<span class="st">'order.paid'</span>, $order-&gt;id, [<span class="st">'total'</span> =&gt; $order-&gt;total-&gt;<span class="fn">amount</span>()]);
+});
+<span class="cm">// Теперь либо есть и заказ, и событие, либо нет ни того, ни другого.</span>
+
+<span class="cm">// 2. Отдельный процесс переносит события в брокер</span>
+<span class="kw">while</span> ($this-&gt;running) {
+    <span class="cm">// Блокировка строк, чтобы два релея не отправили одно событие дважды</span>
+    $batch = $this-&gt;outbox-&gt;<span class="fn">lockUnpublished</span>(limit: 200);
+
+    <span class="kw">foreach</span> ($batch <span class="kw">as</span> $event) {
+        <span class="kw">try</span> {
+            $this-&gt;broker-&gt;<span class="fn">publish</span>($event);
+            $this-&gt;outbox-&gt;<span class="fn">markPublished</span>($event-&gt;id);
+        } <span class="kw">catch</span> (<span class="nm">BrokerUnavailable</span>) {
+            <span class="cm">// Брокер лежит — не страшно: событие останется в базе</span>
+            <span class="cm">// и уйдёт при следующем проходе. Ничего не потеряно.</span>
+            $this-&gt;outbox-&gt;<span class="fn">incrementAttempts</span>($event-&gt;id);
+            <span class="kw">break</span>;
+        }
+    }
+
+    <span class="kw">if</span> ($batch === []) { <span class="fn">usleep</span>(200_000); }
+}
+
+<span class="cm">// Падение между publish и markPublished даёт повторную отправку — это</span>
+<span class="cm">// осознанная плата: at-least-once, а потребитель дедуплицирует по event_id.</span>
+
+<span class="cm">// Что мониторить: возраст самой старой неопубликованной записи.</span>
+<span class="cm">// Растёт — значит релей умер, и это видно раньше, чем заметят потребители.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Outbox нужен не всегда. Он оправдан там, где потеря события означает рассогласование системы: оплата прошла, а склад не узнал; заказ создан, а партнёр не уведомлён. Для «отправить письмо о новом комментарии» достаточно публикации после коммита: потеря такого сообщения при падении процесса неприятна, но не ломает данные. Как обычно, вопрос в цене ошибки.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое проблема двойной записи и как её решают?</b><br>Нужно атомарно записать в базу и отправить в брокер, но общей транзакции у них нет: падение между операциями оставляет систему в рассогласованном состоянии. Решение — transactional outbox: событие пишется в ту же базу в той же транзакции, а отдельный процесс переносит его в брокер и помечает отправленным. Плата — доставка «хотя бы один раз», поэтому потребитель обязан дедуплицировать.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="retries">
+    <p class="path">middle / ошибки</p>
+    <div class="card-top"><h3>Повторы, DLQ, отравленные сообщения</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Обработчик падает регулярно: внешний сервис недоступен, база в блокировках, данные оказались неожиданными. Разница между рабочей системой и проблемной — в том, различает ли она временные и постоянные ошибки.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · вид ошибки и правильная реакция</caption>
+      <thead><tr><th>Ошибка</th><th>Природа</th><th>Реакция</th></tr></thead>
+      <tbody>
+        <tr><td>Внешний сервис недоступен</td><td>Временная</td><td>Повтор с экспонентой и джиттером</td></tr>
+        <tr><td>Таймаут базы, блокировка</td><td>Временная</td><td>Повтор, небольшое число попыток</td></tr>
+        <tr><td>Превышен лимит запросов (429)</td><td>Временная</td><td>Повтор с задержкой из <code>Retry-After</code></td></tr>
+        <tr><td>Некорректные данные в сообщении</td><td>Постоянная</td><td>Сразу в DLQ: повторы бессмысленны</td></tr>
+        <tr><td>Объект удалён</td><td>Постоянная</td><td>Подтвердить и выйти — это не ошибка</td></tr>
+        <tr><td>Ошибка в коде обработчика</td><td>Постоянная до релиза</td><td>DLQ, исправить, повторить из DLQ</td></tr>
+        <tr><td>Неизвестный тип сообщения</td><td>Постоянная</td><td>DLQ и алерт: обычно рассинхрон версий</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Различение ошибок: половина проблемы решается здесь</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">NotifyPartner</span> $message): <span class="nm">void</span>
+{
+    <span class="kw">try</span> {
+        $this-&gt;partner-&gt;<span class="fn">send</span>($message-&gt;payload);
+    } <span class="kw">catch</span> (<span class="nm">TimeoutException</span> | <span class="nm">ConnectionException</span> $e) {
+        <span class="cm">// Временная: просим повторить позже</span>
+        <span class="kw">throw new</span> <span class="nm">RecoverableMessageHandlingException</span>(<span class="st">'partner unavailable'</span>, previous: $e);
+    } <span class="kw">catch</span> (<span class="nm">RateLimitException</span> $e) {
+        <span class="cm">// Временная с известной задержкой — повторяем не раньше, чем разрешили</span>
+        <span class="kw">throw new</span> <span class="nm">RecoverableMessageHandlingException</span>(retryAfter: $e-&gt;retryAfter);
+    } <span class="kw">catch</span> (<span class="nm">InvalidPayloadException</span> $e) {
+        <span class="cm">// Постоянная: повторять бессмысленно, сразу в DLQ</span>
+        <span class="kw">throw new</span> <span class="nm">UnrecoverableMessageHandlingException</span>(<span class="st">'invalid payload'</span>, previous: $e);
+    }
+}
+
+<span class="cm">// Стратегия повторов — экспонента с джиттером:</span>
+<span class="cm">//   попытка 1: через 1 с ± случайное отклонение</span>
+<span class="cm">//   попытка 2: через 3 с</span>
+<span class="cm">//   попытка 3: через 9 с</span>
+<span class="cm">//   дальше    → DLQ</span>
+<span class="cm"># Джиттер критичен: без него тысяча сообщений, упавших одновременно,</span>
+<span class="cm"># вернётся одной волной и добьёт восстанавливающийся сервис.</span></code></pre></div>
+
+    <p><strong>DLQ — не свалка, а очередь на разбор.</strong> Она полезна только вместе с тремя вещами: алертом на непустую DLQ (иначе там годами копятся потери), сохранением причины отказа рядом с сообщением и механизмом повторной отправки после исправления. Без этого DLQ становится местом, куда сообщения уходят молча и навсегда.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Бесконечные повторы без ограничения. Одно «отравленное» сообщение — с данными, на которых обработчик всегда падает, — начинает крутиться по кругу, занимает воркеры, забивает логи и в некоторых конфигурациях блокирует остальную очередь. Лимит попыток и DLQ обязательны с первого дня; без них система деградирует от одной некорректной записи.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое отравленное сообщение и как с ним бороться?</b><br>Сообщение, на котором обработчик падает всегда: некорректные данные, ошибка в коде, ссылка на исчезнувший объект. Без ограничения попыток оно крутится бесконечно и занимает ресурсы. Решение — различать временные и постоянные ошибки, ограничить число повторов и отправлять в DLQ, а на непустую DLQ ставить алерт с разбором и возможностью повторной отправки после исправления.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="kafka">
+    <p class="path">middle / kafka</p>
+    <div class="card-top"><h3>Kafka: лог и партиции</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Kafka устроена принципиально иначе, чем RabbitMQ. Это не очередь, из которой сообщение исчезает после обработки, а <strong>журнал</strong>: сообщения записываются последовательно и хранятся заданное время независимо от того, кто их прочитал. Потребитель просто запоминает, до какого места дошёл.</p>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Модель Kafka: топик, партиции, смещения</span></div><pre><code>Топик "orders" разбит на партиции. Каждая — упорядоченный лог:
+
+  partition 0: [0][1][2][3][4][5]...
+                        ↑ consumer A читает с offset 3
+  partition 1: [0][1][2][3]...
+                  ↑ consumer B читает с offset 2
+  partition 2: [0][1][2][3][4]...
+
+Ключевые следствия:
+
+  1. Порядок гарантирован ТОЛЬКО внутри партиции.
+     Сообщения с одним ключом всегда попадают в одну партицию —
+     поэтому ключом делают идентификатор агрегата: события одного
+     заказа обрабатываются последовательно, разные заказы — параллельно.
+
+  2. Число партиций ограничивает параллелизм: в группе потребителей
+     одну партицию читает ровно один потребитель. Десять партиций —
+     максимум десять параллельных обработчиков, одиннадцатый простаивает.
+
+  3. Сообщение не удаляется после чтения. Его можно перечитать:
+     сдвинуть смещение назад и обработать заново — это штатная операция,
+     а не восстановление из бэкапа.
+
+  4. Разные группы потребителей читают один топик независимо, каждая
+     со своим смещением. Добавить нового подписчика — не задеть существующих.</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · RabbitMQ против Kafka</caption>
+      <thead><tr><th>Критерий</th><th>RabbitMQ</th><th>Kafka</th></tr></thead>
+      <tbody>
+        <tr><td>Модель</td><td>Очередь: сообщение исчезает после ack</td><td>Лог: сообщение хранится по времени</td></tr>
+        <tr><td>Маршрутизация</td><td>Гибкая: обменники, ключи, шаблоны</td><td>Простая: топик и ключ партиционирования</td></tr>
+        <tr><td>Порядок</td><td>В пределах очереди при одном потребителе</td><td>В пределах партиции</td></tr>
+        <tr><td>Перечитать историю</td><td>Нельзя</td><td>Штатная операция</td></tr>
+        <tr><td>Параллелизм</td><td>Любое число потребителей на очередь</td><td>Ограничен числом партиций</td></tr>
+        <tr><td>Отложенная доставка</td><td>Есть (плагин, TTL + DLX)</td><td>Из коробки нет</td></tr>
+        <tr><td>Приоритеты</td><td>Есть</td><td>Нет</td></tr>
+        <tr><td>Пропускная способность</td><td>Десятки тысяч сообщений/с</td><td>Сотни тысяч и выше</td></tr>
+        <tr><td>Эксплуатация</td><td>Проще</td><td>Сложнее: кластер, партиции, смещения</td></tr>
+        <tr><td>Типичное применение</td><td>Задачи, команды, фоновые операции</td><td>Поток событий, аналитика, несколько подписчиков</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Число партиций легко увеличить и невозможно уменьшить, а увеличение ломает распределение существующих ключей: сообщения с одним ключом начнут попадать в другую партицию, и гарантия порядка на границе изменения нарушится. Поэтому число партиций выбирают с запасом на рост параллелизма заранее — это одно из немногих решений в Kafka, которое трудно откатить.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем Kafka отличается от RabbitMQ?</b><br>Это разные модели. RabbitMQ — брокер очередей: сообщение доставляется потребителю и исчезает после подтверждения, зато есть гибкая маршрутизация, приоритеты и отложенная доставка. Kafka — распределённый лог: сообщения хранятся заданное время, потребители читают со своим смещением и могут перечитать историю, порядок гарантирован внутри партиции, параллелизм ограничен их числом. Для фоновых задач приложения обычно берут RabbitMQ, для потока событий с несколькими независимыми подписчиками — Kafka.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="choose">
+    <p class="path">middle / выбор</p>
+    <div class="card-top"><h3>Выбор брокера</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Самый частый неверный ход — начинать с Kafka, потому что «так делают в больших системах». Для типичного PHP-проекта с фоновыми задачами полностью достаточно очереди в базе или в Redis, и это решение стоит защищать, а не стесняться.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · варианты и условия применимости</caption>
+      <thead><tr><th>Вариант</th><th>Когда достаточно</th><th>Ограничения</th></tr></thead>
+      <tbody>
+        <tr><td>Очередь в БД</td><td>До сотен задач в минуту, уже есть транзакции</td><td>Нагружает основную базу, нужен опрос и блокировки</td></tr>
+        <tr><td>Redis</td><td>Тысячи задач в секунду, простые сценарии</td><td>Слабее гарантии сохранности, нужна настройка персистентности</td></tr>
+        <tr><td>RabbitMQ</td><td>Нужны маршрутизация, приоритеты, отложенная доставка, DLQ</td><td>Отдельный компонент в эксплуатации</td></tr>
+        <tr><td>Kafka</td><td>Поток событий, несколько независимых подписчиков, реплей</td><td>Сложная эксплуатация, партиции, нет приоритетов</td></tr>
+        <tr><td>Облачная очередь</td><td>Не хотим эксплуатировать брокер сами</td><td>Зависимость от провайдера, свои ограничения и цена за сообщение</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="formula">Начинайте с самого простого, что закрывает требования<span>Очередь в БД → Redis → RabbitMQ → Kafka. Каждый шаг вправо — новый компонент в дежурстве</span></div>
+
+    <div class="code"><div class="bar"><span>sql</span><span class="r">Очередь в базе: рабочее решение, которое недооценивают</span></div><pre><code><span class="cm">-- Для сотен задач в минуту это полностью достаточно и не требует брокера</span>
+CREATE TABLE jobs (
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    queue        VARCHAR(64)  NOT NULL,
+    payload      JSON         NOT NULL,
+    available_at DATETIME(3)  NOT NULL,   <span class="cm">-- отложенная доставка бесплатно</span>
+    reserved_at  DATETIME(3)  NULL,       <span class="cm">-- взято в работу</span>
+    attempts     SMALLINT     NOT NULL DEFAULT 0,
+    INDEX idx_pick (queue, reserved_at, available_at, id)
+);
+
+<span class="cm">-- Забор задачи без гонки между воркерами:</span>
+BEGIN;
+SELECT id, payload FROM jobs
+ WHERE queue = 'default' AND reserved_at IS NULL AND available_at &lt;= NOW()
+ ORDER BY id
+ LIMIT 1
+ FOR UPDATE SKIP LOCKED;        <span class="cm">-- ключевая конструкция: не ждём чужую строку</span>
+
+UPDATE jobs SET reserved_at = NOW(), attempts = attempts + 1 WHERE id = :id;
+COMMIT;
+
+<span class="cm">-- Плюсы: транзакция вместе с бизнес-данными (outbox не нужен), простая отладка</span>
+<span class="cm">-- обычным SELECT, никакого нового компонента в эксплуатации.</span>
+<span class="cm">-- Минусы: нагрузка на основную базу, опрос вместо push, потолок пропускной способности.</span></code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Честный ответ на собеседовании «у нас очередь в базе, потому что задач сотни в минуту и это не создаёт проблем» звучит сильнее, чем «мы поставили Kafka». Второй вариант почти всегда влечёт уточняющий вопрос про число партиций, стратегию фиксации смещений и мониторинг лага — и на нём становится ясно, была ли Kafka обоснованным решением.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как выбрать брокер под задачу?</b><br>От требований, а не от популярности. Если нужны просто фоновые задачи и объём небольшой — очередь в базе или в Redis, без нового компонента в эксплуатации. Нужны маршрутизация, приоритеты, отложенная доставка и DLQ — RabbitMQ. Нужен поток событий с несколькими независимыми подписчиками, перечитывание истории и высокая пропускная способность — Kafka. Каждый шаг вправо добавляет мощность и стоимость эксплуатации.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="ordering">
+    <p class="path">middle / порядок</p>
+    <div class="card-top"><h3>Порядок и конкурентность</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Как только воркеров становится больше одного, порядок обработки теряется. Это не дефект брокера, а прямое следствие параллелизма — и большинство систем с этим прекрасно живут, если обработчики написаны правильно.</p>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Почему порядок ломается и что с этим делать</span></div><pre><code>События одного заказа: created → paid → shipped
+
+Один воркер:     created → paid → shipped        порядок сохранён
+Три воркера:     paid → shipped → created        порядок потерян!
+                 (воркер, взявший created, оказался медленнее)
+
+Три способа справиться, по возрастанию цены:
+
+1. СДЕЛАТЬ ОБРАБОТЧИК УСТОЙЧИВЫМ К ПОРЯДКУ — лучший вариант.
+   Каждое событие несёт версию агрегата; обработчик игнорирует событие,
+   если у него уже применена более свежая версия:
+       if ($event-&gt;version &lt;= $current-&gt;version) { return; }
+
+2. ПАРТИЦИОНИРОВАТЬ ПО КЛЮЧУ АГРЕГАТА.
+   Все события заказа идут в одну партицию или очередь и обрабатываются
+   последовательно; разные заказы — параллельно. В Kafka это встроено
+   (ключ сообщения), в RabbitMQ делается через consistent hashing
+   или несколько очередей с маршрутизацией по хешу идентификатора.
+
+3. ОДИН ПОТРЕБИТЕЛЬ НА ОЧЕРЕДЬ.
+   Гарантированный глобальный порядок ценой отсутствия параллелизма.
+   Годится для узких мест, где объём небольшой, а порядок критичен.
+
+Чего делать НЕ надо: пытаться восстановить порядок задержками
+и повторами «подождём, вдруг придёт предыдущее». Это не работает
+и превращается в неотлаживаемую систему.</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · параллелизм и его последствия</caption>
+      <thead><tr><th>Решение</th><th>Порядок</th><th>Пропускная способность</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Один воркер</td><td>Полный</td><td>Низкая</td><td>Узкое место при росте</td></tr>
+        <tr><td>Партиционирование по ключу</td><td>В пределах агрегата</td><td>Высокая</td><td>Перекос при «горячем» ключе</td></tr>
+        <tr><td>Много воркеров без ключа</td><td>Нет</td><td>Максимальная</td><td>Обработчик обязан быть устойчив к порядку</td></tr>
+        <tr><td>Версии в событиях</td><td>Не нужен</td><td>Максимальная</td><td>Нужно вести версию агрегата</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Требование «нужен строгий порядок» стоит подвергать сомнению. Часто оно означает не порядок как таковой, а недопустимость применения устаревшего состояния — а это решается версиями и проверкой актуальности, без потери параллелизма. Настоящая необходимость глобального порядка встречается редко и почти всегда указывает на то, что состояние стоило бы держать в одном месте с транзакцией.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как гарантировать порядок обработки сообщений?</b><br>Полностью — только одним потребителем на очередь, что убивает параллелизм. Практичный вариант — партиционирование по идентификатору агрегата: события одного заказа идут последовательно, разные заказы параллельно. Но лучший ответ обычно другой: сделать обработчик устойчивым к порядку через версию агрегата — тогда порядок вообще перестаёт быть требованием, и система масштабируется свободно.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Объясняю, почему exactly-once недостижим</li>
+        <li>Делаю обработчик идемпотентным через уникальный индекс</li>
+        <li>Вставляю отметку об обработке в одной транзакции с эффектом</li>
+        <li>Убираю старые записи дедупликации по расписанию</li>
+        <li>Применяю outbox там, где потеря события ломает данные</li>
+        <li>Мониторю возраст самой старой неопубликованной записи</li>
+        <li>Различаю временные и постоянные ошибки в обработчике</li>
+      </ul>
+      <ul class="check">
+        <li>Ограничиваю число повторов и использую экспоненту с джиттером</li>
+        <li>Ставлю алерт на непустую DLQ и умею повторять из неё</li>
+        <li>Понимаю модель Kafka: партиции, смещения, группы потребителей</li>
+        <li>Знаю, что число партиций ограничивает параллелизм</li>
+        <li>Выбираю брокер от требований, а не от популярности</li>
+        <li>Помню, что очередь в базе — рабочее решение</li>
+        <li>Делаю обработчики устойчивыми к порядку через версии</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Проверка зрелости в одном вопросе: что произойдёт, если прямо сейчас перезапустить всех воркеров жёстко, посреди обработки? В зрелой системе — ничего: сообщения вернутся, придут повторно, дедупликация отсечёт двойные эффекты, работа продолжится. Если ответ «часть писем уйдёт дважды, а часть заказов зависнет» — идемпотентности нет, и это первое, что нужно чинить.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · эксплуатация и архитектура</p>
+    <h2>Senior: контракты, эксплуатация, отказы</h2>
+    <p>На senior-уровне очередь перестаёт быть технической деталью и становится контрактом между командами: формат сообщения переживает релизы, поток событий нужно мониторить, а при аварии — уметь остановить, разобрать и переиграть. И, как всегда, уметь сказать, что очередь здесь не нужна.</p>
+  </div>
+
+  <!-- 12 -->
+  <article class="card" id="contracts">
+    <p class="path">senior / контракт</p>
+    <div class="card-top"><h3>Контракты сообщений</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Формат сообщения — такой же публичный контракт, как API. Разница в том, что его нарушение обнаруживается не сразу: сообщение уходит в брокер, живёт там часы, а падает у потребителя, которого писала другая команда.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · изменения формата сообщения</caption>
+      <thead><tr><th>Изменение</th><th>Ломающее?</th><th>Как делать</th></tr></thead>
+      <tbody>
+        <tr><td>Новое необязательное поле</td><td>Нет</td><td>Со значением по умолчанию у потребителя</td></tr>
+        <tr><td>Новый тип события</td><td>Нет</td><td>Потребители игнорируют незнакомые типы</td></tr>
+        <tr><td>Удаление или переименование поля</td><td><strong>Да</strong></td><td>Новая версия схемы, поддержка обеих</td></tr>
+        <tr><td>Изменение типа поля</td><td><strong>Да</strong></td><td>Новое поле рядом, старое устаревает</td></tr>
+        <tr><td>Новое обязательное поле</td><td><strong>Да</strong></td><td>Сначала необязательное, потом обязательное</td></tr>
+        <tr><td>Изменение смысла поля</td><td><strong>Да</strong>, и хуже всего</td><td>Только новое поле: тихая поломка не видна в тестах</td></tr>
+        <tr><td>Новое значение перечисления</td><td>Условно</td><td>Потребители должны иметь ветку по умолчанию</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php + json</span><span class="r">Версионирование сообщений и период сосуществования</span></div><pre><code><span class="cm">// Само сообщение несёт версию и тип — иначе потребитель гадает, что пришло</span>
+{
+  "event_id": "3f8c2b1a-...",
+  "type": "order.paid",
+  "version": 2,
+  "occurred_at": "2026-03-11T08:15:30Z",
+  "aggregate_id": "ord_9271",
+  "payload": {
+    "total": { "amount": "1990.00", "currency": "RUB" }
+  }
+}
+
+<span class="cm">// Ломающее изменение выкатывается в три шага, а не одним релизом:</span>
+<span class="cm">//   1) Потребители учатся понимать v2, продолжая понимать v1.</span>
+<span class="cm">//   2) Производитель начинает публиковать v2 (или обе версии сразу).</span>
+<span class="cm">//   3) Когда v1 перестал приходить и очереди пусты — поддержка v1 удаляется.</span>
+<span class="cm">// Порядок именно такой: сначала читатели, потом писатели. Обратный порядок</span>
+<span class="cm">// гарантированно кладёт часть потребителей в DLQ.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Терпимый потребитель: главное правило устойчивости</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">array</span> $raw): <span class="nm">void</span>
+{
+    <span class="cm">// 1. Незнакомая версия — не ошибка обработки, а сигнал о рассинхроне</span>
+    <span class="kw">if</span> ($raw[<span class="st">'version'</span>] &gt; <span class="kw">self</span>::SUPPORTED_VERSION) {
+        $this-&gt;logger-&gt;<span class="fn">warning</span>(<span class="st">'unsupported message version'</span>, $raw);
+
+        <span class="kw">throw new</span> <span class="nm">UnrecoverableMessageHandlingException</span>();   <span class="cm">// сразу в DLQ, без повторов</span>
+    }
+
+    <span class="cm">// 2. Неизвестные поля игнорируем: производитель имеет право их добавлять.</span>
+    <span class="cm">//    Строгая проверка «лишних полей» превращает безопасное изменение в аварию.</span>
+    $payload = $raw[<span class="st">'payload'</span>];
+
+    <span class="cm">// 3. Отсутствующие необязательные поля получают значение по умолчанию</span>
+    $currency = $payload[<span class="st">'total'</span>][<span class="st">'currency'</span>] ?? <span class="st">'RUB'</span>;
+
+    <span class="cm">// 4. Неизвестное значение перечисления не роняет обработку целиком</span>
+    $channel = <span class="nm">Channel</span>::<span class="fn">tryFrom</span>($payload[<span class="st">'channel'</span>] ?? <span class="st">''</span>) ?? <span class="nm">Channel</span>::Unknown;
+}
+
+<span class="cm">// Принцип: строгий к тому, что публикуешь, терпимый к тому, что получаешь.</span>
+<span class="cm">// Он позволяет производителю развиваться, не согласовывая каждый шаг</span>
+<span class="cm">// со всеми потребителями сразу.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Отдельная опасность — сообщения, которые уже лежат в очереди. При выкатке нового формата в брокере остаётся хвост старых сообщений, а если очередь была забита — этот хвост живёт часами. Поэтому поддержка предыдущей версии удаляется не в следующем релизе, а после того, как вы убедились, что старых сообщений не осталось: по метрике версий в логах потребителя.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как менять формат сообщений, не сломав потребителей?</b><br>Считать формат публичным контрактом. Совместимые изменения — новые необязательные поля — выкатываются свободно. Ломающие идут через версию в сообщении и три шага: сначала все потребители учатся понимать новую версию, потом производитель начинает её публиковать, и только после исчезновения старых сообщений из очередей удаляется поддержка предыдущей. Потребители при этом пишутся терпимыми: игнорируют незнакомые поля и имеют ветку по умолчанию для новых значений перечислений.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="patterns">
+    <p class="path">senior / паттерны</p>
+    <div class="card-top"><h3>Паттерны обмена</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Основное различие, которое стоит держать в голове: <strong>команда</strong> адресована конкретному получателю и говорит, что сделать; <strong>событие</strong> сообщает всем заинтересованным, что уже произошло. Путаница между ними приводит к системам, где «событие» на самом деле знает, кто и как на него отреагирует.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · команда против события</caption>
+      <thead><tr><th>Критерий</th><th>Команда</th><th>Событие</th></tr></thead>
+      <tbody>
+        <tr><td>Смысл</td><td>«Сделай это»</td><td>«Это произошло»</td></tr>
+        <tr><td>Получателей</td><td>Ровно один</td><td>Ноль или много</td></tr>
+        <tr><td>Именование</td><td>Повелительно: <code>SendReceipt</code></td><td>В прошедшем времени: <code>OrderPaid</code></td></tr>
+        <tr><td>Отправитель знает получателя</td><td>Да</td><td>Нет — и это главное свойство</td></tr>
+        <tr><td>Можно отклонить</td><td>Да, это часть контракта</td><td>Нет: факт уже случился</td></tr>
+        <tr><td>Связанность</td><td>Выше</td><td>Ниже</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · прикладные паттерны обмена</caption>
+      <thead><tr><th>Паттерн</th><th>Задача</th><th>Нюанс</th></tr></thead>
+      <tbody>
+        <tr><td>Fan-out</td><td>Одно событие — много независимых реакций</td><td>Каждый подписчик со своей очередью и своей DLQ</td></tr>
+        <tr><td>Request-reply</td><td>Асинхронный запрос с ответом</td><td>Нужны очередь ответов и корреляционный идентификатор</td></tr>
+        <tr><td>Claim check</td><td>Большие данные не в сообщении</td><td>В сообщение кладут ссылку на объектное хранилище</td></tr>
+        <tr><td>Приоритетные очереди</td><td>Срочное вперёд обычного</td><td>Проще и надёжнее — отдельные очереди и пулы воркеров</td></tr>
+        <tr><td>Отложенная доставка</td><td>Выполнить через час</td><td>В Kafka нет из коробки; в БД — тривиально</td></tr>
+        <tr><td>Saga</td><td>Многошаговый процесс с компенсациями</td><td>Состояние процесса хранится в базе, а не в сообщениях</td></tr>
+        <tr><td>Дросселирование</td><td>Не превысить лимит внешнего API</td><td>Ограничение на стороне потребителя, а не размером очереди</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Claim check: большие данные не должны ездить в брокере</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: файл на 50 МБ в теле сообщения. Брокер не хранилище:</span>
+<span class="cm">// раздувается память, падает пропускная способность, часть брокеров</span>
+<span class="cm">// просто откажется принимать такое сообщение.</span>
+
+<span class="cm">// ХОРОШО: данные в объектное хранилище, в сообщении — ссылка</span>
+$key = $this-&gt;storage-&gt;<span class="fn">put</span>(<span class="st">"imports/{$id}.csv"</span>, $contents);
+
+$this-&gt;bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> <span class="nm">ProcessImport</span>(
+    importId: $id,
+    storageKey: $key,          <span class="cm">// ссылка вместо содержимого</span>
+    eventId: $eventId,
+));
+
+<span class="cm">// Обработчик забирает данные сам</span>
+<span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">ProcessImport</span> $message): <span class="nm">void</span>
+{
+    $stream = $this-&gt;storage-&gt;<span class="fn">readStream</span>($message-&gt;storageKey);
+    <span class="cm">// ... обработка потоком, без загрузки файла целиком в память ...</span>
+}
+
+<span class="cm">// Практическое правило: сообщение до нескольких десятков килобайт.</span>
+<span class="cm">// Всё, что больше, — по ссылке. Заодно решается вопрос срока хранения:</span>
+<span class="cm">// у файла в хранилище есть политика удаления, у сообщения в брокере — нет.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем команда отличается от события?</b><br>Команда адресована конкретному обработчику и говорит, что сделать; у неё один получатель, её можно отклонить, и отправитель знает, кто её выполнит. Событие сообщает о свершившемся факте всем заинтересованным: получателей может быть ноль или много, отклонить его нельзя, а отправитель не знает подписчиков. Отсюда и разница в связанности: события развязывают систему, но делают поток управления менее явным.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="ops">
+    <p class="path">senior / эксплуатация</p>
+    <div class="card-top"><h3>Эксплуатация и мониторинг</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Очередь — это компонент, который умеет ломаться тихо. Приложение отвечает, ошибок нет, а письма не отправляются третий час, потому что воркеры упали после деплоя. Обнаруживается это обычно от пользователей — если не настроен правильный мониторинг.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · что мониторить и о чём это говорит</caption>
+      <thead><tr><th>Метрика</th><th>Что показывает</th><th>Когда тревожно</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Возраст старейшего сообщения</strong></td><td>Насколько отстаём в реальном времени</td><td>Главная метрика: растёт — значит не справляемся</td></tr>
+        <tr><td>Глубина очереди</td><td>Сколько ждёт</td><td>Полезна в паре с возрастом, отдельно обманчива</td></tr>
+        <tr><td>Число потребителей</td><td>Живы ли воркеры</td><td>Ноль при непустой очереди — авария</td></tr>
+        <tr><td>Скорость публикации и обработки</td><td>Приход против расхода</td><td>Публикация стабильно выше — очередь не рассосётся</td></tr>
+        <tr><td>Необработанные (in-flight)</td><td>Взято и не подтверждено</td><td>Растёт — воркеры зависли</td></tr>
+        <tr><td>Размер DLQ</td><td>Сколько потеряно</td><td>Любой рост требует разбора</td></tr>
+        <tr><td>Доля повторов</td><td>Здоровье обработчиков и зависимостей</td><td>Всплеск — обычно проблема снаружи</td></tr>
+        <tr><td>Время обработки сообщения</td><td>Стоимость одной задачи</td><td>Рост p99 — предвестник роста очереди</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="formula">Воркеров ≈ входящий поток × время обработки<span>Закон Литтла: 50 сообщений/с по 400 мс — это 20 одновременно занятых воркеров плюс запас</span></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Диагностика: очередь растёт, что делать</span></div><pre><code><span class="cm"># 1. Живы ли воркеры и сколько их</span>
+rabbitmqctl list_queues name messages messages_unacknowledged consumers
+ps aux | grep messenger:consume | grep -v grep | wc -l
+kubectl get pods -l app=worker
+
+<span class="cm"># 2. Не зависли ли: необработанные растут, а обработка не идёт</span>
+<span class="cm">#    Частая причина — внешний вызов без таймаута</span>
+
+<span class="cm"># 3. Что именно тормозит: время обработки по типам сообщений</span>
+<span class="cm">#    Обычно виноват один тип, а страдает вся очередь — аргумент</span>
+<span class="cm">#    за разделение очередей по типам задач</span>
+
+<span class="cm"># 4. Быстрые меры, по порядку:</span>
+<span class="cm">#    — добавить воркеров (если упирается не в базу и не во внешний сервис)</span>
+<span class="cm">#    — временно остановить публикацию неважного (массовые рассылки)</span>
+<span class="cm">#    — вынести проблемный тип в отдельную очередь, чтобы разблокировать остальное</span>
+
+<span class="cm"># Kafka: лаг группы потребителей — та же метрика, что возраст сообщения</span>
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+    --describe --group order-processor
+<span class="cm"># Смотрим колонку LAG по каждой партиции: перекос между партициями</span>
+<span class="cm"># означает неудачный ключ партиционирования — «горячий» агрегат.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Добавление воркеров помогает не всегда. Если обработчики упираются в базу, во внешний API или в блокировки, удвоение числа воркеров ухудшит ситуацию: больше соединений, больше конкуренции, больше таймаутов. Прежде чем масштабировать потребителей, нужно понять, во что упёрлись, — иначе можно уронить базу и превратить растущую очередь в полноценный инцидент.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Очередь растёт. Ваши действия?</b><br>Сначала проверяю, живы ли воркеры и не зависли ли они — это самая частая причина, особенно после деплоя. Затем смотрю, во что упирается обработка: если в базу или внешний сервис, добавление воркеров сделает хуже. Дальше — время обработки по типам сообщений: обычно тормозит один тип, а страдают все, и его стоит вынести в отдельную очередь. Из быстрых мер — приостановить публикацию неважного. Главная метрика при этом не глубина очереди, а возраст самого старого сообщения.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="failures">
+    <p class="path">senior / инциденты</p>
+    <div class="card-top"><h3>Отказы и реплей</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Сценарии, которые стоит продумать заранее, потому что в момент аварии времени на размышления не будет. Все они встречаются регулярно и все имеют отработанные решения.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · сценарии отказов</caption>
+      <thead><tr><th>Что случилось</th><th>Что происходит с системой</th><th>Правильная реакция</th></tr></thead>
+      <tbody>
+        <tr><td>Брокер недоступен</td><td>Публикация падает, обработка стоит</td><td>Outbox копит события в базе; приложение не должно падать</td></tr>
+        <tr><td>Воркеры не запустились после деплоя</td><td>Очередь тихо растёт</td><td>Алерт на нулевое число потребителей</td></tr>
+        <tr><td>Все воркеры зависли на внешнем API</td><td>Обработка встала, in-flight растёт</td><td>Таймауты и предохранитель обязательны</td></tr>
+        <tr><td>Ошибка в обработчике: всё падает</td><td>Массовые повторы, затем DLQ</td><td>Остановить потребление, исправить, повторить из DLQ</td></tr>
+        <tr><td>Опубликовали неверные события</td><td>Потребители применили неверный эффект</td><td>Компенсирующие события; «удалить из очереди» не поможет</td></tr>
+        <tr><td>Очередь переполнена</td><td>Брокер отказывает или вытесняет</td><td>Лимит длины и политика заранее, иначе решает брокер</td></tr>
+        <tr><td>Дубликаты после сбоя</td><td>Двойные эффекты</td><td>Дедупликация; проверить, где её не было</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Реплей: переиграть события после исправления</span></div><pre><code><span class="cm"># Ситуация: обработчик две недели неверно считал бонусы. Код исправлен.</span>
+<span class="cm"># Нужно применить правильную логику к уже прошедшим событиям.</span>
+
+<span class="cm"># Kafka: сдвинуть смещение группы назад — история сохранена</span>
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+    --group bonus-processor --reset-offsets \
+    --to-datetime 2026-02-25T00:00:00.000 --topic orders --execute
+<span class="cm"># Обязательно перед этим: остановить потребителей группы,</span>
+<span class="cm"># иначе смещение не сдвинется.</span>
+
+<span class="cm"># RabbitMQ: истории нет — сообщения удалены после подтверждения.</span>
+<span class="cm"># Реплей возможен только из своего журнала событий (outbox или отдельная</span>
+<span class="cm"># таблица истории). Это ещё один аргумент хранить события у себя.</span>
+php bin/console app:events:replay --type=order.paid \
+    --from="2026-02-25" --to="2026-03-10" --dry-run
+
+<span class="cm"># Перед любым реплеем ответить на три вопроса:</span>
+<span class="cm">#   1. Идемпотентны ли обработчики? Иначе бонусы начислятся ещё раз.</span>
+<span class="cm">#   2. Не сработают ли побочные эффекты повторно — письма, вебхуки партнёрам?</span>
+<span class="cm">#      Обычно на время реплея их отключают или направляют в заглушку.</span>
+<span class="cm">#   3. Выдержит ли система поток? Реплей двух недель за час — это</span>
+<span class="cm">#      многократная нагрузка; нужно дросселирование.</span></code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>«Просто очистим очередь» во время инцидента. Сообщения — это работа, которую кто-то ждёт: неотправленные письма, неначисленные бонусы, неуведомлённые партнёры. Очистка превращает видимую проблему (растущая очередь) в невидимую (тихо потерянные данные), которая всплывёт через недели. Правильный порядок — остановить публикацию, разобраться, при необходимости выгрузить сообщения в файл, и только потом чистить.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Обработчик две недели работал неверно. Как исправить последствия?</b><br>Исправить код, затем переиграть события. В Kafka это сдвиг смещения группы назад — история хранится. В RabbitMQ истории нет, поэтому реплей возможен только из собственного журнала событий, и это хороший аргумент хранить их у себя в outbox. Перед реплеем обязательно проверить три вещи: идемпотентность обработчиков, отключение внешних побочных эффектов вроде писем и вебхуков, и дросселирование, чтобы не положить систему потоком.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / границы</p>
+    <div class="card-top"><h3>Когда очередь не нужна</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Очередь стала настолько привычной, что её ставят по умолчанию. Между тем она добавляет компонент в эксплуатацию, дубликаты, отложенный результат и целый класс новых инцидентов. Иногда правильный ответ — не ставить.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · антипаттерны использования очередей</caption>
+      <thead><tr><th>Антипаттерн</th><th>Чем плохо</th><th>Как правильно</th></tr></thead>
+      <tbody>
+        <tr><td>Очередь ради операции в 50 мс</td><td>Накладные расходы больше выигрыша</td><td>Выполнить синхронно</td></tr>
+        <tr><td>Очередь как база данных</td><td>Сообщения хранятся месяцами «на всякий случай»</td><td>Состояние — в базе, очередь для передачи</td></tr>
+        <tr><td>Очередь вместо транзакции</td><td>Согласованность становится eventual там, где нужна строгая</td><td>Одна транзакция в одной базе</td></tr>
+        <tr><td>Цепочка из десяти обработчиков</td><td>Невозможно отследить и отладить</td><td>Оркестрация с явным состоянием процесса</td></tr>
+        <tr><td>Очередь между слоями одного приложения</td><td>Асинхронность там, где хватает вызова метода</td><td>Прямой вызов</td></tr>
+        <tr><td>Синхронное ожидание ответа из очереди</td><td>Худшее из двух миров: сложность и блокировка</td><td>Обычный HTTP-запрос</td></tr>
+        <tr><td>Очередь как способ «не думать о нагрузке»</td><td>Узкое место просто переехало в потребителя</td><td>Найти и устранить настоящее ограничение</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Отдельно про цепочки.</strong> Схема «событие A запускает обработчик, который публикует событие B, которое запускает обработчик, публикующий событие C» выглядит красиво и развязанно ровно до первого инцидента. Дальше выясняется, что никто не знает, где остановился процесс, что произошло с третьим шагом и почему часть заказов застряла посередине. Для многошаговых процессов нужна не цепочка событий, а явное состояние процесса в базе — тогда всегда видно, где кто находится и что нужно доделать.</p>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Полезный тест перед добавлением очереди: что произойдёт, если этой операции не случится вообще? Если ответ «пользователь не получит письмо, отправим позже» — очередь уместна. Если «деньги спишутся, а заказ не создастся» — операции место в транзакции, а не в очереди. Асинхронность не должна использоваться для того, чтобы обойти проблему согласованности: она её усугубляет.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда очередь — неправильное решение?</b><br>Когда результат нужен пользователю немедленно; когда операция занимает десятки миллисекунд и накладные расходы больше выигрыша; когда требуется строгая согласованность — тогда это транзакция, а не сообщение; и когда очередь используется как хранилище состояния. Отдельный случай — длинные цепочки событий: они выглядят развязанными, но становятся неотлаживаемыми, и для многошаговых процессов правильнее явное состояние в базе.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Отношусь к формату сообщения как к публичному контракту</li>
+        <li>Версионирую сообщения и выкатываю изменения читателями вперёд</li>
+        <li>Пишу терпимых потребителей: незнакомые поля игнорируются</li>
+        <li>Помню про хвост старых сообщений в очередях при смене формата</li>
+        <li>Различаю команду и событие и называю их соответственно</li>
+        <li>Не кладу большие данные в сообщение — только ссылку</li>
+      </ul>
+      <ul class="check">
+        <li>Мониторю возраст старейшего сообщения, а не только глубину</li>
+        <li>Ставлю алерт на нулевое число потребителей и на рост DLQ</li>
+        <li>Считаю число воркеров по закону Литтла</li>
+        <li>Понимаю, когда добавление воркеров сделает хуже</li>
+        <li>Умею переиграть события и знаю три проверки перед реплеем</li>
+        <li>Никогда не «чищу очередь» без выгрузки и разбора</li>
+        <li>Заменяю длинные цепочки событий явным состоянием процесса</li>
+        <li>Умею объяснить, где очередь не нужна</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ про очереди почти всегда содержит числа и отказ: «RabbitMQ, четыре очереди по важности, восемь воркеров, лаг держим под минуту, алерт на возраст больше пяти минут и на непустую DLQ; события храним у себя в outbox, чтобы можно было переиграть; Kafka не берём — одного подписчика на событие нам достаточно, а эксплуатировать кластер некому».</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения: что применять в какой ситуации, что проверить перед выводом очередей в прод и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Задача → приём</h3><span class="badge b-tag">Таблица 16</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 16 · что применить и чем за это платите</caption>
+      <thead><tr><th>Задача</th><th>Приём</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Долгая операция в запросе</td><td>Вынести в очередь</td><td>Отложенный результат, новый компонент</td></tr>
+        <tr><td>Сообщение может прийти дважды</td><td>Дедупликация по event_id с уникальным индексом</td><td>Таблица, которую надо чистить</td></tr>
+        <tr><td>Событие теряется при падении процесса</td><td>Transactional outbox</td><td>Релей и его мониторинг</td></tr>
+        <tr><td>Внешний сервис временно недоступен</td><td>Повторы с экспонентой и джиттером</td><td>Задержка обработки</td></tr>
+        <tr><td>Сообщение падает всегда</td><td>Лимит попыток и DLQ</td><td>Нужен разбор и повторная отправка</td></tr>
+        <tr><td>Важное стоит за массовым</td><td>Отдельные очереди и пулы воркеров</td><td>Больше процессов в эксплуатации</td></tr>
+        <tr><td>Нужен порядок по агрегату</td><td>Партиционирование по ключу</td><td>Перекос при «горячем» ключе</td></tr>
+        <tr><td>Порядок в принципе не гарантирован</td><td>Версия агрегата в событии</td><td>Нужно вести версию</td></tr>
+        <tr><td>Большие данные</td><td>Ссылка на хранилище вместо тела</td><td>Два шага вместо одного</td></tr>
+        <tr><td>Нужно переиграть историю</td><td>Kafka или свой журнал событий</td><td>Хранение и дросселирование при реплее</td></tr>
+        <tr><td>Меняется формат сообщения</td><td>Версия в сообщении, читатели вперёд</td><td>Период поддержки двух версий</td></tr>
+        <tr><td>Многошаговый процесс</td><td>Явное состояние процесса в базе</td><td>Больше кода, зато отлаживается</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Чек-лист готовности очередей</h3><span class="badge b-tag">Таблица 17</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 17 · что проверить до вывода в прод</caption>
+      <thead><tr><th>Область</th><th>Вопрос, на который нужен ответ</th></tr></thead>
+      <tbody>
+        <tr><td>Подтверждения</td><td>Подтверждаем после обработки, а не при получении?</td></tr>
+        <tr><td>Идемпотентность</td><td>Что произойдёт при повторной доставке того же сообщения?</td></tr>
+        <tr><td>Долговечность</td><td>Переживут ли сообщения перезапуск брокера — проверяли?</td></tr>
+        <tr><td>Публикация</td><td>Сообщение уходит после коммита или через outbox?</td></tr>
+        <tr><td>Повторы</td><td>Есть ли лимит попыток, экспонента и джиттер?</td></tr>
+        <tr><td>DLQ</td><td>Есть ли алерт на непустую DLQ и способ повторить?</td></tr>
+        <tr><td>Разделение</td><td>Важное отделено от массового?</td></tr>
+        <tr><td>Размер сообщения</td><td>Нет ли в теле больших данных и сущностей ORM?</td></tr>
+        <tr><td>Формат</td><td>Есть ли версия и терпимы ли потребители к новым полям?</td></tr>
+        <tr><td>Воркеры</td><td>Есть ли лимиты по памяти, времени и числу задач?</td></tr>
+        <tr><td>Деплой</td><td>Останавливаются ли воркеры при выкатке?</td></tr>
+        <tr><td>Мониторинг</td><td>Есть ли алерт на возраст сообщения и на ноль потребителей?</td></tr>
+        <tr><td>Ёмкость</td><td>Посчитано ли число воркеров по потоку и времени обработки?</td></tr>
+        <tr><td>Отказ брокера</td><td>Что делает приложение, когда брокер недоступен?</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 18</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 18 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Основы</td><td>Знает producer, consumer, ack, DLQ</td><td>Понимает семантику доставки</td><td>Объясняет, почему exactly-once невозможен</td></tr>
+        <tr><td>Надёжность</td><td>Подтверждает после обработки</td><td>Делает обработчик идемпотентным</td><td>Проектирует систему, переживающую любой перезапуск</td></tr>
+        <tr><td>Согласованность</td><td>Публикует после коммита</td><td>Применяет outbox</td><td>Решает, где outbox нужен, а где избыточен</td></tr>
+        <tr><td>Ошибки</td><td>Знает про повторы</td><td>Различает временные и постоянные</td><td>Строит процесс разбора DLQ и реплея</td></tr>
+        <tr><td>Брокеры</td><td>Работал с одним</td><td>Сравнивает и выбирает по требованиям</td><td>Обосновывает отказ от более сложного</td></tr>
+        <tr><td>Порядок</td><td>Знает, что он не гарантирован</td><td>Партиционирует по ключу</td><td>Делает порядок ненужным через версии</td></tr>
+        <tr><td>Эксплуатация</td><td>Смотрит глубину очереди</td><td>Мониторит возраст и лаг</td><td>Считает ёмкость и разбирает инциденты</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и цена</td><td>Компромиссы, числа и осознанный отказ</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Команды по ситуациям</h2>
+    <p>То, что нужно во время инцидента с очередями, когда думать некогда.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>RabbitMQ</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Диагностика и управление</span></div><pre><code><span class="cm"># Состояние очередей: главная команда</span>
+rabbitmqctl list_queues name messages messages_ready \
+    messages_unacknowledged consumers memory
+
+<span class="cm"># Кто подключён и что делает</span>
+rabbitmqctl list_consumers
+rabbitmqctl list_connections name user state channels
+rabbitmqctl list_channels connection messages_unacknowledged prefetch_count
+
+<span class="cm"># Маршрутизация: куда на самом деле уходят сообщения</span>
+rabbitmqctl list_exchanges name type
+rabbitmqctl list_bindings source_name destination_name routing_key
+
+<span class="cm"># Здоровье узла и кластера</span>
+rabbitmq-diagnostics status
+rabbitmq-diagnostics check_running
+rabbitmq-diagnostics list_unresponsive_queues
+rabbitmqctl cluster_status
+
+<span class="cm"># Память и диск: типовая причина отказа публикации —</span>
+<span class="cm"># брокер включает защиту и блокирует producers</span>
+rabbitmq-diagnostics memory_breakdown
+rabbitmqctl status | grep -A3 <span class="st">'disk_free'</span>
+
+<span class="cm"># Опасные операции — только осознанно</span>
+rabbitmqctl purge_queue my_queue          <span class="cm"># удалит все сообщения безвозвратно</span>
+rabbitmqctl close_connection &lt;pid&gt; <span class="st">"reason"</span></code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Kafka</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Топики, группы, лаг</span></div><pre><code><span class="cm"># Лаг группы — главная метрика: сколько отстаём по каждой партиции</span>
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+    --describe --group order-processor
+
+<span class="cm"># Все группы и их состояние</span>
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
+
+<span class="cm"># Топики: число партиций и репликация</span>
+kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic orders
+
+<span class="cm"># Увеличить число партиций (уменьшить нельзя!)</span>
+kafka-topics.sh --bootstrap-server localhost:9092 \
+    --alter --topic orders --partitions 12
+
+<span class="cm"># Посмотреть сообщения, не мешая рабочим потребителям</span>
+kafka-console-consumer.sh --bootstrap-server localhost:9092 \
+    --topic orders --from-beginning --max-messages 5 \
+    --property print.key=true --property print.timestamp=true
+
+<span class="cm"># Сдвиг смещения: реплей или пропуск застрявшего.</span>
+<span class="cm"># Потребители группы должны быть остановлены!</span>
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+    --group order-processor --topic orders \
+    --reset-offsets --to-datetime 2026-03-01T00:00:00.000 --execute
+
+<span class="cm"># Пропустить всё накопившееся (осознанная потеря!)</span>
+kafka-consumer-groups.sh --bootstrap-server localhost:9092 \
+    --group order-processor --topic orders --reset-offsets --to-latest --execute</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Воркеры в PHP</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Symfony Messenger и Laravel Queues</span></div><pre><code><span class="cm"># --- Symfony Messenger ---</span>
+php bin/console messenger:consume async --time-limit=3600 --memory-limit=192M -vv
+php bin/console messenger:stop-workers          <span class="cm"># мягкая остановка при деплое</span>
+php bin/console messenger:failed:show           <span class="cm"># что в DLQ</span>
+php bin/console messenger:failed:show &lt;id&gt; -vv  <span class="cm"># с причиной и трассировкой</span>
+php bin/console messenger:failed:retry --force  <span class="cm"># повторить всё после исправления</span>
+php bin/console messenger:failed:remove &lt;id&gt;
+php bin/console messenger:stats                 <span class="cm"># глубина по транспортам</span>
+
+<span class="cm"># --- Laravel Queues ---</span>
+php artisan queue:work redis --queue=critical,default \
+    --max-time=3600 --memory=192 --max-jobs=1000 --tries=3 --backoff=1,3,9
+php artisan queue:restart                       <span class="cm"># мягкая остановка при деплое</span>
+php artisan queue:failed                        <span class="cm"># список неудачных</span>
+php artisan queue:retry all
+php artisan queue:monitor redis:default --max=1000   <span class="cm"># алерт при превышении</span>
+
+<span class="cm"># --- Обязательный минимум в проде ---</span>
+<span class="cm"># 1. Супервизор (supervisor, systemd, оркестратор) поднимает упавшие процессы</span>
+<span class="cm"># 2. Лимиты по времени, памяти и числу задач — от утечек и старого кода</span>
+<span class="cm"># 3. Мягкая остановка в процедуре деплоя — иначе фон работает на старом коде</span>
+<span class="cm"># 4. Обработка SIGTERM в коде: доработать текущее сообщение и выйти</span></code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Две команды стоит повесить на дашборд и смотреть ежедневно: глубина и возраст по каждой очереди и размер DLQ. Большинство инцидентов с очередями начинаются задолго до того, как их замечают пользователи, и видны именно в этих двух числах — если на них кто-то смотрит.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас. Вопросы про очереди почти всегда проверяют понимание отказов: что произойдёт при повторной доставке, при падении воркера, при недоступном брокере.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Зачем нужна очередь?</span><span class="aa">Чтобы убрать из времени ответа работу, результат которой не нужен немедленно: письма, отчёты, обработка файлов, синхронизация. Дополнительно она сглаживает пики, превращая всплеск в очередь работ, и развязывает компоненты. Плата — дубликаты, отсутствие порядка, отложенный результат и новый компонент в эксплуатации.</span></li>
+      <li><span class="qq">Что нельзя выносить в очередь?</span><span class="aa">Всё, от чего зависит ответ пользователю, и всё, что должно быть согласовано строго: проверку прав, валидацию, транзакционную запись, определяющую успех операции. Также не окупается вынос операций в десятки миллисекунд — накладные расходы больше выигрыша.</span></li>
+      <li><span class="qq">Что такое producer, consumer и брокер?</span><span class="aa">Producer публикует сообщение, брокер хранит и доставляет, consumer читает и обрабатывает. Ключевое свойство — они не знают друг о друге напрямую и могут работать в разное время: producer публикует, даже когда все потребители остановлены.</span></li>
+      <li><span class="qq">Чем очередь отличается от топика?</span><span class="aa">Из очереди сообщение достаётся одному потребителю: несколько воркеров делят работу между собой. Топик (или обменник) — точка публикации, откуда сообщение может попасть в несколько очередей и быть обработано несколькими независимыми подписчиками.</span></li>
+      <li><span class="qq">Что такое ack и зачем он нужен?</span><span class="aa">Подтверждение обработки: брокер удаляет сообщение только после него. Если воркер умрёт, не подтвердив, брокер по таймауту вернёт сообщение в очередь, и оно не потеряется. Подтверждать нужно после успешной работы, а не при получении.</span></li>
+      <li><span class="qq">Что произойдёт, если воркер упадёт во время обработки?</span><span class="aa">Сообщение вернётся в очередь и достанется другому воркеру. Это правильное поведение. Обратная сторона: если падение случилось после выполнения работы, но до подтверждения, работа выполнится повторно — поэтому обработчик обязан быть идемпотентным.</span></li>
+      <li><span class="qq">Чем опасно автоподтверждение?</span><span class="aa">Тем, что брокер считает сообщение обработанным в момент выдачи. Падение воркера означает потерю сообщения без следа: в очереди его уже нет, работа не сделана, и никто об этом не узнает. Автоподтверждение допустимо только для необязательных данных вроде метрик.</span></li>
+      <li><span class="qq">Что такое prefetch и на что он влияет?</span><span class="aa">Сколько сообщений брокер отдаёт воркеру заранее. Большое значение приводит к неравномерности: один воркер забрал сотню и обрабатывает последовательно, пока другие простаивают, а при его падении вся сотня возвращается разом. Для медленных обработчиков разумно от 1 до 10.</span></li>
+      <li><span class="qq">Что такое DLQ?</span><span class="aa">Очередь для сообщений, которые не удалось обработать за отведённое число попыток. Она нужна, чтобы «отравленное» сообщение не крутилось бесконечно и не блокировало остальные. Полезна только вместе с алертом, сохранением причины отказа и механизмом повторной отправки после исправления.</span></li>
+      <li><span class="qq">Что должно быть в сообщении?</span><span class="aa">Идентификаторы и минимум значений, нужных обработчику, плюс идентификатор события для дедупликации. Не сущности ORM и не большие документы: сообщение живёт в брокере и переживает релизы, поэтому его формат — контракт. Актуальные данные обработчик читает сам.</span></li>
+      <li><span class="qq">Почему нельзя класть в сообщение сущность ORM?</span><span class="aa">Потому что сообщение сериализуется и лежит в брокере минуты или часы: за это время объект успевает измениться, а после релиза может измениться его структура — и старые сообщения перестанут разбираться, уходя в DLQ. Плюс сериализация тянет за собой связанные объекты.</span></li>
+      <li><span class="qq">Что такое обменник в RabbitMQ?</span><span class="aa">Точка публикации, которая по правилам раскладывает сообщения по очередям. Producer публикует в обменник с ключом маршрутизации и ничего не знает о подписчиках: добавить нового — значит создать очередь и привязку, код отправителя не меняется.</span></li>
+      <li><span class="qq">Какие бывают типы обменников?</span><span class="aa"><code>direct</code> — точное совпадение ключа, задача идёт в конкретную очередь. <code>topic</code> — шаблоны с масками, гибкая подписка на классы событий. <code>fanout</code> — во все связанные очереди, ключ игнорируется. <code>headers</code> — по заголовкам, применяется редко.</span></li>
+      <li><span class="qq">Как сделать так, чтобы сообщения пережили перезапуск брокера?</span><span class="aa">Тремя настройками вместе: долговечная очередь, постоянные сообщения и подтверждения публикации. Пропуск любой означает потерю: недолговечная очередь исчезнет целиком, непостоянные сообщения пропадут из долговечной очереди, а без подтверждений отправитель не узнает о потере при сетевом сбое.</span></li>
+      <li><span class="qq">Что показывает число необработанных сообщений?</span><span class="aa">Сколько взято воркерами в работу и ещё не подтверждено. Если оно растёт и не убывает, воркеры зависли — чаще всего на внешнем вызове без таймаута. Это отличается от растущей глубины очереди, которая означает, что не хватает мощности.</span></li>
+      <li><span class="qq">Почему воркеры нужно перезапускать при деплое?</span><span class="aa">Потому что это долгоживущие процессы: они держат в памяти старый код и продолжат работать по нему неделями. Плюс накапливаются утечки памяти и отваливаются соединения с базой. Правильный порядок — мягкая остановка после переключения релиза, супервизор поднимет новые процессы с новым кодом.</span></li>
+      <li><span class="qq">Зачем воркеру лимиты по памяти, времени и числу задач?</span><span class="aa">PHP не рассчитан на бесконечно живущие процессы: утечки накапливаются, соединения отваливаются по таймауту, а после деплоя процесс работает на старом коде. Плановый перезапуск по лимиту решает все три проблемы разом и не требует внешнего вмешательства.</span></li>
+      <li><span class="qq">Почему нельзя публиковать сообщение внутри транзакции?</span><span class="aa">Потому что воркер может забрать его за миллисекунды — раньше коммита — и не найти запись в базе. Локально это почти не воспроизводится, а под нагрузкой случается регулярно. Публиковать нужно после коммита, а надёжно — через outbox.</span></li>
+      <li><span class="qq">Зачем разделять очереди?</span><span class="aa">Чтобы важное не стояло за массовым. Классический пример: код подтверждения ждёт, пока обработается ночная рассылка на миллион адресов. Разделение по важности и по каналу с отдельными пулами воркеров решает это надёжнее любых приоритетов.</span></li>
+      <li><span class="qq">Что означает растущая очередь?</span><span class="aa">Что публикация идёт быстрее обработки. Причин обычно три: воркеры не запущены или упали, воркеры зависли на внешнем вызове, или мощности действительно не хватает. Прежде чем добавлять воркеров, нужно понять, какая из трёх, — иначе можно уронить базу.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Какие бывают семантики доставки?</span><span class="aa">At-most-once — может потеряться, дублей нет, годится только для необязательных данных. At-least-once — не теряется, но может прийти дважды; это практический выбор почти везде. Exactly-once на кончиках системы недостижим и строится как at-least-once плюс дедупликация у потребителя.</span></li>
+      <li><span class="qq">Почему exactly-once невозможен?</span><span class="aa">Потому что отправитель не может отличить «сообщение не дошло» от «дошло, но подтверждение потерялось». Любой выбор даёт либо потерю, либо дубликат. То, что некоторые брокеры называют exactly-once, — транзакционность внутри брокера, а не гарантия для вашего побочного эффекта вроде отправки письма.</span></li>
+      <li><span class="qq">Как сделать обработчик идемпотентным?</span><span class="aa">Хранить обработанные идентификаторы событий с уникальным индексом и вставлять отметку в той же транзакции, что и эффект: дубликат падает на конфликте и просто подтверждается. Проверка «а не обрабатывали ли уже» отдельным запросом ненадёжна — два воркера пройдут её одновременно.</span></li>
+      <li><span class="qq">Что делать с идемпотентностью, если эффект вне базы?</span><span class="aa">Разбить на три шага: отметить «начали» с уникальным индексом, выполнить внешний вызов с ключом идемпотентности на его стороне, отметить «завершили». Записи, застрявшие в состоянии «начали», разбираются отдельной проверкой у провайдера: прошла операция или нет.</span></li>
+      <li><span class="qq">Что такое проблема двойной записи?</span><span class="aa">Нужно атомарно сохранить данные и отправить сообщение, но база и брокер — разные системы без общей транзакции. Падение между операциями оставляет рассогласование: заказ есть, события нет, склад не узнал. Решается transactional outbox.</span></li>
+      <li><span class="qq">Как работает outbox?</span><span class="aa">Событие пишется в таблицу в той же транзакции, что и бизнес-данные, — либо есть и то и другое, либо ничего. Отдельный процесс читает неопубликованные записи, отправляет в брокер и помечает отправленными. Падение между отправкой и пометкой даёт повтор, поэтому потребитель дедуплицирует.</span></li>
+      <li><span class="qq">Всегда ли нужен outbox?</span><span class="aa">Нет. Он оправдан там, где потеря события ломает данные: оплата прошла, а склад не узнал. Для «отправить письмо о комментарии» достаточно публикации после коммита — потеря неприятна, но не приводит к рассогласованию. Вопрос в цене ошибки.</span></li>
+      <li><span class="qq">Что мониторить у процесса-релея outbox?</span><span class="aa">Возраст самой старой неопубликованной записи. Он растёт, если релей умер или брокер недоступен, и это видно раньше, чем заметят потребители. Глубина таблицы менее информативна: она может быть большой при нормальной работе на пике.</span></li>
+      <li><span class="qq">Как отличать временные ошибки от постоянных?</span><span class="aa">По природе: недоступность сервиса, таймаут, превышение лимита — временные, их нужно повторять. Некорректные данные, неизвестный тип сообщения, ошибка в коде — постоянные, повторы бессмысленны и сообщение должно сразу уйти в DLQ. В коде это выражается разными типами исключений.</span></li>
+      <li><span class="qq">Как правильно настроить повторы?</span><span class="aa">Ограниченное число попыток, экспоненциально растущая задержка и обязательный джиттер. Без джиттера тысяча сообщений, упавших одновременно, вернётся одной волной и добьёт восстанавливающийся сервис. После исчерпания попыток — DLQ, а не бесконечный цикл.</span></li>
+      <li><span class="qq">Что такое отравленное сообщение?</span><span class="aa">Сообщение, на котором обработчик падает всегда: некорректные данные, ошибка в коде, ссылка на исчезнувший объект. Без ограничения попыток оно крутится бесконечно, занимает воркеры и забивает логи. Лечится лимитом попыток, DLQ и разбором причины.</span></li>
+      <li><span class="qq">Чем Kafka отличается от RabbitMQ?</span><span class="aa">Разные модели. RabbitMQ — очередь: сообщение исчезает после подтверждения, зато есть гибкая маршрутизация, приоритеты и отложенная доставка. Kafka — лог: сообщения хранятся заданное время, потребители читают со своим смещением и могут перечитать историю, порядок гарантирован внутри партиции, параллелизм ограничен их числом.</span></li>
+      <li><span class="qq">Что такое партиция в Kafka?</span><span class="aa">Упорядоченный лог внутри топика. Сообщения с одинаковым ключом всегда попадают в одну партицию, поэтому ключом делают идентификатор агрегата: события одного заказа обрабатываются последовательно, разные заказы параллельно. Число партиций ограничивает параллелизм: одну партицию в группе читает ровно один потребитель.</span></li>
+      <li><span class="qq">Что такое consumer group?</span><span class="aa">Набор потребителей, которые делят между собой партиции топика и хранят общее смещение. Разные группы читают один топик независимо, каждая со своим прогрессом, — поэтому добавление нового подписчика не задевает существующих. Внутри группы партиции распределяются между участниками.</span></li>
+      <li><span class="qq">Можно ли уменьшить число партиций?</span><span class="aa">Нет, только увеличить. И увеличение ломает распределение ключей: сообщения с одним ключом начнут попадать в другую партицию, и гарантия порядка на границе изменения нарушится. Поэтому число партиций выбирают с запасом заранее — это трудно откатываемое решение.</span></li>
+      <li><span class="qq">Как выбрать брокер под задачу?</span><span class="aa">От требований. Фоновые задачи и небольшой объём — очередь в базе или Redis, без нового компонента. Нужны маршрутизация, приоритеты, отложенная доставка, DLQ — RabbitMQ. Нужен поток событий с несколькими независимыми подписчиками и перечитывание истории — Kafka. Каждый шаг добавляет мощность и стоимость эксплуатации.</span></li>
+      <li><span class="qq">Очередь в базе — это нормально?</span><span class="aa">Для сотен задач в минуту — вполне. Плюсы существенные: постановка задачи в одной транзакции с бизнес-данными (outbox не нужен), простая отладка обычным запросом, никакого нового компонента в дежурстве. Минусы — нагрузка на основную базу и потолок пропускной способности. Забор строки делается с пропуском заблокированных, чтобы воркеры не мешали друг другу.</span></li>
+      <li><span class="qq">Гарантируется ли порядок обработки?</span><span class="aa">Только при одном потребителе на очередь или в пределах партиции. Как только воркеров становится больше, порядок теряется — это следствие параллелизма, а не дефект брокера. Практичные решения: партиционирование по ключу агрегата или, лучше, устойчивость обработчика к порядку через версию агрегата.</span></li>
+      <li><span class="qq">Как сделать обработчик устойчивым к порядку?</span><span class="aa">Передавать в событии версию агрегата и игнорировать событие, если применена уже более свежая версия. Тогда порядок перестаёт быть требованием, и система масштабируется свободно. Это почти всегда лучше, чем добиваться порядка ограничением параллелизма.</span></li>
+      <li><span class="qq">Что произойдёт, если жёстко перезапустить всех воркеров?</span><span class="aa">В корректной системе — ничего: неподтверждённые сообщения вернутся в очередь, придут повторно, дедупликация отсечёт двойные эффекты, обработка продолжится. Если ответ другой — часть писем уйдёт дважды, часть заказов зависнет, — значит идемпотентности нет, и это первоочередная проблема.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как менять формат сообщений, не сломав потребителей?</span><span class="aa">Считать формат публичным контрактом. Совместимые изменения — новые необязательные поля — выкатываются свободно. Ломающие идут через версию в сообщении и три шага: сначала все потребители учатся понимать новую версию, потом производитель начинает публиковать, и только после исчезновения старых сообщений удаляется поддержка предыдущей.</span></li>
+      <li><span class="qq">Почему порядок «сначала читатели, потом писатели» важен?</span><span class="aa">Потому что обратный порядок гарантированно кладёт часть потребителей в DLQ: новые сообщения приходят раньше, чем их научились разбирать. И отдельно нужно помнить про хвост старых сообщений, уже лежащих в очередях: при забитой очереди он живёт часами, поэтому поддержку старой версии удаляют по метрике, а не по календарю.</span></li>
+      <li><span class="qq">Что такое терпимый потребитель?</span><span class="aa">Тот, который игнорирует незнакомые поля, подставляет значения по умолчанию для отсутствующих необязательных и имеет ветку по умолчанию для новых значений перечислений. Принцип: строгий к тому, что публикуешь, терпимый к тому, что получаешь. Он позволяет производителю развиваться, не согласовывая каждый шаг со всеми.</span></li>
+      <li><span class="qq">Чем команда отличается от события?</span><span class="aa">Команда адресована конкретному обработчику и говорит, что сделать: получатель один, её можно отклонить, отправитель знает исполнителя. Событие сообщает о свершившемся факте: подписчиков ноль или много, отклонить нельзя, отправитель их не знает. События развязывают систему, но делают поток управления менее явным.</span></li>
+      <li><span class="qq">Как передавать большие данные через очередь?</span><span class="aa">Не передавать: класть данные в объектное хранилище, а в сообщение — ссылку. Брокер не хранилище: большие тела раздувают память, снижают пропускную способность, а часть брокеров просто откажется их принимать. Ориентир — сообщение до нескольких десятков килобайт.</span></li>
+      <li><span class="qq">Какая метрика очереди главная?</span><span class="aa">Возраст самого старого необработанного сообщения. Глубина обманчива: сто тысяч быстрых сообщений — норма, а сто медленных могут означать часовое отставание. Возраст напрямую отвечает на вопрос «насколько мы отстаём в реальном времени» и годится для алерта в отличие от глубины.</span></li>
+      <li><span class="qq">Как посчитать нужное число воркеров?</span><span class="aa">По закону Литтла: одновременно занято ≈ входящий поток × время обработки. Пятьдесят сообщений в секунду по 400 мс — это двадцать одновременно работающих воркеров плюс запас на пики. Проверка — метрика возраста: если растёт, воркеров не хватает независимо от расчёта.</span></li>
+      <li><span class="qq">Когда добавление воркеров сделает хуже?</span><span class="aa">Когда обработчики упираются не в себя, а в базу, внешний API или блокировки. Удвоение воркеров даст больше соединений, больше конкуренции и больше таймаутов — растущая очередь превратится в полноценный инцидент. Сначала нужно понять, во что упёрлись.</span></li>
+      <li><span class="qq">Очередь растёт. Ваши действия?</span><span class="aa">Проверить, живы ли воркеры и не зависли ли они (частая причина — деплой без перезапуска или внешний вызов без таймаута). Посмотреть, во что упирается обработка. Разобрать время по типам сообщений: обычно тормозит один тип, а страдают все, и его стоит вынести в отдельную очередь. Из быстрых мер — приостановить публикацию неважного.</span></li>
+      <li><span class="qq">Что делает приложение, когда брокер недоступен?</span><span class="aa">Не падает. При наличии outbox события копятся в базе и уйдут после восстановления — ничего не теряется. Без outbox нужно решить заранее: отказать пользователю или выполнить операцию синхронно как запасной путь. Худший вариант — необработанное исключение при публикации, которое роняет пользовательский сценарий.</span></li>
+      <li><span class="qq">Как переиграть события после исправления обработчика?</span><span class="aa">В Kafka сдвинуть смещение группы назад: история сохранена, это штатная операция при остановленных потребителях. В RabbitMQ истории нет, поэтому реплей возможен только из собственного журнала событий — хороший аргумент хранить их у себя. Перед реплеем проверяются три вещи: идемпотентность, отключение внешних побочных эффектов и дросселирование.</span></li>
+      <li><span class="qq">Почему нельзя просто очистить очередь во время инцидента?</span><span class="aa">Потому что сообщения — это работа, которую кто-то ждёт: неотправленные письма, неначисленные бонусы, неуведомлённые партнёры. Очистка превращает видимую проблему в невидимую потерю данных, которая всплывёт через недели. Правильный порядок: остановить публикацию, разобраться, при необходимости выгрузить сообщения, и только потом чистить.</span></li>
+      <li><span class="qq">Опубликовали неверные события. Что делать?</span><span class="aa">Удалять из очереди поздно: часть потребителей уже применила эффект. Нужны компенсирующие события или явная корректировка состояния, а также разбор, у кого что успело примениться. Это тот случай, когда развязанность через события оборачивается сложностью: отправитель не знает всех подписчиков.</span></li>
+      <li><span class="qq">Как устроен разбор DLQ?</span><span class="aa">Как процесс, а не как надежда. Алерт на непустую DLQ, причина отказа сохранена рядом с сообщением, есть команда повторной отправки после исправления и решение по безнадёжным. Без этого DLQ становится местом, где потери копятся молча и обнаруживаются через месяцы.</span></li>
+      <li><span class="qq">Когда очередь — неправильное решение?</span><span class="aa">Когда результат нужен пользователю немедленно; когда операция занимает десятки миллисекунд; когда требуется строгая согласованность — тогда это транзакция, а не сообщение; когда очередь используется как хранилище состояния. Отдельный случай — длинные цепочки событий: они выглядят развязанными, но становятся неотлаживаемыми.</span></li>
+      <li><span class="qq">Чем плохи цепочки из множества обработчиков?</span><span class="aa">Тем, что никто не знает, где остановился процесс: событие A запустило B, которое запустило C, и при сбое посередине состояние неизвестно. Для многошаговых процессов нужна не цепочка, а явное состояние процесса в базе — тогда видно, кто где находится и что нужно доделать.</span></li>
+      <li><span class="qq">Как ограничить нагрузку на внешний сервис из очереди?</span><span class="aa">Ограничением на стороне потребителя, а не размером очереди: число воркеров, лимит запросов в секунду, предохранитель при отказах. Очередь при этом работает как буфер — сообщения копятся и обрабатываются в допустимом темпе. Пытаться регулировать это скоростью публикации бессмысленно: источник обычно не под вашим контролем.</span></li>
+      <li><span class="qq">Как обеспечить приоритеты?</span><span class="aa">Надёжнее всего отдельными очередями и отдельными пулами воркеров, а не механизмом приоритетов внутри одной очереди. Приоритеты внутри очереди работают хуже, чем ожидается: они не спасают, когда все воркеры уже заняты долгими низкоприоритетными задачами. Разделение решает это структурно.</span></li>
+      <li><span class="qq">Как проверить, что система очередей действительно надёжна?</span><span class="aa">Экспериментами на стенде: жёстко убить воркеры посреди обработки, перезапустить брокер под нагрузкой, отключить внешний сервис, отправить заведомо некорректное сообщение. Правильный результат — ничего не потеряно, дубликаты отсечены, отравленное ушло в DLQ, а система восстановилась сама. Всё остальное — предположения.</span></li>
+      <li><span class="qq">Как выглядит зрелая работа с очередями?</span><span class="aa">Идемпотентные обработчики, outbox там, где потеря ломает данные, разделение по важности, лимиты повторов и живая DLQ с разбором, алерты на возраст сообщения и на ноль потребителей, посчитанная ёмкость, отрепетированный реплей и осознанный выбор брокера с объяснением, почему не взяли более сложный.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Очереди изучаются поломками: пока вы не убили воркер посреди обработки и не увидели дубликат, идемпотентность остаётся теорией. Первые задания выполняются на локальном стенде, дальше — на своём проекте.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Первая очередь с нуля</h4>
+    <p>Поднимите RabbitMQ в контейнере, отправьте сообщение из PHP, обработайте воркером. Посмотрите очередь в панели управления и командой на всех стадиях: до обработки, во время, после.</p>
+    <div class="box task"><span class="lbl">Результат</span>Понимание пути сообщения целиком, а не по документации.</div>
+
+    <h4>2. Четыре способа сломать</h4>
+    <p>Убейте воркер посреди обработки. Перезапустите брокер с непостоянными сообщениями. Опубликуйте внутри транзакции. Отправьте сообщение, на котором обработчик падает всегда. Каждый раз зафиксируйте, что произошло.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица «поломка → что случилось → как чинится». Самое ценное задание раздела.</div>
+
+    <h4>3. Маршрутизация в RabbitMQ</h4>
+    <p>Настройте обменник типа topic с тремя очередями и разными ключами. Опубликуйте события с разными ключами и проследите, куда они попали. Затем добавьте четвёртого подписчика, не меняя код отправителя.</p>
+    <div class="box task"><span class="lbl">Результат</span>Понимание, зачем нужен обменник и что такое развязка отправителя и получателей.</div>
+
+    <h4>4. Долговечность на практике</h4>
+    <p>Проверьте три настройки по отдельности: долговечная очередь без постоянных сообщений, постоянные без подтверждений публикации, и все три вместе. После каждой конфигурации перезапустите брокер и посчитайте сообщения.</p>
+    <div class="box task"><span class="lbl">Результат</span>Числа, показывающие, что настройки работают только вместе.</div>
+
+    <h4>5. Воркер, переживающий деплой</h4>
+    <p>Настройте воркера с лимитами по времени, памяти и числу задач, обработкой сигнала завершения и супервизором. Пошлите сигнал во время обработки и убедитесь, что сообщение не потеряно.</p>
+    <div class="box task"><span class="lbl">Результат</span>Воркер, который корректно останавливается и поднимается сам, — обязательная база для прода.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Идемпотентный обработчик</h4>
+    <p>Реализуйте дедупликацию по идентификатору события с уникальным индексом и вставкой в одной транзакции с эффектом. Проверьте: отправьте одно сообщение дважды и параллельно двумя воркерами.</p>
+    <div class="box task"><span class="lbl">Результат</span>Доказательство, что двойная доставка и гонка двух воркеров не создают второго эффекта.</div>
+
+    <h4>7. Outbox от начала до конца</h4>
+    <p>Таблица outbox, запись в транзакции с бизнес-операцией, процесс-релей с блокировкой строк, метрика возраста неопубликованной записи. Проверьте: остановите брокер на пять минут и посмотрите, что события не потеряются.</p>
+    <div class="box task"><span class="lbl">Результат</span>Демонстрация: брокер лежал, приложение работало, после восстановления всё уехало ровно по разу.</div>
+
+    <h4>8. Повторы и DLQ</h4>
+    <p>Настройте различение временных и постоянных ошибок, экспоненту с джиттером, лимит попыток и DLQ. Проверьте оба пути: временная ошибка приводит к успешному повтору, постоянная — сразу в DLQ.</p>
+    <div class="box task"><span class="lbl">Результат</span>Работающий разбор DLQ: посмотреть причину, исправить, повторить.</div>
+
+    <h4>9. Kafka: партиции и порядок</h4>
+    <p>Поднимите Kafka, создайте топик с тремя партициями, публикуйте события с ключом и без. Запустите два потребителя в группе и посмотрите распределение партиций и порядок обработки.</p>
+    <div class="box task"><span class="lbl">Результат</span>Наглядное понимание, почему ключ определяет порядок и почему партиций должно хватать на параллелизм.</div>
+
+    <h4>10. Очередь в базе</h4>
+    <p>Реализуйте простую очередь на таблице: отложенная доставка, забор с пропуском заблокированных строк, счётчик попыток. Замерьте, сколько задач в секунду она держит на вашем железе.</p>
+    <div class="box task"><span class="lbl">Результат</span>Число, после которого вы сможете аргументированно решать, нужен ли брокер вообще.</div>
+
+    <h4>11. Разделение очередей</h4>
+    <p>Разделите очереди по важности и по типу задач, разведите пулы воркеров. Смоделируйте массовую рассылку и убедитесь, что срочные сообщения обрабатываются без задержки.</p>
+    <div class="box task"><span class="lbl">Результат</span>Замер времени обработки срочного сообщения во время массовой нагрузки до и после разделения.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Мониторинг и алерты</h4>
+    <p>Соберите метрики: возраст старейшего сообщения, глубина, число потребителей, необработанные, размер DLQ, время обработки по типам. Настройте алерты на возраст и на ноль потребителей и проверьте их искусственной поломкой.</p>
+    <div class="box task"><span class="lbl">Результат</span>Дашборд, по которому состояние очередей видно за десять секунд, и два проверенных алерта.</div>
+
+    <h4>13. Версионирование сообщений</h4>
+    <p>Проведите ломающее изменение формата по правильной схеме: потребители учатся понимать новую версию, затем производитель переключается, затем старая поддержка удаляется по метрике. Попробуйте и обратный порядок на стенде.</p>
+    <div class="box task"><span class="lbl">Результат</span>Наглядное сравнение: правильный порядок проходит незаметно, обратный кладёт потребителей в DLQ.</div>
+
+    <h4>14. Учения по отказам</h4>
+    <p>На стенде под нагрузкой: отключите брокер, убейте всех воркеров, зависьте на внешнем API, отправьте поток отравленных сообщений. Зафиксируйте, что видит пользователь, что показывает мониторинг и за сколько система восстанавливается.</p>
+    <div class="box task"><span class="lbl">Результат</span>Протокол учений с временем обнаружения и восстановления по каждому сценарию.</div>
+
+    <h4>15. Реплей событий</h4>
+    <p>Реализуйте механизм повторного проигрывания событий из своего журнала: фильтр по типу и периоду, режим проверки без применения, дросселирование, отключение внешних побочных эффектов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отрепетированная процедура, которая понадобится ровно тогда, когда обработчик проработает неверно две недели.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Нужен локальный стенд с брокером: почти вся ценность темы — в экспериментах с отказами, которые нельзя ставить на проде.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Основы и первые поломки</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Зачем очередь и что выносить, producer и consumer, подтверждения и prefetch, DLQ, сообщения и их содержимое, воркеры в PHP и их лимиты, обменники RabbitMQ, долговечность, типовые грабли первого внедрения.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: первая очередь, четыре способа сломать, маршрутизация, долговечность, воркер с корректной остановкой.</li>
+      <li>Проверить свой проект: подтверждаем после обработки или при получении, есть ли лимиты у воркеров, останавливаются ли они при деплое.</li>
+      <li>Посмотреть, что лежит в сообщениях: нет ли сущностей ORM и больших данных.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Таблица «поломка → последствие → лечение», проверенные настройки долговечности и воркер, переживающий деплой.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что выносить в очередь, а что нет?</li>
+      <li>Что произойдёт, если воркер упадёт во время обработки?</li>
+      <li>Чем опасно автоподтверждение?</li>
+      <li>Какие три настройки нужны для сохранности сообщений?</li>
+      <li>Что должно быть в сообщении?</li>
+      <li>Почему нельзя публиковать внутри транзакции?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Надёжность доставки</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Семантики доставки и почему exactly-once невозможен, идемпотентность через уникальный индекс, эффекты вне базы, проблема двойной записи и outbox, релей и его мониторинг, временные и постоянные ошибки, повторы с джиттером, DLQ и её разбор.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6–8: идемпотентный обработчик, outbox с релеем, повторы и DLQ.</li>
+      <li>Проверить каждый обработчик в проекте на вопрос «что будет при повторной доставке».</li>
+      <li>Найти места, где событие публикуется без outbox, и оценить, где это критично.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Идемпотентные обработчики, работающий outbox, переживший остановку брокера, и живая DLQ с процедурой разбора.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Почему exactly-once недостижим и что делают вместо?</li>
+      <li>Как сделать обработчик идемпотентным?</li>
+      <li>Что делать, если эффект вне базы?</li>
+      <li>Как работает outbox и когда он избыточен?</li>
+      <li>Как различать временные и постоянные ошибки?</li>
+      <li>Зачем джиттер в повторах?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Брокеры, порядок, выбор</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Модель Kafka: топики, партиции, смещения, группы потребителей; отличия от RabbitMQ; выбор брокера по требованиям; очередь в базе как полноценный вариант; порядок и конкурентность, партиционирование по ключу, устойчивость к порядку через версии.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 9–11: Kafka с партициями, очередь в базе с замером пропускной способности, разделение очередей по важности.</li>
+      <li>Обосновать письменно выбор брокера для своего проекта: что требуется и почему этого достаточно.</li>
+      <li>Найти обработчики, которые сломаются при нарушении порядка, и добавить версии.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Понимание обеих моделей на практике, замеренная пропускная способность очереди в базе и обработчики, устойчивые к порядку.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Чем Kafka отличается от RabbitMQ?</li>
+      <li>Что такое партиция и почему её число ограничивает параллелизм?</li>
+      <li>Что такое consumer group?</li>
+      <li>Как выбрать брокер под задачу?</li>
+      <li>Гарантируется ли порядок и как с этим жить?</li>
+      <li>Как сделать обработчик устойчивым к порядку?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Контракты, эксплуатация, отказы</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Формат сообщения как контракт, версионирование и порядок выкатки, терпимый потребитель, команда против события, claim check и приоритеты, метрики и алерты, расчёт числа воркеров, сценарии отказов, реплей и его подготовка, антипаттерны.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: мониторинг и алерты, версионирование сообщений, учения по отказам, механизм реплея.</li>
+      <li>Посчитать по закону Литтла нужное число воркеров и сравнить с фактическим.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд, с числами и с объяснением, от чего отказались.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Дашборд и проверенные алерты, отрепетированное версионирование, протокол учений по отказам и работающая процедура реплея.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как менять формат сообщений, не сломав потребителей?</li>
+      <li>Чем команда отличается от события?</li>
+      <li>Какая метрика очереди главная и почему?</li>
+      <li>Когда добавление воркеров сделает хуже?</li>
+      <li>Что делает приложение при недоступном брокере?</li>
+      <li>Как переиграть события и что проверить перед этим?</li>
+      <li>Почему нельзя просто очистить очередь?</li>
+      <li>Когда очередь — неправильное решение?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы про очереди</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Отвечайте через отказы.</strong> Любой вопрос про очереди на самом деле про сбои. «Используем RabbitMQ» — ничего. «At-least-once, обработчики идемпотентны по event_id, повторы с джиттером, после трёх попыток DLQ с алертом» — ответ.</li>
+      <li><strong>Называйте числа.</strong> Сколько сообщений в секунду, сколько воркеров, какой лаг держите, какой алерт на возраст, сколько лежит в DLQ прямо сейчас. Это мгновенно отличает эксплуатацию от чтения документации.</li>
+      <li><strong>Не стесняйтесь простых решений.</strong> «У нас очередь в базе, потому что задач сотни в минуту» звучит сильнее, чем Kafka без ответа на вопрос про число партиций и стратегию фиксации смещений.</li>
+      <li><strong>Помните про два уровня.</strong> Часть вопросов про механику брокера, часть — про архитектуру: где очередь уместна, где нужна транзакция, где цепочку событий стоит заменить явным состоянием. Второе ценится выше.</li>
+      <li><strong>Держите наготове историю инцидента.</strong> Очередь встала после деплоя, дубликаты писем, застрявшая DLQ, реплей после неверной логики. Что случилось, как обнаружили, как чинили, что изменили в процессе.</li>
+      <li><strong>Признавайте, чего не делали.</strong> «С Kafka в проде не работал, использовал RabbitMQ; разницу понимаю так-то» — сильный ответ. Выдуманный опыт вскрывается вопросом про партиции и ребалансировку.</li>
+      <li><strong>Приносите артефакты.</strong> Схема очередей с разделением по важности, дашборд, протокол учений по отказам, процедура реплея с проверками.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Брокеры сообщений и очереди» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

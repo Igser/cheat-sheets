@@ -1,0 +1,2246 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · backend · подготовка к собеседованию и к работе</p>
+  <h1>Symfony для PHP-разработчиков</h1>
+  <p class="lead">Symfony — фреймворк с другой философией, чем у «быстрых» решений: здесь почти ничего не происходит по волшебству. Запрос проходит через явную цепочку событий, зависимости собираются контейнером, который компилируется в обычный PHP-код, а конфигурация описывает, что именно и куда внедряется. Это дороже на входе и заметно дешевле на дистанции: через три года на большом проекте вы всё ещё можете ответить на вопрос «почему это вызвалось».</p>
+  <p class="lead">Отсюда и характер собеседований. Про Symfony редко спрашивают синтаксис — спрашивают устройство: что делает HttpKernel, чем слушатель отличается от подписчика, как контейнер понимает, что подставить в конструктор, что происходит при <code>flush()</code> в Doctrine, зачем нужен voter, если есть <code>access_control</code>, и почему после деплоя надо прогревать кэш.</p>
+  <p class="lead">Конспект собирает то, что нужно в работе и что действительно спрашивают: от первого контроллера до компиляции контейнера, Messenger в проде, деплоя без простоя и обновления мажорных версий. Смежные темы вынесены отдельно: <a href="php.html">PHP</a>, <a href="sql.html">базы данных</a>, <a href="data-structures.html">структуры данных</a>, <a href="laravel.html">Laravel</a>, <a href="ai.html">AI и LLM</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>HttpKernel и жизненный цикл, роутинг и контроллеры, контейнер и autowiring, Twig, Doctrine, формы, консоль.</span></div>
+    <div class="aud m"><b>Middle</b><span>Теги и компиляция контейнера, события, Doctrine глубже, Security и voters, API, Messenger, кэш, тесты.</span></div>
+    <div class="aud s"><b>Senior</b><span>Производительность и предзагрузка, долгоживущие рантаймы, границы модулей, деплой, обновление версий.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>25</i></span>
+    <span>Блоков кода: <i>50</i></span>
+    <span>Сравнительных таблиц: <i>16</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#lifecycle">Жизненный цикл запроса</a></li>
+    <li><span class="tree">├─</span> <a href="#structure">Структура и конфигурация</a></li>
+    <li><span class="tree">├─</span> <a href="#routing">Роутинг и контроллеры</a></li>
+    <li><span class="tree">├─</span> <a href="#di">Контейнер и autowiring</a></li>
+    <li><span class="tree">├─</span> <a href="#doctrine">Doctrine: основы</a></li>
+    <li><span class="tree">├─</span> <a href="#forms">Формы и валидация</a></li>
+    <li><span class="tree">├─</span> <a href="#twig">Twig и ответы</a></li>
+    <li><span class="tree">├─</span> <a href="#console">Консоль и отладка</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#di-adv">Контейнер: теги и компиляция</a></li>
+    <li><span class="tree">├─</span> <a href="#events">События и подписчики</a></li>
+    <li><span class="tree">├─</span> <a href="#doctrine-adv">Doctrine: связи и N+1</a></li>
+    <li><span class="tree">├─</span> <a href="#security">Security и voters</a></li>
+    <li><span class="tree">├─</span> <a href="#api">API: сериализация и DTO</a></li>
+    <li><span class="tree">├─</span> <a href="#messenger">Messenger и фоновая обработка</a></li>
+    <li><span class="tree">├─</span> <a href="#cache">Кэш: приложение и HTTP</a></li>
+    <li><span class="tree">├─</span> <a href="#testing">Тестирование</a></li>
+    <li><span class="tree">├─</span> <a href="#layers">Организация кода</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#performance">Производительность</a></li>
+    <li><span class="tree">├─</span> <a href="#runtime">Долгоживущие рантаймы</a></li>
+    <li><span class="tree">├─</span> <a href="#scaling">Масштабирование</a></li>
+    <li><span class="tree">├─</span> <a href="#boundaries">Границы и зависимость от фреймворка</a></li>
+    <li><span class="tree">├─</span> <a href="#security-adv">Безопасность в проде</a></li>
+    <li><span class="tree">├─</span> <a href="#observability">Наблюдаемость</a></li>
+    <li><span class="tree">├─</span> <a href="#deploy">Деплой без простоя</a></li>
+    <li><span class="tree">├─</span> <a href="#upgrade">Версии и обновления</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Консоль и атрибуты</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · фундамент</p>
+    <h2>Junior Symfony Developer</h2>
+    <p>Задача этого уровня — увидеть, что Symfony это не набор магии, а явная цепочка: ядро, события, контейнер, контроллер. Junior-а проверяют по четырём осям: жизненный цикл запроса, роутинг и контроллеры, понимание внедрения зависимостей и базовая работа с Doctrine и формами.</p>
+  </div>
+
+  <!-- J1 -->
+  <article class="card" id="lifecycle">
+    <p class="path">junior / ядро / жизненный цикл</p>
+    <div class="card-top"><h3>Жизненный цикл запроса и HttpKernel</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Вся модель Symfony укладывается в одну формулу: <span class="t">HttpKernel</span> превращает <code>Request</code> в <code>Response</code>, а между ними рассылает события, на которые может подписаться любой код. Понимание этой цепочки отвечает сразу на десяток вопросов — от «где поставить проверку» до «почему мой листенер не сработал».</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Путь запроса через ядро</span></div><pre><code>public/index.php  →  Runtime  →  Kernel::handle(Request)
+                                        │
+   kernel.request ─────────────────────►│  определение маршрута, локали,
+                                        │  аутентификация (firewall)
+                                        │  ← листенер может вернуть Response
+                                        │    и оборвать цепочку
+   kernel.controller ──────────────────►│  контроллер уже найден,
+                                        │  его можно подменить
+   kernel.controller_arguments ────────►│  разрешение аргументов:
+                                        │  сущности, DTO, сервисы
+                                        ▼
+                                 ВЫЗОВ КОНТРОЛЛЕРА
+                                        │
+                 вернул Response? ──да──┤
+                        │нет            │
+   kernel.view ────────►│  превратить результат в Response
+                        └──────────────►│
+   kernel.response ────────────────────►│  правка заголовков, куки, кэш
+                                        ▼
+                                    ОТВЕТ КЛИЕНТУ
+   kernel.terminate ───────────────────►  тяжёлое «после ответа»
+   kernel.exception ───────────────────►  если где-то бросили исключение</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Свой подписчик на события ядра</span></div><pre><code>&lt;?php
+<span class="kw">declare</span>(strict_types=1);
+
+<span class="kw">namespace</span> App\EventSubscriber;
+
+<span class="kw">use</span> Symfony\Component\EventDispatcher\EventSubscriberInterface;
+<span class="kw">use</span> Symfony\Component\HttpKernel\Event\RequestEvent;
+<span class="kw">use</span> Symfony\Component\HttpKernel\Event\ResponseEvent;
+<span class="kw">use</span> Symfony\Component\HttpKernel\KernelEvents;
+
+<span class="kw">final class</span> RequestIdSubscriber <span class="kw">implements</span> EventSubscriberInterface
+{
+    <span class="kw">private string</span> $requestId = <span class="st">''</span>;
+
+    <span class="cm">// Подписчик сам объявляет, на что он реагирует и с каким приоритетом.</span>
+    <span class="cm">// Чем больше приоритет, тем раньше вызов.</span>
+    <span class="kw">public static function</span> <span class="fn">getSubscribedEvents</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [
+            KernelEvents::REQUEST  =&gt; [<span class="st">'onRequest'</span>, 255],
+            KernelEvents::RESPONSE =&gt; <span class="st">'onResponse'</span>,
+        ];
+    }
+
+    <span class="kw">public function</span> <span class="fn">onRequest</span>(RequestEvent $event): <span class="kw">void</span>
+    {
+        <span class="cm">// Вложенные запросы (подзапросы) обычно обрабатывать не нужно</span>
+        <span class="kw">if</span> (!$event-&gt;<span class="fn">isMainRequest</span>()) {
+            <span class="kw">return</span>;
+        }
+
+        $this-&gt;requestId = $event-&gt;<span class="fn">getRequest</span>()-&gt;headers-&gt;<span class="fn">get</span>(<span class="st">'X-Request-Id'</span>)
+            ?? <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(8));
+    }
+
+    <span class="kw">public function</span> <span class="fn">onResponse</span>(ResponseEvent $event): <span class="kw">void</span>
+    {
+        $event-&gt;<span class="fn">getResponse</span>()-&gt;headers-&gt;<span class="fn">set</span>(<span class="st">'X-Request-Id'</span>, $this-&gt;requestId);
+    }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Событие <code>kernel.terminate</code> происходит <em>после</em> отправки ответа пользователю. Туда выносят то, что не должно задерживать ответ, но при этом важно понимать: под FPM это всё ещё тот же процесс, он занят до конца обработки. Для по-настоящему долгих задач место в Messenger, а не в terminate.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что происходит от запроса до ответа в Symfony?</b><br>Единая точка входа создаёт ядро, которое вызывает <code>handle()</code>. Дальше рассылаются события: <code>kernel.request</code> (маршрут, локаль, аутентификация — здесь листенер может сразу вернуть ответ), <code>kernel.controller</code> и разрешение аргументов, вызов контроллера, при необходимости <code>kernel.view</code>, затем <code>kernel.response</code> и отправка. После ответа — <code>kernel.terminate</code>, а при исключении — <code>kernel.exception</code>.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите подписчика, который добавляет в каждый ответ идентификатор запроса и время обработки, а в лог — предупреждение о медленных запросах. Проверьте, что заголовок появляется и на страницах с ошибкой 500.</div>
+  </article>
+
+  <!-- J2 -->
+  <article class="card" id="structure">
+    <p class="path">junior / основы / структура</p>
+    <div class="card-top"><h3>Структура проекта, окружения и конфигурация</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Карта типового проекта</span></div><pre><code>bin/console            консольная точка входа
+config/
+  packages/            настройки бандлов; подкаталоги dev/ test/ prod/
+  routes/              маршруты, если не через атрибуты
+  services.yaml        описание сервисов и правила autowiring
+  bundles.php          какие бандлы включены и в каких окружениях
+public/index.php       единственная точка входа для веба
+src/
+  Controller/  Entity/  Repository/  Service/
+  EventSubscriber/  MessageHandler/  Security/
+templates/             шаблоны Twig
+migrations/            миграции Doctrine
+tests/                 Unit / Functional
+var/                   кэш и логи (в git не хранится)
+.env                   значения по умолчанию, коммитятся
+.env.local             локальные переопределения, НЕ коммитятся</code></pre></div>
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">services.yaml: правила по умолчанию</span></div><pre><code><span class="nm">services</span>:
+    <span class="nm">_defaults</span>:
+        <span class="nm">autowire</span>: <span class="kw">true</span>          <span class="cm"># подставлять зависимости по типам</span>
+        <span class="nm">autoconfigure</span>: <span class="kw">true</span>    <span class="cm"># сам вешать теги: подписчики, команды, voters</span>
+
+        <span class="cm"># Привязка скалярных аргументов по имени — иначе их нечем подставить</span>
+        <span class="nm">bind</span>:
+            <span class="nm">$uploadsDir</span>: <span class="st">'%kernel.project_dir%/var/uploads'</span>
+            <span class="nm">$paymentApiKey</span>: <span class="st">'%env(PAYMENT_API_KEY)%'</span>
+
+    <span class="cm"># Все классы из src/ становятся сервисами</span>
+    <span class="nm">App\</span>:
+        <span class="nm">resource</span>: <span class="st">'../src/'</span>
+        <span class="nm">exclude</span>: [<span class="st">'../src/Entity/'</span>, <span class="st">'../src/Kernel.php'</span>]
+
+    <span class="cm"># Точечная настройка конкретного сервиса</span>
+    <span class="nm">App\Service\Exporter</span>:
+        <span class="nm">arguments</span>:
+            <span class="nm">$batchSize</span>: 500</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 1 · окружения и что в них меняется</caption>
+      <thead><tr><th>Окружение</th><th>Отладка</th><th>Кэш контейнера</th><th>Особенности</th></tr></thead>
+      <tbody>
+        <tr><td><code>dev</code></td><td>Включена</td><td>Пересобирается при изменении конфигурации</td><td>Профайлер, подробные ошибки, отладочная панель</td></tr>
+        <tr><td><code>test</code></td><td>Включена</td><td>Отдельный кэш</td><td>Своя база, отключённые внешние интеграции</td></tr>
+        <tr><td><code>prod</code></td><td>Выключена</td><td>Собирается заранее и не проверяется</td><td>Прогрев кэша при деплое обязателен</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Файл <code>.env</code> задаёт значения по умолчанию и коммитится, а <code>.env.local</code> — локальные переопределения и в репозиторий не попадает. На проде значения обычно приходят из настоящих переменных окружения, а секреты — из зашифрованного хранилища секретов. Класть боевые ключи в <code>.env</code> нельзя: он в истории git навсегда.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Держать в проекте один гигантский <code>services.yaml</code> с перечислением каждого сервиса вручную. Autowiring и autoconfigure закрывают 95% случаев; явное описание нужно только там, где контейнер не может догадаться сам: скаляры, несколько реализаций одного интерфейса, фабрики.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем отличаются окружения и зачем прогрев кэша?</b><br>Окружение определяет набор конфигурации и поведение: в <code>dev</code> контейнер и маршруты пересобираются при изменениях, в <code>prod</code> они компилируются заранее и не проверяются на актуальность ради скорости. Поэтому на проде после выкатки нужно собрать кэш (<code>cache:clear</code>/<code>cache:warmup</code>), иначе первый запрос будет собирать его сам или приложение возьмёт устаревшую версию.</div>
+    <div class="box task"><span class="lbl">Практика</span>Добавьте свой параметр в <code>services.yaml</code> через <code>bind</code>, прочитайте его в сервисе и переопределите значением из переменной окружения. Затем посмотрите скомпилированный контейнер в <code>var/cache</code> и найдите там свой сервис.</div>
+  </article>
+
+  <!-- J3 -->
+  <article class="card" id="routing">
+    <p class="path">junior / http / маршруты</p>
+    <div class="card-top"><h3>Роутинг и контроллеры</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Контроллер: атрибуты, аргументы, ответы</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Controller;
+
+<span class="kw">use</span> App\Entity\Post;
+<span class="kw">use</span> App\Repository\PostRepository;
+<span class="kw">use</span> Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+<span class="kw">use</span> Symfony\Component\HttpFoundation\Request;
+<span class="kw">use</span> Symfony\Component\HttpFoundation\Response;
+<span class="kw">use</span> Symfony\Component\Routing\Attribute\Route;
+
+#[Route(<span class="st">'/posts'</span>, name: <span class="st">'post_'</span>)]
+<span class="kw">final class</span> PostController <span class="kw">extends</span> AbstractController
+{
+    #[Route(<span class="st">''</span>, name: <span class="st">'index'</span>, methods: [<span class="st">'GET'</span>])]
+    <span class="kw">public function</span> <span class="fn">index</span>(PostRepository $posts, Request $request): Response
+    {
+        <span class="cm">// Сервисы внедряются прямо в аргументы метода</span>
+        <span class="kw">return</span> $this-&gt;<span class="fn">render</span>(<span class="st">'post/index.html.twig'</span>, [
+            <span class="st">'posts'</span> =&gt; $posts-&gt;<span class="fn">findPublished</span>($request-&gt;query-&gt;<span class="fn">getInt</span>(<span class="st">'page'</span>, 1)),
+        ]);
+    }
+
+    <span class="cm">// Сущность находится по параметру маршрута автоматически;</span>
+    <span class="cm">// если записи нет — 404 без единой строки кода</span>
+    #[Route(<span class="st">'/{slug}'</span>, name: <span class="st">'show'</span>, methods: [<span class="st">'GET'</span>], requirements: [<span class="st">'slug'</span> =&gt; <span class="st">'[a-z0-9-]+'</span>])]
+    <span class="kw">public function</span> <span class="fn">show</span>(Post $post): Response
+    {
+        <span class="cm">// Права проверяются явно: поиск сущности их НЕ проверяет</span>
+        $this-&gt;<span class="fn">denyAccessUnlessGranted</span>(<span class="st">'view'</span>, $post);
+
+        <span class="kw">return</span> $this-&gt;<span class="fn">render</span>(<span class="st">'post/show.html.twig'</span>, [<span class="st">'post'</span> =&gt; $post]);
+    }
+
+    #[Route(<span class="st">'/{id}'</span>, name: <span class="st">'delete'</span>, methods: [<span class="st">'DELETE'</span>])]
+    <span class="kw">public function</span> <span class="fn">delete</span>(Post $post, PostRepository $posts): Response
+    {
+        $this-&gt;<span class="fn">denyAccessUnlessGranted</span>(<span class="st">'delete'</span>, $post);
+        $posts-&gt;<span class="fn">remove</span>($post, flush: <span class="kw">true</span>);
+
+        <span class="kw">return</span> $this-&gt;<span class="fn">redirectToRoute</span>(<span class="st">'post_index'</span>);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Разные виды ответов и типичные помощники</span></div><pre><code>&lt;?php
+$this-&gt;<span class="fn">render</span>(<span class="st">'post/show.html.twig'</span>, [<span class="st">'post'</span> =&gt; $post]);   <span class="cm">// HTML</span>
+$this-&gt;<span class="fn">json</span>([<span class="st">'status'</span> =&gt; <span class="st">'ok'</span>], Response::HTTP_CREATED);      <span class="cm">// JSON</span>
+$this-&gt;<span class="fn">redirectToRoute</span>(<span class="st">'post_index'</span>, [<span class="st">'page'</span> =&gt; 2]);
+$this-&gt;<span class="fn">file</span>($absolutePath, <span class="st">'report.pdf'</span>);                  <span class="cm">// скачивание</span>
+<span class="kw">throw</span> $this-&gt;<span class="fn">createNotFoundException</span>(<span class="st">'Публикация не найдена'</span>);
+<span class="kw">throw</span> $this-&gt;<span class="fn">createAccessDeniedException</span>();
+
+<span class="cm">// Флеш-сообщение для следующей страницы</span>
+$this-&gt;<span class="fn">addFlash</span>(<span class="st">'success'</span>, <span class="st">'Публикация сохранена'</span>);
+
+<span class="cm">// Потоковая отдача больших файлов без загрузки в память</span>
+<span class="kw">return new</span> StreamedResponse(<span class="kw">function</span> () <span class="kw">use</span> ($rows) {
+    $out = <span class="fn">fopen</span>(<span class="st">'php://output'</span>, <span class="st">'w'</span>);
+    <span class="kw">foreach</span> ($rows <span class="kw">as</span> $row) { <span class="fn">fputcsv</span>($out, $row); }
+});</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Автоматический поиск сущности по параметру маршрута отвечает на вопрос «существует ли запись», но не на вопрос «можно ли её этому пользователю». Забытая проверка прав здесь — самая частая уязвимость: достаточно подставить чужой идентификатор в адрес. Проверка делается явно — <code>denyAccessUnlessGranted</code>, атрибут <code>#[IsGranted]</code> или выборка сразу с фильтром по владельцу.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Контроллер, который сам ходит в базу через <code>EntityManager</code>, отправляет письма, строит отчёт и содержит бизнес-правила. Контроллер — адаптер HTTP: принять запрос, вызвать сервис, вернуть ответ. Всё остальное должно быть вызываемо и из консольной команды, и из обработчика сообщения.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как в контроллер попадают аргументы?</b><br>Их разрешают специальные резолверы на этапе <code>kernel.controller_arguments</code>: сервисы подставляются по типу из контейнера, параметры маршрута — по имени, сущности Doctrine ищутся по параметру, а объекты запроса могут собираться из тела или строки запроса соответствующими атрибутами. Это расширяемый механизм: можно написать собственный резолвер.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сделайте контроллер ресурса с маршрутами через атрибуты, ограничениями параметров и именованными маршрутами. Затем напишите функциональный тест: чужая запись даёт 403, несуществующая — 404.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+
+  <!-- J4 -->
+  <article class="card" id="di">
+    <p class="path">junior / ядро / контейнер</p>
+    <div class="card-top"><h3>Контейнер и autowiring</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p><span class="t">Контейнер</span> — это то, что делает Symfony Symfony. Он знает, как создать любой сервис, и подставляет зависимости по типам аргументов конструктора. Ключевая деталь: в <code>prod</code> контейнер <strong>компилируется в обычный PHP-класс</strong>, поэтому во время запроса никакой рефлексии и «поиска» не происходит.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сервис и его зависимости</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Service;
+
+<span class="kw">use</span> Psr\Log\LoggerInterface;
+<span class="kw">use</span> Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+<span class="kw">final class</span> InvoiceGenerator
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="cm">// По типу — контейнер сам найдёт реализацию</span>
+        <span class="kw">private readonly</span> PdfRenderer $renderer,
+        <span class="kw">private readonly</span> LoggerInterface $logger,
+
+        <span class="cm">// Скаляры по типу подставить нельзя — указываем явно</span>
+        #[Autowire(<span class="st">'%kernel.project_dir%/var/invoices'</span>)]
+        <span class="kw">private readonly string</span> $storageDir,
+
+        #[Autowire(env: <span class="st">'INVOICE_TEMPLATE'</span>)]
+        <span class="kw">private readonly string</span> $template,
+    ) {}
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Две реализации одного интерфейса</span></div><pre><code><span class="cm"># Когда интерфейс один, а классов несколько, контейнер не угадает —</span>
+<span class="cm"># нужно указать, какая реализация используется по умолчанию.</span>
+<span class="nm">services</span>:
+    <span class="nm">App\Payment\StripeGateway</span>: ~
+    <span class="nm">App\Payment\SandboxGateway</span>: ~
+
+    <span class="cm"># Алиас: «когда просят интерфейс — давай эту реализацию»</span>
+    <span class="nm">App\Payment\PaymentGateway</span>: <span class="st">'@App\Payment\StripeGateway'</span>
+
+    <span class="cm"># А конкретному потребителю — другую</span>
+    <span class="nm">App\Command\TestPaymentCommand</span>:
+        <span class="nm">arguments</span>:
+            <span class="nm">$gateway</span>: <span class="st">'@App\Payment\SandboxGateway'</span></code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Отладка контейнера: что вообще есть</span></div><pre><code><span class="cm"># Какие типы можно внедрять и что за ними стоит</span>
+php bin/console debug:autowiring
+php bin/console debug:autowiring logger
+
+<span class="cm"># Полный список сервисов и параметры конкретного</span>
+php bin/console debug:container
+php bin/console debug:container App\Service\InvoiceGenerator
+
+<span class="cm"># Итоговая конфигурация бандла после слияния всех файлов</span>
+php bin/console debug:config framework
+php bin/console config:dump-reference doctrine</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Не путайте внедрение зависимостей и service locator. Правильно — просить конкретные зависимости в конструкторе: они видны в сигнатуре, их можно подменить в тесте. Получать контейнер целиком и доставать из него что попало (<code>$container-&gt;get(...)</code>) значит скрыть зависимости и лишиться проверки на этапе компиляции. В контроллерах Symfony это отчасти есть исторически, но в свои сервисы такое тащить не нужно.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Делать сервис <code>public: true</code>, чтобы «достать его откуда угодно». По умолчанию сервисы приватные именно для того, чтобы обращения шли через внедрение: тогда компилятор контейнера может выбросить неиспользуемое, встроить зависимости и поймать ошибку на этапе сборки, а не в рантайме.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как контейнер понимает, что подставить в конструктор?</b><br>По типам аргументов: тип сопоставляется с идентификатором сервиса или его алиасом. Скалярные значения по типу вывести нельзя — их задают через <code>bind</code>, аргументы сервиса или атрибут внедрения. Если у интерфейса несколько реализаций, нужен алиас по умолчанию либо явное указание для конкретного потребителя. В <code>prod</code> всё это разрешается один раз при компиляции контейнера.</div>
+    <div class="box task"><span class="lbl">Практика</span>Заведите интерфейс с двумя реализациями, настройте алиас по умолчанию и подмену для одной консольной команды. Проверьте результат через <code>debug:container</code> и найдите оба сервиса в скомпилированном контейнере.</div>
+  </article>
+
+  <!-- J5 -->
+  <article class="card" id="doctrine">
+    <p class="path">junior / данные / doctrine</p>
+    <div class="card-top"><h3>Doctrine: сущности, репозитории, EntityManager</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Doctrine — реализация паттерна Data Mapper: сущность ничего не знает о базе, а за сохранение отвечает <span class="t">EntityManager</span>. Это принципиальное отличие от Active Record и источник большинства вопросов на собеседовании.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сущность: обычный PHP-класс с разметкой</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Entity;
+
+<span class="kw">use</span> Doctrine\DBAL\Types\Types;
+<span class="kw">use</span> Doctrine\ORM\Mapping <span class="kw">as</span> ORM;
+
+#[ORM\Entity(repositoryClass: PostRepository::<span class="kw">class</span>)]
+#[ORM\Table(name: <span class="st">'posts'</span>)]
+#[ORM\Index(columns: [<span class="st">'status'</span>, <span class="st">'published_at'</span>], name: <span class="st">'idx_posts_feed'</span>)]
+<span class="kw">class</span> Post
+{
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    <span class="kw">private</span> ?<span class="kw">int</span> $id = <span class="kw">null</span>;
+
+    #[ORM\Column(length: 200)]
+    <span class="kw">private string</span> $title;
+
+    #[ORM\Column(type: Types::TEXT)]
+    <span class="kw">private string</span> $body;
+
+    #[ORM\Column(length: 20, enumType: PostStatus::<span class="kw">class</span>)]
+    <span class="kw">private</span> PostStatus $status = PostStatus::Draft;
+
+    #[ORM\Column(nullable: <span class="kw">true</span>)]
+    <span class="kw">private</span> ?\DateTimeImmutable $publishedAt = <span class="kw">null</span>;
+
+    <span class="cm">// Владелец связи: внешний ключ лежит в этой таблице</span>
+    #[ORM\ManyToOne(inversedBy: <span class="st">'posts'</span>)]
+    #[ORM\JoinColumn(nullable: <span class="kw">false</span>)]
+    <span class="kw">private</span> User $author;
+
+    <span class="cm">// Обратная сторона: коллекция комментариев</span>
+    #[ORM\OneToMany(mappedBy: <span class="st">'post'</span>, targetEntity: Comment::<span class="kw">class</span>, cascade: [<span class="st">'persist'</span>])]
+    <span class="kw">private</span> Collection $comments;
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">string</span> $title, <span class="kw">string</span> $body, User $author)
+    {
+        $this-&gt;title = $title;
+        $this-&gt;body = $body;
+        $this-&gt;author = $author;
+        $this-&gt;comments = <span class="kw">new</span> ArrayCollection();
+    }
+
+    <span class="cm">// Поведение живёт в сущности, а не в контроллере</span>
+    <span class="kw">public function</span> <span class="fn">publish</span>(\DateTimeImmutable $at): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> ($this-&gt;status !== PostStatus::Draft) {
+            <span class="kw">throw new</span> \DomainException(<span class="st">'Публиковать можно только черновик'</span>);
+        }
+
+        $this-&gt;status = PostStatus::Published;
+        $this-&gt;publishedAt = $at;
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сохранение, чтение, репозиторий</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Doctrine\ORM\EntityManagerInterface;
+
+<span class="kw">final class</span> PostService
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> EntityManagerInterface $em,
+        <span class="kw">private readonly</span> PostRepository $posts,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">create</span>(<span class="kw">string</span> $title, <span class="kw">string</span> $body, User $author): Post
+    {
+        $post = <span class="kw">new</span> Post($title, $body, $author);
+
+        $this-&gt;em-&gt;<span class="fn">persist</span>($post);   <span class="cm">// «взять под наблюдение» — SQL ещё НЕ выполняется</span>
+        $this-&gt;em-&gt;<span class="fn">flush</span>();          <span class="cm">// вот здесь всё накопленное уходит в базу</span>
+
+        <span class="kw">return</span> $post;
+    }
+
+    <span class="kw">public function</span> <span class="fn">publish</span>(Post $post): <span class="kw">void</span>
+    {
+        $post-&gt;<span class="fn">publish</span>(<span class="kw">new</span> \DateTimeImmutable());
+
+        <span class="cm">// persist не нужен: объект уже под наблюдением,</span>
+        <span class="cm">// Doctrine сама увидит изменения при flush</span>
+        $this-&gt;em-&gt;<span class="fn">flush</span>();
+    }
+}
+
+<span class="cm">// Репозиторий: место для запросов, а не для бизнес-логики</span>
+<span class="kw">final class</span> PostRepository <span class="kw">extends</span> ServiceEntityRepository
+{
+    <span class="kw">public function</span> <span class="fn">findPublished</span>(<span class="kw">int</span> $limit = 20): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> $this-&gt;<span class="fn">createQueryBuilder</span>(<span class="st">'p'</span>)
+            -&gt;<span class="fn">andWhere</span>(<span class="st">'p.status = :status'</span>)
+            -&gt;<span class="fn">setParameter</span>(<span class="st">'status'</span>, PostStatus::Published)
+            -&gt;<span class="fn">orderBy</span>(<span class="st">'p.publishedAt'</span>, <span class="st">'DESC'</span>)
+            -&gt;<span class="fn">setMaxResults</span>($limit)
+            -&gt;<span class="fn">getQuery</span>()
+            -&gt;<span class="fn">getResult</span>();
+    }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Ключевое отличие от Active Record: сущность не умеет сохранять себя. Doctrine хранит загруженные объекты в единице работы, при <code>flush()</code> сравнивает их с исходным состоянием и генерирует нужные запросы. Отсюда следствия: <code>persist()</code> нужен только для новых объектов; один <code>flush()</code> на всю операцию лучше десяти; а <code>flush()</code> внутри цикла — типичная причина медленного импорта.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Вызывать <code>flush()</code> в цикле на каждой итерации. Каждый вызов — это проход по всем отслеживаемым объектам и отдельная транзакция. Для массовых операций: пачки по несколько сотен объектов, <code>flush()</code> и <code>clear()</code> после каждой пачки — иначе память вырастет вместе с числом отслеживаемых сущностей.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что делает <code>persist()</code> и чем он отличается от <code>flush()</code>?</b><br><code>persist()</code> сообщает менеджеру, что новый объект нужно отслеживать; запросов при этом не выполняется. <code>flush()</code> синхронизирует все изменения отслеживаемых объектов с базой в одной транзакции. Для уже загруженной сущности <code>persist()</code> не нужен: изменения обнаружатся автоматически при <code>flush()</code>.</div>
+    <div class="box task"><span class="lbl">Практика</span>Опишите сущности блога со связями и перечислением статуса, сгенерируйте миграцию и наполните базу фикстурами. Затем включите панель профайлера и посмотрите, какие запросы порождает страница списка.</div>
+  </article>
+
+  <!-- J6 -->
+  <article class="card" id="forms">
+    <p class="path">junior / http / формы</p>
+    <div class="card-top"><h3>Формы и валидация</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">DTO с ограничениями и тип формы</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Component\Validator\Constraints <span class="kw">as</span> Assert;
+
+<span class="cm">// Отдельный объект под ввод: сущность не должна зависеть от формы</span>
+<span class="kw">final class</span> PostFormData
+{
+    #[Assert\NotBlank(message: <span class="st">'Укажите заголовок'</span>)]
+    #[Assert\Length(max: 200)]
+    <span class="kw">public string</span> $title = <span class="st">''</span>;
+
+    #[Assert\NotBlank]
+    #[Assert\Length(min: 10)]
+    <span class="kw">public string</span> $body = <span class="st">''</span>;
+
+    #[Assert\Count(max: 10)]
+    <span class="kw">public array</span> $tagIds = [];
+
+    #[Assert\GreaterThanOrEqual(<span class="st">'today'</span>)]
+    <span class="kw">public</span> ?\DateTimeImmutable $publishAt = <span class="kw">null</span>;
+}
+
+<span class="kw">final class</span> PostFormType <span class="kw">extends</span> AbstractType
+{
+    <span class="kw">public function</span> <span class="fn">buildForm</span>(FormBuilderInterface $builder, <span class="kw">array</span> $options): <span class="kw">void</span>
+    {
+        $builder
+            -&gt;<span class="fn">add</span>(<span class="st">'title'</span>, TextType::<span class="kw">class</span>, [<span class="st">'label'</span> =&gt; <span class="st">'Заголовок'</span>])
+            -&gt;<span class="fn">add</span>(<span class="st">'body'</span>, TextareaType::<span class="kw">class</span>)
+            -&gt;<span class="fn">add</span>(<span class="st">'publishAt'</span>, DateTimeType::<span class="kw">class</span>, [<span class="st">'required'</span> =&gt; <span class="kw">false</span>]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">configureOptions</span>(OptionsResolver $resolver): <span class="kw">void</span>
+    {
+        $resolver-&gt;<span class="fn">setDefaults</span>([<span class="st">'data_class'</span> =&gt; PostFormData::<span class="kw">class</span>]);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Обработка формы в контроллере</span></div><pre><code>&lt;?php
+#[Route(<span class="st">'/posts/new'</span>, name: <span class="st">'post_new'</span>)]
+<span class="kw">public function</span> <span class="fn">new</span>(Request $request, PostService $posts): Response
+{
+    $data = <span class="kw">new</span> PostFormData();
+    $form = $this-&gt;<span class="fn">createForm</span>(PostFormType::<span class="kw">class</span>, $data);
+
+    $form-&gt;<span class="fn">handleRequest</span>($request);   <span class="cm">// заполняет объект из запроса</span>
+
+    <span class="cm">// isValid() запускает валидацию по ограничениям DTO</span>
+    <span class="kw">if</span> ($form-&gt;<span class="fn">isSubmitted</span>() &amp;&amp; $form-&gt;<span class="fn">isValid</span>()) {
+        $post = $posts-&gt;<span class="fn">createFromForm</span>($data, $this-&gt;<span class="fn">getUser</span>());
+        $this-&gt;<span class="fn">addFlash</span>(<span class="st">'success'</span>, <span class="st">'Публикация создана'</span>);
+
+        <span class="kw">return</span> $this-&gt;<span class="fn">redirectToRoute</span>(<span class="st">'post_show'</span>, [<span class="st">'slug'</span> =&gt; $post-&gt;<span class="fn">getSlug</span>()]);
+    }
+
+    <span class="cm">// Форма с ошибками рендерится обратно; CSRF-токен добавляется сам</span>
+    <span class="kw">return</span> $this-&gt;<span class="fn">render</span>(<span class="st">'post/new.html.twig'</span>, [<span class="st">'form'</span> =&gt; $form]);
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Валидатор в Symfony — самостоятельный компонент: он проверяет объекты по ограничениям и работает не только с формами. Для API формы обычно не нужны — там входной объект собирается из тела запроса соответствующим атрибутом и валидируется тем же валидатором. Один и тот же набор ограничений обслуживает и веб-форму, и API.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Привязывать форму напрямую к сущности Doctrine и позволять ей заполнять любые поля. Тогда структура БД становится контрактом формы, а лишнее поле в запросе может попасть в сущность. Отдельный DTO под ввод разрывает эту связь и делает валидацию понятной.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как связаны формы и валидация?</b><br>Это два независимых компонента. Форма отвечает за преобразование данных запроса в объект и обратно, валидатор — за проверку объекта по ограничениям, объявленным атрибутами. Метод <code>isValid()</code> просто запускает валидатор для связанных данных. Поэтому валидацию можно использовать и без форм: в API, в консольных командах, в обработчиках сообщений.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сделайте форму создания записи через отдельный DTO с ограничениями и проверьте три сценария тестом: успех, ошибки валидации, отсутствие CSRF-токена. Затем переиспользуйте тот же DTO в API-эндпоинте.</div>
+  </article>
+
+  <!-- J7 -->
+  <article class="card" id="twig">
+    <p class="path">junior / представление / twig</p>
+    <div class="card-top"><h3>Twig и формирование ответа</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>twig</span><span class="r">Наследование, экранирование, ссылки</span></div><pre><code>{# templates/post/index.html.twig #}
+{% extends <span class="st">'base.html.twig'</span> %}
+
+{% block title %}Публикации{% endblock %}
+
+{% block body %}
+    {# {{ }} экранирует HTML по умолчанию — защита от XSS #}
+    &lt;h1&gt;{{ page_title }}&lt;/h1&gt;
+
+    {% for post in posts %}
+        &lt;article&gt;
+            &lt;a href="{{ path(<span class="st">'post_show'</span>, {slug: post.slug}) }}"&gt;{{ post.title }}&lt;/a&gt;
+            &lt;small&gt;{{ post.author.name }} · {{ post.publishedAt|date(<span class="st">'d.m.Y'</span>) }}&lt;/small&gt;
+
+            {# Проверка прав прямо в шаблоне — только чтобы скрыть элемент #}
+            {% if is_granted(<span class="st">'edit'</span>, post) %}
+                &lt;a href="{{ path(<span class="st">'post_edit'</span>, {id: post.id}) }}"&gt;Изменить&lt;/a&gt;
+            {% endif %}
+        &lt;/article&gt;
+    {% else %}
+        &lt;p&gt;Публикаций пока нет.&lt;/p&gt;
+    {% endfor %}
+{% endblock %}</code></pre></div>
+    <div class="code"><div class="bar"><span>twig</span><span class="r">Полезное в повседневной работе</span></div><pre><code>{# Ссылки и ресурсы #}
+{{ path(<span class="st">'post_show'</span>, {slug: post.slug}) }}        {# относительный URL #}
+{{ url(<span class="st">'post_show'</span>, {slug: post.slug}) }}         {# абсолютный #}
+{{ asset(<span class="st">'build/app.css'</span>) }}
+
+{# Фильтры #}
+{{ text|striptags|slice(0, 200) ~ <span class="st">'…'</span> }}
+{{ price|number_format(2, <span class="st">','</span>, <span class="st">' '</span>) }}
+{{ post.createdAt|format_datetime(locale=<span class="st">'ru'</span>) }}
+{{ value|default(<span class="st">'—'</span>) }}
+
+{# Осознанный вывод готовой разметки — только для доверенного HTML #}
+{{ trustedHtml|raw }}
+
+{# Переиспользуемые куски #}
+{{ include(<span class="st">'partials/_card.html.twig'</span>, {post: post}) }}
+{{ render(controller(<span class="st">'App\\Controller\\WidgetController::sidebar'</span>)) }}
+
+{# Формы #}
+{{ form_start(form) }}
+    {{ form_row(form.title) }}
+    {{ form_row(form.body) }}
+    &lt;button&gt;Сохранить&lt;/button&gt;
+{{ form_end(form) }}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Twig экранирует вывод для HTML-контекста по умолчанию, но контексты бывают разные. Значение, попадающее в атрибут JavaScript или в URL, требует соответствующей стратегии экранирования, а <code>|raw</code> отключает защиту полностью. Пользовательский контент через <code>|raw</code> — это XSS.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Обращаться к связям сущности прямо в цикле шаблона (<code>post.comments|length</code> на списке из 50 записей). Каждое обращение к незагруженной связи — отдельный запрос. Данные готовит контроллер или сервис, шаблон только отображает: тогда проблема видна в профайлере и решается жадной загрузкой.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как Twig защищает от XSS и когда защита не работает?</b><br>Автоматическим экранированием вывода в HTML-контексте. Не работает при <code>|raw</code>, при подстановке значений в JavaScript или в атрибуты без соответствующего экранирования и при сборке HTML вручную в PHP-коде. Пользовательский ввод всегда считается недоверенным.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сверстайте список с базовым шаблоном, включаемым фрагментом карточки и формой фильтра. Попробуйте сохранить в заголовок записи тег скрипта и убедитесь, что он выводится как текст, а через <code>|raw</code> — выполняется.</div>
+  </article>
+
+  <!-- J8 -->
+  <article class="card" id="console">
+    <p class="path">junior / инструменты / консоль</p>
+    <div class="card-top"><h3>Консольные команды и отладка</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Своя команда</span></div><pre><code>&lt;?php
+<span class="kw">namespace</span> App\Command;
+
+<span class="kw">use</span> Symfony\Component\Console\Attribute\AsCommand;
+<span class="kw">use</span> Symfony\Component\Console\Command\Command;
+<span class="kw">use</span> Symfony\Component\Console\Input\InputInterface;
+<span class="kw">use</span> Symfony\Component\Console\Input\InputOption;
+<span class="kw">use</span> Symfony\Component\Console\Output\OutputInterface;
+<span class="kw">use</span> Symfony\Component\Console\Style\SymfonyStyle;
+
+#[AsCommand(name: <span class="st">'app:posts:publish'</span>, description: <span class="st">'Публикует запланированные записи'</span>)]
+<span class="kw">final class</span> PublishScheduledCommand <span class="kw">extends</span> Command
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly</span> PostService $posts)
+    {
+        <span class="kw">parent</span>::<span class="fn">__construct</span>();
+    }
+
+    <span class="kw">protected function</span> <span class="fn">configure</span>(): <span class="kw">void</span>
+    {
+        $this-&gt;<span class="fn">addOption</span>(<span class="st">'dry-run'</span>, <span class="kw">null</span>, InputOption::VALUE_NONE, <span class="st">'Только показать'</span>);
+    }
+
+    <span class="kw">protected function</span> <span class="fn">execute</span>(InputInterface $input, OutputInterface $output): <span class="kw">int</span>
+    {
+        $io = <span class="kw">new</span> SymfonyStyle($input, $output);
+        $due = $this-&gt;posts-&gt;<span class="fn">findDueForPublishing</span>();
+
+        <span class="kw">if</span> ($due === []) {
+            $io-&gt;<span class="fn">success</span>(<span class="st">'Нечего публиковать'</span>);
+
+            <span class="kw">return</span> Command::SUCCESS;
+        }
+
+        $io-&gt;<span class="fn">progressStart</span>(<span class="fn">count</span>($due));
+
+        <span class="kw">foreach</span> ($due <span class="kw">as</span> $post) {
+            <span class="kw">if</span> (!$input-&gt;<span class="fn">getOption</span>(<span class="st">'dry-run'</span>)) {
+                $this-&gt;posts-&gt;<span class="fn">publish</span>($post);
+            }
+            $io-&gt;<span class="fn">progressAdvance</span>();
+        }
+
+        $io-&gt;<span class="fn">progressFinish</span>();
+        $io-&gt;<span class="fn">success</span>(<span class="fn">sprintf</span>(<span class="st">'Опубликовано: %d'</span>, <span class="fn">count</span>($due)));
+
+        <span class="kw">return</span> Command::SUCCESS;
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Команды, которые набирают каждый день</span></div><pre><code><span class="cm"># Что вообще есть в приложении</span>
+php bin/console list
+php bin/console about
+
+<span class="cm"># Генерация кода</span>
+php bin/console make:controller
+php bin/console make:entity
+php bin/console make:migration &amp;&amp; php bin/console doctrine:migrations:migrate
+php bin/console make:form
+php bin/console make:voter
+php bin/console make:test
+
+<span class="cm"># Диагностика — половина отладки живёт здесь</span>
+php bin/console debug:router
+php bin/console debug:autowiring
+php bin/console debug:container --parameters
+php bin/console debug:event-dispatcher kernel.request
+php bin/console debug:config framework
+
+<span class="cm"># Проверка синтаксиса до деплоя</span>
+php bin/console lint:yaml config/
+php bin/console lint:twig templates/
+php bin/console lint:container
+
+<span class="cm"># Кэш</span>
+php bin/console cache:clear
+php bin/console cache:warmup</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Консольная команда работает в том же контейнере, что и веб, но окружение указывается отдельно: без <code>APP_ENV=prod</code> команда выполнится в <code>dev</code> со своим кэшем и своей конфигурацией. Отсюда классическая путаница: миграция «применилась», но не туда, куда ожидали.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как посмотреть, какие сервисы и маршруты есть в приложении?</b><br>Набором команд <code>debug:*</code>: <code>debug:router</code> для маршрутов, <code>debug:autowiring</code> для типов, доступных к внедрению, <code>debug:container</code> для сервисов и параметров, <code>debug:event-dispatcher</code> для подписчиков конкретного события. Это же первый инструмент, когда «мой сервис не подставляется» или «листенер не срабатывает».</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите команду с флагом «только показать» и индикатором прогресса, поставьте её в расписание системного планировщика и убедитесь, что она корректно работает с указанием окружения <code>prod</code>.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Рассказываю цепочку событий ядра от запроса до ответа</li>
+        <li>Знаю, чем <code>kernel.request</code> отличается от <code>kernel.terminate</code></li>
+        <li>Различаю окружения и понимаю, зачем прогрев кэша</li>
+        <li>Не кладу боевые секреты в <code>.env</code></li>
+        <li>Пишу маршруты атрибутами с ограничениями и именами</li>
+        <li>Помню, что поиск сущности не проверяет права</li>
+      </ul>
+      <ul class="check">
+        <li>Понимаю autowiring и умею связать интерфейс с реализацией</li>
+        <li>Пользуюсь командами <code>debug:*</code> вместо гадания</li>
+        <li>Объясняю разницу <code>persist()</code> и <code>flush()</code></li>
+        <li>Не вызываю <code>flush()</code> в цикле</li>
+        <li>Использую DTO с ограничениями вместо формы прямо на сущности</li>
+        <li>Экранирую вывод в Twig и не хожу в базу из шаблона</li>
+        <li>Пишу консольные команды с понятным выводом и кодами возврата</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-собеседование по Symfony почти всегда содержит три вопроса: жизненный цикл запроса, как работает autowiring и чем Doctrine отличается от Active Record. Первые два закрывает этот блок, третий — начало уровня middle.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · инженерия</p>
+    <h2>Middle Symfony Developer</h2>
+    <p>Middle умеет расширять фреймворк, а не только пользоваться им: подключает свои реализации через теги, вешает поведение на события, понимает, во что превращается работа с Doctrine на объёме, настраивает права через voters, выносит долгое в Messenger и покрывает всё это тестами.</p>
+  </div>
+
+  <!-- M1 -->
+  <article class="card" id="di-adv">
+    <p class="path">middle / контейнер / теги</p>
+    <div class="card-top"><h3>Контейнер глубже: теги, компиляция, ленивые сервисы</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Главный приём расширения в Symfony — <span class="t">теги</span>. Вы объявляете интерфейс-точку расширения, все реализации автоматически получают тег, а потребитель получает их коллекцией. Так устроены сами подписчики событий, voters, нормализаторы сериализатора и команды.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Точка расширения на тегах</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Интерфейс — контракт точки расширения</span>
+<span class="kw">interface</span> ExportFormatter
+{
+    <span class="kw">public function</span> <span class="fn">supports</span>(<span class="kw">string</span> $format): <span class="kw">bool</span>;
+    <span class="kw">public function</span> <span class="fn">format</span>(<span class="kw">iterable</span> $rows): <span class="kw">string</span>;
+}
+
+<span class="cm">// 2. Реализации — просто классы; autoconfigure сам повесит тег</span>
+<span class="kw">final class</span> CsvFormatter <span class="kw">implements</span> ExportFormatter { <span class="cm">/* ... */</span> }
+<span class="kw">final class</span> XlsxFormatter <span class="kw">implements</span> ExportFormatter { <span class="cm">/* ... */</span> }
+
+<span class="cm">// 3. Потребитель получает все реализации одним аргументом</span>
+<span class="kw">use</span> Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+
+<span class="kw">final class</span> Exporter
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        #[AutowireIterator(ExportFormatter::<span class="kw">class</span>)]
+        <span class="kw">private readonly iterable</span> $formatters,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">export</span>(<span class="kw">iterable</span> $rows, <span class="kw">string</span> $format): <span class="kw">string</span>
+    {
+        <span class="kw">foreach</span> ($this-&gt;formatters <span class="kw">as</span> $formatter) {
+            <span class="kw">if</span> ($formatter-&gt;<span class="fn">supports</span>($format)) {
+                <span class="kw">return</span> $formatter-&gt;<span class="fn">format</span>($rows);
+            }
+        }
+
+        <span class="kw">throw new</span> \InvalidArgumentException(<span class="st">"Формат {$format} не поддерживается"</span>);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Автоконфигурация тега и ленивые сервисы</span></div><pre><code><span class="nm">services</span>:
+    <span class="cm"># Все классы, реализующие интерфейс, получают тег автоматически</span>
+    <span class="nm">_instanceof</span>:
+        <span class="nm">App\Export\ExportFormatter</span>:
+            <span class="nm">tags</span>: [<span class="st">'app.export_formatter'</span>]
+
+    <span class="cm"># Тяжёлый сервис создаётся только при первом обращении к нему</span>
+    <span class="nm">App\Service\ReportRenderer</span>:
+        <span class="nm">lazy</span>: <span class="kw">true</span>
+
+    <span class="cm"># Приоритет: определяет порядок в коллекции</span>
+    <span class="nm">App\Export\XlsxFormatter</span>:
+        <span class="nm">tags</span>:
+            - { <span class="nm">name</span>: <span class="st">'app.export_formatter'</span>, <span class="nm">priority</span>: 10 }</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Compiler pass: вмешательство в сборку контейнера</span></div><pre><code>&lt;?php
+<span class="cm">// Нужен, когда логику нельзя выразить конфигурацией:</span>
+<span class="cm">// собрать карту «ключ → сервис», проверить обязательные реализации,</span>
+<span class="cm">// подменить определение сервиса в зависимости от окружения.</span>
+<span class="kw">final class</span> RegisterFormattersPass <span class="kw">implements</span> CompilerPassInterface
+{
+    <span class="kw">public function</span> <span class="fn">process</span>(ContainerBuilder $container): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> (!$container-&gt;<span class="fn">has</span>(Exporter::<span class="kw">class</span>)) {
+            <span class="kw">return</span>;
+        }
+
+        $map = [];
+
+        <span class="kw">foreach</span> ($container-&gt;<span class="fn">findTaggedServiceIds</span>(<span class="st">'app.export_formatter'</span>) <span class="kw">as</span> $id =&gt; $tags) {
+            <span class="kw">foreach</span> ($tags <span class="kw">as</span> $attributes) {
+                $map[$attributes[<span class="st">'format'</span>]] = <span class="kw">new</span> Reference($id);
+            }
+        }
+
+        $container-&gt;<span class="fn">findDefinition</span>(Exporter::<span class="kw">class</span>)
+                  -&gt;<span class="fn">setArgument</span>(<span class="st">'$formatters'</span>, $map);
+    }
+}
+
+<span class="cm">// Регистрируется в Kernel::build()</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Контейнер собирается один раз и компилируется в PHP-код. Всё, что вы делаете тегами и compiler pass'ами, выполняется <em>на этапе сборки</em>, а не на каждом запросе — поэтому такая расширяемость почти ничего не стоит в рантайме. Обратная сторона: изменения конфигурации требуют пересборки кэша, а в <code>prod</code> это шаг деплоя.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Внедрять десяток сервисов в конструктор «на всякий случай», когда в конкретном вызове нужен один. Каждый аргумент создаётся при создании сервиса. Решение — коллекция по тегу с выбором нужного, локатор сервисов (создаёт по требованию) или пометка тяжёлых зависимостей как ленивых.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как добавить свою реализацию в существующую точку расширения?</b><br>Реализовать нужный интерфейс — при включённом autoconfigure сервис получит соответствующий тег автоматически, и фреймворк подхватит его. Если нужна своя точка расширения, объявляется интерфейс, через <code>_instanceof</code> вешается тег, а потребитель получает коллекцию по тегу. Для сложной логики сборки используется compiler pass, работающий на этапе компиляции контейнера.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сделайте точку расширения «формат экспорта»: интерфейс, две реализации, потребитель с коллекцией по тегу и приоритетами. Проверьте порядок через <code>debug:container --tag=app.export_formatter</code>.</div>
+  </article>
+
+  <!-- M2 -->
+  <article class="card" id="events">
+    <p class="path">middle / события / диспетчер</p>
+    <div class="card-top"><h3>События: слушатели, подписчики, свои события</h3><span class="badge b-2">Инженерия</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 2 · слушатель или подписчик</caption>
+      <thead><tr><th>Критерий</th><th>Listener</th><th>Subscriber</th></tr></thead>
+      <tbody>
+        <tr><td>Где объявлена подписка</td><td>В конфигурации или атрибуте над методом</td><td>Внутри класса, в статическом методе</td></tr>
+        <tr><td>Видно из класса, на что подписан</td><td>Не всегда</td><td>Да, всё в одном месте</td></tr>
+        <tr><td>Можно включать по окружению</td><td>Да, конфигурацией</td><td>Только логикой внутри</td></tr>
+        <tr><td>Несколько событий одним классом</td><td>Возможно, но многословно</td><td>Естественно</td></tr>
+        <tr><td>Когда выбирать</td><td>Подписка зависит от конфигурации, нужен внешний контроль</td><td>По умолчанию в коде приложения</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Своё доменное событие и реакция на него</span></div><pre><code>&lt;?php
+<span class="cm">// Событие — носитель факта, без логики</span>
+<span class="kw">final class</span> OrderPlacedEvent
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly</span> Order $order) {}
+}
+
+<span class="cm">// Публикация</span>
+<span class="kw">final class</span> PlaceOrder
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> EntityManagerInterface $em,
+        <span class="kw">private readonly</span> EventDispatcherInterface $dispatcher,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(OrderData $data): Order
+    {
+        $order = <span class="cm">/* ... создание и сохранение ... */</span>;
+        $this-&gt;em-&gt;<span class="fn">flush</span>();
+
+        <span class="cm">// Публикуем ПОСЛЕ успешного сохранения</span>
+        $this-&gt;dispatcher-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> OrderPlacedEvent($order));
+
+        <span class="kw">return</span> $order;
+    }
+}
+
+<span class="cm">// Реакция: отдельный класс, о котором источник не знает</span>
+<span class="kw">use</span> Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+#[AsEventListener(event: OrderPlacedEvent::<span class="kw">class</span>)]
+<span class="kw">final class</span> SendOrderConfirmation
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(OrderPlacedEvent $event): <span class="kw">void</span>
+    {
+        <span class="cm">// Тяжёлое отсюда лучше отправлять в Messenger, а не делать синхронно</span>
+        $this-&gt;bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> SendOrderEmail($event-&gt;order-&gt;<span class="fn">getId</span>()));
+    }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>События Doctrine (<code>postPersist</code>, <code>postUpdate</code> и другие) выполняются внутри <code>flush()</code>, то есть в открытой транзакции. Делать оттуда внешние вызовы, отправлять письма или дополнительно вызывать <code>flush()</code> — источник трудноуловимых проблем. Максимум — заполнение технических полей; всё остальное публикуйте после успешного сохранения.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Прятать основной сценарий в цепочку событий: заказ создаётся в одном подписчике, оплата в другом, письмо в третьем. Через полгода никто не может ответить, что происходит при оформлении. События — для дополнительных эффектов; основной путь должен читаться сверху вниз в одном классе.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем слушатель отличается от подписчика?</b><br>Технически ничем: оба вызываются диспетчером. Разница в том, где объявлена подписка. У подписчика она внутри класса, поэтому по коду сразу видно, на что он реагирует. У слушателя подписка задаётся снаружи — конфигурацией или атрибутом, что удобно, когда её нужно включать по окружению или менять без правки класса.</div>
+    <div class="box task"><span class="lbl">Практика</span>Разнесите оформление заказа: основной сценарий в отдельном классе, а уведомление и аналитику — в слушателей события. Убедитесь тестом, что при падении слушателя заказ всё равно сохраняется, и проверьте порядок вызовов через <code>debug:event-dispatcher</code>.</div>
+  </article>
+
+  <!-- M3 -->
+  <article class="card" id="doctrine-adv">
+    <p class="path">middle / данные / doctrine глубже</p>
+    <div class="card-top"><h3>Doctrine: связи, N+1, объёмы</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Doctrine возвращает не строки, а объекты, и делает это лениво: связь загружается в момент первого обращения. Отсюда главная проблема производительности — <span class="t">N+1</span>.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">N+1 и жадная загрузка через fetch join</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: 1 запрос за постами + по запросу за автором на каждый = 101</span>
+$posts = $repo-&gt;<span class="fn">findBy</span>([<span class="st">'status'</span> =&gt; PostStatus::Published], [<span class="st">'publishedAt'</span> =&gt; <span class="st">'DESC'</span>], 100);
+<span class="kw">foreach</span> ($posts <span class="kw">as</span> $post) {
+    <span class="fn">echo</span> $post-&gt;<span class="fn">getAuthor</span>()-&gt;<span class="fn">getName</span>();       <span class="cm">// ленивая загрузка — новый запрос</span>
+}
+
+<span class="cm">// ХОРОШО: один запрос с присоединением и выборкой связанных сущностей</span>
+<span class="kw">public function</span> <span class="fn">findFeed</span>(<span class="kw">int</span> $limit): <span class="kw">array</span>
+{
+    <span class="kw">return</span> $this-&gt;<span class="fn">createQueryBuilder</span>(<span class="st">'p'</span>)
+        -&gt;<span class="fn">addSelect</span>(<span class="st">'a'</span>)                  <span class="cm">// ← без этого join не заполнит объекты</span>
+        -&gt;<span class="fn">innerJoin</span>(<span class="st">'p.author'</span>, <span class="st">'a'</span>)
+        -&gt;<span class="fn">andWhere</span>(<span class="st">'p.status = :s'</span>)-&gt;<span class="fn">setParameter</span>(<span class="st">'s'</span>, PostStatus::Published)
+        -&gt;<span class="fn">orderBy</span>(<span class="st">'p.publishedAt'</span>, <span class="st">'DESC'</span>)
+        -&gt;<span class="fn">setMaxResults</span>($limit)
+        -&gt;<span class="fn">getQuery</span>()
+        -&gt;<span class="fn">getResult</span>();
+}
+
+<span class="cm">// Счётчик — подзапросом, а не загрузкой коллекции в память</span>
+$qb-&gt;<span class="fn">addSelect</span>(<span class="st">'(SELECT COUNT(c.id) FROM App\Entity\Comment c WHERE c.post = p) AS commentsCount'</span>);</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Большие объёмы: не держать всё в памяти</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: 500 000 объектов в единице работы — memory_limit</span>
+<span class="kw">foreach</span> ($repo-&gt;<span class="fn">findAll</span>() <span class="kw">as</span> $order) { <span class="cm">/* ... */</span> }
+
+<span class="cm">// ХОРОШО: потоковый обход + периодическая очистка отслеживаемых объектов</span>
+$query = $this-&gt;em-&gt;<span class="fn">createQuery</span>(<span class="st">'SELECT o FROM App\Entity\Order o WHERE o.status = :s'</span>)
+    -&gt;<span class="fn">setParameter</span>(<span class="st">'s'</span>, <span class="st">'pending'</span>);
+
+$i = 0;
+
+<span class="kw">foreach</span> ($query-&gt;<span class="fn">toIterable</span>() <span class="kw">as</span> $order) {
+    $this-&gt;<span class="fn">process</span>($order);
+
+    <span class="kw">if</span> (++$i % 500 === 0) {
+        $this-&gt;em-&gt;<span class="fn">flush</span>();
+        $this-&gt;em-&gt;<span class="fn">clear</span>();     <span class="cm">// отпускаем объекты: иначе память растёт линейно</span>
+    }
+}
+
+$this-&gt;em-&gt;<span class="fn">flush</span>();
+
+<span class="cm">// Когда объекты не нужны — не создавать их вовсе</span>
+$ids = $qb-&gt;<span class="fn">select</span>(<span class="st">'o.id'</span>)-&gt;<span class="fn">getQuery</span>()-&gt;<span class="fn">getSingleColumnResult</span>();
+$rows = $qb-&gt;<span class="fn">getQuery</span>()-&gt;<span class="fn">getArrayResult</span>();      <span class="cm">// массивы вместо сущностей</span>
+
+<span class="cm">// Массовое изменение — одним запросом, минуя ORM</span>
+$this-&gt;em-&gt;<span class="fn">createQuery</span>(<span class="st">'UPDATE App\Entity\Order o SET o.status = :new WHERE o.status = :old'</span>)
+    -&gt;<span class="fn">setParameters</span>([<span class="st">'new'</span> =&gt; <span class="st">'archived'</span>, <span class="st">'old'</span> =&gt; <span class="st">'done'</span>])
+    -&gt;<span class="fn">execute</span>();     <span class="cm">// ВАЖНО: события сущностей при этом не сработают</span></code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 3 · как доставать данные</caption>
+      <thead><tr><th>Способ</th><th>Что возвращает</th><th>Когда</th></tr></thead>
+      <tbody>
+        <tr><td>Методы репозитория (<code>find</code>, <code>findBy</code>)</td><td>Сущности</td><td>Простые выборки по полям</td></tr>
+        <tr><td>QueryBuilder / DQL</td><td>Сущности или массивы</td><td>Основной инструмент: соединения, условия, агрегаты</td></tr>
+        <tr><td>Гидрация в массив</td><td>Массивы</td><td>Списки и отчёты, где объекты не нужны</td></tr>
+        <tr><td>Потоковый обход</td><td>По одной сущности</td><td>Обработка больших выборок</td></tr>
+        <tr><td>Чистый SQL через DBAL</td><td>Строки</td><td>Тяжёлая аналитика, массовые операции, специфичный SQL</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Единица работы держит ссылки на все загруженные сущности, поэтому «просто цикл по миллиону записей» съедает память независимо от того, сохраняете вы что-то или нет. В пакетной обработке обязательны потоковый обход и периодическая очистка. И помните: после очистки прежние объекты перестают отслеживаться — работать с ними дальше нельзя.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Считать, что <code>join</code> в QueryBuilder решает N+1. Без <code>addSelect</code> соединение используется только для фильтрации, а связанные объекты всё равно догружаются отдельными запросами. Это одна из самых частых ошибок при оптимизации.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое N+1 в Doctrine и как его убрать?</b><br>Это ленивая загрузка связей: один запрос за списком и по запросу на каждое обращение к связи. Убирается присоединением с выборкой связанной сущности (<code>join</code> плюс <code>addSelect</code>), агрегатами вместо загрузки коллекций и гидрацией в массивы там, где объекты не нужны. Находится через профайлер или лог запросов, а лучше — тестом, считающим их количество.</div>
+    <div class="box task"><span class="lbl">Практика</span>Найдите страницу с N+1 через профайлер, перепишите запрос с присоединением и сравните число запросов. Затем напишите импорт 500 000 записей с потоковым обходом и очисткой, замерив пиковую память.</div>
+  </article>
+
+  <!-- M4 -->
+  <article class="card" id="security">
+    <p class="path">middle / доступ / security</p>
+    <div class="card-top"><h3>Security: аутентификация, права, voters</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">security.yaml: скелет конфигурации</span></div><pre><code><span class="nm">security</span>:
+    <span class="nm">password_hashers</span>:
+        <span class="nm">Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface</span>: <span class="st">'auto'</span>
+
+    <span class="nm">providers</span>:
+        <span class="nm">app_users</span>:
+            <span class="nm">entity</span>: { <span class="nm">class</span>: App\Entity\User, <span class="nm">property</span>: email }
+
+    <span class="nm">firewalls</span>:
+        <span class="cm"># Порядок важен: срабатывает первый подходящий по шаблону</span>
+        <span class="nm">dev</span>:
+            <span class="nm">pattern</span>: <span class="st">'^/(_(profiler|wdt)|css|images|js)/'</span>
+            <span class="nm">security</span>: <span class="kw">false</span>
+
+        <span class="nm">api</span>:
+            <span class="nm">pattern</span>: <span class="st">'^/api'</span>
+            <span class="nm">stateless</span>: <span class="kw">true</span>          <span class="cm"># без сессии: аутентификация на каждый запрос</span>
+            <span class="nm">provider</span>: app_users
+            <span class="nm">custom_authenticators</span>: [App\Security\ApiTokenAuthenticator]
+
+        <span class="nm">main</span>:
+            <span class="nm">lazy</span>: <span class="kw">true</span>               <span class="cm"># пользователь загружается только при обращении</span>
+            <span class="nm">provider</span>: app_users
+            <span class="nm">form_login</span>:
+                <span class="nm">login_path</span>: app_login
+                <span class="nm">check_path</span>: app_login
+            <span class="nm">logout</span>: { <span class="nm">path</span>: app_logout }
+            <span class="nm">remember_me</span>: { <span class="nm">secret</span>: <span class="st">'%kernel.secret%'</span> }
+
+    <span class="cm"># Грубая защита по URL. Тонкая — voters.</span>
+    <span class="nm">access_control</span>:
+        - { <span class="nm">path</span>: <span class="st">'^/admin'</span>, <span class="nm">roles</span>: ROLE_ADMIN }
+        - { <span class="nm">path</span>: <span class="st">'^/api'</span>, <span class="nm">roles</span>: ROLE_API }
+
+    <span class="nm">role_hierarchy</span>:
+        <span class="nm">ROLE_ADMIN</span>: [ROLE_USER, ROLE_MODERATOR]</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Voter: права на конкретный объект</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Component\Security\Core\Authorization\Voter\Voter;
+
+<span class="cm">/** @extends Voter&lt;string, Post&gt; */</span>
+<span class="kw">final class</span> PostVoter <span class="kw">extends</span> Voter
+{
+    <span class="kw">public const</span> VIEW = <span class="st">'view'</span>;
+    <span class="kw">public const</span> EDIT = <span class="st">'edit'</span>;
+    <span class="kw">public const</span> DELETE = <span class="st">'delete'</span>;
+
+    <span class="kw">protected function</span> <span class="fn">supports</span>(<span class="kw">string</span> $attribute, <span class="kw">mixed</span> $subject): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="fn">in_array</span>($attribute, [self::VIEW, self::EDIT, self::DELETE], <span class="kw">true</span>)
+            &amp;&amp; $subject <span class="kw">instanceof</span> Post;
+    }
+
+    <span class="kw">protected function</span> <span class="fn">voteOnAttribute</span>(<span class="kw">string</span> $attribute, <span class="kw">mixed</span> $subject, TokenInterface $token): <span class="kw">bool</span>
+    {
+        $user = $token-&gt;<span class="fn">getUser</span>();
+
+        <span class="cm">// Публичное чтение доступно и гостю</span>
+        <span class="kw">if</span> ($attribute === self::VIEW &amp;&amp; $subject-&gt;<span class="fn">isPublished</span>()) {
+            <span class="kw">return true</span>;
+        }
+
+        <span class="kw">if</span> (!$user <span class="kw">instanceof</span> User) {
+            <span class="kw">return false</span>;
+        }
+
+        <span class="kw">return match</span>($attribute) {
+            self::VIEW, self::EDIT =&gt; $subject-&gt;<span class="fn">getAuthor</span>() === $user,
+            self::DELETE =&gt; $subject-&gt;<span class="fn">getAuthor</span>() === $user
+                &amp;&amp; $subject-&gt;<span class="fn">getCreatedAt</span>() &gt; <span class="kw">new</span> \DateTimeImmutable(<span class="st">'-24 hours'</span>),
+        };
+    }
+}
+
+<span class="cm">// Использование: контроллер, атрибут, шаблон</span>
+$this-&gt;<span class="fn">denyAccessUnlessGranted</span>(PostVoter::EDIT, $post);
+
+#[IsGranted(<span class="st">'edit'</span>, subject: <span class="st">'post'</span>)]
+<span class="kw">public function</span> <span class="fn">edit</span>(Post $post): Response { <span class="cm">/* ... */</span> }</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Правило <code>access_control</code> работает по URL и роли — это грубый фильтр. Ответ на вопрос «может ли <em>этот</em> пользователь редактировать <em>эту</em> запись» дают voters. И самое надёжное — выбирать из базы сразу только доступные записи: тогда забытая проверка не превращается в утечку данных.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Проверки вида <code>if ($user-&gt;getRole() === 'manager')</code>, разбросанные по контроллерам и шаблонам. Через год ролей пять, условия расползлись по сотне мест, а изменить правило нельзя без полного обхода кода. Правила живут в voters, роль — лишь один из входов в решение.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужны voters, если есть <code>access_control</code>?</b><br>Потому что это разные уровни. <code>access_control</code> закрывает раздел по URL и роли, ничего не зная об объектах. Voter отвечает на вопрос о конкретном объекте: владелец ли пользователь, не истёк ли срок, в каком статусе запись. Voters переиспользуются в контроллере, атрибуте и шаблоне, и правило описано в одном месте.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите voter с правилами просмотра, редактирования и удаления, подключите его в контроллере и шаблоне. Покройте тестами: владелец — 200, чужой — 403, гость — редирект или 401, а список содержит только доступные записи.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+
+  <!-- M5 -->
+  <article class="card" id="api">
+    <p class="path">middle / http / api</p>
+    <div class="card-top"><h3>API: DTO, сериализация, контракт</h3><span class="badge b-2">Прикладное</span></div>
+    <p>Symfony даёт готовые механизмы для API без лишних слоёв: объект запроса собирается из тела и проверяется валидатором, ответ формируется сериализатором с группами. Сущности при этом наружу не отдаются.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Вход: DTO из тела запроса, проверенный валидатором</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
+<span class="kw">use</span> Symfony\Component\HttpKernel\Attribute\MapQueryString;
+<span class="kw">use</span> Symfony\Component\Validator\Constraints <span class="kw">as</span> Assert;
+
+<span class="kw">final class</span> CreatePostRequest
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        #[Assert\NotBlank]
+        #[Assert\Length(max: 200)]
+        <span class="kw">public readonly string</span> $title = <span class="st">''</span>,
+
+        #[Assert\NotBlank]
+        <span class="kw">public readonly string</span> $body = <span class="st">''</span>,
+
+        #[Assert\All([<span class="kw">new</span> Assert\Positive()])]
+        <span class="kw">public readonly array</span> $tagIds = [],
+    ) {}
+}
+
+#[Route(<span class="st">'/api/posts'</span>, methods: [<span class="st">'POST'</span>])]
+<span class="kw">public function</span> <span class="fn">create</span>(
+    <span class="cm">// Тело запроса десериализуется в объект и валидируется автоматически.</span>
+    <span class="cm">// При ошибках фреймворк сам вернёт 422 с перечнем нарушений.</span>
+    #[MapRequestPayload] CreatePostRequest $payload,
+    PostService $posts,
+): JsonResponse {
+    $post = $posts-&gt;<span class="fn">create</span>($payload, $this-&gt;<span class="fn">getUser</span>());
+
+    <span class="kw">return</span> $this-&gt;<span class="fn">json</span>($post, Response::HTTP_CREATED, [], [<span class="st">'groups'</span> =&gt; [<span class="st">'post:read'</span>]]);
+}
+
+<span class="cm">// Строка запроса тоже собирается в объект — с валидацией фильтров</span>
+#[Route(<span class="st">'/api/posts'</span>, methods: [<span class="st">'GET'</span>])]
+<span class="kw">public function</span> <span class="fn">list</span>(#[MapQueryString] PostListQuery $query): JsonResponse
+{ <span class="cm">/* ... */</span> }</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Выход: группы сериализации вместо ручной сборки массивов</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Component\Serializer\Attribute\Groups;
+
+<span class="kw">class</span> Post
+{
+    #[Groups([<span class="st">'post:read'</span>, <span class="st">'post:list'</span>])]
+    <span class="kw">private</span> ?<span class="kw">int</span> $id = <span class="kw">null</span>;
+
+    #[Groups([<span class="st">'post:read'</span>, <span class="st">'post:list'</span>])]
+    <span class="kw">private string</span> $title;
+
+    <span class="cm">// Тело — только в детальном представлении</span>
+    #[Groups([<span class="st">'post:read'</span>])]
+    <span class="kw">private string</span> $body;
+
+    <span class="cm">// Служебное поле не попадёт в ответ вообще: ни в одной группе</span>
+    <span class="kw">private</span> ?<span class="kw">string</span> $internalNote = <span class="kw">null</span>;
+}
+
+<span class="cm">// Сериализация с контекстом</span>
+$json = $serializer-&gt;<span class="fn">serialize</span>($posts, <span class="st">'json'</span>, [<span class="st">'groups'</span> =&gt; [<span class="st">'post:list'</span>]]);</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 4 · решения по API, которые принимают на старте</caption>
+      <thead><tr><th>Вопрос</th><th>Практика</th></tr></thead>
+      <tbody>
+        <tr><td>Версионирование</td><td>Префикс в пути (<code>/api/v1</code>); ломающие изменения — только в новой версии</td></tr>
+        <tr><td>Формат ошибок</td><td>Единый для всех эндпоинтов; ошибки валидации — 422 с перечнем полей</td></tr>
+        <tr><td>Пагинация</td><td>Обязательный верхний предел размера страницы; курсорная — для больших смещений</td></tr>
+        <tr><td>Что отдаём</td><td>Только поля, объявленные в группах, — контракт не зависит от схемы БД</td></tr>
+        <tr><td>Ограничение частоты</td><td>Лимит по пользователю или ключу API, а не только по адресу</td></tr>
+        <tr><td>Даты</td><td>ISO 8601 в UTC; преобразование в часовой пояс — на клиенте</td></tr>
+        <tr><td>Готовое решение</td><td>Для большого CRUD-API имеет смысл специализированный бандл; для десятка эндпоинтов достаточно контроллеров и сериализатора</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Группы сериализации на сущности удобны, но делают её одновременно и моделью базы, и контрактом API. Пока полей мало — это нормально. Как только появляются разные представления для разных клиентов и версий, лучше отдельные выходные DTO: тогда изменение схемы не ломает клиентов, а контракт виден в одном месте.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как в Symfony принять и проверить JSON-запрос?</b><br>Объявить DTO с ограничениями валидации и пометить аргумент контроллера атрибутом отображения тела запроса: фреймворк сам десериализует тело в объект, прогонит валидацию и вернёт 422 с перечнем нарушений при ошибках. Метод контроллера получает уже корректный типизированный объект, а не сырой массив.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сделайте API ресурса: создание через DTO с валидацией, список с фильтрами из строки запроса и ограничением размера страницы, ответы через группы сериализации. Покройте тестами структуру ответа и формат ошибок валидации.</div>
+  </article>
+
+  <!-- M6 -->
+  <article class="card" id="messenger">
+    <p class="path">middle / фон / messenger</p>
+    <div class="card-top"><h3>Messenger: очереди и фоновая обработка</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Правило то же, что и в любом веб-приложении: всё, что дольше пары сотен миллисекунд и не нужно пользователю немедленно, уходит в фон. В Symfony это <span class="t">Messenger</span> — шина сообщений с транспортами, повторами и обработкой сбоев.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сообщение и обработчик</span></div><pre><code>&lt;?php
+<span class="cm">// Сообщение — простой объект с данными. Внутрь кладут идентификаторы,</span>
+<span class="cm">// а не сущности: пока задача ждёт в очереди, данные могут измениться.</span>
+<span class="kw">final class</span> GenerateInvoice
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly int</span> $orderId) {}
+}
+
+<span class="kw">use</span> Symfony\Component\Messenger\Attribute\AsMessageHandler;
+
+#[AsMessageHandler]
+<span class="kw">final class</span> GenerateInvoiceHandler
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> OrderRepository $orders,
+        <span class="kw">private readonly</span> InvoiceBuilder $builder,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(GenerateInvoice $message): <span class="kw">void</span>
+    {
+        $order = $this-&gt;orders-&gt;<span class="fn">find</span>($message-&gt;orderId);
+
+        <span class="cm">// Заказ мог быть удалён, пока сообщение ждало обработки</span>
+        <span class="kw">if</span> ($order === <span class="kw">null</span>) {
+            <span class="kw">return</span>;
+        }
+
+        <span class="cm">// Идемпотентность: обработчик может быть вызван повторно</span>
+        <span class="kw">if</span> ($order-&gt;<span class="fn">hasInvoice</span>()) {
+            <span class="kw">return</span>;
+        }
+
+        $this-&gt;builder-&gt;<span class="fn">build</span>($order);
+    }
+}
+
+<span class="cm">// Отправка</span>
+$bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> GenerateInvoice($order-&gt;<span class="fn">getId</span>()));
+$bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> GenerateInvoice($id), [<span class="kw">new</span> DelayStamp(300_000)]);   <span class="cm">// через 5 минут</span></code></pre></div>
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Транспорты, повторы, очередь сбоев</span></div><pre><code><span class="nm">framework</span>:
+    <span class="nm">messenger</span>:
+        <span class="nm">failure_transport</span>: failed        <span class="cm"># куда падают окончательно неудачные</span>
+
+        <span class="nm">transports</span>:
+            <span class="nm">async</span>:
+                <span class="nm">dsn</span>: <span class="st">'%env(MESSENGER_TRANSPORT_DSN)%'</span>
+                <span class="nm">retry_strategy</span>:
+                    <span class="nm">max_retries</span>: 3
+                    <span class="nm">delay</span>: 1000            <span class="cm"># первая пауза, мс</span>
+                    <span class="nm">multiplier</span>: 3          <span class="cm"># растущая задержка: 1с, 3с, 9с</span>
+
+            <span class="nm">async_priority_high</span>:
+                <span class="nm">dsn</span>: <span class="st">'%env(MESSENGER_TRANSPORT_DSN)%'</span>
+                <span class="nm">options</span>: { <span class="nm">queue_name</span>: high }
+
+            <span class="nm">failed</span>: <span class="st">'doctrine://default?queue_name=failed'</span>
+
+        <span class="cm"># Какое сообщение куда идёт</span>
+        <span class="nm">routing</span>:
+            <span class="nm">App\Message\GenerateInvoice</span>: async
+            <span class="nm">App\Message\SendVerificationCode</span>: async_priority_high</code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Эксплуатация воркеров</span></div><pre><code><span class="cm"># Воркер под супервизором. Лимиты защищают от утечек и старого кода.</span>
+php bin/console messenger:consume async_priority_high async \
+  --time-limit=3600 --memory-limit=256M --limit=1000
+
+<span class="cm"># Разбор сбоев</span>
+php bin/console messenger:failed:show
+php bin/console messenger:failed:retry --force
+php bin/console messenger:stats
+
+<span class="cm"># При деплое — иначе воркеры продолжат выполнять старый код</span>
+php bin/console messenger:stop-workers</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Не кладите сущности Doctrine в сообщение. Объект сериализуется в момент отправки, а обрабатывается позже — данные успеют устареть, а связи не восстановятся корректно. Правильно передавать идентификатор и загружать актуальное состояние в обработчике, попутно проверяя, что запись ещё существует.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Отправлять сообщение до <code>flush()</code>. При быстром воркере обработчик стартует раньше, чем данные окажутся в базе, и не находит запись. Отправляйте после успешного сохранения — либо используйте штатное средство отложенной отправки в рамках текущей транзакции.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что произойдёт, если обработчик упадёт?</b><br>Сообщение вернётся в транспорт и будет повторено согласно стратегии: заданное число попыток с растущей задержкой. После исчерпания попыток оно попадёт в транспорт сбоев, откуда его можно посмотреть и перезапустить вручную. Поэтому обработчик обязан быть идемпотентным, а окончательные сбои — попадать в мониторинг, а не только в таблицу.</div>
+    <div class="box task"><span class="lbl">Практика</span>Вынесите генерацию документа в Messenger с повторами и очередью сбоев, разделите очереди по критичности. Сымитируйте падение внешнего сервиса и проследите путь сообщения: повторы, попадание в сбойные, перезапуск. Проверьте, что повторная обработка не создаёт дублей.</div>
+  </article>
+
+  <!-- M7 -->
+  <article class="card" id="cache">
+    <p class="path">middle / производительность / кэш</p>
+    <div class="card-top"><h3>Кэш: приложение и HTTP</h3><span class="badge b-2">Инженерия</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Кэш приложения: получить или вычислить</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Contracts\Cache\CacheInterface;
+<span class="kw">use</span> Symfony\Contracts\Cache\ItemInterface;
+
+<span class="kw">final class</span> CategoryTree
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> CacheInterface $cache,
+        <span class="kw">private readonly</span> CategoryRepository $categories,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">get</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> $this-&gt;cache-&gt;<span class="fn">get</span>(<span class="st">'categories.tree'</span>, <span class="kw">function</span> (ItemInterface $item) {
+            $item-&gt;<span class="fn">expiresAfter</span>(3600);
+            $item-&gt;<span class="fn">tag</span>([<span class="st">'categories'</span>]);          <span class="cm">// для точечного сброса по тегу</span>
+
+            <span class="kw">return</span> $this-&gt;categories-&gt;<span class="fn">buildTree</span>();
+        });
+    }
+
+    <span class="kw">public function</span> <span class="fn">invalidate</span>(): <span class="kw">void</span>
+    {
+        $this-&gt;cache-&gt;<span class="fn">invalidateTags</span>([<span class="st">'categories'</span>]);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">HTTP-кэш: не выполнять запрос вообще</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Component\HttpKernel\Attribute\Cache;
+
+<span class="cm">// Публичный ответ кэшируется обратным прокси на 5 минут,</span>
+<span class="cm">// ещё час может отдаваться устаревшим, пока обновляется в фоне</span>
+#[Cache(public: <span class="kw">true</span>, maxage: 300, staleWhileRevalidate: 3600)]
+#[Route(<span class="st">'/posts'</span>, methods: [<span class="st">'GET'</span>])]
+<span class="kw">public function</span> <span class="fn">index</span>(): Response { <span class="cm">/* ... */</span> }
+
+<span class="cm">// Условный запрос: если у клиента актуальная версия — 304 без тела</span>
+<span class="kw">public function</span> <span class="fn">show</span>(Post $post, Request $request): Response
+{
+    $response = <span class="kw">new</span> Response();
+    $response-&gt;<span class="fn">setEtag</span>(<span class="fn">md5</span>($post-&gt;<span class="fn">getUpdatedAt</span>()-&gt;<span class="fn">format</span>(<span class="st">'U'</span>)));
+    $response-&gt;<span class="fn">setLastModified</span>($post-&gt;<span class="fn">getUpdatedAt</span>());
+    $response-&gt;<span class="fn">setPublic</span>();
+
+    <span class="kw">if</span> ($response-&gt;<span class="fn">isNotModified</span>($request)) {
+        <span class="kw">return</span> $response;      <span class="cm">// 304: тело не формируется и не передаётся</span>
+    }
+
+    <span class="kw">return</span> $this-&gt;<span class="fn">render</span>(<span class="st">'post/show.html.twig'</span>, [<span class="st">'post'</span> =&gt; $post], $response);
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 5 · уровни кэширования</caption>
+      <thead><tr><th>Уровень</th><th>Что экономит</th><th>Осторожно</th></tr></thead>
+      <tbody>
+        <tr><td>HTTP-кэш (прокси, CDN)</td><td>Запрос вообще не доходит до приложения</td><td>Только для одинакового для всех контента; персональные страницы так кэшировать нельзя</td></tr>
+        <tr><td>Кэш приложения</td><td>Повторные вычисления и запросы к БД</td><td>Нужны TTL и стратегия инвалидации</td></tr>
+        <tr><td>Кэш Doctrine</td><td>Разбор метаданных и повторные запросы</td><td>Метаданные кэшируют всегда на проде; кэш результатов — точечно</td></tr>
+        <tr><td>Кэш контейнера и маршрутов</td><td>Сборку приложения на каждом запросе</td><td>Собирается при деплое, требует прогрева</td></tr>
+        <tr><td>Opcache и предзагрузка</td><td>Парсинг и компиляцию PHP</td><td>После деплоя нужен перезапуск процессов</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Кэш — ускорение, а не источник истины: приложение обязано работать при пустом или недоступном кэше, просто медленнее. Отдельная типичная ошибка — кэшировать персонализированный ответ как публичный: тогда один пользователь увидит страницу другого. Всё, что зависит от пользователя, либо не кэшируется на уровне HTTP, либо выносится в отдельные фрагменты.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем HTTP-кэш отличается от кэша приложения?</b><br>HTTP-кэш живёт перед приложением: при попадании запрос не доходит до PHP вообще — это самый дешёвый вариант, но подходит только для одинакового для всех содержимого. Кэш приложения работает внутри и сохраняет результаты вычислений и запросов, помогая и на персональных страницах. В реальном проекте используют оба уровня плюс кэш контейнера и opcache.</div>
+    <div class="box task"><span class="lbl">Практика</span>Закэшируйте самый тяжёлый участок страницы с TTL и тегами, добавьте сброс по событию изменения. Отдельно включите условные запросы на детальной странице и убедитесь по заголовкам, что повторное обращение возвращает 304.</div>
+  </article>
+
+  <!-- M8 -->
+  <article class="card" id="testing">
+    <p class="path">middle / качество / тесты</p>
+    <div class="card-top"><h3>Тестирование</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 6 · три вида тестов в Symfony</caption>
+      <thead><tr><th>Вид</th><th>Базовый класс</th><th>Что проверяет</th><th>Скорость</th></tr></thead>
+      <tbody>
+        <tr><td>Модульный</td><td>Обычный TestCase</td><td>Чистую логику без контейнера</td><td>Миллисекунды</td></tr>
+        <tr><td>Интеграционный</td><td>KernelTestCase</td><td>Сервис вместе с реальными зависимостями и БД</td><td>Десятки миллисекунд</td></tr>
+        <tr><td>Функциональный</td><td>WebTestCase</td><td>Весь путь запроса: маршрут, права, валидация, ответ</td><td>Сотни миллисекунд</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Функциональный тест: поведение целиком</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
+<span class="kw">final class</span> PostControllerTest <span class="kw">extends</span> WebTestCase
+{
+    <span class="kw">public function</span> <span class="fn">testAuthorCanUpdateOwnPost</span>(): <span class="kw">void</span>
+    {
+        $client = <span class="kw">static</span>::<span class="fn">createClient</span>();
+        $post = $this-&gt;<span class="fn">createPost</span>();
+
+        $client-&gt;<span class="fn">loginUser</span>($post-&gt;<span class="fn">getAuthor</span>());
+        $client-&gt;<span class="fn">request</span>(<span class="st">'PUT'</span>, <span class="st">"/api/posts/{$post-&gt;getId()}"</span>, content: <span class="fn">json_encode</span>([
+            <span class="st">'title'</span> =&gt; <span class="st">'Новый заголовок'</span>,
+            <span class="st">'body'</span>  =&gt; <span class="st">'Достаточно длинный текст'</span>,
+        ]));
+
+        $this-&gt;<span class="fn">assertResponseIsSuccessful</span>();
+        $this-&gt;<span class="fn">assertJsonContains</span>([<span class="st">'title'</span> =&gt; <span class="st">'Новый заголовок'</span>]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">testStrangerGetsForbidden</span>(): <span class="kw">void</span>
+    {
+        $client = <span class="kw">static</span>::<span class="fn">createClient</span>();
+        $post = $this-&gt;<span class="fn">createPost</span>();
+
+        $client-&gt;<span class="fn">loginUser</span>($this-&gt;<span class="fn">createUser</span>(<span class="st">'stranger@example.com'</span>));
+        $client-&gt;<span class="fn">request</span>(<span class="st">'PUT'</span>, <span class="st">"/api/posts/{$post-&gt;getId()}"</span>, content: <span class="st">'{}'</span>);
+
+        $this-&gt;<span class="fn">assertResponseStatusCodeSame</span>(403);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Подмена внешнего мира в тестах</span></div><pre><code>&lt;?php
+<span class="cm">// Подмена сервиса в контейнере на заглушку</span>
+$gateway = $this-&gt;<span class="fn">createMock</span>(PaymentGateway::<span class="kw">class</span>);
+$gateway-&gt;<span class="fn">method</span>(<span class="st">'charge'</span>)-&gt;<span class="fn">willReturn</span>(PaymentResult::<span class="fn">success</span>());
+<span class="kw">static</span>::<span class="fn">getContainer</span>()-&gt;<span class="fn">set</span>(PaymentGateway::<span class="kw">class</span>, $gateway);
+
+<span class="cm">// HTTP-клиент без сети: ответы задаются заранее</span>
+$http = <span class="kw">new</span> MockHttpClient([
+    <span class="kw">new</span> MockResponse(<span class="fn">json_encode</span>([<span class="st">'status'</span> =&gt; <span class="st">'ok'</span>]), [<span class="st">'http_code'</span> =&gt; 200]),
+]);
+
+<span class="cm">// Messenger: в тестовом окружении транспорт в памяти —</span>
+<span class="cm">// проверяем факт отправки, а не выполнение обработчика</span>
+$transport = <span class="kw">static</span>::<span class="fn">getContainer</span>()-&gt;<span class="fn">get</span>(<span class="st">'messenger.transport.async'</span>);
+$this-&gt;<span class="fn">assertCount</span>(1, $transport-&gt;<span class="fn">getSent</span>());
+
+<span class="cm">// Время под контролем: фиксируем «сейчас» вместо реальных часов</span>
+<span class="kw">static</span>::<span class="fn">getContainer</span>()-&gt;<span class="fn">set</span>(ClockInterface::<span class="kw">class</span>, <span class="kw">new</span> MockClock(<span class="st">'2026-01-01 12:00:00'</span>));</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Тесты не должны ходить в интернет и в боевую базу. Внешние HTTP-вызовы подменяются мок-клиентом, очередь — транспортом в памяти, время — управляемыми часами. Отдельно стоит проверить, что тестовое окружение действительно использует свою базу: конфигурация окружения <code>test</code> для этого и существует.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Тестировать реализацию: проверять, что вызвался определённый метод сервиса, вместо результата. Такой тест ломается при любом рефакторинге и ничего не гарантирует. Проверяйте наблюдаемое поведение: код ответа, содержимое JSON, состояние базы, факт отправки сообщения.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем отличаются <code>KernelTestCase</code> и <code>WebTestCase</code>?</b><br>Первый поднимает ядро и даёт доступ к контейнеру — им тестируют сервисы вместе с реальными зависимостями. Второй дополнительно даёт клиента, который выполняет полноценные запросы через ядро без веб-сервера, — им тестируют маршруты, права, валидацию и формат ответа. Модульные тесты обходятся без ядра вообще.</div>
+    <div class="box task"><span class="lbl">Практика</span>Покройте один ресурс функциональными тестами: список, создание, обновление, удаление, права, валидация. Подмените внешний API мок-клиентом, проверьте отправку сообщения в очередь и добавьте прогон в CI.</div>
+  </article>
+
+  <!-- M9 -->
+  <article class="card" id="layers">
+    <p class="path">middle / архитектура / организация</p>
+    <div class="card-top"><h3>Организация кода</h3><span class="badge b-2">Инженерия</span></div>
+    <p>Symfony не навязывает архитектуру — только структуру каталогов по умолчанию. Решение, куда класть логику, принимаете вы, и чаще всего слишком поздно.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Эволюция по мере роста</span></div><pre><code>1. КОНТРОЛЛЕР + СУЩНОСТЬ + РЕПОЗИТОРИЙ        небольшой проект
+   Нормально. Не усложняйте раньше времени.
+
+2. + СЕРВИСЫ И DTO                             логика переиспользуется
+   «Оформить заказ» вызывается из контроллера, консоли и обработчика
+   сообщения — значит это отдельный класс, а не метод контроллера.
+
+3. + ГРУППИРОВКА ПО ДОМЕНАМ                    проект вырос
+   src/Order/, src/Catalog/, src/Billing/ вместо общих
+   Controller/, Service/, Entity/ на весь проект.
+
+4. + ЯВНЫЕ ГРАНИЦЫ                             несколько команд
+   Домен без зависимостей от фреймворка, инфраструктура — снаружи,
+   общение между доменами через контракты и события.
+
+Ориентир: структура должна отражать предметную область,
+а не типы классов. По каталогу src/ должно быть понятно,
+чем занимается приложение, а не какой в нём фреймворк.</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 7 · куда что класть</caption>
+      <thead><tr><th>Код</th><th>Место</th><th>Признак ошибки</th></tr></thead>
+      <tbody>
+        <tr><td>Разбор запроса и формирование ответа</td><td>Контроллер</td><td>Контроллер длиннее 30 строк</td></tr>
+        <tr><td>Проверка входных данных</td><td>DTO с ограничениями</td><td>Проверки <code>if</code> в начале сервиса</td></tr>
+        <tr><td>Права на объект</td><td>Voter</td><td>Сравнение ролей строкой по коду</td></tr>
+        <tr><td>Правила предметной области</td><td>Сущность или доменный сервис</td><td>Бизнес-условия в контроллере или шаблоне</td></tr>
+        <tr><td>Сценарий из нескольких шагов</td><td>Отдельный класс-действие</td><td>Дублирование логики между контроллером и командой</td></tr>
+        <tr><td>Запросы к БД</td><td>Репозиторий</td><td>QueryBuilder в контроллере</td></tr>
+        <tr><td>Побочные эффекты</td><td>Слушатель события или обработчик сообщения</td><td>Отправка писем внутри доменного метода</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Свои бандлы внутри приложения сегодня почти не нужны: бандл — это способ распространять переиспользуемый код между проектами. Для разделения одного приложения достаточно каталогов, пространств имён и правил в конфигурации сервисов. Бандл оправдан, когда код действительно будет ставиться в другой проект через пакетный менеджер.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Куда вы кладёте бизнес-логику?</b><br>Валидация — в DTO с ограничениями, права — в voters, представление — в сериализатор или шаблоны. Правила, относящиеся к сущности, живут в самой сущности. Сценарий, затрагивающий несколько сущностей и вызываемый из контроллера, консоли и обработчика сообщения, выносится в отдельный класс. Контроллер остаётся адаптером HTTP.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите самый крупный контроллер и разложите его: валидацию в DTO, права в voter, сценарий в отдельный класс, побочные эффекты в слушателя события. Убедитесь, что функциональные тесты не изменились и остались зелёными.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Расширяю фреймворк через теги и точки расширения</li>
+        <li>Понимаю, что контейнер компилируется, а не собирается в рантайме</li>
+        <li>Различаю слушателя и подписчика, знаю про приоритеты</li>
+        <li>Не делаю тяжёлого в событиях Doctrine внутри транзакции</li>
+        <li>Нахожу и устраняю N+1, помню про <code>addSelect</code></li>
+        <li>Обрабатываю большие выборки потоково с очисткой</li>
+      </ul>
+      <ul class="check">
+        <li>Отдаю API через DTO и группы, а не сущности напрямую</li>
+        <li>Пишу voters вместо сравнения ролей по коду</li>
+        <li>Выношу долгое в Messenger, делаю обработчики идемпотентными</li>
+        <li>Передаю в сообщениях идентификаторы, а не сущности</li>
+        <li>Различаю HTTP-кэш и кэш приложения, знаю про инвалидацию</li>
+        <li>Пишу функциональные тесты с подменой внешнего мира</li>
+        <li>Группирую код по доменам, а не по типам классов</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Middle-собеседование по Symfony — это разбор задачи: «страница делает 200 запросов, что делаете», «как дать доступ только владельцу», «куда вынести генерацию отчёта», «как это протестировать». Ценится связная картина: где событие, где сообщение, где кэш и как всё проверено.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · архитектура</p>
+    <h2>Senior Symfony Developer</h2>
+    <p>На этом уровне обсуждают не возможности фреймворка, а стоимость решений: почему приложение отвечает за 300 мс, а не за 30; что произойдёт с сервисами, если процесс перестанет умирать после запроса; как выкатить релиз без простоя, когда есть миграции и воркеры; и как пережить мажорное обновление на проекте, которому шесть лет.</p>
+  </div>
+
+  <!-- S1 -->
+  <article class="card" id="performance">
+    <p class="path">senior / производительность / порядок</p>
+    <div class="card-top"><h3>Производительность: где на самом деле время</h3><span class="badge b-3">Архитектура</span><span class="badge b-must">Отличает senior</span></div>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Порядок разбора медленного эндпоинта</span></div><pre><code>1. СКОЛЬКО ЗАПРОСОВ В БД?      профайлер показывает число и время
+   200 вместо 5 — это N+1, и никакой кэш этого не лечит.
+
+2. КАКИЕ ЭТО ЗАПРОСЫ?          EXPLAIN на самом долгом; индексы;
+   гидрация в объекты там, где хватило бы массивов.
+
+3. ЧТО ДЕЛАЕМ СИНХРОННО?       внешние HTTP, почта, генерация файлов
+   → Messenger.
+
+4. ЧТО МОЖНО НЕ ДЕЛАТЬ?        кэш приложения, HTTP-кэш, условные запросы.
+
+5. И ТОЛЬКО ПОТОМ инфраструктура: opcache, предзагрузка,
+   оптимизация автозагрузки, долгоживущий рантайм.
+
+Типичное распределение времени в Symfony-приложении:
+  БД и внешние вызовы ≈ 70%, шаблоны и сериализация ≈ 20%,
+  сам фреймворк ≈ 10% (и это то, что оптимизируют последним).</code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Настройки прода, которые дают больше всего</span></div><pre><code><span class="cm"># Сборка: без dev-зависимостей, с оптимизированной автозагрузкой</span>
+composer install --no-dev --optimize-autoloader --classmap-authoritative
+
+<span class="cm"># Компиляция контейнера, маршрутов, шаблонов под prod</span>
+APP_ENV=prod php bin/console cache:clear
+APP_ENV=prod php bin/console cache:warmup
+
+<span class="cm"># Предзагрузка: классы компилируются один раз при старте процесса</span>
+<span class="cm"># и живут в памяти всех воркеров (файл генерируется при прогреве кэша)</span>
+<span class="cm"># php.ini: opcache.preload=/var/www/current/var/cache/prod/App_KernelProdContainer.preload.php</span>
+
+<span class="cm"># Doctrine на проде: метаданные и разбор запросов кэшируются в пул,</span>
+<span class="cm"># а не пересчитываются на каждом запросе</span>
+<span class="cm"># doctrine.orm.metadata_cache_driver / query_cache_driver → cache.system</span></code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 8 · что реально ускоряет приложение</caption>
+      <thead><tr><th>Мера</th><th>Эффект</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Убрать N+1 и лишние запросы</td><td>Обычно самый большой выигрыш</td><td>Работа с кодом и тестами</td></tr>
+        <tr><td>Opcache и оптимизированная автозагрузка</td><td>Кратное ускорение старта запроса</td><td>Настройка и перезапуск при деплое</td></tr>
+        <tr><td>Скомпилированный кэш контейнера и маршрутов</td><td>Большой; обязателен на проде</td><td>Прогрев в деплое</td></tr>
+        <tr><td>Предзагрузка классов</td><td>Заметный на больших проектах</td><td>Перезапуск процессов при каждом релизе</td></tr>
+        <tr><td>Кэш приложения для тяжёлых участков</td><td>Большой</td><td>Нужна стратегия инвалидации</td></tr>
+        <tr><td>HTTP-кэш и условные запросы</td><td>Максимальный: запрос не доходит до PHP</td><td>Только для неперсонализированного контента</td></tr>
+        <tr><td>Долгоживущий рантайм</td><td>Существенный, если узкое место — загрузка приложения</td><td>Требует кода без утечек состояния</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Профайлер Symfony — инструмент разработки. На проде он либо выключен, либо включён точечно с ограничением доступа и выборкой: он собирает и хранит подробные данные по каждому запросу и сам становится нагрузкой. Для прода нужны легковесные метрики и лог медленных запросов, а не полный профиль каждого обращения.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Начинать оптимизацию с перехода на альтернативный рантайм. Если страница делает 300 запросов к базе, ускорение загрузки фреймворка даст единицы процентов, а сложность вырастет заметно. Сначала запросы и данные, потом кэши, потом инфраструктура.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Эндпоинт отвечает 3 секунды. Ваши действия?</b><br>Открыть профайлер и посмотреть число запросов и их время. Почти всегда находится N+1 или запрос без индекса. Дальше — гидрация: нужны ли объекты или хватит массивов; вынос синхронных внешних вызовов в Messenger; кэш тяжёлых участков. Инфраструктурные меры в конце, с замером после каждого шага.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите самый медленный эндпоинт и доведите его до целевого времени, фиксируя после каждого шага число запросов, время и память. Отдельно замерьте эффект от прогрева кэша и предзагрузки.</div>
+  </article>
+
+  <!-- S2 -->
+  <article class="card" id="runtime">
+    <p class="path">senior / исполнение / рантайм</p>
+    <div class="card-top"><h3>Долгоживущие рантаймы и состояние сервисов</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Symfony умеет работать не только под FPM: компонент рантайма позволяет запустить то же приложение в долгоживущем процессе. Выигрыш в том, что ядро и контейнер поднимаются один раз, а не на каждый запрос. Цена — приложение больше не «обнуляется» после ответа.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Что ломается и как с этим жить</span></div><pre><code>СОСТОЯНИЕ МЕЖДУ ЗАПРОСАМИ
+  • сервис, запомнивший текущего пользователя или Request,
+    начнёт отдавать чужие данные;
+  • статические свойства и накопленные коллекции не очищаются;
+  • менеджер сущностей после исключения закрывается — и остаётся
+    закрытым для следующих запросов, если его не пересоздать.
+  → сервисы с состоянием реализуют сброс и помечаются как сбрасываемые;
+    зависимости, связанные с запросом, не сохраняются в свойствах.
+
+УТЕЧКИ ПАМЯТИ
+  • раньше их убирал конец запроса, теперь процесс растёт часами.
+  → ограничение числа обработанных запросов и времени жизни процесса,
+    потолок памяти, наблюдение за графиком.
+
+ТОТ ЖЕ НАБОР ПРАВИЛ КАСАЕТСЯ ВОРКЕРОВ MESSENGER —
+они долгоживущие с самого начала, просто про это реже помнят.
+
+КОГДА ОКУПАЕТСЯ: когда узкое место — загрузка приложения.
+Если 70% времени уходит в базу, выигрыш будет скромным.</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сервис с состоянием: сброс между запросами</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Contracts\Service\ResetInterface;
+
+<span class="cm">// Такой сервис безопасен и под FPM, и в долгоживущем процессе:</span>
+<span class="cm">// фреймворк вызовет reset() между запросами.</span>
+<span class="kw">final class</span> RequestContext <span class="kw">implements</span> ResetInterface
+{
+    <span class="kw">private</span> ?User $currentUser = <span class="kw">null</span>;
+    <span class="kw">private array</span> $collectedEvents = [];
+
+    <span class="kw">public function</span> <span class="fn">reset</span>(): <span class="kw">void</span>
+    {
+        $this-&gt;currentUser = <span class="kw">null</span>;
+        $this-&gt;collectedEvents = [];
+    }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Самая частая ловушка в долгоживущих процессах и воркерах — закрытый менеджер сущностей. Любое исключение при работе с базой закрывает его, и все последующие обращения падают, пока процесс не перезапустят. Поэтому воркеры перезапускают по лимитам, а обработчики пишут так, чтобы падение одного сообщения не отравляло остальные.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что нужно проверить перед переходом на долгоживущий рантайм?</b><br>Нет ли сервисов, хранящих данные запроса между вызовами, — они начнут смешивать пользователей. Есть ли сброс состояния у тех, кому он нужен. Как ведёт себя менеджер сущностей после ошибок. Нет ли утечек памяти: процесс теперь живёт часами. И главное — измерить, что узкое место действительно в загрузке приложения, а не в базе.</div>
+    <div class="box task"><span class="lbl">Практика</span>Найдите в проекте сервисы, хранящие состояние между вызовами, и реализуйте у них сброс. Затем запустите воркер Messenger на сутки с лимитами и постройте график памяти — утечка видна сразу.</div>
+  </article>
+
+  <!-- S3 -->
+  <article class="card" id="scaling">
+    <p class="path">senior / масштабирование / инфраструктура</p>
+    <div class="card-top"><h3>Масштабирование на несколько серверов</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 9 · что должно перестать быть локальным</caption>
+      <thead><tr><th>Компонент</th><th>Проблема при нескольких узлах</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>Сессии</td><td>Файловое хранилище живёт на одном сервере</td><td>Общее хранилище сессий (Redis или БД)</td></tr>
+        <tr><td>Кэш приложения</td><td>Локальные пулы расходятся между узлами</td><td>Общий адаптер; локальный кэш — только для неизменяемых данных</td></tr>
+        <tr><td>Загруженные файлы</td><td>Лежат на одном узле</td><td>Объектное хранилище через файловую абстракцию</td></tr>
+        <tr><td>Очереди</td><td>Транспорт в БД упирается в основную базу</td><td>Выделенный брокер, разделение очередей по критичности</td></tr>
+        <tr><td>Планировщик</td><td>Задача запустится на каждом узле</td><td>Блокировка через общее хранилище (компонент блокировок)</td></tr>
+        <tr><td>Ограничение частоты</td><td>Счётчик на узел — лимит умножается на их число</td><td>Общее хранилище для счётчиков</td></tr>
+        <tr><td>Логи</td><td>Разбросаны по машинам</td><td>Централизованный сбор в структурированном виде</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Блокировка между серверами</span></div><pre><code>&lt;?php
+<span class="kw">use</span> Symfony\Component\Lock\LockFactory;
+
+<span class="cm">// Хранилище блокировок должно быть общим для всех узлов,</span>
+<span class="cm">// иначе «блокировка» защищает только один сервер от самого себя.</span>
+<span class="kw">final class</span> ReindexCommand <span class="kw">extends</span> Command
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly</span> LockFactory $locks)
+    {
+        <span class="kw">parent</span>::<span class="fn">__construct</span>();
+    }
+
+    <span class="kw">protected function</span> <span class="fn">execute</span>(InputInterface $in, OutputInterface $out): <span class="kw">int</span>
+    {
+        $lock = $this-&gt;locks-&gt;<span class="fn">createLock</span>(<span class="st">'catalog.reindex'</span>, ttl: 3600);
+
+        <span class="kw">if</span> (!$lock-&gt;<span class="fn">acquire</span>()) {
+            $out-&gt;<span class="fn">writeln</span>(<span class="st">'Переиндексация уже выполняется, выходим'</span>);
+
+            <span class="kw">return</span> Command::SUCCESS;
+        }
+
+        <span class="kw">try</span> {
+            $this-&gt;<span class="fn">reindex</span>();
+        } <span class="kw">finally</span> {
+            $lock-&gt;<span class="fn">release</span>();
+        }
+
+        <span class="kw">return</span> Command::SUCCESS;
+    }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Разделяйте очереди по критичности. Одна общая очередь означает, что ночной пересчёт каталога на 200 000 товаров задержит письмо с кодом подтверждения. Минимум — быстрая очередь для пользовательских сценариев и медленная для массовых операций, с отдельными воркерами и разным числом процессов.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что нужно изменить, чтобы приложение работало на нескольких серверах?</b><br>Убрать локальное состояние: сессии и кэш в общее хранилище, файлы в объектное, очереди в общий брокер, блокировки и счётчики лимитов — тоже в общее хранилище, логи в централизованный сбор. Затем убедиться, что деплой согласованно обновляет все узлы и перезапускает воркеры.</div>
+    <div class="box task"><span class="lbl">Практика</span>Разверните проект на двух узлах за балансировщиком и найдите всё, что сломается: вход в систему, загрузка файла, кэш, планировщик, ограничение частоты. Исправьте и проверьте, что выключение одного узла не ломает сценарии.</div>
+  </article>
+
+  <!-- S4 -->
+  <article class="card" id="boundaries">
+    <p class="path">senior / архитектура / границы</p>
+    <div class="card-top"><h3>Границы модулей и зависимость от фреймворка</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Направление зависимостей</span></div><pre><code>src/
+  Order/
+    Domain/          сущности, объекты-значения, правила, доменные события
+                     ← ни одного use Symfony\ и ни одного use Doctrine\
+    Application/     сценарии: «оформить заказ», «отменить заказ»
+    Infrastructure/  репозитории Doctrine, клиенты внешних API
+    UI/              контроллеры, консольные команды, обработчики сообщений
+  Catalog/
+  Billing/
+
+Правила, ради которых всё затевалось:
+  • домен объявляет интерфейс, инфраструктура его реализует;
+  • модуль общается с другим через публичный контракт или событие,
+    а не через прямое обращение к чужим сущностям;
+  • нарушения границ ловит проверка зависимостей в CI —
+    иначе договорённость живёт до ближайшего срочного релиза.</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 10 · когда какая структура</caption>
+      <thead><tr><th>Ситуация</th><th>Структура</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>1–3 разработчика, один домен</td><td>Стандартные каталоги Symfony</td><td>Слои добавят файлов и не решат ни одной проблемы</td></tr>
+        <tr><td>Логика переиспользуется</td><td>Сервисы-сценарии и DTO</td><td>Убирает дублирование между контроллером, консолью и обработчиком</td></tr>
+        <tr><td>Несколько команд и доменов</td><td>Группировка по доменам с границами</td><td>Снижает связность, деплой остаётся одним</td></tr>
+        <tr><td>Разные требования к масштабу и релизам</td><td>Выделение сервиса</td><td>Оправдано конкретной причиной, а не модой</td></tr>
+        <tr><td>Код нужен в другом проекте</td><td>Отдельный пакет или бандл</td><td>Это и есть настоящее назначение бандла</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Полная независимость от фреймворка — не самоцель. Разумный компромисс: держать вне фреймворка то, что дороже всего переписывать, — правила предметной области и вычисления. Контроллеры, конфигурация, миграции и шаблоны спокойно остаются фреймворковыми: это точки входа, они и должны быть такими.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Заводить свои бандлы для разделения одного приложения. Бандл — механизм распространения кода между проектами: он тянет за собой расширение, конфигурацию, семантику. Для внутреннего разделения достаточно каталогов, пространств имён и правил в конфигурации сервисов.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда стоит выносить часть системы в отдельный сервис?</b><br>Когда есть причина, которую монолит не решает: часть нужно масштабировать независимо, у неё другой цикл релизов или другой стек, либо команды физически мешают друг другу. Проблемы связности сначала решаются границами внутри монолита — это дешевле и обратимо. Распил без такой причины даёт сетевые отказы и распределённые транзакции вместо вызова метода.</div>
+    <div class="box task"><span class="lbl">Практика</span>Выделите один домен в отдельный каталог с доменным слоем без зависимостей от фреймворка и Doctrine. Добавьте в CI проверку, которая падает при появлении запрещённой зависимости.</div>
+  </article>
+
+  <!-- S5 -->
+  <article class="card" id="security-adv">
+    <p class="path">senior / безопасность / прод</p>
+    <div class="card-top"><h3>Безопасность в продакшене</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 11 · что находят при аудите Symfony-приложений</caption>
+      <thead><tr><th>Риск</th><th>Как появляется</th><th>Мера</th></tr></thead>
+      <tbody>
+        <tr><td>Доступ к чужому объекту</td><td>Сущность найдена по параметру маршрута, права не проверены</td><td>Voter на каждом эндпоинте; выборка сразу с фильтром по владельцу</td></tr>
+        <tr><td>Инъекция через DQL или SQL</td><td>Конкатенация значений вместо параметров; сортировка по полю из запроса</td><td>Только параметры; поля сортировки — по белому списку</td></tr>
+        <tr><td>Утечка полей через API</td><td>Сериализация сущности без групп</td><td>Явные группы или выходные DTO</td></tr>
+        <tr><td>Раскрытие отладочной информации</td><td>Профайлер или режим отладки доступны на проде</td><td>Отладка выключена, профайлер закрыт, страницы ошибок без трассировки</td></tr>
+        <tr><td>Секреты в репозитории</td><td>Ключи в <code>.env</code> или в конфигурации</td><td>Переменные окружения и зашифрованное хранилище секретов</td></tr>
+        <tr><td>Перебор паролей и кодов</td><td>Нет ограничения частоты на вход и восстановление</td><td>Компонент ограничения частоты с общим хранилищем счётчиков</td></tr>
+        <tr><td>Небезопасная загрузка файлов</td><td>Доверие имени и заявленному типу</td><td>Проверка содержимого, генерация имени, хранение вне корня сайта</td></tr>
+        <tr><td>Устаревшие зависимости</td><td>Пакеты годами без обновления</td><td>Аудит уязвимостей в CI и регулярные обновления</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Секреты и аудит</span></div><pre><code><span class="cm"># Зашифрованное хранилище секретов: значения шифруются,</span>
+<span class="cm"># в репозиторий попадают только шифротексты и публичный ключ.</span>
+php bin/console secrets:set DATABASE_PASSWORD
+php bin/console secrets:list --reveal      <span class="cm"># требует приватного ключа</span>
+
+<span class="cm"># Уязвимости в зависимостях — обязательный шаг CI</span>
+composer audit
+
+<span class="cm"># Проверки конфигурации перед выкаткой</span>
+php bin/console lint:container
+php bin/console lint:yaml config/
+php bin/console debug:config framework</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Самая частая реальная уязвимость — не экзотика, а забытая проверка прав на одном эндпоинте из сорока. Защита системная: писать выборки сразу с ограничением по владельцу и иметь для каждого ресурса тест «чужой пользователь получает 403». Точечные проверки в контроллерах рано или поздно где-то забудут.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>От чего Symfony защищает по умолчанию, а от чего нет?</b><br>По умолчанию есть: экранирование в Twig, CSRF в формах, параметризованные запросы в Doctrine, современное хеширование паролей, разделение окружений. Не защищает от отсутствующей авторизации на объект, инъекций в собранных вручную запросах, утечки полей через сериализацию сущностей, включённой отладки на проде, секретов в репозитории и уязвимых зависимостей.</div>
+    <div class="box task"><span class="lbl">Практика</span>Пройдите по таблице и проверьте свой проект по каждому пункту. На каждую находку напишите тест, фиксирующий правильное поведение, и подключите аудит зависимостей в CI.</div>
+  </article>
+
+  <!-- S6 -->
+  <article class="card" id="observability">
+    <p class="path">senior / эксплуатация / наблюдаемость</p>
+    <div class="card-top"><h3>Наблюдаемость</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Логи: каналы и разное поведение по окружениям</span></div><pre><code><span class="nm">monolog</span>:
+    <span class="nm">handlers</span>:
+        <span class="cm"># На проде: писать не всё подряд, а придержать записи и вывалить</span>
+        <span class="cm"># весь контекст запроса, если случилась ошибка</span>
+        <span class="nm">main</span>:
+            <span class="nm">type</span>: fingers_crossed
+            <span class="nm">action_level</span>: error
+            <span class="nm">handler</span>: nested
+            <span class="nm">excluded_http_codes</span>: [404, 405]
+
+        <span class="nm">nested</span>:
+            <span class="nm">type</span>: stream
+            <span class="nm">path</span>: <span class="st">'php://stderr'</span>          <span class="cm"># в контейнерах — в поток, а не в файл</span>
+            <span class="nm">level</span>: debug
+            <span class="nm">formatter</span>: monolog.formatter.json   <span class="cm"># структурированный вывод</span>
+
+        <span class="cm"># Отдельный канал для фоновой обработки</span>
+        <span class="nm">messenger</span>:
+            <span class="nm">type</span>: stream
+            <span class="nm">path</span>: <span class="st">'php://stderr'</span>
+            <span class="nm">channels</span>: [messenger]</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Структурированные записи со сквозным идентификатором</span></div><pre><code>&lt;?php
+<span class="cm">// Плохо: строка, по которой ничего не сгруппировать</span>
+$logger-&gt;<span class="fn">info</span>(<span class="st">"Заказ {$order-&gt;getId()} оплачен пользователем {$user-&gt;getId()}"</span>);
+
+<span class="cm">// Хорошо: стабильное имя события плюс контекст</span>
+$logger-&gt;<span class="fn">info</span>(<span class="st">'order.paid'</span>, [
+    <span class="st">'order_id'</span>    =&gt; $order-&gt;<span class="fn">getId</span>(),
+    <span class="st">'user_id'</span>     =&gt; $user-&gt;<span class="fn">getId</span>(),
+    <span class="st">'amount'</span>      =&gt; $order-&gt;<span class="fn">getTotal</span>(),
+    <span class="st">'duration_ms'</span> =&gt; $ms,
+]);
+
+<span class="cm">// Идентификатор запроса добавляется процессором ко всем записям сразу —</span>
+<span class="cm">// тогда по одному значению собирается вся картина обращения.</span></code></pre></div>
+    <p>Минимальный набор для прода:</p>
+    <ul>
+      <li><strong>Трекер ошибок</strong> с группировкой и оповещением: логи, которые никто не читает, — не мониторинг.</li>
+      <li><strong>Метрики приложения:</strong> время ответа по перцентилям, доля ошибок, число запросов к БД на обращение.</li>
+      <li><strong>Метрики очередей:</strong> длина, время ожидания, доля сбоев, возраст самого старого сообщения — растущая очередь предвещает инцидент.</li>
+      <li><strong>Health-check</strong> для оркестратора: проверка доступности базы и критичных зависимостей.</li>
+      <li><strong>Алерты по симптомам:</strong> рост ошибок, деградация времени ответа, очередь выше порога, место на диске.</li>
+    </ul>
+    <div class="box imp"><span class="lbl">Важно</span>Обработчик, придерживающий записи до появления ошибки, очень удобен, но у него есть цена: при массовых ошибках он вываливает огромный объём логов. Исключайте из него шум вроде 404 и следите за объёмом — иначе первый же всплеск ошибок заполнит диск.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы узнаёте о поломке на проде?</b><br>Из алертов: рост доли ошибок и времени ответа, всплеск сбойных сообщений, рост длины и возраста очереди, ошибки в трекере с группировкой. Дальше — сборка полной картины по сквозному идентификатору запроса в структурированных логах. Если единственный сигнал — обращения пользователей, наблюдаемости нет.</div>
+    <div class="box task"><span class="lbl">Практика</span>Добавьте сквозной идентификатор запроса во все записи и во внешние вызовы, переведите три ключевых места на структурированные события и настройте алерт на рост доли ошибок. Проверьте срабатывание, сломав фичу на стенде.</div>
+  </article>
+
+  <!-- S7 -->
+  <article class="card" id="deploy">
+    <p class="path">senior / эксплуатация / деплой</p>
+    <div class="card-top"><h3>Деплой без простоя</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Порядок шагов и почему именно такой</span></div><pre><code><span class="cm"># 1. Сборка нового релиза в отдельной директории (старая продолжает работать)</span>
+composer install --no-dev --optimize-autoloader --classmap-authoritative
+npm ci &amp;&amp; npm run build
+
+<span class="cm"># 2. Прогрев кэша ДЛЯ НОВОГО релиза, в правильном окружении</span>
+APP_ENV=prod php bin/console cache:warmup
+
+<span class="cm"># 3. Только совместимые миграции — до переключения кода.</span>
+<span class="cm">#    Расширяющие: новые колонки и таблицы. Ничего не удаляем.</span>
+APP_ENV=prod php bin/console doctrine:migrations:migrate --no-interaction
+
+<span class="cm"># 4. Атомарное переключение симлинка на новый релиз</span>
+ln -sfn /releases/2026-07-26 /var/www/current
+
+<span class="cm"># 5. Перечитать процессы: подхватить новый код и сбросить opcache</span>
+sudo systemctl reload php8.4-fpm
+
+<span class="cm"># 6. Остановить воркеры — супервизор поднимет их на новом коде.</span>
+<span class="cm">#    Без этого они продолжат выполнять старую версию.</span>
+APP_ENV=prod php bin/console messenger:stop-workers
+
+<span class="cm"># 7. Проверка: health-check, ключевые сценарии, метрики ошибок.</span>
+<span class="cm">#    Откат = вернуть симлинк и снова остановить воркеры.</span></code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 12 · грабли деплоя</caption>
+      <thead><tr><th>Симптом</th><th>Причина</th></tr></thead>
+      <tbody>
+        <tr><td>После выката работает старый код</td><td>Не перезагружен FPM, не сброшен opcache или не остановлены воркеры</td></tr>
+        <tr><td>Первые запросы после релиза очень медленные</td><td>Кэш не прогрет заранее и собирается на первом обращении</td></tr>
+        <tr><td>Ошибки в течение минуты после деплоя</td><td>Разрушающая миграция выкачена вместе с кодом: старая и новая версии работали одновременно</td></tr>
+        <tr><td>Обработчики падают на неизвестных полях</td><td>Воркеры не перезапущены и работают со старым кодом</td></tr>
+        <tr><td>Кэш прогрет «не тот»</td><td>Прогрев выполнен без указания окружения <code>prod</code></td></tr>
+        <tr><td>Не работает загрузка файлов</td><td>Права на каталоги <code>var/</code> или симлинки не перенесены в новый релиз</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Миграция и переключение кода происходят не одновременно: между ними работают обе версии приложения. Поэтому изменения схемы должны быть совместимы в обе стороны, а удаление колонок и сужение типов выносится в отдельные более поздние релизы. Подробности про схему «расширить → перенести → сузить» — в <a href="sql.html">конспекте по базам данных</a>.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Опишите деплой Symfony-приложения без простоя.</b><br>Сборка релиза отдельно, прогрев кэша для нужного окружения, применение только совместимых миграций, атомарное переключение симлинка, перезагрузка FPM, остановка воркеров Messenger для перезапуска на новом коде, проверка health-check и метрик. Откат — обратное переключение симлинка и повторная остановка воркеров.</div>
+    <div class="box task"><span class="lbl">Практика</span>Опишите деплой проекта как скрипт или пайплайн с шагами выше и явной процедурой отката. Проведите учебный откат релиза и замерьте, сколько времени он занимает.</div>
+  </article>
+
+  <!-- S8 -->
+  <article class="card" id="upgrade">
+    <p class="path">senior / поддержка / версии</p>
+    <div class="card-top"><h3>Версии, устаревания и обновления</h3><span class="badge b-3">Архитектура</span></div>
+    <p>У Symfony предсказуемый график выпусков: минорные версии выходят регулярно и обратно совместимы, мажорные — раз в несколько лет, а отдельные версии получают статус долгосрочной поддержки с более длинным сроком исправлений. Это делает планирование обновлений возможным, если им заниматься заранее.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Стратегия, которая работает</span></div><pre><code>ПОСТОЯННО
+  • обновлять минорные версии регулярно, а не копить на год;
+  • держать тесты зелёными — это единственная страховка при обновлении;
+  • следить за журналом устареваний: в dev и test каждое использование
+    устаревшего API логируется, и это готовый список работ.
+
+ПЕРЕД МАЖОРНЫМ ОБНОВЛЕНИЕМ
+  1. Обновиться до последней минорной версии текущей мажорной ветки.
+  2. Свести к нулю предупреждения об устареваниях: в новой мажорной
+     версии удалено ровно то, о чём предупреждали.
+  3. Поднять версию PHP, если новая ветка требует более свежую.
+  4. Проверить сторонние бандлы: часть может не поддерживать
+     новую версию — это самая частая причина застрять.
+  5. Обновлять в отдельной ветке, выкатывать отдельным релизом
+     без функциональных изменений.
+
+ПОЛЕЗНО ЗНАТЬ
+  • рецепты Flex обновляются отдельной командой: изменения в конфигурации
+    приходят не с обновлением пакета, а с обновлением рецепта;
+  • автоматический рефакторинг помогает с типовыми заменами,
+    но требует ревью каждого изменения.</code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Команды для обновления</span></div><pre><code>composer outdated --direct
+composer why-not symfony/framework-bundle 8.0   <span class="cm"># кто мешает обновиться</span>
+
+<span class="cm"># Что изменилось в рецептах пакетов с момента установки</span>
+composer recipes
+composer recipes:update symfony/framework-bundle
+
+<span class="cm"># Устаревания: журнал в dev/test и сводка после прогона тестов</span>
+<span class="cm"># (включается переменной окружения SYMFONY_DEPRECATIONS_HELPER)</span>
+vendor/bin/phpunit</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Устаревания в Symfony — не косметика, а спецификация будущего обновления. Всё, о чём предупреждает журнал в текущей мажорной ветке, будет удалено в следующей. Проект, где предупреждения игнорируют годами, обновляется не за неделю, а за квартал — и обычно под давлением окончания поддержки.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как обновить мажорную версию Symfony на большом проекте?</b><br>Сначала обновиться до последней минорной версии текущей ветки и убрать все предупреждения об устареваниях — именно это удаляется в новой мажорной. Затем проверить требования по версии PHP и совместимость сторонних бандлов, обновиться в отдельной ветке при зелёных тестах, отдельно обновить рецепты конфигурации и выкатить релизом без функциональных изменений, чтобы при проблемах было понятно, что откатывать.</div>
+    <div class="box task"><span class="lbl">Практика</span>Соберите список устареваний своего проекта из журнала и сводки после прогона тестов, оцените объём работ и составьте план обновления: что мешает, какие бандлы блокируют, сколько релизов потребуется.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Начинаю оптимизацию с числа запросов, а не с инфраструктуры</li>
+        <li>Знаю, что даёт прогрев кэша, предзагрузка и оптимизация автозагрузки</li>
+        <li>Не держу профайлер включённым на проде</li>
+        <li>Понимаю риски состояния в долгоживущих процессах</li>
+        <li>Реализую сброс у сервисов с состоянием</li>
+        <li>Убираю локальное состояние для работы на нескольких узлах</li>
+      </ul>
+      <ul class="check">
+        <li>Разделяю очереди по критичности и слежу за их метриками</li>
+        <li>Держу домен независимым от фреймворка там, где это окупается</li>
+        <li>Не завожу бандлы для внутреннего разделения приложения</li>
+        <li>Прохожу чек-лист безопасности и закрываю находки тестами</li>
+        <li>Пишу структурированные логи со сквозным идентификатором</li>
+        <li>Выкатываю и откатываю релиз без простоя, помню про воркеры</li>
+        <li>Держу предупреждения об устареваниях на нуле</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-собеседование по Symfony — это разбор ситуаций: «страница делает 200 запросов», «как выкатить миграцию на большой таблице», «что будет при переходе на долгоживущий рантайм», «как разнести код между командами». Ценится порядок действий, цифры и понимание, чем вы платите за каждое решение.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения перед собеседованием: чем решать типовую задачу, чем Symfony отличается по подходу от «быстрых» фреймворков и что должно быть готово до запуска.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Задача → инструмент Symfony</h3><span class="badge b-tag">Таблица 13</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 13 · где решается типовая задача</caption>
+      <thead><tr><th>Задача</th><th>Инструмент</th><th>Замечание</th></tr></thead>
+      <tbody>
+        <tr><td>Проверить входные данные</td><td>DTO с ограничениями валидатора</td><td>Работает и для форм, и для API, и для консоли</td></tr>
+        <tr><td>Проверить права на объект</td><td>Voter</td><td><code>access_control</code> — только грубый фильтр по URL и роли</td></tr>
+        <tr><td>Найти сущность по параметру маршрута</td><td>Автоматическое разрешение аргумента</td><td>Даёт 404, но не проверяет права</td></tr>
+        <tr><td>Отдать JSON</td><td>Сериализатор с группами или выходной DTO</td><td>Сущность напрямую отдавать нельзя</td></tr>
+        <tr><td>Сделать что-то долгое</td><td>Messenger</td><td>Идемпотентность обработчика обязательна</td></tr>
+        <tr><td>Отреагировать на факт несколькими способами</td><td>Событие и слушатели</td><td>Основной сценарий держать явным</td></tr>
+        <tr><td>Добавить поведение всем запросам</td><td>Подписчик на события ядра</td><td>Приоритет определяет порядок</td></tr>
+        <tr><td>Подключить свою реализацию в готовый механизм</td><td>Интерфейс плюс тег (автоконфигурация)</td><td>Для сложной сборки — compiler pass</td></tr>
+        <tr><td>Не пересчитывать тяжёлое</td><td>Кэш приложения с тегами</td><td>TTL и правило инвалидации обязательны</td></tr>
+        <tr><td>Не выполнять запрос вообще</td><td>HTTP-кэш, условные запросы</td><td>Только для неперсонализированного контента</td></tr>
+        <tr><td>Не дать выполнить операцию дважды</td><td>Компонент блокировок с общим хранилищем</td><td>Локальное хранилище не защищает кластер</td></tr>
+        <tr><td>Ограничить частоту обращений</td><td>Компонент ограничения частоты</td><td>Счётчики — в общее хранилище</td></tr>
+        <tr><td>Выполнять по расписанию</td><td>Консольная команда плюс системный планировщик</td><td>На кластере — с блокировкой</td></tr>
+        <tr><td>Обработать миллион записей</td><td>Потоковый обход с периодической очисткой</td><td><code>findAll()</code> — путь к нехватке памяти</td></tr>
+        <tr><td>Подменить внешний сервис в тесте</td><td>Подмена сервиса в контейнере, мок-клиент HTTP</td><td>Тесты не ходят в сеть</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Symfony и Laravel: разница подходов</h3><span class="badge b-tag">Таблица 14</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 14 · не «лучше и хуже», а разные компромиссы</caption>
+      <thead><tr><th>Аспект</th><th>Symfony</th><th>Laravel</th></tr></thead>
+      <tbody>
+        <tr><td>Философия</td><td>Явность: почти всё описано конфигурацией и типами</td><td>Удобство: много готовых соглашений и коротких путей</td></tr>
+        <tr><td>Работа с БД</td><td>Doctrine, Data Mapper: сущность не знает о базе</td><td>Eloquent, Active Record: модель и есть доступ к данным</td></tr>
+        <tr><td>Сохранение</td><td>Единица работы и <code>flush()</code> с автоматическим отслеживанием изменений</td><td>Явные <code>save()</code> и <code>update()</code> на модели</td></tr>
+        <tr><td>Контейнер</td><td>Компилируется в PHP-код на этапе сборки</td><td>Разрешает зависимости в рантайме</td></tr>
+        <tr><td>Расширение</td><td>Теги, compiler pass, события ядра</td><td>Провайдеры, фасады, макросы</td></tr>
+        <tr><td>Права</td><td>Voters и firewalls</td><td>Политики и гейты</td></tr>
+        <tr><td>Фон</td><td>Messenger с транспортами и стратегиями повторов</td><td>Очереди с джобами и ретраями</td></tr>
+        <tr><td>Порог входа</td><td>Выше: больше явных понятий на старте</td><td>Ниже: быстрый старт из коробки</td></tr>
+        <tr><td>Где выигрывает</td><td>Долгоживущие большие системы, сложная предметная область, несколько команд</td><td>Быстрая разработка продуктовых фич, небольшие и средние проекты</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box good"><span class="lbl">Практический вывод</span>Обе платформы решают одни задачи и заимствуют друг у друга идеи. На собеседовании выигрышный ответ — не «Symfony лучше», а понимание компромиссов: где явность окупается сопровождаемостью, а где скорость разработки важнее. Подробности по второй платформе — в <a href="laravel.html">отдельном конспекте</a>.</div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Чек-лист готовности к проду</h3><span class="badge b-tag">Таблица 15</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 15 · что должно быть сделано до запуска</caption>
+      <thead><tr><th>Область</th><th>Пункт</th></tr></thead>
+      <tbody>
+        <tr><td>Конфигурация</td><td>Окружение <code>prod</code>, отладка выключена, профайлер недоступен, секреты не в репозитории</td></tr>
+        <tr><td>Сборка</td><td><code>composer install --no-dev -o</code>, прогрев кэша в деплое, opcache и предзагрузка настроены</td></tr>
+        <tr><td>База</td><td>Индексы под реальные запросы, миграции совместимы, есть бэкапы с проверенным восстановлением</td></tr>
+        <tr><td>Производительность</td><td>Нет N+1 на ключевых страницах, тяжёлые участки закэшированы, гидрация выбрана осознанно</td></tr>
+        <tr><td>Фон</td><td>Воркеры под супервизором с лимитами, остановка воркеров в деплое, транспорт сбоев и мониторинг</td></tr>
+        <tr><td>Кластер</td><td>Сессии, кэш, блокировки и счётчики лимитов — в общем хранилище; файлы вне локального диска</td></tr>
+        <tr><td>Безопасность</td><td>Voters на всех эндпоинтах, ограничение частоты на вход, валидация загрузок, аудит зависимостей</td></tr>
+        <tr><td>Наблюдаемость</td><td>Структурированные логи, трекер ошибок, метрики очередей и БД, health-check, алерты</td></tr>
+        <tr><td>Тесты</td><td>Функциональные тесты ключевых сценариев в CI, внешние сервисы замоканы</td></tr>
+        <tr><td>Деплой</td><td>Атомарное переключение, план отката, проверка после выката</td></tr>
+        <tr><td>Поддержка</td><td>Версии Symfony и PHP поддерживаются, предупреждения об устареваниях под контролем</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 16</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 16 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Ядро</td><td>Знает цепочку событий и роль контейнера</td><td>Расширяет фреймворк тегами и событиями</td><td>Понимает компиляцию контейнера и цену абстракций</td></tr>
+        <tr><td>Данные</td><td>Сущности, репозитории, миграции</td><td>N+1, DQL, гидрация, пакетная обработка</td><td>Поведение под нагрузкой, миграции без простоя</td></tr>
+        <tr><td>HTTP</td><td>Маршруты, контроллеры, формы</td><td>DTO, сериализация, кэш, ограничение частоты</td><td>Контракты API, версионирование, деградация</td></tr>
+        <tr><td>Доступ</td><td>Понимает разницу аутентификации и авторизации</td><td>Пишет voters и настраивает firewalls</td><td>Строит модель угроз и проверяет её тестами</td></tr>
+        <tr><td>Фон</td><td>Знает, что Messenger есть</td><td>Пишет идемпотентные обработчики с повторами</td><td>Разделяет очереди, мониторит, планирует отказ</td></tr>
+        <tr><td>Архитектура</td><td>Контроллер и сервис</td><td>Слои, DTO, события, группировка по доменам</td><td>Границы модулей, обоснование сложности и отказ от неё</td></tr>
+        <tr><td>Эксплуатация</td><td>Запускает локально</td><td>Понимает окружения, кэш и деплой</td><td>Отвечает за релиз, откат, наблюдаемость и обновления</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и применение</td><td>Компромиссы, цифры, план на отказ</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · инструменты</p>
+    <h2>Консоль и атрибуты</h2>
+    <p>То, что набирают и пишут каждый день. Сгруппировано по ситуации, а не по алфавиту.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Команды по ситуациям</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Разработка</span></div><pre><code>symfony new my-app --webapp          <span class="cm"># новый проект с типовым набором</span>
+composer require symfony/messenger
+composer require --dev symfony/maker-bundle
+
+php bin/console make:controller
+php bin/console make:entity
+php bin/console make:migration
+php bin/console make:form
+php bin/console make:voter
+php bin/console make:message
+php bin/console make:subscriber
+php bin/console make:test
+
+php bin/console debug:router                 <span class="cm"># все маршруты</span>
+php bin/console debug:autowiring redis       <span class="cm"># что можно внедрить</span>
+php bin/console debug:container --tag=kernel.event_subscriber
+php bin/console debug:event-dispatcher kernel.request
+php bin/console debug:config framework
+php bin/console debug:twig                   <span class="cm"># фильтры, функции, пути шаблонов</span></code></pre></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">База, фон, эксплуатация</span></div><pre><code>php bin/console doctrine:migrations:migrate
+php bin/console doctrine:migrations:status
+php bin/console doctrine:schema:validate      <span class="cm"># схема и разметка совпадают?</span>
+php bin/console doctrine:query:dql <span class="st">'SELECT p FROM App\Entity\Post p'</span>
+
+php bin/console messenger:consume async --time-limit=3600 --memory-limit=256M
+php bin/console messenger:failed:show
+php bin/console messenger:failed:retry --force
+php bin/console messenger:stop-workers        <span class="cm"># обязательный шаг деплоя</span>
+
+APP_ENV=prod php bin/console cache:clear
+APP_ENV=prod php bin/console cache:warmup
+php bin/console cache:pool:clear cache.app
+
+php bin/console lint:container &amp;&amp; php bin/console lint:yaml config/ \
+  &amp;&amp; php bin/console lint:twig templates/
+php bin/console secrets:set API_TOKEN
+php bin/console about</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Атрибуты, которые встречаются чаще всего</span></div><pre><code>&lt;?php
+<span class="cm">// Маршрутизация и контроллеры</span>
+#[Route(<span class="st">'/posts/{slug}'</span>, name: <span class="st">'post_show'</span>, methods: [<span class="st">'GET'</span>])]
+#[IsGranted(<span class="st">'edit'</span>, subject: <span class="st">'post'</span>)]
+#[Cache(public: <span class="kw">true</span>, maxage: 300)]
+
+<span class="cm">// Разрешение аргументов</span>
+#[MapRequestPayload] CreatePostRequest $payload
+#[MapQueryString] PostListQuery $query
+#[MapEntity(mapping: [<span class="st">'slug'</span> =&gt; <span class="st">'slug'</span>])] Post $post
+
+<span class="cm">// Контейнер</span>
+#[Autowire(<span class="st">'%kernel.project_dir%/var/uploads'</span>)] <span class="kw">string</span> $dir
+#[Autowire(env: <span class="st">'API_TOKEN'</span>)] <span class="kw">string</span> $token
+#[AutowireIterator(ExportFormatter::<span class="kw">class</span>)] <span class="kw">iterable</span> $formatters
+#[AutowireLocator([<span class="st">'csv'</span> =&gt; CsvFormatter::<span class="kw">class</span>])] ContainerInterface $locator
+
+<span class="cm">// Точки расширения</span>
+#[AsEventListener(event: OrderPlacedEvent::<span class="kw">class</span>, priority: 10)]
+#[AsMessageHandler]
+#[AsCommand(name: <span class="st">'app:reindex'</span>, description: <span class="st">'…'</span>)]
+
+<span class="cm">// Данные</span>
+#[ORM\Entity(repositoryClass: PostRepository::<span class="kw">class</span>)]
+#[ORM\Column(length: 200)]
+#[Assert\NotBlank]
+#[Groups([<span class="st">'post:read'</span>])]</code></pre></div>
+    <div class="box good"><span class="lbl">Практический вывод</span>Половина отладки Symfony живёт в командах <code>debug:*</code>. «Сервис не подставляется», «листенер не срабатывает», «маршрут не находится», «параметр пустой» — на каждый из этих вопросов есть команда, которая отвечает за секунду. Гадать и читать конфигурацию глазами почти никогда не нужно.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы намеренно короткие — это каркас, а не пересказ документации. Структура сильного ответа: определение → как работает → пример из практики → компромисс.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что происходит от запроса до ответа?</span><span class="aa">Единая точка входа создаёт ядро, оно вызывает обработку запроса и рассылает события: определение маршрута и аутентификация, поиск контроллера, разрешение аргументов, вызов контроллера, при необходимости преобразование результата в ответ, финальная правка ответа. После отправки — событие завершения, при исключении — событие обработки ошибки.</span></li>
+      <li><span class="qq">Что такое HttpKernel?</span><span class="aa">Компонент, превращающий объект запроса в объект ответа. Вся структура приложения строится вокруг этого преобразования, а расширение делается подпиской на события, которые ядро рассылает по ходу обработки.</span></li>
+      <li><span class="qq">Зачем нужны события ядра?</span><span class="aa">Чтобы добавлять поведение всем запросам, не трогая контроллеры: аутентификация, локаль, заголовки, логирование, обработка исключений. Слушатель может даже вернуть ответ на раннем этапе и оборвать дальнейшую обработку.</span></li>
+      <li><span class="qq">Чем окружения отличаются друг от друга?</span><span class="aa">Набором конфигурации и поведением кэша: в разработке контейнер и маршруты пересобираются при изменениях, в продакшене компилируются заранее и не проверяются. Тестовое окружение обычно использует свою базу и отключённые внешние интеграции.</span></li>
+      <li><span class="qq">Зачем прогревать кэш на проде?</span><span class="aa">Потому что контейнер, маршруты и шаблоны компилируются в файлы. Без прогрева первый запрос после деплоя будет собирать их сам, а при неверных правах — упадёт. Прогрев в правильном окружении — обязательный шаг выкатки.</span></li>
+      <li><span class="qq">Как настраиваются маршруты?</span><span class="aa">Обычно атрибутами над классом и методами контроллера: путь, имя, разрешённые методы, ограничения параметров. Альтернатива — файлы конфигурации, что удобно для маршрутов сторонних бандлов.</span></li>
+      <li><span class="qq">Как сущность попадает в аргумент контроллера?</span><span class="aa">Её находит специальный резолвер аргументов по параметру маршрута, при отсутствии записи возвращается 404. Права доступа при этом не проверяются — это отдельный шаг.</span></li>
+      <li><span class="qq">Что такое autowiring?</span><span class="aa">Автоматическая подстановка зависимостей по типам аргументов конструктора: контейнер сопоставляет тип с сервисом или его алиасом. Скалярные значения так подставить нельзя — их задают явно.</span></li>
+      <li><span class="qq">Что делать, если у интерфейса две реализации?</span><span class="aa">Указать алиас по умолчанию, чтобы контейнер знал, что подставлять при запросе интерфейса, и при необходимости задать другую реализацию конкретному потребителю через аргументы сервиса.</span></li>
+      <li><span class="qq">Чем <code>persist()</code> отличается от <code>flush()</code>?</span><span class="aa">Первый берёт новый объект под наблюдение, запросов при этом не выполняется. Второй синхронизирует все изменения отслеживаемых объектов с базой в одной транзакции. Для уже загруженной сущности <code>persist()</code> не нужен.</span></li>
+      <li><span class="qq">Чем Doctrine отличается от Active Record?</span><span class="aa">Это Data Mapper: сущность — обычный объект, ничего не знающий о базе, а сохранением занимается менеджер сущностей. В Active Record модель сама умеет себя сохранять. Отсюда разные подходы к тестированию, к доменной логике и к пакетным операциям.</span></li>
+      <li><span class="qq">Зачем репозиторий, если есть менеджер сущностей?</span><span class="aa">Репозиторий — место для запросов конкретной сущности: там живут методы выборки с понятными именами. Это избавляет от построения одинаковых запросов по всему коду и делает их тестируемыми.</span></li>
+      <li><span class="qq">Как связаны формы и валидация?</span><span class="aa">Это независимые компоненты. Форма преобразует данные запроса в объект и обратно, валидатор проверяет объект по ограничениям, объявленным атрибутами. Поэтому валидацию можно использовать и без форм — в API и консольных командах.</span></li>
+      <li><span class="qq">Почему форму лучше связывать с DTO, а не с сущностью?</span><span class="aa">Иначе структура базы становится контрактом формы, а лишние поля в запросе могут попасть в сущность. Отдельный объект под ввод разрывает эту связь и делает набор допустимых полей явным.</span></li>
+      <li><span class="qq">Как Twig защищает от XSS?</span><span class="aa">Автоматическим экранированием вывода в HTML-контексте. Защита не работает при явном отключении экранирования, при подстановке значений в JavaScript или атрибуты без соответствующей стратегии и при сборке HTML вручную в коде.</span></li>
+      <li><span class="qq">Где хранить настройки и секреты?</span><span class="aa">Значения по умолчанию — в файле окружения, который коммитится; локальные переопределения — в файле, который не коммитится. На проде значения приходят из переменных окружения, а секреты — из зашифрованного хранилища. Боевые ключи в репозитории недопустимы.</span></li>
+      <li><span class="qq">Как узнать, какие маршруты и сервисы есть в приложении?</span><span class="aa">Командами отладки: список маршрутов, список сервисов и параметров, список типов, доступных для внедрения, подписчики конкретного события. Это же первый шаг, когда что-то «не подставляется» или «не срабатывает».</span></li>
+      <li><span class="qq">Как написать консольную команду?</span><span class="aa">Классом с атрибутом команды: имя, описание, аргументы и опции в настройке, логика в методе выполнения, зависимости — через конструктор. Возвращается код завершения, а вывод оформляется стилевым помощником.</span></li>
+      <li><span class="qq">Чем отличается запуск команды в разных окружениях?</span><span class="aa">Окружение задаётся отдельно и определяет конфигурацию и кэш. Команда, запущенная без указания продакшн-окружения, отработает в окружении разработки — со своей базой и своими настройками.</span></li>
+      <li><span class="qq">Что такое бандл?</span><span class="aa">Способ упаковать переиспользуемый код с его конфигурацией и точками расширения для распространения между проектами. Для разделения одного приложения бандлы сегодня не нужны — достаточно каталогов и пространств имён.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как расширить готовый механизм фреймворка?</span><span class="aa">Реализовать нужный интерфейс: при включённой автоконфигурации сервис получит соответствующий тег и будет подхвачен. Для собственной точки расширения объявляют интерфейс, вешают тег через правило по типу и получают коллекцию в потребителе.</span></li>
+      <li><span class="qq">Что такое compiler pass и когда он нужен?</span><span class="aa">Класс, вмешивающийся в сборку контейнера: он видит все определения сервисов и может их менять. Нужен, когда логику нельзя выразить конфигурацией — собрать карту «ключ → сервис», проверить обязательные реализации, подменить определение по условию.</span></li>
+      <li><span class="qq">Что даёт компиляция контейнера?</span><span class="aa">Всё разрешение зависимостей происходит один раз при сборке, а в рантайме выполняется обычный сгенерированный PHP-код без рефлексии. Поэтому теги и проходы компилятора почти ничего не стоят на запросе, но изменение конфигурации требует пересборки кэша.</span></li>
+      <li><span class="qq">Чем слушатель отличается от подписчика?</span><span class="aa">Только тем, где объявлена подписка: у подписчика — внутри класса, поэтому сразу видно, на что он реагирует; у слушателя — снаружи, конфигурацией или атрибутом, что удобно для включения по окружению.</span></li>
+      <li><span class="qq">Зачем приоритеты у слушателей?</span><span class="aa">Они задают порядок вызова для одного события. Это важно, когда один слушатель должен отработать до другого — например, установить контекст до того, как им воспользуются. Порядок смотрится командой отладки диспетчера.</span></li>
+      <li><span class="qq">Чем опасны события Doctrine?</span><span class="aa">Они выполняются внутри сохранения, то есть в открытой транзакции. Внешние вызовы, отправка писем или дополнительное сохранение оттуда приводят к долгим транзакциям и трудноуловимым ошибкам. Там уместны только технические поля.</span></li>
+      <li><span class="qq">Что такое N+1 и как его убрать в Doctrine?</span><span class="aa">Ленивая загрузка связей: один запрос за списком и по запросу на каждое обращение. Убирается присоединением с явной выборкой связанной сущности, агрегатами вместо загрузки коллекций и гидрацией в массивы там, где объекты не нужны.</span></li>
+      <li><span class="qq">Почему <code>join</code> сам по себе не решает N+1?</span><span class="aa">Потому что без добавления связанной сущности в выборку соединение используется только для фильтрации, а объекты всё равно догружаются отдельными запросами. Нужно явно включить связанные данные в результат.</span></li>
+      <li><span class="qq">Как обработать миллион записей?</span><span class="aa">Потоковым обходом результата запроса с периодическими сохранением и очисткой менеджера: иначе все загруженные объекты остаются под наблюдением и память растёт линейно. Если объекты не нужны — гидрация в массивы или прямой SQL.</span></li>
+      <li><span class="qq">Что происходит при очистке менеджера сущностей?</span><span class="aa">Он перестаёт отслеживать ранее загруженные объекты. Это освобождает память, но делает прежние объекты «отсоединёнными»: изменения в них больше не будут сохранены, а связи не догрузятся. После очистки работают с заново загруженными данными.</span></li>
+      <li><span class="qq">Зачем voters, если есть <code>access_control</code>?</span><span class="aa">Это разные уровни. Правила по URL и ролям закрывают раздел целиком и ничего не знают об объектах. Voter отвечает на вопрос про конкретный объект: владелец ли пользователь, в каком статусе запись, не истёк ли срок. И переиспользуется в контроллере, атрибуте и шаблоне.</span></li>
+      <li><span class="qq">Что такое firewall и зачем их несколько?</span><span class="aa">Firewall описывает, как аутентифицируются запросы по определённому шаблону пути. Их делают несколько, потому что механизмы разные: веб-часть работает с сессией и формой входа, API — без состояния и по токену. Срабатывает первый подходящий по шаблону.</span></li>
+      <li><span class="qq">Как принять и проверить JSON-запрос?</span><span class="aa">Объявить DTO с ограничениями и пометить аргумент контроллера атрибутом отображения тела запроса: фреймворк десериализует тело, прогонит валидацию и вернёт 422 при ошибках. Контроллер получает уже корректный типизированный объект.</span></li>
+      <li><span class="qq">Почему нельзя отдавать сущность напрямую в API?</span><span class="aa">Ответ становится зеркалом схемы базы: любое изменение колонок меняет контракт, а служебные поля утекают клиенту. Группы сериализации или отдельные выходные DTO делают контракт явным и независимым от схемы.</span></li>
+      <li><span class="qq">Что произойдёт, если обработчик сообщения упадёт?</span><span class="aa">Сообщение вернётся в транспорт и будет повторено по заданной стратегии с растущей задержкой. После исчерпания попыток оно попадёт в транспорт сбоев, откуда его можно посмотреть и перезапустить. Поэтому обработчик обязан быть идемпотентным.</span></li>
+      <li><span class="qq">Почему в сообщение нельзя класть сущность?</span><span class="aa">Объект сериализуется при отправке, а обрабатывается позже: данные успеют устареть, а связи корректно не восстановятся. Передают идентификатор и загружают актуальное состояние в обработчике, проверяя, что запись ещё существует.</span></li>
+      <li><span class="qq">Почему сообщение стоит отправлять после сохранения?</span><span class="aa">Иначе воркер может начать обработку раньше, чем данные окажутся в базе, и не найдёт запись. Отправка после успешной фиксации транзакции убирает эту гонку.</span></li>
+      <li><span class="qq">Чем HTTP-кэш отличается от кэша приложения?</span><span class="aa">HTTP-кэш живёт перед приложением: при попадании запрос вообще не доходит до PHP, но подходит только для одинакового для всех содержимого. Кэш приложения работает внутри и сохраняет результаты вычислений, помогая и на персональных страницах.</span></li>
+      <li><span class="qq">Чем отличаются виды тестов в Symfony?</span><span class="aa">Модульные обходятся без ядра и проверяют чистую логику. Интеграционные поднимают ядро и работают с реальными сервисами и базой. Функциональные дополнительно выполняют полноценные запросы через ядро и проверяют маршруты, права, валидацию и формат ответа.</span></li>
+      <li><span class="qq">Как подменить внешний сервис в тесте?</span><span class="aa">Заменить его в контейнере тестового окружения заглушкой, для HTTP использовать мок-клиент с заранее заданными ответами, для очереди — транспорт в памяти и проверку факта отправки, для времени — управляемые часы. Тесты не должны ходить в сеть.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Эндпоинт отвечает 3 секунды. Порядок действий?</span><span class="aa">Профайлер: число запросов и их время. Обычно N+1 или запрос без индекса. Дальше — гидрация (нужны ли объекты), вынос синхронных внешних вызовов в фон, кэш тяжёлых участков. Инфраструктура в конце, с замером после каждого шага.</span></li>
+      <li><span class="qq">Что даёт прогрев кэша и предзагрузка?</span><span class="aa">Прогрев компилирует контейнер, маршруты и шаблоны заранее, чтобы этого не делал первый запрос. Предзагрузка держит скомпилированные классы в памяти процессов, ускоряя старт запроса. Оба механизма требуют перезапуска процессов при выкатке нового кода.</span></li>
+      <li><span class="qq">Почему профайлер не оставляют включённым на проде?</span><span class="aa">Он собирает и хранит подробные данные по каждому запросу — это заметная нагрузка и место на диске, а также потенциальная утечка внутренней информации. На проде нужны лёгкие метрики и лог медленных запросов, а профайлер — точечно и с ограничением доступа.</span></li>
+      <li><span class="qq">Что ломается при переходе на долгоживущий рантайм?</span><span class="aa">Всё, что опиралось на смерть процесса после ответа: сервисы с состоянием начинают смешивать данные пользователей, утечки накапливаются, менеджер сущностей после ошибки остаётся закрытым. Решается сбросом состояния, лимитами на процесс и аккуратной обработкой ошибок.</span></li>
+      <li><span class="qq">Как сделать сервис безопасным для долгоживущего процесса?</span><span class="aa">Не хранить в нём данные запроса, а если состояние необходимо — реализовать сброс, чтобы фреймворк очищал его между запросами. Зависимости, связанные с запросом, получать в момент обработки, а не запоминать в свойствах.</span></li>
+      <li><span class="qq">Что нужно, чтобы приложение работало на нескольких серверах?</span><span class="aa">Убрать локальное состояние: сессии, кэш, блокировки и счётчики лимитов — в общее хранилище, файлы — в объектное, очереди — в общий брокер, логи — в централизованный сбор. Плюс согласованный деплой всех узлов и перезапуск воркеров.</span></li>
+      <li><span class="qq">Зачем разделять очереди?</span><span class="aa">Чтобы массовая фоновая работа не задерживала пользовательские сценарии. Минимум — быстрая очередь для писем и уведомлений и медленная для пересчётов, с отдельными воркерами и разным числом процессов.</span></li>
+      <li><span class="qq">Как защититься от параллельного запуска задачи на кластере?</span><span class="aa">Блокировкой с общим хранилищем: задача пытается захватить лок и завершается, если он занят. Локальное хранилище блокировок защищает только один сервер от самого себя, что на кластере бесполезно.</span></li>
+      <li><span class="qq">Стоит ли изолировать домен от фреймворка?</span><span class="aa">Частично и осознанно: правила предметной области и вычисления имеет смысл держать без зависимостей от HTTP и ORM — они тестируются мгновенно и переживают обновления. Контроллеры, конфигурация и миграции остаются фреймворковыми.</span></li>
+      <li><span class="qq">Нужны ли свои бандлы внутри приложения?</span><span class="aa">Обычно нет. Бандл — механизм распространения кода между проектами со своей конфигурацией и точками расширения. Для внутреннего разделения достаточно каталогов, пространств имён и правил в конфигурации сервисов, а границы удерживаются проверкой зависимостей в CI.</span></li>
+      <li><span class="qq">Как удержать границы модулей?</span><span class="aa">Сделать их нарушение невозможным незаметно: публичные контракты, запрет обращаться к чужим сущностям напрямую и автоматическая проверка зависимостей в CI. Договорённость без проверки не переживает первый срочный релиз.</span></li>
+      <li><span class="qq">Какие уязвимости чаще всего находят в Symfony-проектах?</span><span class="aa">Забытая проверка прав на объект при найденной по маршруту сущности; утечка полей через сериализацию сущностей; инъекции в собранных вручную запросах и в сортировке по полю из запроса; доступный профайлер или включённая отладка на проде; секреты в репозитории; устаревшие зависимости.</span></li>
+      <li><span class="qq">Как хранить секреты?</span><span class="aa">В переменных окружения на проде и в зашифрованном хранилище секретов, где в репозиторий попадают только шифротексты, а приватный ключ хранится отдельно. Файлы окружения с боевыми значениями в репозитории недопустимы: они остаются в истории навсегда.</span></li>
+      <li><span class="qq">Что должно быть в логах и чего в них быть не должно?</span><span class="aa">Должно: имя события, идентификаторы сущностей и пользователя, длительность, сквозной идентификатор запроса — в структурированном виде. Не должно: паролей, токенов, персональных данных сверх необходимого. Маскирование настраивается централизованно.</span></li>
+      <li><span class="qq">Как вы узнаёте о поломке на проде?</span><span class="aa">Из алертов: рост доли ошибок и времени ответа, всплеск сбойных сообщений, рост длины и возраста очереди. Дальше — сборка картины по сквозному идентификатору запроса. Если единственный сигнал — обращения пользователей, наблюдаемости нет.</span></li>
+      <li><span class="qq">Опишите деплой без простоя.</span><span class="aa">Сборка релиза отдельно, прогрев кэша для нужного окружения, применение только совместимых миграций, атомарное переключение симлинка, перезагрузка процессов PHP, остановка воркеров для перезапуска на новом коде, проверка health-check и метрик. Откат — обратное переключение симлинка.</span></li>
+      <li><span class="qq">Почему после деплоя работает старый код?</span><span class="aa">Три обычные причины: не перезагружены процессы PHP и не сброшен кэш опкодов, не остановлены воркеры очередей, кэш собран не для того релиза или не в том окружении. Проверяются именно в этом порядке.</span></li>
+      <li><span class="qq">Что делать с предупреждениями об устареваниях?</span><span class="aa">Считать их спецификацией следующего мажорного обновления: всё, о чём предупреждают сейчас, будет удалено. Их сводят к нулю до обновления, опираясь на журнал в окружениях разработки и тестов и на сводку после прогона тестов.</span></li>
+      <li><span class="qq">Как обновить мажорную версию на большом проекте?</span><span class="aa">Сначала до последней минорной версии текущей ветки и обнуление устареваний. Затем проверка требований к версии PHP и совместимости сторонних бандлов, обновление в отдельной ветке при зелёных тестах, отдельное обновление рецептов конфигурации и выкатка релизом без функциональных изменений.</span></li>
+      <li><span class="qq">Спроектируйте обработку 200 000 заказов за ночь.</span><span class="aa">Ожидается разговор о компромиссах: потоковый обход и обработка пачками с очисткой менеджера; параллелизм несколькими воркерами с разбиением диапазона по ключу; идемпотентность и возобновляемость с сохранением позиции; массовые операции вместо построчных; контроль нагрузки на базу и лага реплик; лимиты памяти и плановый перезапуск воркеров; логирование прогресса и алерт на остановку.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Каждое задание даёт артефакт: работающую функциональность, тесты, замеры «до и после» или документ с обоснованием решений.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Блог с нуля</h4>
+    <p>Сущности со связями, миграции с индексами, фикстуры, контроллеры с маршрутами через атрибуты, шаблоны со списком и карточкой, пагинация. Проект поднимается с нуля одной командой.</p>
+    <div class="box task"><span class="lbl">Результат</span>Работающее приложение и краткая инструкция запуска.</div>
+
+    <h4>2. Формы и валидация</h4>
+    <p>Создание и редактирование записи через DTO с ограничениями: свои сообщения, вывод ошибок, сохранение введённых значений при возврате на форму.</p>
+    <div class="box task"><span class="lbl">Результат</span>Три теста: успех, ошибки валидации, отсутствие прав.</div>
+
+    <h4>3. Подписчик на события ядра</h4>
+    <p>Подписчик, добавляющий в каждый ответ идентификатор запроса и время обработки, а в лог — предупреждение о медленных запросах.</p>
+    <div class="box task"><span class="lbl">Результат</span>Заголовки видны и на страницах ошибок; порядок вызова проверен командой отладки диспетчера.</div>
+
+    <h4>4. Консольная команда</h4>
+    <p>Команда с флагом «только показать» и индикатором прогресса, обрабатывающая просроченные записи. Запуск по расписанию с указанием продакшн-окружения.</p>
+    <div class="box task"><span class="lbl">Результат</span>Команда корректно работает через планировщик и возвращает осмысленные коды завершения.</div>
+
+    <h4>5. Найти N+1 глазами</h4>
+    <p>Откройте профайлер на странице списка и посчитайте запросы. Затем добавьте присоединение с выборкой связанных сущностей и посчитайте снова.</p>
+    <div class="box task"><span class="lbl">Результат</span>Две цифры «было / стало» и первое понимание, откуда берутся лишние запросы.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Точка расширения на тегах</h4>
+    <p>Интерфейс «формат экспорта», две реализации, потребитель с коллекцией по тегу и приоритетами. Проверка состава через команду отладки контейнера.</p>
+    <div class="box task"><span class="lbl">Результат</span>Добавление третьего формата не требует правки существующего кода.</div>
+
+    <h4>7. API с DTO и правами</h4>
+    <p>REST-эндпоинты: создание через DTO с валидацией, список с фильтрами и ограничением размера страницы, группы сериализации, voter на объект, единый формат ошибок.</p>
+    <div class="box task"><span class="lbl">Результат</span>Функциональные тесты на структуру ответа, права и ошибки валидации.</div>
+
+    <h4>8. Оптимизация выборки</h4>
+    <p>Страница с N+1: переписать запрос с присоединением и агрегатами, сравнить число запросов и время. Затем перевести отчёт на гидрацию в массивы.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица «запросов / время / память» до и после каждого изменения.</div>
+
+    <h4>9. Messenger с повторами</h4>
+    <p>Вынести генерацию документа в сообщение с повторами и транспортом сбоев, разделить очереди по критичности, сымитировать падение внешнего сервиса.</p>
+    <div class="box task"><span class="lbl">Результат</span>Прослеженный путь сообщения и подтверждение, что повторная обработка не создаёт дублей.</div>
+
+    <h4>10. Кэш и условные запросы</h4>
+    <p>Закэшировать тяжёлый участок с тегами и инвалидацией по событию; на детальной странице включить условные запросы и убедиться в ответах 304.</p>
+    <div class="box task"><span class="lbl">Результат</span>Замер времени ответа и проверка поведения при недоступном кэше.</div>
+
+    <h4>11. Разбор толстого контроллера</h4>
+    <p>Разложить метод на 150 строк: валидацию в DTO, права в voter, сценарий в отдельный класс, побочные эффекты в слушателя события.</p>
+    <div class="box task"><span class="lbl">Результат</span>Функциональные тесты не изменились и остались зелёными.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Профиль медленного эндпоинта</h4>
+    <p>Довести самый медленный эндпоинт до целевого времени, фиксируя после каждого шага число запросов, время и память. Отдельно замерить эффект прогрева кэша и предзагрузки.</p>
+    <div class="box task"><span class="lbl">Результат</span>Отчёт «было → стало» с вкладом каждого изменения.</div>
+
+    <h4>13. Пакетная обработка</h4>
+    <p>Команда обработки 500 000 записей: потоковый обход, пачки с сохранением и очисткой, возобновляемость по позиции, лимиты памяти и времени.</p>
+    <div class="box task"><span class="lbl">Результат</span>График памяти за весь прогон и корректное возобновление после остановки.</div>
+
+    <h4>14. Аудит безопасности</h4>
+    <p>Пройти чек-лист: права на всех эндпоинтах, утечка полей через сериализацию, ручные запросы, доступность профайлера, секреты, зависимости.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список находок, исправления и регрессионные тесты на каждую.</div>
+
+    <h4>15. Готовность к проду</h4>
+    <p>Пройти таблицу готовности целиком: деплой с откатом, воркеры под супервизором, общие хранилища для кластера, наблюдаемость и алерты, бэкапы с проверенным восстановлением.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ на 2–3 страницы и проведённые учения по откату релиза.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Symfony хорошо изучается сверху вниз: сначала увидеть цепочку запроса и контейнер целиком, потом наращивать детали. Каждая неделя заканчивается работающим кодом, а не прочитанной документацией.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Ядро и основы</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Жизненный цикл запроса и события ядра, структура проекта и окружения, конфигурация и переменные окружения, маршруты и контроллеры, контейнер и autowiring, Twig, консольные команды и команды отладки.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–4: блог с нуля, формы, подписчик на события ядра, консольная команда.</li>
+      <li>Разобрать скомпилированный контейнер в каталоге кэша и найти там свои сервисы.</li>
+      <li>Прочитать разделы документации о маршрутизации, контейнере и конфигурации целиком.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Работающее приложение с CRUD, формами, своим подписчиком и командой; понимание, что происходит между запросом и ответом.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что происходит от запроса до ответа?</li>
+      <li>Зачем нужны события ядра и что даёт приоритет?</li>
+      <li>Чем окружения отличаются и зачем прогрев кэша?</li>
+      <li>Как контейнер понимает, что подставить в конструктор?</li>
+      <li>Что делать, если у интерфейса две реализации?</li>
+      <li>Как посмотреть маршруты, сервисы и подписчиков?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Данные и доступ</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Doctrine: сущности и связи, единица работы, репозитории, DQL и построитель запросов, N+1 и жадная загрузка, гидрация, пакетная обработка; Security: firewalls, аутентификация, voters, роли.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 5, 7, 8: поиск N+1, API с DTO и правами, оптимизация выборки.</li>
+      <li>Написать voter с тремя правилами и покрыть его тестами на все исходы.</li>
+      <li>Сгенерировать 500 000 записей и сравнить обычный обход, потоковый и гидрацию в массивы.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>API с voters и группами сериализации, оптимизированная страница списка и таблица замеров по способам обхода больших выборок.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Чем Doctrine отличается от Active Record?</li>
+      <li>Что делают <code>persist()</code> и <code>flush()</code>?</li>
+      <li>Почему <code>join</code> сам по себе не решает N+1?</li>
+      <li>Что происходит при очистке менеджера сущностей?</li>
+      <li>Зачем voters, если есть правила по URL?</li>
+      <li>Зачем несколько firewalls?</li>
+      <li>Почему нельзя отдавать сущность напрямую в API?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Расширение, фон, качество</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Теги и точки расширения, compiler pass, ленивые сервисы, события приложения, Messenger и стратегии повторов, кэш приложения и HTTP-кэш, три вида тестов и подмена внешнего мира, организация кода по доменам.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6, 9, 10, 11: точка расширения на тегах, Messenger с повторами, кэш и условные запросы, разбор толстого контроллера.</li>
+      <li>Поднять воркер локально и посмотреть на очередь под нагрузкой, включая транспорт сбоев.</li>
+      <li>Настроить прогон тестов в CI и добавить проверку числа запросов на ключевых страницах.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Расширяемый механизм на тегах, фоновая обработка с повторами и идемпотентностью, закэшированный тяжёлый участок и зелёный набор функциональных тестов.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как добавить свою реализацию в готовый механизм?</li>
+      <li>Когда нужен compiler pass?</li>
+      <li>Что произойдёт, если обработчик сообщения упадёт?</li>
+      <li>Почему в сообщении передают идентификатор, а не сущность?</li>
+      <li>Чем HTTP-кэш отличается от кэша приложения?</li>
+      <li>Чем отличаются виды тестов и когда какой писать?</li>
+      <li>Как подменить внешний сервис в тесте?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Прод: нагрузка, безопасность, релизы</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Порядок оптимизации и настройки прода, предзагрузка и оптимизация автозагрузки, долгоживущие рантаймы и состояние сервисов, масштабирование на несколько узлов, границы модулей, безопасность, наблюдаемость, деплой и откат, устаревания и обновление версий.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: профиль медленного эндпоинта, пакетная обработка, аудит безопасности, готовность к проду.</li>
+      <li>Найти сервисы с состоянием и реализовать у них сброс; запустить воркер на сутки и построить график памяти.</li>
+      <li>Собрать список устареваний проекта и оценить объём работ по обновлению.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ со структурой «определение → механизм → пример → компромисс».</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Ускоренный эндпоинт с отчётом, устойчивая пакетная команда, закрытые находки аудита, документ готовности к проду и уверенные ответы на все 60 вопросов.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>С чего начинать разбор медленного эндпоинта?</li>
+      <li>Что даёт прогрев кэша и предзагрузка?</li>
+      <li>Что ломается при переходе на долгоживущий рантайм?</li>
+      <li>Что нужно для работы на нескольких серверах?</li>
+      <li>Какие уязвимости чаще всего находят?</li>
+      <li>Опишите деплой без простоя и откат.</li>
+      <li>Почему после деплоя может работать старый код?</li>
+      <li>Что делать с предупреждениями об устареваниях?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Структура ответа:</strong> определение в одну фразу → как работает внутри → пример из вашей практики → компромисс или ограничение. Последний пункт отличает middle от senior.</li>
+      <li><strong>Отвечайте про механизм, а не про название.</strong> Вопрос «что такое voter» проверяет понимание модели прав. Ответ «класс для проверки доступа» слабый; «точка расширения, куда система авторизации обращается за решением по конкретному объекту, и её же переиспользуют контроллер, атрибут и шаблон» — сильный.</li>
+      <li><strong>Держите в голове SQL под ORM.</strong> Половина вопросов по Doctrine на самом деле про то, какие запросы уйдут в базу и когда.</li>
+      <li><strong>Говорите цифрами:</strong> «страница с 200 запросов до 4», «время ответа с 3,1 с до 210 мс», «память импорта с 900 МБ до 40 МБ».</li>
+      <li><strong>Не бойтесь сказать «здесь это лишнее».</strong> Отказ от бандла, от лишнего слоя или от смены рантайма с внятным обоснованием — сильный ответ: он показывает, что вы считаете стоимость сложности.</li>
+      <li><strong>Приносите артефакты:</strong> отчёт по оптимизации, план обновления версии, документ готовности к проду, набор тестов. Они превращают рассказ в доказательство.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Symfony для PHP-разработчиков» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

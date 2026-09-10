@@ -1,0 +1,2020 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · backend · подготовка к собеседованию и к работе</p>
+  <h1>PHP для разработчиков</h1>
+  <p class="lead">PHP — язык, который проще всего начать использовать и сложнее всего использовать хорошо. Он прощает почти всё: нестрогие сравнения, отсутствие типов, глобальное состояние, смешение логики с разметкой. Именно поэтому у него репутация языка с плохим кодом — и именно поэтому разница между junior и senior здесь особенно заметна: одни пишут на PHP 5 с новым синтаксисом, другие используют строгие типы, статический анализ и понимают, что происходит в движке.</p>
+  <p class="lead">Современный PHP 8 — это типизированный язык с перечислениями, неизменяемыми свойствами, объектами-значениями, генераторами, файберами и очень хорошим статическим анализом. Понимать нужно не только синтаксис, но и модель исполнения: процесс живёт один запрос и умирает, память управляется подсчётом ссылок, массивы копируются лениво, а самое дорогое в типичном приложении — не PHP, а ожидание базы и сети.</p>
+  <p class="lead">Этот конспект — про сам язык и его окружение, без фреймворков: от типов и сравнений до внутренностей движка, тюнинга FPM и работы с легаси. Смежные темы вынесены отдельно: <a href="laravel.html">Laravel</a>, <a href="sql.html">базы данных</a>, <a href="data-structures.html">структуры данных</a>, <a href="ai.html">AI и LLM</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Модель исполнения, типы и сравнения, массивы и строки, функции, ООП, исключения, Composer.</span></div>
+    <div class="aud m"><b>Middle</b><span>Строгая типизация и перечисления, SOLID и DI, генераторы, память и COW, тесты и статанализ, безопасность.</span></div>
+    <div class="aud s"><b>Senior</b><span>Внутренности движка, профилирование, долгоживущие процессы, FPM и opcache, легаси и версии.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>25</i></span>
+    <span>Блоков кода: <i>44</i></span>
+    <span>Сравнительных таблиц: <i>18</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#lifecycle">Как выполняется PHP</a></li>
+    <li><span class="tree">├─</span> <a href="#types">Типы и сравнения</a></li>
+    <li><span class="tree">├─</span> <a href="#arrays">Массивы и строки</a></li>
+    <li><span class="tree">├─</span> <a href="#functions">Функции и замыкания</a></li>
+    <li><span class="tree">├─</span> <a href="#oop">ООП: основы</a></li>
+    <li><span class="tree">├─</span> <a href="#errors">Ошибки и исключения</a></li>
+    <li><span class="tree">├─</span> <a href="#composer">Composer, автозагрузка, PSR</a></li>
+    <li><span class="tree">├─</span> <a href="#http">HTTP-контекст и ввод</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#typing">Строгая типизация</a></li>
+    <li><span class="tree">├─</span> <a href="#enums">Перечисления и объекты-значения</a></li>
+    <li><span class="tree">├─</span> <a href="#oop-adv">Абстракции и магия</a></li>
+    <li><span class="tree">├─</span> <a href="#solid">SOLID и внедрение зависимостей</a></li>
+    <li><span class="tree">├─</span> <a href="#generators">Итераторы и генераторы</a></li>
+    <li><span class="tree">├─</span> <a href="#memory">Память, ссылки, copy-on-write</a></li>
+    <li><span class="tree">├─</span> <a href="#exceptions">Исключения в продакшене</a></li>
+    <li><span class="tree">├─</span> <a href="#quality">Тесты и статический анализ</a></li>
+    <li><span class="tree">├─</span> <a href="#security">Безопасность</a></li>
+    <li><span class="tree">├─</span> <a href="#concurrency">Параллельность и файберы</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#internals">Внутренности движка</a></li>
+    <li><span class="tree">├─</span> <a href="#profiling">Профилирование</a></li>
+    <li><span class="tree">├─</span> <a href="#longrunning">Долгоживущие процессы</a></li>
+    <li><span class="tree">├─</span> <a href="#fpm">FPM, opcache, лимиты</a></li>
+    <li><span class="tree">├─</span> <a href="#architecture">Архитектура без фреймворка</a></li>
+    <li><span class="tree">├─</span> <a href="#legacy">Легаси и обновление версий</a></li>
+    <li><span class="tree">├─</span> <a href="#deps">Зависимости и экосистема</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#gotchas">Грабли и идиомы</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · фундамент</p>
+    <h2>Junior PHP Developer</h2>
+    <p>Задача этого уровня — понять модель исполнения и перестать спотыкаться на особенностях языка. Junior-а проверяют по четырём осям: что происходит при HTTP-запросе, как устроены типы и сравнения, как работать с массивами и строками без сюрпризов, и базовое ООП с исключениями.</p>
+  </div>
+
+  <!-- J1 -->
+  <article class="card" id="lifecycle">
+    <p class="path">junior / модель / исполнение</p>
+    <div class="card-top"><h3>Как выполняется PHP</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Главная особенность PHP, из которой следует почти всё остальное: <span class="t">shared-nothing</span>. Каждый HTTP-запрос обрабатывается процессом, который стартует с чистого листа, отрабатывает и умирает. Между запросами в памяти не остаётся ничего — ни переменных, ни соединений, ни объектов.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Жизнь одного запроса</span></div><pre><code>Браузер → nginx → PHP-FPM (пул процессов)
+                      │
+                      ├─ процесс берёт запрос
+                      ├─ читает .php-файл
+                      │    └─ opcache: скомпилированный байткод уже в памяти,
+                      │       парсинг и компиляция пропускаются
+                      ├─ выполняет байткод
+                      │    └─ ваши переменные, соединения с БД, объекты —
+                      │       всё создаётся заново для этого запроса
+                      ├─ отдаёт ответ
+                      └─ ВСЁ очищается: память, соединения, состояние
+
+Следствия, о которых спрашивают:
+  • «переменная не сохранилась между запросами» — так и должно быть;
+  • состояние живёт в сессии, кэше, БД — а не в PHP;
+  • утечка памяти живёт ровно один запрос (пока вы не перешли
+    на долгоживущие воркеры — там правила меняются);
+  • opcache на проде обязателен: без него каждый запрос заново
+    парсит и компилирует все подключаемые файлы.</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 1 · где выполняется PHP</caption>
+      <thead><tr><th>SAPI</th><th>Модель</th><th>Где применяется</th></tr></thead>
+      <tbody>
+        <tr><td>PHP-FPM</td><td>Пул процессов, процесс на запрос</td><td>Стандарт для веба за nginx</td></tr>
+        <tr><td>CLI</td><td>Один процесс на команду</td><td>Консольные команды, воркеры очередей, cron</td></tr>
+        <tr><td>Встроенный сервер</td><td>Однопоточный</td><td>Только локальная разработка</td></tr>
+        <tr><td>Долгоживущие рантаймы (Swoole, RoadRunner, FrankenPHP)</td><td>Процесс обслуживает много запросов</td><td>Высокая нагрузка; требует кода без утечек состояния</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Разница между CLI и FPM касается не только скорости. В CLI по умолчанию нет ограничения на время выполнения, а в FPM оно есть — и там же действует таймаут веб-сервера. Долгие операции в веб-запросе обрываются на середине; их место в консольных командах и очередях.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему переменная не сохраняется между запросами?</b><br>Потому что PHP работает по модели shared-nothing: процесс инициализируется на запрос и полностью очищается после ответа. Состояние между запросами хранится вне PHP — в сессии, кэше, базе. Именно поэтому производительность приложения обычно определяется базой и сетью, а не самим языком.</div>
+    <div class="box task"><span class="lbl">Практика</span>Выведите на страницу <code>php_sapi_name()</code>, <code>memory_get_peak_usage()</code> и время выполнения. Сравните значения при работе через FPM и через CLI. Затем отключите opcache и замерьте разницу во времени ответа.</div>
+  </article>
+
+  <!-- J2 -->
+  <article class="card" id="types">
+    <p class="path">junior / язык / типы</p>
+    <div class="card-top"><h3>Типы, сравнения и приведение</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>PHP — язык с динамической типизацией и автоматическим приведением типов. Это источник большинства «магических» багов, и именно здесь стоит быть педантичным.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сравнения: строгое и нестрогое</span></div><pre><code>&lt;?php
+<span class="cm">// === сравнивает значение И тип, == приводит типы</span>
+0 === <span class="st">'0'</span>;        <span class="cm">// false</span>
+0 == <span class="st">'0'</span>;         <span class="cm">// true</span>
+
+<span class="cm">// В PHP 8 сравнение числа со строкой изменилось в лучшую сторону:</span>
+<span class="cm">// нечисловая строка больше не превращается в 0</span>
+0 == <span class="st">'foo'</span>;       <span class="cm">// false в PHP 8 (в PHP 7 было true!)</span>
+0 == <span class="st">''</span>;          <span class="cm">// false в PHP 8</span>
+<span class="st">'1'</span> == <span class="st">'01'</span>;      <span class="cm">// true — обе строки числовые, сравниваются как числа</span>
+<span class="st">'10'</span> == <span class="st">'1e1'</span>;    <span class="cm">// true — та же причина</span>
+<span class="kw">null</span> == <span class="kw">false</span>;    <span class="cm">// true</span>
+[] == <span class="kw">false</span>;      <span class="cm">// true</span>
+
+<span class="cm">// Правило: в прикладном коде используйте === всегда,</span>
+<span class="cm">// кроме случаев, когда приведение нужно осознанно.</span>
+<span class="fn">in_array</span>(<span class="st">'abc'</span>, [0, 1], <span class="kw">true</span>);   <span class="cm">// третий аргумент — строгий режим</span>
+<span class="fn">array_search</span>($v, $arr, <span class="kw">true</span>);</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ложные значения и проверки существования</span></div><pre><code>&lt;?php
+<span class="cm">// Всё это — false при приведении к bool:</span>
+<span class="kw">false</span>, 0, 0.0, <span class="st">''</span>, <span class="st">'0'</span>, [], <span class="kw">null</span>
+<span class="cm">// А вот это — true:</span>
+<span class="st">'0.0'</span>, <span class="st">'false'</span>, <span class="st">' '</span>, [0], -1, <span class="st">'00'</span>
+
+<span class="cm">// Классическая ошибка: strpos вернул 0 — позицию, а не «не найдено»</span>
+<span class="kw">if</span> (<span class="fn">strpos</span>($haystack, $needle)) { }              <span class="cm">// ПЛОХО</span>
+<span class="kw">if</span> (<span class="fn">strpos</span>($haystack, $needle) !== <span class="kw">false</span>) { }   <span class="cm">// ХОРОШО</span>
+<span class="kw">if</span> (<span class="fn">str_contains</span>($haystack, $needle)) { }        <span class="cm">// ЛУЧШЕ (PHP 8)</span>
+
+<span class="cm">// Проверки существования: разные инструменты для разных задач</span>
+<span class="fn">isset</span>($a[<span class="st">'k'</span>]);              <span class="cm">// есть ключ И значение не null</span>
+<span class="fn">array_key_exists</span>(<span class="st">'k'</span>, $a); <span class="cm">// есть ключ, даже если значение null</span>
+<span class="fn">empty</span>($a[<span class="st">'k'</span>]);             <span class="cm">// нет ключа ИЛИ значение ложное — осторожно с '0'</span>
+
+<span class="cm">// Удобные операторы вместо ветвлений</span>
+$name = $data[<span class="st">'name'</span>] ?? <span class="st">'аноним'</span>;      <span class="cm">// null coalescing</span>
+$config[<span class="st">'limit'</span>] ??= 20;                <span class="cm">// присвоить, если не задано</span>
+$city = $user?-&gt;address?-&gt;city;           <span class="cm">// nullsafe: null вместо ошибки</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Числа с плавающей точкой нельзя сравнивать на равенство и нельзя использовать для денег: <code>0.1 + 0.2 !== 0.3</code>. Для денег — целые в минимальных единицах (копейки) или строковая арифметика произвольной точности; для сравнения — сопоставление с допустимой погрешностью.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Полагаться на нестрогое сравнение «чтобы работало и со строкой, и с числом». Данные из HTTP-запроса всегда строки, из базы — часто тоже. Приводите тип явно на границе (<code>(int)</code>, <code>(float)</code>, валидация), а дальше работайте строго — тогда сравнение перестаёт быть источником сюрпризов.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем <code>==</code> отличается от <code>===</code> и что изменилось в PHP 8?</b><br><code>==</code> сравнивает после приведения типов, <code>===</code> — значение и тип без приведения. В PHP 8 изменилось сравнение числа со строкой: если строка нечисловая, число приводится к строке, а не наоборот. Поэтому <code>0 == 'foo'</code> теперь <code>false</code>, хотя в PHP 7 было <code>true</code> — это устранило целый класс уязвимостей в проверках.</div>
+    <div class="box task"><span class="lbl">Практика</span>Соберите таблицу сравнений: возьмите значения <code>0</code>, <code>'0'</code>, <code>''</code>, <code>null</code>, <code>false</code>, <code>[]</code>, <code>'foo'</code> и сравните каждое с каждым через <code>==</code> и <code>===</code>. Объясните каждое расхождение — после этого нестрогие сравнения перестанут удивлять.</div>
+  </article>
+
+  <!-- J3 -->
+  <article class="card" id="arrays">
+    <p class="path">junior / язык / массивы и строки</p>
+    <div class="card-top"><h3>Массивы и строки</h3><span class="badge b-1">База</span></div>
+    <p>Массив в PHP — универсальная структура: список, словарь, стек, очередь. Под капотом это упорядоченная хеш-таблица, а не классический массив, — отсюда и гибкость, и стоимость операций. Подробный разбор сложности — в <a href="data-structures.html">конспекте по структурам данных</a>; здесь — язык и типичные ошибки.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Массивы: то, что используют каждый день</span></div><pre><code>&lt;?php
+<span class="cm">// Ключи: только int и string. Всё остальное приводится.</span>
+$a[<span class="st">'42'</span>] === $a[42];      <span class="cm">// один и тот же элемент — числовая строка стала int</span>
+
+<span class="cm">// Перебор и преобразование</span>
+<span class="kw">foreach</span> ($rows <span class="kw">as</span> $key =&gt; $row) { }
+<span class="fn">array_map</span>(<span class="kw">fn</span> ($x) =&gt; $x * 2, $nums);      <span class="cm">// ключи теряются при нескольких массивах</span>
+<span class="fn">array_filter</span>($rows, <span class="kw">fn</span> ($r) =&gt; $r-&gt;isActive);  <span class="cm">// КЛЮЧИ СОХРАНЯЮТСЯ!</span>
+<span class="fn">array_values</span>(<span class="fn">array_filter</span>(...));            <span class="cm">// переиндексация после фильтра</span>
+<span class="fn">array_reduce</span>($items, <span class="kw">fn</span> ($c, $i) =&gt; $c + $i-&gt;total, 0);
+<span class="fn">array_column</span>($rows, <span class="st">'name'</span>, <span class="st">'id'</span>);          <span class="cm">// индекс id =&gt; name одной строкой</span>
+
+<span class="cm">// Объединение: две разные операции</span>
+<span class="fn">array_merge</span>([1, 2], [3, 4]);   <span class="cm">// [1,2,3,4] — int-ключи переиндексируются</span>
+[1, 2] + [3, 4];               <span class="cm">// [1,2] — ключи 0 и 1 уже заняты</span>
+[...$a, ...$b];                <span class="cm">// spread, со строковыми ключами — с PHP 8.1</span>
+
+<span class="cm">// Сортировки: sort теряет ключи, asort/ksort — нет</span>
+<span class="fn">usort</span>($items, <span class="kw">fn</span> ($x, $y) =&gt; $x-&gt;price &lt;=&gt; $y-&gt;price);
+<span class="cm">// С PHP 8.0 сортировки стабильны: равные элементы сохраняют порядок</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Строки: байты, а не символы</span></div><pre><code>&lt;?php
+$s = <span class="st">'привет'</span>;
+<span class="fn">strlen</span>($s);           <span class="cm">// 12 — байтов, кириллица в UTF-8 по два байта</span>
+<span class="fn">mb_strlen</span>($s);        <span class="cm">// 6 — символов</span>
+<span class="fn">mb_substr</span>($s, 0, 3);  <span class="cm">// 'при' — не режет символ пополам</span>
+<span class="fn">mb_strtoupper</span>($s);    <span class="cm">// 'ПРИВЕТ' — strtoupper кириллицу не тронет</span>
+
+<span class="cm">// Полезное из PHP 8</span>
+<span class="fn">str_contains</span>($h, $n);
+<span class="fn">str_starts_with</span>($h, $n);
+<span class="fn">str_ends_with</span>($h, $n);
+
+<span class="cm">// Интерполяция и heredoc</span>
+$msg = <span class="st">"Привет, {$user-&gt;name}! Заказ №{$order['id']}"</span>;
+$sql = &lt;&lt;&lt;SQL
+    SELECT * FROM orders WHERE user_id = :id
+    SQL;                       <span class="cm">// с PHP 7.3 отступ закрывающего маркера снимается</span>
+
+<span class="cm">// Сборка большого текста: не конкатенация в цикле, а implode</span>
+$csv = <span class="fn">implode</span>(<span class="st">"\n"</span>, <span class="fn">array_map</span>(<span class="kw">fn</span> ($r) =&gt; <span class="fn">implode</span>(<span class="st">','</span>, $r), $rows));</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Три ловушки, на которых спотыкаются регулярно: <code>array_filter</code> сохраняет ключи (и <code>json_encode</code> отдаст объект вместо массива — спасает <code>array_values</code>); <code>array_merge</code> переиндексирует целочисленные ключи, а оператор <code>+</code> нет; <code>in_array</code> без третьего аргумента сравнивает нестрого.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span><code>foreach ($items as &amp;$item)</code> с последующим обычным <code>foreach</code> по тому же массиву. После первого цикла переменная остаётся ссылкой на последний элемент, и второй цикл затирает его. Классический баг, который ищут часами. Если использовали ссылку — сразу после цикла делайте <code>unset($item)</code>.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Массив в PHP — это массив?</b><br>Нет, это упорядоченная хеш-таблица: ключи только <code>int</code> и <code>string</code>, порядок вставки сохраняется, доступ по ключу идёт через хеш. Для последовательных целых ключей движок применяет оптимизацию и хранит только вектор значений, что экономит память и ускоряет обход.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите функцию обрезки текста до N символов с многоточием, не ломающую слова и UTF-8. Проверьте на тексте с эмодзи. Отдельно замерьте сборку строки из 100 000 фрагментов конкатенацией и через <code>implode</code>.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+
+  <!-- J4 -->
+  <article class="card" id="functions">
+    <p class="path">junior / язык / функции</p>
+    <div class="card-top"><h3>Функции, аргументы и замыкания</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сигнатуры: типы, значения по умолчанию, именованные аргументы</span></div><pre><code>&lt;?php
+<span class="kw">declare</span>(strict_types=1);
+
+<span class="kw">function</span> <span class="fn">formatPrice</span>(
+    <span class="kw">int</span> $amount,                    <span class="cm">// в копейках — не float!</span>
+    <span class="kw">string</span> $currency = <span class="st">'RUB'</span>,
+    <span class="kw">bool</span> $withSymbol = <span class="kw">true</span>,
+): <span class="kw">string</span> {
+    <span class="cm">// ...</span>
+}
+
+<span class="cm">// Именованные аргументы (PHP 8.0): не нужно передавать всё подряд</span>
+<span class="fn">formatPrice</span>(amount: 149900, withSymbol: <span class="kw">false</span>);
+
+<span class="cm">// Переменное число аргументов и распаковка</span>
+<span class="kw">function</span> <span class="fn">sum</span>(<span class="kw">int</span> ...$numbers): <span class="kw">int</span> { <span class="kw">return</span> <span class="fn">array_sum</span>($numbers); }
+<span class="fn">sum</span>(...[1, 2, 3]);
+
+<span class="cm">// Тип возврата, которого не бывает: функция всегда бросает или завершает</span>
+<span class="kw">function</span> <span class="fn">fail</span>(<span class="kw">string</span> $message): <span class="kw">never</span> { <span class="kw">throw new</span> RuntimeException($message); }</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Замыкания и стрелочные функции</span></div><pre><code>&lt;?php
+$tax = 0.2;
+
+<span class="cm">// Классическое замыкание: внешние переменные захватываются явно</span>
+$withTax = <span class="kw">function</span> (<span class="kw">float</span> $price) <span class="kw">use</span> ($tax): <span class="kw">float</span> {
+    <span class="kw">return</span> $price * (1 + $tax);
+};
+
+<span class="cm">// Стрелочная функция (7.4): захват по значению автоматически, только одно выражение</span>
+$withTax = <span class="kw">fn</span> (<span class="kw">float</span> $price): <span class="kw">float</span> =&gt; $price * (1 + $tax);
+
+<span class="cm">// Захват по ссылке — когда нужно менять внешнюю переменную</span>
+$total = 0;
+$add = <span class="kw">function</span> (<span class="kw">float</span> $x) <span class="kw">use</span> (&amp;$total): <span class="kw">void</span> { $total += $x; };
+
+<span class="cm">// Первоклассный callable (8.1): вместо строк с именами функций</span>
+$fn = <span class="fn">strlen</span>(...);
+$fn = $service-&gt;<span class="fn">handle</span>(...);
+$lengths = <span class="fn">array_map</span>(<span class="fn">mb_strlen</span>(...), $words);
+
+<span class="cm">// Замыкание без привязки к $this — меньше сюрпризов</span>
+$pure = <span class="kw">static fn</span> (<span class="kw">int</span> $x): <span class="kw">int</span> =&gt; $x * 2;</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span><code>declare(strict_types=1)</code> ставится в начало <em>каждого</em> файла и действует только на вызовы, сделанные из этого файла. Без него PHP молча приводит <code>"5"</code> к <code>int</code>, а <code>"abc"</code> вызовет ошибку только в рантайме. Со строгими типами ошибка возникает сразу и в понятном месте — это первое, что стоит включить в любом проекте.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Функции с логическими флагами в аргументах: <code>process($data, true, false, true)</code>. На месте вызова невозможно понять, что происходит. Лечится именованными аргументами, перечислениями вместо флагов или разделением на несколько функций с говорящими именами.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем стрелочная функция отличается от обычного замыкания?</b><br>Стрелочная автоматически захватывает используемые внешние переменные по значению и содержит одно выражение. Обычное замыкание требует явного <code>use</code>, но может содержать любой код и захватывать по ссылке. Изменить внешнюю переменную из стрелочной функции нельзя — она видит только копию.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите функцию с именованными аргументами и значениями по умолчанию, затем перепишите набор колбэков с использованием синтаксиса первоклассных callable. Включите строгие типы и посмотрите, что перестанет работать в старом коде.</div>
+  </article>
+
+  <!-- J5 -->
+  <article class="card" id="oop">
+    <p class="path">junior / ооп / основы</p>
+    <div class="card-top"><h3>ООП: классы, интерфейсы, трейты</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Современный класс на PHP 8</span></div><pre><code>&lt;?php
+<span class="kw">declare</span>(strict_types=1);
+
+<span class="kw">namespace</span> App\Domain\Orders;
+
+<span class="kw">final class</span> Order
+{
+    <span class="kw">private array</span> $items = [];
+
+    <span class="cm">// Продвижение свойств конструктора (8.0): объявление и присвоение сразу</span>
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly string</span> $id,        <span class="cm">// readonly (8.1): менять нельзя</span>
+        <span class="kw">public readonly</span> Customer $customer,
+        <span class="kw">private</span> OrderStatus $status = OrderStatus::Draft,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">addItem</span>(OrderItem $item): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> ($this-&gt;status !== OrderStatus::Draft) {
+            <span class="kw">throw new</span> OrderAlreadyPlaced($this-&gt;id);
+        }
+
+        $this-&gt;items[] = $item;
+    }
+
+    <span class="kw">public function</span> <span class="fn">total</span>(): Money
+    {
+        <span class="kw">return</span> <span class="fn">array_reduce</span>(
+            $this-&gt;items,
+            <span class="kw">static fn</span> (Money $carry, OrderItem $item) =&gt; $carry-&gt;<span class="fn">add</span>($item-&gt;<span class="fn">subtotal</span>()),
+            Money::<span class="fn">zero</span>(),
+        );
+    }
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 2 · чем отличаются механизмы переиспользования</caption>
+      <thead><tr><th>Механизм</th><th>Что даёт</th><th>Когда брать</th><th>Ограничение</th></tr></thead>
+      <tbody>
+        <tr><td>Наследование</td><td>Поведение и состояние родителя</td><td>Есть настоящее отношение «является»</td><td>Только один родитель; жёсткая связь</td></tr>
+        <tr><td>Интерфейс</td><td>Контракт без реализации</td><td>Нужна подменяемость и типизация по роли</td><td>Реализовать можно много, состояния нет</td></tr>
+        <tr><td>Трейт</td><td>Готовые методы в несколько классов</td><td>Технические примеси без своей сущности</td><td>Копирование кода в класс; конфликты имён; легко злоупотребить</td></tr>
+        <tr><td>Композиция</td><td>Объект использует другой объект</td><td>По умолчанию, вместо наследования</td><td>Чуть больше кода — и это оправданная цена</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Интерфейс, абстрактный класс, трейт</span></div><pre><code>&lt;?php
+<span class="cm">// Интерфейс — только контракт (с 8.3 у констант интерфейса можно указать тип)</span>
+<span class="kw">interface</span> PaymentGateway
+{
+    <span class="kw">public function</span> <span class="fn">charge</span>(Money $amount, Card $card): PaymentResult;
+}
+
+<span class="cm">// Абстрактный класс — контракт плюс общая реализация</span>
+<span class="kw">abstract class</span> BaseGateway <span class="kw">implements</span> PaymentGateway
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">protected readonly</span> HttpClient $http) {}
+
+    <span class="kw">abstract protected function</span> <span class="fn">endpoint</span>(): <span class="kw">string</span>;
+
+    <span class="kw">protected function</span> <span class="fn">request</span>(<span class="kw">array</span> $payload): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> $this-&gt;http-&gt;<span class="fn">post</span>($this-&gt;<span class="fn">endpoint</span>(), $payload);
+    }
+}
+
+<span class="cm">// Трейт — примесь. Хорош для техники, плох для бизнес-логики.</span>
+<span class="kw">trait</span> HasTimestamps
+{
+    <span class="kw">private</span> ?\DateTimeImmutable $createdAt = <span class="kw">null</span>;
+
+    <span class="kw">public function</span> <span class="fn">touch</span>(): <span class="kw">void</span> { $this-&gt;createdAt ??= <span class="kw">new</span> \DateTimeImmutable(); }
+}
+
+<span class="cm">// self против static: раннее и позднее статическое связывание</span>
+<span class="kw">class</span> A {
+    <span class="kw">public static function</span> <span class="fn">createSelf</span>(): <span class="kw">static</span> { <span class="kw">return new static</span>(); }  <span class="cm">// класс потомка</span>
+    <span class="kw">public static function</span> <span class="fn">createHard</span>(): <span class="kw">self</span> { <span class="kw">return new self</span>(); }      <span class="cm">// всегда A</span>
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Начиная с PHP 8.2 создание необъявленных (динамических) свойств объявлено устаревшим: опечатка в имени свойства теперь заметна, а не создаёт молча новое поле. Это хорошо — но старый код на этом ломается. Точечное исключение делается атрибутом, но правильный путь — объявить свойства явно.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Наследование ради переиспользования кода: <code>class OrderReport extends Order</code>, потому что «там уже есть нужные методы». Наследование означает «является», а не «использует». Если отношения «является» нет — композиция или интерфейс. Иначе через год иерархия из пяти уровней, в которой никто не понимает, откуда взялся метод.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Интерфейс или абстрактный класс?</b><br>Интерфейс — когда нужен только контракт и подменяемость: классов-реализаций может быть много, и они не связаны общим кодом. Абстрактный класс — когда, кроме контракта, есть общая реализация и состояние. Реализовать интерфейсов можно несколько, унаследоваться — только от одного класса, поэтому по умолчанию берут интерфейс плюс композицию.</div>
+    <div class="box task"><span class="lbl">Практика</span>Опишите иерархию платёжных шлюзов: интерфейс, абстрактный базовый класс с общей работой по HTTP и две реализации. Затем напишите код, который работает только с интерфейсом, и подмените реализацию заглушкой в тесте.</div>
+  </article>
+
+  <!-- J6 -->
+  <article class="card" id="errors">
+    <p class="path">junior / надёжность / ошибки</p>
+    <div class="card-top"><h3>Ошибки и исключения</h3><span class="badge b-1">База</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>В PHP 7+ почти всё стало исключениями, но иерархия двухголовая, и её надо знать: <code>Throwable</code> делится на <code>Error</code> (проблемы самого движка и кода) и <code>Exception</code> (прикладные ситуации).</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Иерархия</span></div><pre><code>Throwable (интерфейс)
+├── Error                     ← ошибки языка и рантайма, ловить точечно
+│   ├── TypeError             неверный тип аргумента или возврата
+│   ├── ValueError            корректный тип, недопустимое значение (8.0)
+│   ├── ArithmeticError → DivisionByZeroError
+│   ├── ArgumentCountError
+│   └── AssertionError
+└── Exception                 ← прикладные ошибки, ваша территория
+    ├── RuntimeException      проблема, видимая только во время работы
+    │   ├── UnexpectedValueException
+    │   └── OutOfBoundsException
+    ├── LogicException        ошибка в самом коде, чинится программистом
+    │   ├── InvalidArgumentException
+    │   └── DomainException
+    ├── JsonException, PDOException, ...
+    └── ВАШИ исключения предметной области</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Обработка: от частного к общему</span></div><pre><code>&lt;?php
+<span class="kw">try</span> {
+    $data = <span class="fn">json_decode</span>($raw, <span class="kw">true</span>, flags: <span class="nm">JSON_THROW_ON_ERROR</span>);
+    $order = $this-&gt;orders-&gt;<span class="fn">place</span>($data);
+} <span class="kw">catch</span> (OutOfStockException $e) {
+    <span class="cm">// Ожидаемая бизнес-ситуация: обработать и показать пользователю</span>
+    <span class="kw">return</span> $this-&gt;<span class="fn">error</span>(<span class="st">'Товара не хватает на складе'</span>, 409);
+} <span class="kw">catch</span> (JsonException | \InvalidArgumentException $e) {
+    <span class="cm">// Несколько типов одним блоком (7.1+)</span>
+    <span class="kw">return</span> $this-&gt;<span class="fn">error</span>(<span class="st">'Некорректные данные запроса'</span>, 400);
+} <span class="kw">catch</span> (\Throwable $e) {
+    <span class="cm">// Последний рубеж: залогировать с контекстом и не показывать детали наружу</span>
+    $this-&gt;logger-&gt;<span class="fn">error</span>(<span class="st">'order.place.failed'</span>, [
+        <span class="st">'exception'</span> =&gt; $e,
+        <span class="st">'user_id'</span>   =&gt; $userId,
+    ]);
+
+    <span class="kw">return</span> $this-&gt;<span class="fn">error</span>(<span class="st">'Внутренняя ошибка'</span>, 500);
+} <span class="kw">finally</span> {
+    <span class="cm">// Выполнится в любом случае: освобождение ресурсов</span>
+    $this-&gt;lock-&gt;<span class="fn">release</span>();
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Свои исключения: с контекстом, а не с текстом</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> OutOfStockException <span class="kw">extends</span> \RuntimeException
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> $productId,
+        <span class="kw">public readonly int</span> $requested,
+        <span class="kw">public readonly int</span> $available,
+    ) {
+        <span class="kw">parent</span>::<span class="fn">__construct</span>(
+            <span class="fn">sprintf</span>(<span class="st">'Товар %d: запрошено %d, доступно %d'</span>, $productId, $requested, $available),
+        );
+    }
+}
+
+<span class="cm">// Ловится по типу, а данные для обработки берутся из свойств,</span>
+<span class="cm">// а не парсятся из текста сообщения.</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>На проде <code>display_errors</code> обязан быть выключен, а <code>log_errors</code> включён: трассировка стека на экране пользователя раскрывает пути, версии и иногда учётные данные. Ошибки должны уходить в лог и в трекер ошибок, пользователю — понятное сообщение без деталей.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Подавление ошибок оператором <code>@</code> и пустые <code>catch</code>-блоки. Проблема не исчезает — она становится невидимой и всплывает позже в другом месте, уже без контекста. Если исключение действительно можно проигнорировать, это нужно объяснить комментарием и всё равно записать в лог на уровне debug.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем <code>Error</code> отличается от <code>Exception</code>?</b><br>Оба реализуют <code>Throwable</code>. <code>Error</code> — проблемы уровня языка и рантайма: неверный тип, деление на ноль, нехватка аргументов; обычно это баг, который надо чинить, а не обрабатывать. <code>Exception</code> — прикладные ситуации, для которых предусмотрена реакция. Ловить <code>\Throwable</code> имеет смысл только на верхнем уровне, чтобы залогировать и отдать корректный ответ.</div>
+    <div class="box task"><span class="lbl">Практика</span>Создайте иерархию исключений для одного домена: базовое исключение модуля и три конкретных с данными в свойствах. Добавьте глобальный обработчик, который логирует непойманное и отдаёт корректный ответ, и проверьте, что на проде трассировка не попадает в вывод.</div>
+  </article>
+
+  <!-- J7 -->
+  <article class="card" id="composer">
+    <p class="path">junior / инструменты / composer</p>
+    <div class="card-top"><h3>Composer, автозагрузка и стандарты PSR</h3><span class="badge b-1">База</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Команды и их смысл</span></div><pre><code>composer require monolog/monolog          <span class="cm"># добавить зависимость</span>
+composer require --dev phpunit/phpunit    <span class="cm"># только для разработки</span>
+
+composer install    <span class="cm"># поставить ТОЧНО версии из composer.lock — так на проде и в CI</span>
+composer update     <span class="cm"># обновить в рамках ограничений и переписать lock — только осознанно</span>
+
+composer install --no-dev --optimize-autoloader   <span class="cm"># сборка для прода</span>
+composer dump-autoload -o
+composer audit                                    <span class="cm"># известные уязвимости в зависимостях</span>
+composer outdated --direct                        <span class="cm"># что можно обновить</span>
+composer why vendor/package                       <span class="cm"># кто это тянет</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">composer.json: автозагрузка и ограничения версий</span></div><pre><code>{
+    <span class="nm">"require"</span>: {
+        <span class="nm">"php"</span>: <span class="st">"^8.3"</span>,
+        <span class="nm">"psr/log"</span>: <span class="st">"^3.0"</span>          <span class="cm">// ^3.0 = &gt;=3.0.0 &lt;4.0.0 — минорные и патчи</span>
+    },
+    <span class="nm">"require-dev"</span>: {
+        <span class="nm">"phpunit/phpunit"</span>: <span class="st">"^11.0"</span>,
+        <span class="nm">"phpstan/phpstan"</span>: <span class="st">"^2.0"</span>
+    },
+    <span class="nm">"autoload"</span>: {
+        <span class="cm">// PSR-4: пространство имён → каталог. App\Domain\Order → src/Domain/Order.php</span>
+        <span class="nm">"psr-4"</span>: { <span class="nm">"App\\"</span>: <span class="st">"src/"</span> }
+    },
+    <span class="nm">"autoload-dev"</span>: {
+        <span class="nm">"psr-4"</span>: { <span class="nm">"Tests\\"</span>: <span class="st">"tests/"</span> }
+    },
+    <span class="nm">"config"</span>: { <span class="nm">"sort-packages"</span>: <span class="kw">true</span> }
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 3 · стандарты PSR, которые встречаются в работе</caption>
+      <thead><tr><th>Стандарт</th><th>О чём</th><th>Зачем знать</th></tr></thead>
+      <tbody>
+        <tr><td>PSR-1 / PSR-12</td><td>Стиль кода</td><td>Единый стиль в команде; проверяется автоматически</td></tr>
+        <tr><td>PSR-4</td><td>Автозагрузка классов</td><td>Файл находится по пространству имён; основа структуры проекта</td></tr>
+        <tr><td>PSR-3</td><td>Логирование</td><td>Единый интерфейс логгера: библиотека не зависит от вашей реализации</td></tr>
+        <tr><td>PSR-7 / PSR-17</td><td>HTTP-сообщения и их фабрики</td><td>Общий формат запроса и ответа между библиотеками</td></tr>
+        <tr><td>PSR-15</td><td>Обработчики и middleware</td><td>Совместимые слои обработки запроса</td></tr>
+        <tr><td>PSR-18</td><td>HTTP-клиент</td><td>Можно менять клиент, не переписывая код</td></tr>
+        <tr><td>PSR-11</td><td>Контейнер зависимостей</td><td>Общий интерфейс получения сервисов</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span><code>composer.lock</code> обязан лежать в репозитории, а на проде и в CI выполняется <code>install</code>, а не <code>update</code>. Иначе сборка становится невоспроизводимой: сегодня подтянулась одна версия зависимости, завтра другая, и «на моей машине работает» превращается в жанр.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем <code>composer install</code> отличается от <code>composer update</code>?</b><br><code>install</code> ставит точные версии из <code>composer.lock</code> — воспроизводимо, поэтому используется в CI и на проде. <code>update</code> пересчитывает версии в пределах ограничений <code>composer.json</code> и переписывает lock — это осознанное действие разработчика, результат которого проходит тесты и ревью.</div>
+    <div class="box task"><span class="lbl">Практика</span>Соберите с нуля мини-проект: <code>composer.json</code> с PSR-4, пара классов, логгер по PSR-3, тесты в <code>require-dev</code>. Затем запустите аудит зависимостей и разберитесь, что означают ограничения версий у каждого пакета.</div>
+  </article>
+
+  <!-- J8 -->
+  <article class="card" id="http">
+    <p class="path">junior / веб / ввод</p>
+    <div class="card-top"><h3>HTTP-контекст: ввод, сессии, файлы</h3><span class="badge b-1">База</span></div>
+    <p>Даже работая во фреймворке, полезно понимать, что под ним: суперглобальные массивы, сессии на куках и загрузка файлов. Именно здесь находится большинство уязвимостей начинающих.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ввод — всегда недоверенные данные</span></div><pre><code>&lt;?php
+<span class="cm">// Всё, что приходит от клиента, — строки, и всё требует проверки</span>
+$_GET, $_POST, $_COOKIE, $_FILES, $_SERVER, $_SESSION
+
+<span class="cm">// JSON-тело приходит не в $_POST, а сырым потоком</span>
+$payload = <span class="fn">json_decode</span>(<span class="fn">file_get_contents</span>(<span class="st">'php://input'</span>), <span class="kw">true</span>, flags: <span class="nm">JSON_THROW_ON_ERROR</span>);
+
+<span class="cm">// Приведение и валидация на границе</span>
+$page = <span class="fn">filter_input</span>(<span class="nm">INPUT_GET</span>, <span class="st">'page'</span>, <span class="nm">FILTER_VALIDATE_INT</span>, [
+    <span class="st">'options'</span> =&gt; [<span class="st">'default'</span> =&gt; 1, <span class="st">'min_range'</span> =&gt; 1, <span class="st">'max_range'</span> =&gt; 10000],
+]);
+$email = <span class="fn">filter_var</span>($input, <span class="nm">FILTER_VALIDATE_EMAIL</span>);
+
+<span class="cm">// Три правила защиты — по месту использования, а не «на входе»:</span>
+<span class="fn">htmlspecialchars</span>($text, <span class="nm">ENT_QUOTES</span> | <span class="nm">ENT_SUBSTITUTE</span>, <span class="st">'UTF-8'</span>);   <span class="cm">// в HTML</span>
+$stmt = $pdo-&gt;<span class="fn">prepare</span>(<span class="st">'SELECT * FROM users WHERE email = ?'</span>);   <span class="cm">// в SQL</span>
+<span class="fn">escapeshellarg</span>($arg);                                        <span class="cm">// в команду ОС</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сессии и загрузка файлов</span></div><pre><code>&lt;?php
+<span class="cm">// Куки сессии: три обязательные настройки</span>
+<span class="fn">session_set_cookie_params</span>([
+    <span class="st">'httponly'</span> =&gt; <span class="kw">true</span>,      <span class="cm">// недоступна из JavaScript</span>
+    <span class="st">'secure'</span>   =&gt; <span class="kw">true</span>,      <span class="cm">// только по HTTPS</span>
+    <span class="st">'samesite'</span> =&gt; <span class="st">'Lax'</span>,     <span class="cm">// защита от межсайтовых запросов</span>
+]);
+<span class="fn">session_start</span>();
+
+<span class="cm">// При смене уровня доступа — новый идентификатор сессии</span>
+<span class="fn">session_regenerate_id</span>(<span class="kw">true</span>);   <span class="cm">// после входа: защита от фиксации сессии</span>
+
+<span class="cm">// Загрузка файла: доверять нельзя ни имени, ни расширению, ни MIME от клиента</span>
+$file = $_FILES[<span class="st">'avatar'</span>];
+
+<span class="kw">if</span> ($file[<span class="st">'error'</span>] !== <span class="nm">UPLOAD_ERR_OK</span>) { <span class="kw">throw new</span> RuntimeException(<span class="st">'Ошибка загрузки'</span>); }
+<span class="kw">if</span> ($file[<span class="st">'size'</span>] &gt; 2 * 1024 * 1024) { <span class="kw">throw new</span> RuntimeException(<span class="st">'Слишком большой файл'</span>); }
+
+<span class="cm">// Определяем тип по содержимому, а не по присланному значению</span>
+$mime = (<span class="kw">new</span> \finfo(<span class="nm">FILEINFO_MIME_TYPE</span>))-&gt;<span class="fn">file</span>($file[<span class="st">'tmp_name'</span>]);
+<span class="kw">if</span> (!<span class="fn">in_array</span>($mime, [<span class="st">'image/jpeg'</span>, <span class="st">'image/png'</span>, <span class="st">'image/webp'</span>], <span class="kw">true</span>)) {
+    <span class="kw">throw new</span> RuntimeException(<span class="st">'Недопустимый тип файла'</span>);
+}
+
+<span class="cm">// Имя генерируем сами, храним вне корня сайта</span>
+$name = <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(16)) . <span class="st">'.'</span> . $ext;
+<span class="fn">move_uploaded_file</span>($file[<span class="st">'tmp_name'</span>], $storagePath . <span class="st">'/'</span> . $name);</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Экранирование делается <em>в момент вывода</em> и по правилам той среды, куда данные попадают: HTML, SQL, shell, JSON — разные правила. Попытка «почистить всё на входе» одной универсальной функцией и хранить уже экранированное приводит к двойному экранированию и дырам одновременно.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Проверять загруженный файл по расширению из его имени. Файл <code>avatar.jpg.php</code> с картинкой внутри — классический способ получить выполнение кода на сервере. Проверяется содержимое, имя генерируется заново, каталог хранения не должен исполнять скрипты.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как безопасно принимать пользовательский ввод?</b><br>Считать его недоверенным всегда. На границе — валидация и приведение типов. При использовании — экранирование по контексту: подготовленные выражения для SQL, <code>htmlspecialchars</code> для HTML, экранирование аргументов для команд ОС. Для файлов — проверка содержимого, а не имени, генерация нового имени и хранение вне корня сайта.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите без фреймворка форму загрузки аватара с полной валидацией и безопасным хранением. Затем попробуйте её обойти: подмена расширения, подмена MIME в запросе, слишком большой файл, обход каталога через имя.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Объясняю модель shared-nothing и роль opcache</li>
+        <li>Различаю окружение CLI и FPM и их ограничения</li>
+        <li>Использую <code>===</code> и понимаю, что изменилось в PHP 8</li>
+        <li>Помню список ложных значений и ловушку <code>strpos</code></li>
+        <li>Не путаю <code>isset</code>, <code>empty</code> и <code>array_key_exists</code></li>
+        <li>Знаю разницу <code>array_merge</code> и <code>+</code>, сохранение ключей в фильтре</li>
+      </ul>
+      <ul class="check">
+        <li>Работаю с текстом через <code>mb_*</code>-функции</li>
+        <li>Пишу <code>declare(strict_types=1)</code> в каждом файле</li>
+        <li>Использую именованные аргументы вместо флагов</li>
+        <li>Выбираю между интерфейсом, абстрактным классом и композицией</li>
+        <li>Знаю иерархию <code>Throwable</code> и не глушу ошибки</li>
+        <li>Понимаю <code>composer install</code> против <code>update</code> и роль lock-файла</li>
+        <li>Экранирую по контексту и валидирую загруженные файлы по содержимому</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-собеседование по PHP почти всегда содержит три вещи: сравнение <code>==</code> и <code>===</code> с примерами, вопрос про ООП (интерфейс против абстрактного класса) и что-нибудь про безопасность ввода. Этот блок закрывает все три.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · инженерия</p>
+    <h2>Middle PHP Developer</h2>
+    <p>Middle пишет не «работающий», а <em>сопровождаемый</em> код: типы вместо комментариев, объекты-значения вместо ассоциативных массивов, явные зависимости вместо глобальных вызовов, тесты и статический анализ вместо ручной проверки. Плюс понимание того, как язык расходует память и что делать, когда данных больше, чем помещается.</p>
+  </div>
+
+  <!-- M1 -->
+  <article class="card" id="typing">
+    <p class="path">middle / типы / строгость</p>
+    <div class="card-top"><h3>Строгая типизация как инструмент</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Типы в современном PHP — не украшение, а самый дешёвый способ переложить часть проверок на движок и статический анализатор. Хорошо типизированный код ломается в момент ошибки, а не через три слоя вызовов.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Что умеет система типов</span></div><pre><code>&lt;?php
+<span class="kw">declare</span>(strict_types=1);
+
+<span class="kw">final class</span> Invoice
+{
+    <span class="cm">// Типизированные свойства (7.4): обращение до инициализации — ошибка,</span>
+    <span class="cm">// а не молчаливый null</span>
+    <span class="kw">private</span> ?\DateTimeImmutable $paidAt = <span class="kw">null</span>;
+
+    <span class="cm">// Типизированная константа класса (8.3)</span>
+    <span class="kw">public const string</span> CURRENCY = <span class="st">'RUB'</span>;
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly string</span> $number,     <span class="cm">// readonly: только из конструктора</span>
+        <span class="kw">public readonly</span> Money $amount,
+    ) {}
+
+    <span class="cm">// Union: несколько допустимых типов</span>
+    <span class="kw">public function</span> <span class="fn">findLine</span>(<span class="kw">int</span>|<span class="kw">string</span> $key): InvoiceLine|<span class="kw">null</span> { <span class="cm">/* ... */</span> }
+
+    <span class="cm">// Intersection (8.1): объект обязан реализовать оба интерфейса</span>
+    <span class="kw">public function</span> <span class="fn">render</span>(Renderable&amp;Countable $items): <span class="kw">string</span> { <span class="cm">/* ... */</span> }
+
+    <span class="cm">// static как тип возврата: удобно для «текучих» интерфейсов</span>
+    <span class="kw">public function</span> <span class="fn">withPaidAt</span>(\DateTimeImmutable $at): <span class="kw">static</span>
+    {
+        $clone = <span class="kw">clone</span> $this;
+        $clone-&gt;paidAt = $at;
+
+        <span class="kw">return</span> $clone;
+    }
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 4 · возможности типизации по версиям</caption>
+      <thead><tr><th>Возможность</th><th>Появилась</th><th>Что даёт на практике</th></tr></thead>
+      <tbody>
+        <tr><td>Скалярные типы, <code>strict_types</code></td><td>7.0</td><td>Ошибка на границе вызова вместо тихого приведения</td></tr>
+        <tr><td>Типизированные свойства</td><td>7.4</td><td>Нельзя присвоить не тот тип и прочитать неинициализированное</td></tr>
+        <tr><td>Union-типы, <code>mixed</code>, <code>static</code></td><td>8.0</td><td>Честная сигнатура вместо комментария в докблоке</td></tr>
+        <tr><td><code>never</code>, <code>readonly</code>, чистые intersection-типы</td><td>8.1</td><td>Неизменяемость на уровне языка; явные «всегда бросает»</td></tr>
+        <tr><td><code>readonly</code>-классы, <code>true</code>/<code>false</code>/<code>null</code> как типы</td><td>8.2</td><td>Неизменяемый объект целиком, точнее сигнатуры</td></tr>
+        <tr><td>Типизированные константы классов</td><td>8.3</td><td>Константы перестают быть <code>mixed</code></td></tr>
+        <tr><td>Хуки свойств и асимметричная видимость</td><td>8.4</td><td>Публичное чтение и приватная запись без гор геттеров</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Асимметричная видимость и хуки (8.4)</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> Basket
+{
+    <span class="cm">// Читать можно снаружи, писать — только внутри класса.</span>
+    <span class="cm">// Раньше это требовало приватного свойства и геттера.</span>
+    <span class="kw">public private(set) int</span> $itemsCount = 0;
+
+    <span class="cm">// Хук свойства: вычисляемое значение без отдельного метода</span>
+    <span class="kw">public string</span> $summary {
+        <span class="kw">get</span> =&gt; <span class="fn">sprintf</span>(<span class="st">'%d товаров'</span>, $this-&gt;itemsCount);
+    }
+
+    <span class="kw">public function</span> <span class="fn">add</span>(): <span class="kw">void</span> { $this-&gt;itemsCount++; }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Типы в PHP проверяются в рантайме и не описывают содержимое массивов: <code>array</code> ничего не говорит о том, что внутри. Эту часть закрывают аннотации для статического анализатора (<code>@param list&lt;Order&gt;</code>) — они не влияют на исполнение, но позволяют анализатору находить ошибки до запуска. Комбинация «нативные типы + аннотации коллекций» даёт максимум пользы.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Массив как универсальная структура данных: <code>function createOrder(array $data)</code>. Что внутри — знает только автор, IDE не подсказывает, анализатор бессилен, опечатка в ключе вылезает в рантайме. Замена — объект с типизированными свойствами: те же данные, но проверяемые.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что даёт <code>declare(strict_types=1)</code>?</b><br>Отключает неявное приведение скалярных аргументов и возвращаемых значений для вызовов из этого файла: передача <code>"5"</code> туда, где ожидается <code>int</code>, вызовет <code>TypeError</code> вместо тихого преобразования. Ошибка возникает в точке вызова, а не через несколько слоёв, где значение уже испортило логику.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите функцию, принимающую ассоциативный массив, и переведите её на объект с типизированными свойствами и <code>readonly</code>. Затем запустите статический анализатор до и после и сравните число находок.</div>
+  </article>
+
+  <!-- M2 -->
+  <article class="card" id="enums">
+    <p class="path">middle / типы / перечисления</p>
+    <div class="card-top"><h3>Перечисления и объекты-значения</h3><span class="badge b-2">Ключевая тема</span></div>
+    <p><span class="t">Перечисление</span> (enum, 8.1) заменяет строковые и числовые константы типом, у которого конечное множество значений. Это убирает целый класс ошибок: невозможно передать статус, которого не существует.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Enum с методами и интерфейсом</span></div><pre><code>&lt;?php
+<span class="kw">enum</span> OrderStatus: <span class="kw">string</span>
+{
+    <span class="kw">case</span> Draft     = <span class="st">'draft'</span>;
+    <span class="kw">case</span> Paid      = <span class="st">'paid'</span>;
+    <span class="kw">case</span> Shipped   = <span class="st">'shipped'</span>;
+    <span class="kw">case</span> Cancelled = <span class="st">'cancelled'</span>;
+
+    <span class="cm">// Поведение живёт рядом со значениями, а не в switch по всему проекту</span>
+    <span class="kw">public function</span> <span class="fn">label</span>(): <span class="kw">string</span>
+    {
+        <span class="kw">return match</span>($this) {
+            self::Draft     =&gt; <span class="st">'Черновик'</span>,
+            self::Paid      =&gt; <span class="st">'Оплачен'</span>,
+            self::Shipped   =&gt; <span class="st">'Отправлен'</span>,
+            self::Cancelled =&gt; <span class="st">'Отменён'</span>,
+        };
+    }
+
+    <span class="cm">// Правила переходов — тоже здесь</span>
+    <span class="kw">public function</span> <span class="fn">canTransitionTo</span>(<span class="kw">self</span> $next): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="fn">in_array</span>($next, <span class="kw">match</span>($this) {
+            self::Draft   =&gt; [self::Paid, self::Cancelled],
+            self::Paid    =&gt; [self::Shipped, self::Cancelled],
+            <span class="kw">default</span>       =&gt; [],
+        }, <span class="kw">true</span>);
+    }
+}
+
+<span class="cm">// Использование</span>
+OrderStatus::<span class="fn">from</span>(<span class="st">'paid'</span>);         <span class="cm">// ValueError, если значения нет</span>
+OrderStatus::<span class="fn">tryFrom</span>($input) ?? OrderStatus::Draft;   <span class="cm">// null вместо исключения</span>
+OrderStatus::<span class="fn">cases</span>();               <span class="cm">// все варианты — для выпадающих списков</span>
+
+<span class="cm">// match строгий и требует покрыть все случаи —</span>
+<span class="cm">// добавили новый статус, забыли обработать → ошибка сразу.</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Объект-значение: тип вместо примитива</span></div><pre><code>&lt;?php
+<span class="cm">// readonly-класс (8.2): неизменяемый целиком</span>
+<span class="kw">final readonly class</span> Money
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public int</span> $amount,        <span class="cm">// в минимальных единицах: копейки</span>
+        <span class="kw">public string</span> $currency,
+    ) {
+        <span class="cm">// Инвариант проверяется один раз — при создании</span>
+        <span class="kw">if</span> ($amount &lt; 0) {
+            <span class="kw">throw new</span> \InvalidArgumentException(<span class="st">'Сумма не может быть отрицательной'</span>);
+        }
+    }
+
+    <span class="kw">public function</span> <span class="fn">add</span>(<span class="kw">self</span> $other): <span class="kw">self</span>
+    {
+        <span class="kw">if</span> ($other-&gt;currency !== $this-&gt;currency) {
+            <span class="kw">throw new</span> CurrencyMismatch($this-&gt;currency, $other-&gt;currency);
+        }
+
+        <span class="kw">return new self</span>($this-&gt;amount + $other-&gt;amount, $this-&gt;currency);
+    }
+
+    <span class="kw">public function</span> <span class="fn">format</span>(): <span class="kw">string</span>
+    {
+        <span class="kw">return</span> <span class="fn">number_format</span>($this-&gt;amount / 100, 2, <span class="st">','</span>, <span class="st">' '</span>) . <span class="st">' ₽'</span>;
+    }
+}
+
+<span class="cm">// Сравните сигнатуры:</span>
+<span class="kw">function</span> <span class="fn">refund</span>(<span class="kw">float</span> $amount, <span class="kw">string</span> $currency): <span class="kw">void</span> {}   <span class="cm">// что угодно</span>
+<span class="kw">function</span> <span class="fn">refund</span>(Money $amount): <span class="kw">void</span> {}                     <span class="cm">// корректно по построению</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Перечисления — это объекты-одиночки: каждый вариант существует в единственном экземпляре, поэтому их можно сравнивать через <code>===</code> и использовать в <code>match</code>. У них нет состояния и их нельзя создать через <code>new</code>. Backed-варианты (со значением) удобны для хранения в базе, чистые — когда значение наружу не выходит.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Строковые статусы, размазанные по проекту: <code>if ($order-&gt;status === 'payed')</code>. Опечатка не будет замечена ни IDE, ни анализатором, а перечень допустимых значений существует только в голове. Перечисление превращает это в ошибку на этапе анализа.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужны объекты-значения, если есть скалярные типы?</b><br>Они переносят инварианты в тип: <code>Money</code> не бывает отрицательной, <code>Email</code> всегда валиден, сложение разных валют невозможно. Проверка выполняется один раз при создании, дальше по коду объект корректен по построению. Плюс поведение (форматирование, арифметика) живёт рядом с данными, а не размазано по хелперам.</div>
+    <div class="box task"><span class="lbl">Практика</span>Замените в проекте строковые статусы на перечисление с методами и правилами переходов, а работу с деньгами — на неизменяемый объект-значение в копейках. Убедитесь, что <code>match</code> заставляет обработать новый вариант при его добавлении.</div>
+  </article>
+
+  <!-- M3 -->
+  <article class="card" id="oop-adv">
+    <p class="path">middle / ооп / абстракции</p>
+    <div class="card-top"><h3>Абстракции, магические методы, клонирование</h3><span class="badge b-2">Инженерия</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Магические методы: где полезны, где вредны</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> Config <span class="kw">implements</span> \ArrayAccess, \Countable, \JsonSerializable, \Stringable
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private array</span> $values) {}
+
+    <span class="cm">// __invoke: объект вызывается как функция — удобно для обработчиков</span>
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="kw">string</span> $key): <span class="kw">mixed</span> { <span class="kw">return</span> $this-&gt;values[$key] ?? <span class="kw">null</span>; }
+
+    <span class="cm">// __toString: приведение к строке (интерфейс Stringable — с 8.0 автоматически)</span>
+    <span class="kw">public function</span> <span class="fn">__toString</span>(): <span class="kw">string</span> { <span class="kw">return</span> <span class="fn">json_encode</span>($this-&gt;values); }
+
+    <span class="cm">// Интерфейсы вместо магии — предсказуемее и видно в сигнатурах</span>
+    <span class="kw">public function</span> <span class="fn">offsetGet</span>(<span class="kw">mixed</span> $o): <span class="kw">mixed</span> { <span class="kw">return</span> $this-&gt;values[$o] ?? <span class="kw">null</span>; }
+    <span class="kw">public function</span> <span class="fn">offsetExists</span>(<span class="kw">mixed</span> $o): <span class="kw">bool</span> { <span class="kw">return</span> <span class="fn">isset</span>($this-&gt;values[$o]); }
+    <span class="kw">public function</span> <span class="fn">offsetSet</span>(<span class="kw">mixed</span> $o, <span class="kw">mixed</span> $v): <span class="kw">void</span> { <span class="kw">throw new</span> \LogicException(<span class="st">'read-only'</span>); }
+    <span class="kw">public function</span> <span class="fn">offsetUnset</span>(<span class="kw">mixed</span> $o): <span class="kw">void</span> { <span class="kw">throw new</span> \LogicException(<span class="st">'read-only'</span>); }
+    <span class="kw">public function</span> <span class="fn">count</span>(): <span class="kw">int</span> { <span class="kw">return</span> <span class="fn">count</span>($this-&gt;values); }
+    <span class="kw">public function</span> <span class="fn">jsonSerialize</span>(): <span class="kw">mixed</span> { <span class="kw">return</span> $this-&gt;values; }
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 5 · магические методы и их цена</caption>
+      <thead><tr><th>Метод</th><th>Когда оправдан</th><th>Чем плох</th></tr></thead>
+      <tbody>
+        <tr><td><code>__construct</code>, <code>__destruct</code></td><td>Всегда</td><td>В деструкторе не должно быть тяжёлой логики</td></tr>
+        <tr><td><code>__invoke</code></td><td>Однометодные обработчики, колбэки</td><td>Скрывает назначение, если злоупотреблять</td></tr>
+        <tr><td><code>__toString</code></td><td>Объекты-значения</td><td>Неявные приведения в неожиданных местах</td></tr>
+        <tr><td><code>__get</code> / <code>__set</code></td><td>Прокси, ленивые обёртки</td><td>IDE и анализатор слепнут; опечатки не ловятся</td></tr>
+        <tr><td><code>__call</code> / <code>__callStatic</code></td><td>Фасады, построители запросов</td><td>Методов нет в сигнатуре — «магия», которую сложно отлаживать</td></tr>
+        <tr><td><code>__clone</code></td><td>Глубокое копирование вложенных объектов</td><td>Забытая реализация даёт общее состояние у копий</td></tr>
+        <tr><td><code>__serialize</code> / <code>__unserialize</code></td><td>Контроль сериализации</td><td>Десериализация недоверенных данных опасна</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Клонирование: поверхностное по умолчанию</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> Report
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public</span> \DateTimeImmutable $date, <span class="kw">public</span> Filters $filters) {}
+
+    <span class="cm">// Без этого метода копия делит объект Filters с оригиналом:</span>
+    <span class="cm">// изменение фильтров в копии затронет исходный отчёт.</span>
+    <span class="kw">public function</span> <span class="fn">__clone</span>(): <span class="kw">void</span>
+    {
+        $this-&gt;filters = <span class="kw">clone</span> $this-&gt;filters;
+    }
+}
+
+<span class="cm">// Атрибут #[\Override] (8.3): ошибка компиляции, если метод</span>
+<span class="cm">// на самом деле ничего не переопределяет (опечатка, изменённый родитель)</span>
+<span class="kw">final class</span> JsonReport <span class="kw">extends</span> Report
+{
+    #[\Override]
+    <span class="kw">public function</span> <span class="fn">render</span>(): <span class="kw">string</span> { <span class="cm">/* ... */</span> }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Объекты передаются по «ссылке на объект»: копия переменной указывает на тот же экземпляр. Поэтому изменение объекта внутри функции видно снаружи, а <code>clone</code> делает лишь поверхностную копию — вложенные объекты остаются общими. Это источник плавающих багов, которые лечатся неизменяемыми объектами-значениями.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем опасны <code>__get</code> и <code>__call</code>?</b><br>Они делают публичный интерфейс невидимым: IDE не подсказывает, статический анализатор не проверяет, опечатка в имени свойства или метода превращается в рантайм-ошибку вместо ошибки анализа. Плюс они медленнее прямого доступа. Оправданы в прокси и обёртках, но в обычном коде лучше явные свойства и методы.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите неизменяемую коллекцию, реализующую <code>IteratorAggregate</code>, <code>Countable</code> и <code>JsonSerializable</code>, с методами <code>map</code>/<code>filter</code>, возвращающими новый экземпляр. Проверьте тестом, что исходная коллекция не меняется.</div>
+  </article>
+
+  <!-- M4 -->
+  <article class="card" id="solid">
+    <p class="path">middle / архитектура / solid</p>
+    <div class="card-top"><h3>SOLID и внедрение зависимостей</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 6 · SOLID на практике, без академизма</caption>
+      <thead><tr><th>Принцип</th><th>Практический смысл</th><th>Признак нарушения</th></tr></thead>
+      <tbody>
+        <tr><td><strong>S</strong> — единственная ответственность</td><td>У класса одна причина для изменения</td><td>Класс на 800 строк, который правят при любой задаче</td></tr>
+        <tr><td><strong>O</strong> — открытость/закрытость</td><td>Новое поведение добавляется новым классом, а не правкой старого</td><td>Растущий <code>switch</code> по типу, который трогают при каждом добавлении</td></tr>
+        <tr><td><strong>L</strong> — подстановка Лисков</td><td>Потомок не ломает ожиданий от родителя</td><td>Наследник бросает исключение там, где родитель работал</td></tr>
+        <tr><td><strong>I</strong> — разделение интерфейсов</td><td>Узкие интерфейсы под конкретных потребителей</td><td>Интерфейс на 20 методов, половина из которых заглушки</td></tr>
+        <tr><td><strong>D</strong> — инверсия зависимостей</td><td>Зависеть от абстракции, а не от конкретного класса</td><td><code>new PDO(...)</code> прямо в бизнес-логике</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Инверсия зависимостей: до и после</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: класс сам создаёт зависимости — не подменить, не протестировать</span>
+<span class="kw">final class</span> OrderService
+{
+    <span class="kw">public function</span> <span class="fn">place</span>(<span class="kw">array</span> $data): <span class="kw">void</span>
+    {
+        $pdo = <span class="kw">new</span> \PDO(<span class="st">'mysql:host=localhost'</span>, <span class="st">'root'</span>, <span class="st">''</span>);   <span class="cm">// жёстко</span>
+        $mailer = <span class="kw">new</span> SmtpMailer(<span class="st">'smtp.example.com'</span>);           <span class="cm">// жёстко</span>
+        <span class="cm">// в тесте это отправит настоящее письмо и полезет в настоящую базу</span>
+    }
+}
+
+<span class="cm">// ХОРОШО: зависимости приходят снаружи и описаны интерфейсами</span>
+<span class="kw">final class</span> OrderService
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> OrderRepository $orders,    <span class="cm">// интерфейс</span>
+        <span class="kw">private readonly</span> Mailer $mailer,             <span class="cm">// интерфейс</span>
+        <span class="kw">private readonly</span> LoggerInterface $logger,    <span class="cm">// PSR-3</span>
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">place</span>(OrderData $data): Order
+    {
+        $order = $this-&gt;orders-&gt;<span class="fn">save</span>(Order::<span class="fn">fromData</span>($data));
+        $this-&gt;mailer-&gt;<span class="fn">send</span>(<span class="kw">new</span> OrderPlacedMail($order));
+        $this-&gt;logger-&gt;<span class="fn">info</span>(<span class="st">'order.placed'</span>, [<span class="st">'id'</span> =&gt; $order-&gt;id]);
+
+        <span class="kw">return</span> $order;
+    }
+}
+
+<span class="cm">// В тесте подставляются заглушки — ни базы, ни SMTP</span>
+$service = <span class="kw">new</span> OrderService(<span class="kw">new</span> InMemoryOrders(), <span class="kw">new</span> FakeMailer(), <span class="kw">new</span> NullLogger());</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Внедрение зависимостей и DI-контейнер — разные вещи. Внедрение — это приём: зависимости приходят через конструктор. Контейнер — инструмент, который их собирает. Приём работает и без контейнера, а вот контейнер без приёма превращается в service locator: класс достаёт что хочет из глобального контейнера, и зависимости снова становятся невидимыми.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Интерфейс на каждый класс «для соблюдения SOLID». Абстракция с единственной реализацией, которой не предвидится второй, — это лишний файл и лишний переход при чтении. Интерфейс появляется там, где есть реальная потребность в подмене: другой драйвер, другая среда, тестовая заглушка.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Объясните инверсию зависимостей на примере.</b><br>Бизнес-логика не должна зависеть от конкретной реализации инфраструктуры. Вместо <code>new SmtpMailer()</code> внутри сервиса объявляется интерфейс <code>Mailer</code>, а конкретная реализация передаётся снаружи. В проде это SMTP, в тестах — заглушка, в консоли — вывод в лог. Класс становится тестируемым и не ломается при смене транспорта.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите класс, который сам создаёт свои зависимости, и переведите его на внедрение через конструктор с интерфейсами. Напишите тест с заглушками, не трогающий ни сеть, ни базу, и убедитесь, что он выполняется за миллисекунды.</div>
+  </article>
+
+  <!-- M5 -->
+  <article class="card" id="generators">
+    <p class="path">middle / данные / итерация</p>
+    <div class="card-top"><h3>Итераторы и генераторы</h3><span class="badge b-2">Инженерия</span></div>
+    <p><span class="t">Генератор</span> — функция, которая отдаёт значения по одному через <code>yield</code>, не строя весь результат в памяти. Это стандартный способ обработать больше данных, чем помещается в <code>memory_limit</code>.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ленивый конвейер обработки</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: файл на 2 ГБ целиком в память</span>
+<span class="kw">function</span> <span class="fn">readAll</span>(<span class="kw">string</span> $path): <span class="kw">array</span> { <span class="kw">return</span> <span class="fn">file</span>($path); }
+
+<span class="cm">// ХОРОШО: генератор — память постоянна независимо от размера файла</span>
+<span class="kw">function</span> <span class="fn">readLines</span>(<span class="kw">string</span> $path): \Generator
+{
+    $fh = <span class="fn">fopen</span>($path, <span class="st">'rb'</span>);
+
+    <span class="kw">try</span> {
+        <span class="kw">while</span> (($line = <span class="fn">fgets</span>($fh)) !== <span class="kw">false</span>) {
+            <span class="kw">yield</span> <span class="fn">rtrim</span>($line, <span class="st">"\r\n"</span>);
+        }
+    } <span class="kw">finally</span> {
+        <span class="fn">fclose</span>($fh);          <span class="cm">// выполнится и при прерывании обхода</span>
+    }
+}
+
+<span class="cm">// Конвейер: каждый шаг тоже ленивый</span>
+<span class="kw">function</span> <span class="fn">mapLazy</span>(<span class="kw">iterable</span> $it, <span class="kw">callable</span> $fn): \Generator
+{
+    <span class="kw">foreach</span> ($it <span class="kw">as</span> $key =&gt; $value) { <span class="kw">yield</span> $key =&gt; $fn($value); }
+}
+
+<span class="kw">function</span> <span class="fn">filterLazy</span>(<span class="kw">iterable</span> $it, <span class="kw">callable</span> $fn): \Generator
+{
+    <span class="kw">foreach</span> ($it <span class="kw">as</span> $key =&gt; $value) { <span class="kw">if</span> ($fn($value)) { <span class="kw">yield</span> $key =&gt; $value; } }
+}
+
+<span class="cm">// Обработка гигабайтного CSV при постоянной памяти</span>
+$rows = <span class="fn">mapLazy</span>(<span class="fn">readLines</span>(<span class="st">'orders.csv'</span>), <span class="fn">str_getcsv</span>(...));
+$paid = <span class="fn">filterLazy</span>($rows, <span class="kw">fn</span> (<span class="kw">array</span> $r) =&gt; $r[3] === <span class="st">'paid'</span>);
+
+<span class="kw">foreach</span> ($paid <span class="kw">as</span> $row) {
+    $importer-&gt;<span class="fn">import</span>($row);
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Что ещё умеет генератор</span></div><pre><code>&lt;?php
+<span class="cm">// Ключи и делегирование другому генератору</span>
+<span class="kw">function</span> <span class="fn">pages</span>(): \Generator
+{
+    <span class="kw">yield from</span> <span class="fn">fetchPage</span>(1);
+    <span class="kw">yield from</span> <span class="fn">fetchPage</span>(2);
+    <span class="kw">return</span> <span class="st">'готово'</span>;               <span class="cm">// доступно через getReturn() после обхода</span>
+}
+
+<span class="cm">// Постраничная выгрузка из API без хранения всего результата</span>
+<span class="kw">function</span> <span class="fn">allCustomers</span>(ApiClient $api): \Generator
+{
+    $page = 1;
+
+    <span class="kw">do</span> {
+        $response = $api-&gt;<span class="fn">get</span>(<span class="st">'/customers'</span>, [<span class="st">'page'</span> =&gt; $page++]);
+        <span class="kw">yield from</span> $response[<span class="st">'data'</span>];
+    } <span class="kw">while</span> ($response[<span class="st">'has_more'</span>]);
+}
+
+<span class="cm">// Свой объект как итерируемый — без превращения в массив</span>
+<span class="kw">final class</span> OrderCollection <span class="kw">implements</span> \IteratorAggregate, \Countable
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private array</span> $orders) {}
+
+    <span class="kw">public function</span> <span class="fn">getIterator</span>(): \Traversable { <span class="kw">return new</span> \ArrayIterator($this-&gt;orders); }
+    <span class="kw">public function</span> <span class="fn">count</span>(): <span class="kw">int</span> { <span class="kw">return</span> <span class="fn">count</span>($this-&gt;orders); }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Генератор — односторонний поток: пройти его дважды нельзя, <code>count()</code> к нему неприменим. Если данные нужны повторно, либо материализуйте их осознанно (<code>iterator_to_array</code>), либо перезапустите источник. Это цена за постоянную память, и обычно она того стоит.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как обработать файл на 5 ГБ, если <code>memory_limit</code> — 256 МБ?</b><br>Не загружать целиком: читать построчно через генератор и обрабатывать потоком, а промежуточные шаги (фильтрация, преобразование) тоже делать ленивыми. Память остаётся постоянной независимо от размера входа. Если нужна агрегация — считать её на лету, а не собирать все строки в массив.</div>
+    <div class="box task"><span class="lbl">Практика</span>Сгенерируйте CSV на 5 млн строк и напишите импорт двумя способами: через <code>file()</code> и через генератор с ленивым конвейером. Замерьте пиковую память и время. Затем добавьте пакетную вставку в базу по 1000 строк.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+
+  <!-- M6 -->
+  <article class="card" id="memory">
+    <p class="path">middle / движок / память</p>
+    <div class="card-top"><h3>Память, ссылки и copy-on-write</h3><span class="badge b-2">Ключевая тема</span></div>
+    <p>PHP управляет памятью подсчётом ссылок: у каждого значения есть счётчик, и когда он падает до нуля, память освобождается немедленно. Отдельный сборщик нужен только для циклических ссылок между объектами.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Copy-on-write: копия создаётся не при передаче, а при записи</span></div><pre><code>&lt;?php
+$big = <span class="fn">range</span>(1, 1_000_000);          <span class="cm">// ~33 МБ</span>
+
+<span class="kw">function</span> <span class="fn">readOnly</span>(<span class="kw">array</span> $a): <span class="kw">int</span>
+{
+    <span class="kw">return</span> <span class="fn">count</span>($a);                 <span class="cm">// копии НЕТ: только чтение</span>
+}
+
+<span class="kw">function</span> <span class="fn">touchIt</span>(<span class="kw">array</span> $a): <span class="kw">array</span>
+{
+    $a[0] = 0;                        <span class="cm">// ← ЗДЕСЬ копируется весь массив: +33 МБ</span>
+    <span class="kw">return</span> $a;
+}
+
+<span class="cm">// Объекты работают иначе: переменная хранит ссылку на экземпляр,</span>
+<span class="cm">// поэтому изменение внутри функции видно снаружи — без всякого &amp;</span>
+<span class="kw">function</span> <span class="fn">mutate</span>(Order $order): <span class="kw">void</span>
+{
+    $order-&gt;status = OrderStatus::Paid;   <span class="cm">// изменит исходный объект</span>
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Измерять, а не угадывать</span></div><pre><code>&lt;?php
+<span class="fn">memory_get_usage</span>();          <span class="cm">// сколько занято сейчас (без учёта накладных)</span>
+<span class="fn">memory_get_usage</span>(<span class="kw">true</span>);      <span class="cm">// сколько запрошено у ОС</span>
+<span class="fn">memory_get_peak_usage</span>(<span class="kw">true</span>); <span class="cm">// пик за весь запрос — самое полезное число</span>
+
+<span class="cm">// Освобождение: unset уменьшает счётчик ссылок</span>
+<span class="fn">unset</span>($bigArray);
+<span class="cm">// Присвоение null тоже сбрасывает ссылку</span>
+$bigArray = <span class="kw">null</span>;
+
+<span class="cm">// Циклические ссылки: A держит B, B держит A — счётчики не обнуляются.</span>
+<span class="cm">// Их убирает отдельный сборщик; в длинном цикле его можно позвать явно.</span>
+<span class="fn">gc_collect_cycles</span>();
+
+<span class="cm">// WeakMap (8.0): кэш по объектам, который не мешает их удалению</span>
+$meta = <span class="kw">new</span> \WeakMap();
+$meta[$entity] = [<span class="st">'loaded_at'</span> =&gt; <span class="fn">time</span>()];
+<span class="cm">// когда $entity больше не нужен — запись исчезает сама</span></code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 7 · как экономить память</caption>
+      <thead><tr><th>Приём</th><th>Когда</th><th>Эффект</th></tr></thead>
+      <tbody>
+        <tr><td>Генераторы вместо массивов</td><td>Обработка потоков и больших файлов</td><td>Память перестаёт зависеть от объёма данных</td></tr>
+        <tr><td>Пачками по 500–2000 записей</td><td>Импорт, пересчёт, выгрузка</td><td>Предсказуемый пик вместо роста до лимита</td></tr>
+        <tr><td>Массивы вместо объектов</td><td>Промежуточные данные, где поведение не нужно</td><td>Объекты заметно дороже по накладным расходам</td></tr>
+        <tr><td>Только нужные колонки</td><td>Выборки из БД</td><td>Меньше данных на каждом уровне</td></tr>
+        <tr><td>Битовые маски вместо массивов флагов</td><td>Множества булевых признаков</td><td>Десятки флагов в одном целом</td></tr>
+        <tr><td><code>unset()</code> в длинных циклах</td><td>Долгоживущие процессы, воркеры</td><td>Не даёт накапливаться мусору между итерациями</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Ссылки (<code>&amp;</code>) в PHP — почти всегда не оптимизация, а источник багов. Они отключают copy-on-write, ломают предсказуемость и приводят к классической ошибке с <code>foreach</code> по ссылке. Если функция меняет данные — пусть возвращает новое значение; если данных много — генератор или пачки.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Повышать <code>memory_limit</code> при каждой ошибке нехватки памяти. Это откладывает проблему до следующего роста объёма, а на проде несколько таких процессов одновременно съедают память сервера. Правильная реакция — посмотреть, что материализуется в память, и перейти на потоковую обработку.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как в PHP работает управление памятью?</b><br>Подсчётом ссылок: значение освобождается сразу, как только на него не остаётся ссылок. Массивы и строки используют copy-on-write — копия создаётся только при записи, поэтому передача большого массива в функцию бесплатна, а его изменение внутри — нет. Циклические ссылки между объектами счётчик не обнуляет, их собирает отдельный сборщик.</div>
+    <div class="box task"><span class="lbl">Практика</span>Замерьте пиковую память на массиве из миллиона элементов при трёх сценариях: передача в функцию без изменений, с изменением одного элемента, по ссылке. Затем перепишите скрипт импорта на генераторы и сравните пик.</div>
+  </article>
+
+  <!-- M7 -->
+  <article class="card" id="exceptions">
+    <p class="path">middle / надёжность / исключения</p>
+    <div class="card-top"><h3>Исключения и логирование в продакшене</h3><span class="badge b-2">Инженерия</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Своя иерархия и сохранение причины</span></div><pre><code>&lt;?php
+<span class="cm">// Базовое исключение модуля: по нему ловят «всё, что от биллинга»</span>
+<span class="kw">interface</span> BillingException <span class="kw">extends</span> \Throwable {}
+
+<span class="kw">final class</span> PaymentDeclined <span class="kw">extends</span> \RuntimeException <span class="kw">implements</span> BillingException
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly string</span> $orderId,
+        <span class="kw">public readonly string</span> $reason,
+        ?\Throwable $previous = <span class="kw">null</span>,     <span class="cm">// цепочка причин</span>
+    ) {
+        <span class="kw">parent</span>::<span class="fn">__construct</span>(<span class="st">"Платёж по заказу {$orderId} отклонён: {$reason}"</span>, 0, $previous);
+    }
+}
+
+<span class="cm">// Оборачивание чужого исключения в своё — с сохранением исходного</span>
+<span class="kw">try</span> {
+    $response = $this-&gt;http-&gt;<span class="fn">post</span>($url, $payload);
+} <span class="kw">catch</span> (\Throwable $e) {
+    <span class="kw">throw new</span> PaymentDeclined($order-&gt;id, <span class="st">'gateway unavailable'</span>, previous: $e);
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Логирование по PSR-3: событие плюс контекст</span></div><pre><code>&lt;?php
+<span class="cm">// Плохо: строка, по которой ничего не найти и не сгруппировать</span>
+$logger-&gt;<span class="fn">error</span>(<span class="st">"Ошибка оплаты заказа {$order-&gt;id} у пользователя {$user-&gt;id}"</span>);
+
+<span class="cm">// Хорошо: стабильное имя события + структурированный контекст</span>
+$logger-&gt;<span class="fn">error</span>(<span class="st">'payment.declined'</span>, [
+    <span class="st">'order_id'</span>  =&gt; $order-&gt;id,
+    <span class="st">'user_id'</span>   =&gt; $user-&gt;id,
+    <span class="st">'amount'</span>    =&gt; $order-&gt;total-&gt;amount,
+    <span class="st">'gateway'</span>   =&gt; <span class="st">'stripe'</span>,
+    <span class="st">'exception'</span> =&gt; $e,        <span class="cm">// обработчик логов сам развернёт трассировку</span>
+]);</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 8 · уровни логирования и когда их ставить</caption>
+      <thead><tr><th>Уровень</th><th>Смысл</th><th>Пример</th></tr></thead>
+      <tbody>
+        <tr><td><code>debug</code></td><td>Подробности для разработки</td><td>Тело внешнего ответа, промежуточные значения</td></tr>
+        <tr><td><code>info</code></td><td>Штатное значимое событие</td><td>Заказ создан, письмо отправлено</td></tr>
+        <tr><td><code>notice</code> / <code>warning</code></td><td>Странно, но работаем дальше</td><td>Повтор запроса после таймаута, использование запасного значения</td></tr>
+        <tr><td><code>error</code></td><td>Операция не выполнена</td><td>Платёж не прошёл, джоб упал окончательно</td></tr>
+        <tr><td><code>critical</code> / <code>alert</code> / <code>emergency</code></td><td>Нужна реакция человека</td><td>Недоступна база, исчерпано место, приложение не отвечает</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Ошибка PHP и исключение — разные вещи. Предупреждения и notice не ловятся <code>catch</code>: чтобы они не терялись, ставят обработчик ошибок, превращающий их в <code>ErrorException</code>, и отдельно обработчик завершения для фатальных. Иначе часть проблем видна только в логе PHP, который никто не читает.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Использовать исключения для нормального потока выполнения: «товар не найден» как исключение в цикле по каталогу. Исключения дороже обычного возврата и, что важнее, скрывают штатную логику. Не найдено — это <code>null</code> или пустая коллекция; исключение — для ситуаций, которые нарушают ожидания.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как организовать обработку ошибок в приложении?</b><br>Своя иерархия исключений по модулям с интерфейсом-маркером, конкретные типы с данными в свойствах, оборачивание чужих исключений с сохранением причины. Обработка — как можно ближе к месту, где известно, что делать; наверху — один общий обработчик, который логирует с контекстом и отдаёт корректный ответ. Плюс перевод ошибок PHP в исключения, чтобы ничего не терялось.</div>
+    <div class="box task"><span class="lbl">Практика</span>Постройте иерархию исключений для одного модуля, добавьте глобальные обработчики ошибок и исключений с логированием по PSR-3 и проверьте, что предупреждения и фатальные ошибки тоже попадают в лог со сквозным идентификатором запроса.</div>
+  </article>
+
+  <!-- M8 -->
+  <article class="card" id="quality">
+    <p class="path">middle / качество / инструменты</p>
+    <div class="card-top"><h3>Тесты и статический анализ</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Тест: поведение, а не реализация</span></div><pre><code>&lt;?php
+<span class="kw">use</span> PHPUnit\Framework\TestCase;
+<span class="kw">use</span> PHPUnit\Framework\Attributes\DataProvider;
+
+<span class="kw">final class</span> MoneyTest <span class="kw">extends</span> TestCase
+{
+    <span class="kw">public function</span> <span class="fn">test_adds_same_currency</span>(): <span class="kw">void</span>
+    {
+        $sum = (<span class="kw">new</span> Money(1000, <span class="st">'RUB'</span>))-&gt;<span class="fn">add</span>(<span class="kw">new</span> Money(500, <span class="st">'RUB'</span>));
+
+        $this-&gt;<span class="fn">assertSame</span>(1500, $sum-&gt;amount);
+    }
+
+    <span class="kw">public function</span> <span class="fn">test_rejects_different_currency</span>(): <span class="kw">void</span>
+    {
+        $this-&gt;<span class="fn">expectException</span>(CurrencyMismatch::<span class="kw">class</span>);
+
+        (<span class="kw">new</span> Money(1000, <span class="st">'RUB'</span>))-&gt;<span class="fn">add</span>(<span class="kw">new</span> Money(500, <span class="st">'USD'</span>));
+    }
+
+    <span class="cm">// Провайдер данных: один тест — много случаев</span>
+    #[DataProvider(<span class="st">'invalidAmounts'</span>)]
+    <span class="kw">public function</span> <span class="fn">test_rejects_negative</span>(<span class="kw">int</span> $amount): <span class="kw">void</span>
+    {
+        $this-&gt;<span class="fn">expectException</span>(\InvalidArgumentException::<span class="kw">class</span>);
+
+        <span class="kw">new</span> Money($amount, <span class="st">'RUB'</span>);
+    }
+
+    <span class="kw">public static function</span> <span class="fn">invalidAmounts</span>(): <span class="kw">array</span>
+    {
+        <span class="kw">return</span> [<span class="st">'отрицательная'</span> =&gt; [-1], <span class="st">'большая отрицательная'</span> =&gt; [-100000]];
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Тестовые двойники: подменяем внешний мир</span></div><pre><code>&lt;?php
+<span class="kw">public function</span> <span class="fn">test_notifies_customer_on_success</span>(): <span class="kw">void</span>
+{
+    <span class="cm">// Мок с ожиданием вызова</span>
+    $mailer = $this-&gt;<span class="fn">createMock</span>(Mailer::<span class="kw">class</span>);
+    $mailer-&gt;<span class="fn">expects</span>($this-&gt;<span class="fn">once</span>())
+           -&gt;<span class="fn">method</span>(<span class="st">'send'</span>)
+           -&gt;<span class="fn">with</span>($this-&gt;<span class="fn">isInstanceOf</span>(OrderPlacedMail::<span class="kw">class</span>));
+
+    <span class="cm">// Заглушка с фиксированным ответом</span>
+    $gateway = $this-&gt;<span class="fn">createStub</span>(PaymentGateway::<span class="kw">class</span>);
+    $gateway-&gt;<span class="fn">method</span>(<span class="st">'charge'</span>)-&gt;<span class="fn">willReturn</span>(PaymentResult::<span class="fn">success</span>());
+
+    (<span class="kw">new</span> OrderService(<span class="kw">new</span> InMemoryOrders(), $mailer, $gateway))-&gt;<span class="fn">place</span>($data);
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 9 · инструменты качества</caption>
+      <thead><tr><th>Инструмент</th><th>Что ловит</th><th>Как встраивать</th></tr></thead>
+      <tbody>
+        <tr><td>PHPUnit</td><td>Регрессии поведения</td><td>Обязательно в CI; тесты быстрые и без сети</td></tr>
+        <tr><td>Статический анализатор (PHPStan, Psalm)</td><td>Несуществующие методы, неверные типы, недостижимый код, потенциальные null</td><td>Начать с невысокого уровня строгости, зафиксировать текущие ошибки и повышать уровень постепенно</td></tr>
+        <tr><td>Форматтер стиля</td><td>Единый стиль по PSR-12</td><td>Проверка в CI, автоформат в IDE и хуках</td></tr>
+        <tr><td>Автоматический рефакторинг (Rector)</td><td>Обновление синтаксиса при переходе на новую версию PHP</td><td>Разово при миграциях, с ревью изменений</td></tr>
+        <tr><td>Мутационное тестирование</td><td>Тесты, которые ничего не проверяют</td><td>Периодически на ключевых модулях</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Статический анализ на большом легаси внедряется не «сразу на максимальном уровне», а через фиксацию текущего состояния: анализатор запоминает существующие ошибки и не даёт добавлять новые. Дальше уровень поднимают по одному, разгребая накопленное по мере правок. Иначе первый запуск выдаёт десять тысяч ошибок и инструмент выключают.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Гнаться за процентом покрытия. Покрытие показывает, какие строки выполнились, а не то, что они проверены: тест без единого утверждения даёт покрытие. Полезнее следить, что критичные сценарии покрыты, что тесты быстрые и что они падают при поломке — последнее проверяется мутационным тестированием.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем мок отличается от заглушки?</b><br>Заглушка возвращает заранее заданные данные и нужна, чтобы код мог работать. Мок дополнительно проверяет факт и характер вызова: был ли вызван метод, сколько раз, с какими аргументами. Заглушки — для входных данных, моки — когда важен сам факт взаимодействия (например, что письмо отправлено ровно один раз).</div>
+    <div class="box task"><span class="lbl">Практика</span>Подключите к проекту статический анализатор с фиксацией текущих ошибок и настройте CI: тесты, анализ, проверка стиля. Затем поднимите уровень строгости на один и разберите первую сотню находок — это лучший способ увидеть слабые места типизации.</div>
+  </article>
+
+  <!-- M9 -->
+  <article class="card" id="security">
+    <p class="path">middle / безопасность / практика</p>
+    <div class="card-top"><h3>Безопасность на уровне языка</h3><span class="badge b-2">Ключевая тема</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 10 · основные риски и правильные инструменты</caption>
+      <thead><tr><th>Риск</th><th>Неверно</th><th>Верно</th></tr></thead>
+      <tbody>
+        <tr><td>SQL-инъекция</td><td>Конкатенация значений в запрос, экранирование вручную</td><td>Подготовленные выражения с плейсхолдерами; имена колонок — по белому списку</td></tr>
+        <tr><td>XSS</td><td>Вывод пользовательского текста как есть</td><td><code>htmlspecialchars</code> при выводе в HTML; экранирование по контексту</td></tr>
+        <tr><td>CSRF</td><td>Изменяющие действия по GET без токена</td><td>Токен в форме, проверка на сервере, куки с <code>SameSite</code></td></tr>
+        <tr><td>Пароли</td><td><code>md5</code>, <code>sha1</code>, собственная «соль»</td><td><code>password_hash</code> / <code>password_verify</code> и периодический <code>password_needs_rehash</code></td></tr>
+        <tr><td>Сравнение секретов</td><td><code>===</code> для токенов и подписей</td><td><code>hash_equals</code> — постоянное время сравнения</td></tr>
+        <tr><td>Случайные значения</td><td><code>rand</code>, <code>mt_rand</code>, <code>uniqid</code></td><td><code>random_bytes</code>, <code>random_int</code></td></tr>
+        <tr><td>Десериализация</td><td><code>unserialize</code> данных от клиента</td><td>JSON; <code>unserialize</code> только для своих данных и с ограничением классов</td></tr>
+        <tr><td>Подключение файлов</td><td>Путь из запроса в <code>include</code></td><td>Белый список; никакой конкатенации пользовательского ввода в путь</td></tr>
+        <tr><td>Запросы по URL от пользователя</td><td>Скачивание любого адреса</td><td>Проверка схемы и хоста, запрет внутренних адресов, таймауты</td></tr>
+        <tr><td>Секреты</td><td>Ключи в коде и в репозитории</td><td>Переменные окружения, маскирование в логах, ротация</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Пароли, токены, подготовленные выражения</span></div><pre><code>&lt;?php
+<span class="cm">// Пароли: алгоритм и стоимость выбирает PHP, соль генерируется сама</span>
+$hash = <span class="fn">password_hash</span>($plain, <span class="nm">PASSWORD_DEFAULT</span>);
+
+<span class="kw">if</span> (<span class="fn">password_verify</span>($plain, $user-&gt;passwordHash)) {
+    <span class="cm">// Стандарт со временем ужесточается — пересчитываем при входе</span>
+    <span class="kw">if</span> (<span class="fn">password_needs_rehash</span>($user-&gt;passwordHash, <span class="nm">PASSWORD_DEFAULT</span>)) {
+        $users-&gt;<span class="fn">updateHash</span>($user, <span class="fn">password_hash</span>($plain, <span class="nm">PASSWORD_DEFAULT</span>));
+    }
+}
+
+<span class="cm">// Токены: криптостойкий источник случайности</span>
+$token = <span class="fn">bin2hex</span>(<span class="fn">random_bytes</span>(32));
+
+<span class="cm">// Сравнение секретов: защита от атак по времени</span>
+<span class="kw">if</span> (!<span class="fn">hash_equals</span>($expectedSignature, $providedSignature)) {
+    <span class="kw">throw new</span> InvalidSignature();
+}
+
+<span class="cm">// PDO: разделение кода и данных</span>
+$pdo = <span class="kw">new</span> \PDO($dsn, $user, $pass, [
+    \PDO::ATTR_ERRMODE            =&gt; \PDO::ERRMODE_EXCEPTION,
+    \PDO::ATTR_DEFAULT_FETCH_MODE =&gt; \PDO::FETCH_ASSOC,
+    \PDO::ATTR_EMULATE_PREPARES   =&gt; <span class="kw">false</span>,   <span class="cm">// настоящие prepared statements</span>
+]);
+
+$stmt = $pdo-&gt;<span class="fn">prepare</span>(<span class="st">'SELECT * FROM orders WHERE user_id = :uid AND status = :st'</span>);
+$stmt-&gt;<span class="fn">execute</span>([<span class="st">'uid'</span> =&gt; $userId, <span class="st">'st'</span> =&gt; $status]);
+
+<span class="cm">// Сортировка по полю из запроса — только по белому списку</span>
+$allowed = [<span class="st">'created_at'</span>, <span class="st">'total'</span>];
+$sort = <span class="fn">in_array</span>($input, $allowed, <span class="kw">true</span>) ? $input : <span class="st">'created_at'</span>;</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Подготовленные выражения защищают <em>значения</em>, но не имена таблиц, колонок и направление сортировки — их подставить параметром нельзя. Всё, что попадает в запрос как часть синтаксиса, проверяется белым списком. Это самое частое место, где инъекция появляется в проекте, где «везде используется PDO».</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Собственная криптография и собственное хеширование паролей «с солью и перцем». Стандартные функции учитывают стоимость вычисления, генерацию соли и обновление алгоритма. Любая самодельная схема почти наверняка слабее и почти наверняка не будет обновляться годами.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как правильно хранить пароли?</b><br>Через <code>password_hash</code> с параметрами по умолчанию: алгоритм современный, соль генерируется автоматически, стоимость подобрана. Проверка — <code>password_verify</code>, при успешном входе — проверка <code>password_needs_rehash</code> и пересчёт при необходимости. Хеши <code>md5</code> и <code>sha1</code> для паролей непригодны: они слишком быстрые и перебираются массово.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите мини-модуль аутентификации без фреймворка: регистрация с корректным хешированием, вход с защитой от перебора, токен восстановления с ограниченным сроком и безопасным сравнением. Затем попробуйте его сломать по каждому пункту таблицы.</div>
+  </article>
+
+  <!-- M10 -->
+  <article class="card" id="concurrency">
+    <p class="path">middle / исполнение / параллельность</p>
+    <div class="card-top"><h3>Параллельность: процессы, файберы, асинхронность</h3><span class="badge b-2">Инженерия</span></div>
+    <p>PHP по умолчанию синхронный и однопоточный: каждая операция ждёт завершения предыдущей. Параллельность достигается не потоками, а несколькими процессами — и это нормально, потому что веб-нагрузка и так распределяется по пулу процессов.</p>
+    <div class="tw"><table>
+      <caption>Таблица 11 · способы делать несколько дел сразу</caption>
+      <thead><tr><th>Способ</th><th>Что даёт</th><th>Когда применять</th></tr></thead>
+      <tbody>
+        <tr><td>Пул процессов (FPM, воркеры)</td><td>Параллельная обработка независимых запросов и задач</td><td>Основной способ; масштабируется числом процессов</td></tr>
+        <tr><td>Очереди</td><td>Асинхронность на уровне приложения: ответ сразу, работа потом</td><td>Всё долгое и не срочное</td></tr>
+        <tr><td>Параллельные HTTP-запросы</td><td>Несколько внешних вызовов одновременно вместо последовательных</td><td>Агрегация данных из нескольких сервисов</td></tr>
+        <tr><td>Файберы (8.1)</td><td>Приостановка и возобновление выполнения — фундамент асинхронных библиотек</td><td>Напрямую почти не пишут; используют через библиотеки событийного цикла</td></tr>
+        <tr><td>Событийные рантаймы (Swoole, ReactPHP, Amp)</td><td>Тысячи соединений в одном процессе</td><td>Долгие соединения, вебсокеты, высоконагруженные API</td></tr>
+        <tr><td>Порождение процессов вручную</td><td>Полный контроль над параллелизмом</td><td>Консольные утилиты; в вебе почти никогда</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Параллельные внешние вызовы вместо последовательных</span></div><pre><code>&lt;?php
+<span class="cm">// ПЛОХО: три сервиса по 300 мс = почти секунда ожидания</span>
+$user    = $api-&gt;<span class="fn">get</span>(<span class="st">'/users/1'</span>);
+$orders  = $api-&gt;<span class="fn">get</span>(<span class="st">'/orders?user=1'</span>);
+$balance = $api-&gt;<span class="fn">get</span>(<span class="st">'/billing/1'</span>);
+
+<span class="cm">// ХОРОШО: три запроса одновременно — общее время ≈ самого долгого.</span>
+<span class="cm">// Через curl_multi напрямую или через HTTP-клиент с поддержкой</span>
+<span class="cm">// параллельных запросов — API зависит от библиотеки, идея одна.</span>
+$mh = <span class="fn">curl_multi_init</span>();
+$handles = [];
+
+<span class="kw">foreach</span> ([<span class="st">'/users/1'</span>, <span class="st">'/orders?user=1'</span>, <span class="st">'/billing/1'</span>] <span class="kw">as</span> $path) {
+    $ch = <span class="fn">curl_init</span>($base . $path);
+    <span class="fn">curl_setopt_array</span>($ch, [
+        <span class="nm">CURLOPT_RETURNTRANSFER</span> =&gt; <span class="kw">true</span>,
+        <span class="nm">CURLOPT_TIMEOUT</span>        =&gt; 5,     <span class="cm">// таймаут обязателен всегда</span>
+        <span class="nm">CURLOPT_CONNECTTIMEOUT</span> =&gt; 2,
+    ]);
+    <span class="fn">curl_multi_add_handle</span>($mh, $ch);
+    $handles[] = $ch;
+}
+
+<span class="kw">do</span> {
+    $status = <span class="fn">curl_multi_exec</span>($mh, $running);
+    <span class="kw">if</span> ($running) { <span class="fn">curl_multi_select</span>($mh); }
+} <span class="kw">while</span> ($running &amp;&amp; $status === <span class="nm">CURLM_OK</span>);
+
+$results = <span class="fn">array_map</span>(<span class="fn">curl_multi_getcontent</span>(...), $handles);</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>У любого внешнего вызова обязаны быть таймаут на соединение и на ответ. Без них один зависший сервис занимает процесс до общего таймаута и способен исчерпать весь пул FPM — деградация одного стороннего API превращается в недоступность вашего приложения.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Есть ли в PHP многопоточность?</b><br>В обычном веб-режиме — нет: код выполняется последовательно в одном потоке, а параллелизм обеспечивается несколькими процессами (пул FPM, воркеры очередей). Файберы дают приостановку и возобновление выполнения и служат основой асинхронных библиотек, но это конкурентность в одном потоке, а не параллельное исполнение. Для настоящей параллельной работы используют процессы, очереди или специализированные рантаймы.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите страницу, которая последовательно дёргает три внешних API, и переведите вызовы на параллельные с таймаутами и обработкой частичных отказов. Замерьте время ответа до и после и проверьте поведение при недоступности одного из сервисов.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Типизирую сигнатуры и свойства, включаю строгие типы</li>
+        <li>Заменяю строковые константы перечислениями</li>
+        <li>Использую объекты-значения вместо примитивов и массивов</li>
+        <li>Выбираю интерфейс, наследование или композицию осознанно</li>
+        <li>Не злоупотребляю магическими методами</li>
+        <li>Внедряю зависимости через конструктор, а не создаю внутри</li>
+      </ul>
+      <ul class="check">
+        <li>Обрабатываю большие данные генераторами и пачками</li>
+        <li>Понимаю copy-on-write и не пользуюсь ссылками без нужды</li>
+        <li>Строю иерархию исключений и логирую структурированно</li>
+        <li>Пишу тесты на поведение, различаю моки и заглушки</li>
+        <li>Держу статический анализ в CI и повышаю уровень</li>
+        <li>Знаю правильные инструменты для паролей, токенов и запросов</li>
+        <li>Ставлю таймауты на все внешние вызовы</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Middle-собеседование по PHP — это вопросы «почему так, а не иначе»: почему объект-значение вместо массива, почему интерфейс вместо наследования, почему генератор вместо массива, почему <code>password_hash</code> вместо <code>md5</code>. Ценится не перечисление возможностей языка, а обоснованный выбор.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · архитектура</p>
+    <h2>Senior PHP Developer</h2>
+    <p>На этом уровне важно не знание синтаксиса, а понимание стоимости решений: что реально происходит в движке, где сгорает время, сколько процессов поместится в память сервера, что сломается при переходе на долгоживущие воркеры, как обновлять язык на проекте, которому восемь лет, и почему очередная библиотека — это обязательство на годы.</p>
+  </div>
+
+  <!-- S1 -->
+  <article class="card" id="internals">
+    <p class="path">senior / движок / внутренности</p>
+    <div class="card-top"><h3>Что происходит внутри: байткод, opcache, JIT</h3><span class="badge b-3">Архитектура</span><span class="badge b-must">Отличает senior</span></div>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Путь кода до исполнения</span></div><pre><code>исходник .php
+   │  лексер + парсер
+   ▼
+AST (синтаксическое дерево)
+   │  компилятор
+   ▼
+opcodes (байткод)  ──►  OPCACHE: байткод сохраняется в разделяемой памяти,
+   │                    и следующий запрос пропускает парсинг и компиляцию
+   ▼
+виртуальная машина Zend выполняет опкоды
+   │
+   └─ JIT (с 8.0): часть опкодов компилируется в машинный код.
+      Помогает на вычислительных задачах; для типичного веб-приложения,
+      где 90% времени — ожидание БД и сети, выигрыш близок к нулю.
+
+Без opcache каждый запрос заново парсит и компилирует ВСЕ подключаемые
+файлы — на фреймворковом проекте это сотни файлов и кратное замедление.</code></pre></div>
+    <div class="code"><div class="bar"><span>ini</span><span class="r">Настройки opcache для прода</span></div><pre><code><span class="cm">; Байткод в разделяемой памяти — без этого всё остальное не имеет смысла</span>
+opcache.enable=1
+opcache.memory_consumption=256          <span class="cm">; МБ под байткод; мало — кэш вытесняется</span>
+opcache.max_accelerated_files=20000     <span class="cm">; больше числа .php-файлов проекта с vendor</span>
+opcache.interned_strings_buffer=16
+
+<span class="cm">; На проде не проверять время изменения файлов: код меняется только деплоем.</span>
+<span class="cm">; ВАЖНО: тогда после выкатки обязателен перезапуск/перезагрузка FPM,</span>
+<span class="cm">; иначе останется старый байткод.</span>
+opcache.validate_timestamps=0
+
+<span class="cm">; Предзагрузка (7.4+): классы компилируются один раз при старте</span>
+<span class="cm">; и живут в памяти всех воркеров. Требует перезапуска при изменении кода.</span>
+opcache.preload=/var/www/current/preload.php
+opcache.preload_user=www-data</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 12 · что реально ускоряет PHP-приложение</caption>
+      <thead><tr><th>Мера</th><th>Типичный эффект</th><th>Стоимость</th></tr></thead>
+      <tbody>
+        <tr><td>Включить opcache</td><td>Кратное ускорение старта запроса</td><td>Одна строка конфигурации</td></tr>
+        <tr><td>Убрать N+1 и лишние запросы к БД</td><td>Обычно самый большой выигрыш</td><td>Работа с кодом</td></tr>
+        <tr><td>Кэшировать дорогие вычисления и внешние вызовы</td><td>Большой</td><td>Нужна стратегия инвалидации</td></tr>
+        <tr><td>Предзагрузка классов</td><td>Заметный на больших фреймворках</td><td>Перезапуск при каждом деплое</td></tr>
+        <tr><td>Обновить версию PHP</td><td>Стабильный прирост от версии к версии</td><td>Тестирование и совместимость</td></tr>
+        <tr><td>Долгоживущий рантайм вместо FPM</td><td>Существенный, если узкое место — загрузка приложения</td><td>Требует кода без утечек состояния</td></tr>
+        <tr><td>Включить JIT</td><td>Почти ноль на веб-нагрузке</td><td>Оправдан на вычислительных задачах</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Настройка <code>opcache.validate_timestamps=0</code> даёт заметный выигрыш, но делает деплой обязательно перезапускающим процессы: без перезагрузки FPM или сброса кэша на проде останется старый байткод. Это одна из самых частых причин «выкатили, а работает по-старому».</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что делает opcache и даст ли JIT ускорение вашему приложению?</b><br>Opcache хранит скомпилированный байткод в разделяемой памяти, устраняя парсинг и компиляцию на каждом запросе, — на проде он обязателен. JIT компилирует часть опкодов в машинный код и помогает вычислительным задачам, но в типичном веб-приложении время уходит на ожидание базы и сети, поэтому выигрыш обычно в пределах погрешности. Сначала запросы к БД, потом кэш, и только потом JIT.</div>
+    <div class="box task"><span class="lbl">Практика</span>Замерьте время ответа приложения в трёх конфигурациях: без opcache, с opcache, с opcache и предзагрузкой. Затем включите JIT и замерьте снова — на веб-нагрузке и на синтетическом вычислительном тесте. Разница объяснит, почему порядок оптимизаций именно такой.</div>
+  </article>
+
+  <!-- S2 -->
+  <article class="card" id="profiling">
+    <p class="path">senior / производительность / профилирование</p>
+    <div class="card-top"><h3>Профилирование: искать, а не угадывать</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Порядок разбора медленного эндпоинта</span></div><pre><code>1. ГДЕ ВРЕМЯ?  Разбить ответ на составляющие:
+   БД · внешние HTTP · шаблоны · сериализация · сам PHP
+   Обычно распределение выглядит так:
+     ~70% база и сеть, ~20% сериализация и шаблоны, ~10% логика.
+
+2. СКОЛЬКО ЗАПРОСОВ И ВЫЗОВОВ? Считать, а не смотреть на глаз.
+   200 запросов вместо 5 — это архитектура, а не «медленный PHP».
+
+3. ЧТО С ПАМЯТЬЮ? Пик за запрос: материализация коллекций,
+   загрузка файлов целиком, гидрация тысяч объектов.
+
+4. ПРОФИЛЬ CPU — если после шагов 1–3 время всё ещё в PHP.
+   Здесь помогает профилировщик с деревом вызовов.
+
+5. ЗАМЕР ПОСЛЕ КАЖДОГО ИЗМЕНЕНИЯ. Оптимизация без замера —
+   это вера, а не инженерия.</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 13 · инструменты и где их применять</caption>
+      <thead><tr><th>Инструмент</th><th>Что даёт</th><th>Ограничение</th></tr></thead>
+      <tbody>
+        <tr><td>Отладчик с профилировщиком (Xdebug)</td><td>Полное дерево вызовов, покрытие</td><td>Сильно замедляет; только локально, не на проде</td></tr>
+        <tr><td>Профилировщики с выборкой (sampling)</td><td>Профиль CPU с малыми накладными расходами</td><td>Меньше деталей, но применимо к бою</td></tr>
+        <tr><td>APM-системы</td><td>Разбивка времени запроса по слоям в проде</td><td>Стоимость и настройка</td></tr>
+        <tr><td>Счётчики в коде</td><td>Число запросов к БД, вызовов внешних API</td><td>Нужно добавлять руками, зато дёшево и точно</td></tr>
+        <tr><td>Лог медленных запросов БД и FPM</td><td>Реальные тяжёлые места под нагрузкой</td><td>Только симптом, не причина</td></tr>
+        <tr><td>Нагрузочное тестирование</td><td>Поведение под конкуренцией, а не в одиночном запросе</td><td>Нужен реалистичный профиль нагрузки</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Локальный замер одного запроса и поведение под нагрузкой — разные вещи. Под конкуренцией всплывают блокировки в базе, исчерпание пула процессов, борьба за соединения и промахи кэша. Прежде чем оптимизировать, убедитесь, что измеряете тот режим, в котором приложение реально живёт.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Микрооптимизации языка: замена <code>foreach</code> на <code>for</code>, борьба с «медленными» строковыми функциями, переписывание циклов ради миллисекунд. На фоне одного лишнего запроса к базе в 20 мс это шум. Оптимизируют то, что показал замер, а не то, что интересно оптимизировать.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Эндпоинт отвечает 3 секунды. Что делаете?</b><br>Сначала разбиваю время по слоям: база, внешние вызовы, шаблоны, логика. Считаю число запросов и внешних обращений. Почти всегда находится N+1, запрос без индекса или синхронный вызов стороннего сервиса. Дальше — потоковая обработка вместо материализации, кэш дорогих участков. Профиль CPU нужен, только если после этого время всё ещё внутри PHP. И замер после каждого шага.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите самый медленный эндпоинт и разложите его время по слоям, добавив счётчики запросов и таймеры. Оптимизируйте по порядку из блока выше и оформите отчёт «было → стало» с вкладом каждого изменения.</div>
+  </article>
+
+  <!-- S3 -->
+  <article class="card" id="longrunning">
+    <p class="path">senior / исполнение / воркеры</p>
+    <div class="card-top"><h3>Долгоживущие процессы</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Воркер очереди и современные рантаймы вроде Swoole, RoadRunner или FrankenPHP ломают главное допущение PHP: процесс больше не умирает после запроса. Код, годами работавший в FPM, начинает вести себя иначе.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Что меняется и что с этим делать</span></div><pre><code>СОСТОЯНИЕ ЖИВЁТ МЕЖДУ ЗАДАЧАМИ
+  • статические свойства и синглтоны не обнуляются;
+  • объект с данными текущего пользователя может «утечь» в следующий запрос;
+  • глобально выставленные настройки (локаль, часовой пояс, конфиг)
+    остаются в силе дальше.
+  → зависимости, связанные с запросом, не кэшировать в статике;
+    состояние сбрасывать явно на границе задачи.
+
+УТЕЧКИ ПАМЯТИ НАКАПЛИВАЮТСЯ
+  • раньше их убирал конец запроса, теперь процесс распухает часами.
+  → ограничивать число задач и время жизни процесса,
+    ставить потолок памяти, следить за графиком RSS.
+
+СОЕДИНЕНИЯ ЖИВУТ ДОЛГО
+  • соединение с БД отваливается по таймауту сервера;
+  • пул соединений внезапно становится вашей заботой.
+  → проверка живости и переподключение, разумные таймауты.
+
+ДЕПЛОЙ ТРЕБУЕТ ПЕРЕЗАПУСКА
+  • старый код остаётся в памяти воркеров после выкатки.
+  → корректный перезапуск по сигналу: дорабатываем текущую задачу
+    и завершаемся, супервизор поднимает новый процесс.</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Корректный воркер: сигналы, лимиты, изоляция задачи</span></div><pre><code>&lt;?php
+<span class="kw">declare</span>(strict_types=1);
+
+<span class="fn">pcntl_async_signals</span>(<span class="kw">true</span>);
+
+$shouldStop = <span class="kw">false</span>;
+$handler = <span class="kw">static function</span> () <span class="kw">use</span> (&amp;$shouldStop): <span class="kw">void</span> { $shouldStop = <span class="kw">true</span>; };
+
+<span class="cm">// Плавная остановка: дорабатываем текущую задачу и выходим</span>
+<span class="fn">pcntl_signal</span>(<span class="nm">SIGTERM</span>, $handler);
+<span class="fn">pcntl_signal</span>(<span class="nm">SIGINT</span>, $handler);
+
+$processed = 0;
+$startedAt = <span class="fn">time</span>();
+
+<span class="kw">while</span> (!$shouldStop) {
+    $job = $queue-&gt;<span class="fn">reserve</span>(timeout: 5);
+
+    <span class="kw">if</span> ($job !== <span class="kw">null</span>) {
+        <span class="kw">try</span> {
+            $handler-&gt;<span class="fn">handle</span>($job);
+            $queue-&gt;<span class="fn">ack</span>($job);
+        } <span class="kw">catch</span> (\Throwable $e) {
+            $logger-&gt;<span class="fn">error</span>(<span class="st">'worker.job_failed'</span>, [<span class="st">'job'</span> =&gt; $job-&gt;id, <span class="st">'exception'</span> =&gt; $e]);
+            $queue-&gt;<span class="fn">retry</span>($job);
+        } <span class="kw">finally</span> {
+            <span class="cm">// Сброс состояния между задачами: identity map, кэши, буферы</span>
+            $container-&gt;<span class="fn">resetScoped</span>();
+            $processed++;
+        }
+    }
+
+    <span class="cm">// Плановый перезапуск: защита от утечек и от старого кода после деплоя</span>
+    <span class="kw">if</span> ($processed &gt;= 1000
+        || <span class="fn">time</span>() - $startedAt &gt; 3600
+        || <span class="fn">memory_get_usage</span>(<span class="kw">true</span>) &gt; 256 * 1024 * 1024
+    ) {
+        <span class="kw">break</span>;   <span class="cm">// супервизор поднимет свежий процесс</span>
+    }
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Прежде чем переходить на долгоживущий рантайм ради производительности, убедитесь, что узкое место — именно загрузка приложения. Если 80% времени занимает база, вы получите единицы процентов выигрыша и целый класс новых багов с утечками состояния. Сначала измерьте, потом меняйте модель исполнения.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что ломается при переходе с FPM на долгоживущие воркеры?</b><br>Всё, что опиралось на «процесс умрёт после запроса»: статические свойства и синглтоны хранят состояние между задачами, утечки памяти накапливаются, соединения с БД отваливаются по таймауту, а после деплоя в памяти остаётся старый код. Решается сбросом состояния на границе задачи, лимитами на число задач, время и память, переподключением к базе и корректным перезапуском по сигналу.</div>
+    <div class="box task"><span class="lbl">Практика</span>Напишите воркер с обработкой сигналов, лимитами по числу задач, времени и памяти, и сбросом состояния между задачами. Запустите его на сутки и постройте график потребления памяти — утечка видна сразу.</div>
+  </article>
+
+  <!-- S4 -->
+  <article class="card" id="fpm">
+    <p class="path">senior / эксплуатация / fpm</p>
+    <div class="card-top"><h3>FPM, лимиты и настройки прода</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>ini</span><span class="r">Пул FPM: главные параметры</span></div><pre><code><span class="cm">; Режим управления процессами</span>
+pm = dynamic                    <span class="cm">; dynamic — обычный выбор; static — стабильная нагрузка</span>
+
+<span class="cm">; ГЛАВНОЕ ЧИСЛО. Считается по памяти, а не «на глаз»:</span>
+<span class="cm">;   max_children ≈ (доступная память − запас) / средний размер процесса</span>
+<span class="cm">; При 8 ГБ, 1 ГБ запаса и процессе в 80 МБ: (8192−1024)/80 ≈ 89</span>
+<span class="cm">; Поставить больше = уход в своп и деградация всего сервера.</span>
+pm.max_children = 80
+pm.start_servers = 20
+pm.min_spare_servers = 10
+pm.max_spare_servers = 30
+
+<span class="cm">; Плановый перезапуск воркера: страховка от утечек в расширениях</span>
+pm.max_requests = 500
+
+<span class="cm">; Жёсткий предел на запрос со стороны FPM.</span>
+<span class="cm">; Должен согласовываться с max_execution_time и таймаутами nginx.</span>
+request_terminate_timeout = 30s
+
+<span class="cm">; Лог медленных запросов с трассировкой — бесценно для диагностики</span>
+slowlog = /var/log/php-fpm/slow.log
+request_slowlog_timeout = 5s
+
+<span class="cm">; Память на процесс: должна согласовываться с расчётом max_children</span>
+php_admin_value[memory_limit] = 256M</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 14 · симптомы и настройки</caption>
+      <thead><tr><th>Симптом</th><th>Вероятная причина</th><th>Что смотреть</th></tr></thead>
+      <tbody>
+        <tr><td>502 или 504 под нагрузкой</td><td>Все процессы заняты, очередь переполнена</td><td><code>max_children</code>, длительность запросов, зависшие внешние вызовы</td></tr>
+        <tr><td>Сервер ушёл в своп</td><td><code>max_children</code> × память процесса больше ОЗУ</td><td>Пересчитать по формуле, снизить лимит</td></tr>
+        <tr><td>Запросы обрываются на 30 секундах</td><td>Таймаут FPM или веб-сервера</td><td>Долгие операции переносить в очередь, а не поднимать таймаут</td></tr>
+        <tr><td>После деплоя старый код</td><td><code>validate_timestamps=0</code> без перезагрузки</td><td>Добавить перезагрузку FPM в деплой</td></tr>
+        <tr><td>Растёт память процессов со временем</td><td>Утечка в расширении или в коде воркера</td><td><code>pm.max_requests</code>, профилирование памяти</td></tr>
+        <tr><td>Кэш опкодов постоянно сбрасывается</td><td>Мало памяти под opcache или мал лимит файлов</td><td>Статистика opcache: заполненность и вытеснения</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Таймауты должны быть согласованы по всей цепочке: веб-сервер, FPM, <code>max_execution_time</code>, таймауты HTTP-клиента и базы. Если внешний вызов может длиться минуту, а FPM обрывает запрос на тридцати секундах, вы получаете оборванные операции без внятной ошибки. Самый безопасный вариант — короткие таймауты в вебе и перенос долгого в фон.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как подобрать <code>pm.max_children</code>?</b><br>По памяти: доступная память минус запас на систему, базу и кэш, делённая на средний размер процесса под вашей нагрузкой. Размер процесса измеряется, а не берётся из головы. Ставить больше бессмысленно и опасно: при исчерпании памяти сервер уходит в своп, и деградирует всё сразу. Если процессов не хватает — сначала сокращать время запроса, а не увеличивать их число.</div>
+    <div class="box task"><span class="lbl">Практика</span>Измерьте средний размер процесса FPM под реальной нагрузкой и пересчитайте <code>max_children</code>. Включите лог медленных запросов и разберите топ-5 записей за сутки. Проверьте согласованность таймаутов по всей цепочке.</div>
+  </article>
+
+  <!-- S5 -->
+  <article class="card" id="architecture">
+    <p class="path">senior / архитектура / границы</p>
+    <div class="card-top"><h3>Архитектура: границы и зависимость от фреймворка</h3><span class="badge b-3">Архитектура</span></div>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Направление зависимостей</span></div><pre><code>            HTTP · CLI · очередь · вебхуки        ← точки входа
+                          │
+                          ▼
+              Прикладной слой (сценарии)          ← «оформить заказ»
+                          │
+                          ▼
+                 Домен: сущности, правила,        ← не знает ни про HTTP,
+                 объекты-значения, события          ни про БД, ни про фреймворк
+                          ▲
+                          │  реализации интерфейсов домена
+              Инфраструктура: БД, почта, API      ← адаптеры
+
+Правило одно: зависимости направлены внутрь. Домен объявляет интерфейс
+(«мне нужен репозиторий заказов»), инфраструктура его реализует.
+Тогда доменные правила тестируются без базы и переживают смену фреймворка.</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Полная независимость от фреймворка — не самоцель и обычно не окупается: слой абстракций стоит времени, а фреймворк меняют раз в никогда. Разумный компромисс — держать вне фреймворка то, что дороже всего переписывать: правила предметной области и вычисления. Контроллеры, миграции и шаблоны спокойно живут во фреймворке.</div>
+    <div class="tw"><table>
+      <caption>Таблица 15 · когда усложнять структуру</caption>
+      <thead><tr><th>Ситуация</th><th>Достаточно</th><th>Признак, что пора дальше</th></tr></thead>
+      <tbody>
+        <tr><td>Небольшой проект, CRUD</td><td>Стандартная структура фреймворка</td><td>Логика начала дублироваться между контроллером, консолью и джобом</td></tr>
+        <tr><td>Логика переиспользуется</td><td>Сервисы и объекты-значения</td><td>Классы разрослись, правила размазаны по слоям</td></tr>
+        <tr><td>Сложная предметная область</td><td>Выделенный доменный слой с интерфейсами</td><td>Несколько команд мешают друг другу в одном коде</td></tr>
+        <tr><td>Несколько команд и доменов</td><td>Модули с явными границами</td><td>Части системы требуют разного масштабирования и релизного цикла</td></tr>
+        <tr><td>Разные требования к масштабу</td><td>Выделение сервиса</td><td>— (дальше только по конкретной боли)</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Строить «чистую архитектуру» с пятью слоями и интерфейсом на каждый класс в проекте из десяти таблиц. Каждая абстракция — это переход при чтении и файл в поддержке. Слои добавляются, когда появляется конкретная боль: дублирование, невозможность протестировать, конфликты команд.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Стоит ли изолировать код от фреймворка?</b><br>Частично и осознанно. Смысл не в гипотетической смене фреймворка, а в тестируемости и долговечности правил: доменная логика без зависимости от HTTP и ORM тестируется мгновенно и переживает любые обновления. Контроллеры, конфигурация и шаблоны изолировать незачем — это точки входа, они и должны быть фреймворковыми.</div>
+    <div class="box task"><span class="lbl">Практика</span>Выделите один сценарий предметной области в классы без единого упоминания фреймворка: сущности, объекты-значения, интерфейс репозитория. Напишите на него тесты без базы и убедитесь, что они выполняются за миллисекунды.</div>
+  </article>
+
+  <!-- S6 -->
+  <article class="card" id="legacy">
+    <p class="path">senior / поддержка / легаси</p>
+    <div class="card-top"><h3>Легаси и обновление версий PHP</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Типичная реальность: проекту восемь лет, версия PHP давно без поддержки, тестов почти нет, а бизнес хочет новых функций. Переписать с нуля почти всегда неправильный ответ — переписывание занимает годы и обычно проваливается.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Порядок работ, который действительно работает</span></div><pre><code>1. ЗАФИКСИРОВАТЬ ПОВЕДЕНИЕ
+   Тесты на ключевые сценарии — даже грубые, сквозные.
+   Без них любое изменение вслепую. Это единственная страховка.
+
+2. ПОДНЯТЬ ВЕРСИЮ PHP ДО ПОДДЕРЖИВАЕМОЙ
+   Отдельным шагом, до всякого рефакторинга: безопасность и скорость
+   достаются почти бесплатно. Автоматический рефакторинг помогает
+   с устаревшим синтаксисом.
+
+3. ВКЛЮЧИТЬ СТАТИЧЕСКИЙ АНАЛИЗ С ФИКСАЦИЕЙ ТЕКУЩИХ ОШИБОК
+   Новый код обязан быть чистым, старый разгребается по ходу.
+
+4. ДУШИТЬ ПОСТЕПЕННО (strangler)
+   Новую функциональность писать по-новому рядом, старые куски
+   заменять по частям, оставляя фасад для остального кода.
+
+5. ГРАНИЦЫ ВМЕСТО ПЕРЕПИСЫВАНИЯ
+   Выделять модули с явными контрактами. Переписывание «всего»
+   не начинать: оно не заканчивается.</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>У каждой версии PHP ограниченный срок поддержки: сначала период исправления ошибок, затем период только для уязвимостей, после чего обновления не выходят вовсе. Работать на неподдерживаемой версии — это не «работает и ладно», а накопление известных уязвимостей без патчей. Актуальные сроки смотрите на php.net, а обновление планируйте заранее, а не когда прижмёт.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>«Сначала наведём порядок, потом обновим версию». На практике порядок не наводится никогда, а обновление откладывается на годы. Правильный порядок обратный: обновить версию (это ограниченная по объёму задача с понятным результатом), а рефакторинг вести постепенно под прикрытием тестов и анализатора.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как подойти к обновлению PHP на большом легаси-проекте?</b><br>Сначала обеспечить хотя бы грубое покрытие ключевых сценариев тестами — иначе изменения вслепую. Затем обновлять версии последовательно, а не прыжком через несколько, каждый шаг прогоняя тестами и выкатывая отдельно. Помогают автоматический рефакторинг устаревшего синтаксиса и статический анализатор. Отдельная типичная преграда — заброшенные зависимости, которые не поддерживают новую версию: их находят заранее.</div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите легаси-модуль и напишите на него сквозные тесты, фиксирующие текущее поведение. Затем прогоните автоматический рефакторинг под целевую версию PHP и убедитесь, что тесты остались зелёными.</div>
+  </article>
+
+  <!-- S7 -->
+  <article class="card" id="deps">
+    <p class="path">senior / экосистема / зависимости</p>
+    <div class="card-top"><h3>Зависимости: выбор и сопровождение</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Каждая добавленная библиотека — обязательство на годы: её придётся обновлять, чинить при несовместимостях и, возможно, заменять, когда автор её забросит. Решение «поставить пакет» стоит принимать так же осознанно, как решение написать свой код.</p>
+    <div class="tw"><table>
+      <caption>Таблица 16 · на что смотреть перед добавлением пакета</caption>
+      <thead><tr><th>Критерий</th><th>Хороший признак</th><th>Тревожный признак</th></tr></thead>
+      <tbody>
+        <tr><td>Активность</td><td>Регулярные релизы, ответы на issue</td><td>Последний коммит два года назад</td></tr>
+        <tr><td>Поддержка версий PHP</td><td>Заявлена актуальная версия</td><td>Ограничение сверху старой версией — заблокирует обновление</td></tr>
+        <tr><td>Размер зависимости</td><td>Мало собственных зависимостей</td><td>Тянет за собой десятки пакетов</td></tr>
+        <tr><td>Объём задачи</td><td>Решает то, что дорого писать самому</td><td>Пакет ради функции на двадцать строк</td></tr>
+        <tr><td>Совместимость со стандартами</td><td>Реализует интерфейсы PSR — заменяем</td><td>Свои несовместимые абстракции повсюду</td></tr>
+        <tr><td>Проникновение в код</td><td>Используется за собственным фасадом</td><td>Классы библиотеки в сигнатурах по всему проекту</td></tr>
+      </tbody>
+    </table></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Гигиена зависимостей</span></div><pre><code><span class="cm"># Уязвимости в установленных версиях — в CI, на каждом прогоне</span>
+composer audit
+
+<span class="cm"># Что устарело именно из прямых зависимостей</span>
+composer outdated --direct
+
+<span class="cm"># Кто тянет этот пакет и почему его нельзя обновить</span>
+composer why vendor/package
+composer why-not vendor/package 3.0
+
+<span class="cm"># Прод-сборка: без dev-зависимостей и с оптимизированной автозагрузкой</span>
+composer install --no-dev --optimize-autoloader
+
+<span class="cm"># Проверить, что проект действительно работает на заявленной версии PHP</span>
+composer check-platform-reqs</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Обновляйте зависимости регулярно и небольшими порциями. Накопленное за год обновление превращается в проект с непредсказуемым сроком, потому что несовместимости складываются. Раз в спринт обновить патчи и минорные версии дешевле, чем раз в год разгребать всё сразу.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы решаете, брать библиотеку или писать своё?</b><br>Смотрю на объём задачи и на цену сопровождения. Инфраструктурное и стандартизованное (HTTP-клиент, логирование, работа с датами) — библиотека, писать своё бессмысленно. Тонкая функция на двадцать строк — свой код, чтобы не тащить дерево зависимостей. Отдельно оцениваю активность проекта, поддерживаемые версии PHP и то, насколько глубоко библиотека прорастёт в код: если её классы окажутся в сигнатурах повсюду, замена станет невозможной.</div>
+    <div class="box task"><span class="lbl">Практика</span>Проведите ревизию зависимостей проекта: аудит уязвимостей, список устаревших и заброшенных пакетов, поиск тех, кто блокирует обновление версии PHP. Составьте план: что обновить сейчас, что заменить, от чего избавиться.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Объясняю путь кода от исходника до опкодов и роль opcache</li>
+        <li>Знаю, почему JIT почти не помогает веб-нагрузке</li>
+        <li>Профилирую по слоям и замеряю после каждого изменения</li>
+        <li>Не занимаюсь микрооптимизациями вместо запросов к БД</li>
+        <li>Понимаю, что ломается в долгоживущих процессах</li>
+        <li>Пишу воркеры с сигналами, лимитами и сбросом состояния</li>
+      </ul>
+      <ul class="check">
+        <li>Считаю <code>max_children</code> по памяти, а не наугад</li>
+        <li>Согласовываю таймауты по всей цепочке</li>
+        <li>Держу доменную логику независимой от фреймворка там, где это окупается</li>
+        <li>Не начинаю переписывание легаси с нуля</li>
+        <li>Обновляю версию PHP отдельным шагом и по порядку</li>
+        <li>Выбираю зависимости осознанно и обновляю их регулярно</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-собеседование по PHP — это разговор о компромиссах и цифрах: сколько процессов поместится в память, где сгорает время запроса, что сломается при переходе на воркеры, как обновить язык на живом проекте. Ценится не знание редких функций, а понимание стоимости решений и порядок действий.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения перед собеседованием: что появилось в версиях языка и что ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Что появилось в PHP 8.x</h3><span class="badge b-tag">Таблица 17</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 17 · ключевые возможности по версиям</caption>
+      <thead><tr><th>Версия</th><th>Главное</th><th>Что это меняет в коде</th></tr></thead>
+      <tbody>
+        <tr><td><strong>8.0</strong></td><td>Именованные аргументы, атрибуты, продвижение свойств конструктора, union-типы, <code>match</code>, nullsafe-оператор, JIT, изменённое сравнение строки с числом</td><td>Конструкторы сокращаются вдвое; <code>match</code> вместо длинных <code>switch</code>; <code>0 == 'foo'</code> перестаёт быть <code>true</code></td></tr>
+        <tr><td><strong>8.1</strong></td><td>Перечисления, <code>readonly</code>-свойства, файберы, <code>never</code>, синтаксис первоклассных callable, чистые intersection-типы, <code>new</code> в значениях по умолчанию</td><td>Статусы становятся типом; появляется настоящая неизменяемость; асинхронные библиотеки получают фундамент</td></tr>
+        <tr><td><strong>8.2</strong></td><td><code>readonly</code>-классы, DNF-типы, <code>null</code>/<code>false</code>/<code>true</code> как самостоятельные типы, устаревание динамических свойств, константы в трейтах</td><td>Объект-значение объявляется одним словом; опечатка в имени свойства перестаёт молча создавать новое поле</td></tr>
+        <tr><td><strong>8.3</strong></td><td>Типизированные константы классов, атрибут <code>#[\Override]</code>, проверка корректности JSON без разбора, динамическое обращение к константам</td><td>Константы перестают быть <code>mixed</code>; ошибки переопределения ловятся на этапе компиляции</td></tr>
+        <tr><td><strong>8.4</strong></td><td>Хуки свойств, асимметричная видимость, ленивые объекты, вызов метода у нового объекта без скобок, функции поиска по массиву</td><td>Геттеры и сеттеры во многом становятся не нужны; публичное чтение с приватной записью — одна строка</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Список неполный и намеренно про то, что меняет повседневный код. Перед обновлением версии смотрите файл <code>UPGRADING</code> в исходниках PHP: там перечислены не новинки, а <em>ломающие изменения</em> — именно они определяют объём работ по миграции.</div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 18</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 18 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Язык</td><td>Синтаксис, типы, сравнения, массивы</td><td>Строгая типизация, перечисления, объекты-значения, генераторы</td><td>Понимает исполнение: опкоды, память, стоимость конструкций</td></tr>
+        <tr><td>ООП</td><td>Классы, интерфейсы, наследование</td><td>Композиция, SOLID, внедрение зависимостей</td><td>Границы модулей, обоснование сложности и отказ от неё</td></tr>
+        <tr><td>Ошибки</td><td>Знает иерархию, ловит исключения</td><td>Строит иерархию, логирует структурированно</td><td>Ставит процесс: обработчики, трекер, алерты, разбор инцидентов</td></tr>
+        <tr><td>Данные и объёмы</td><td>Работает с массивами</td><td>Генераторы, пачки, контроль памяти</td><td>Потоковая обработка, профилирование, лимиты процессов</td></tr>
+        <tr><td>Качество</td><td>Пишет отдельные тесты</td><td>Тесты на поведение и статический анализ в CI</td><td>Внедряет анализ на легаси, следит за деградацией</td></tr>
+        <tr><td>Безопасность</td><td>Экранирует и использует подготовленные выражения</td><td>Знает правильные инструменты для паролей, токенов, ввода</td><td>Модель угроз, аудит зависимостей, безопасность на уровне архитектуры</td></tr>
+        <tr><td>Эксплуатация</td><td>Запускает локально</td><td>Понимает FPM, opcache, окружения</td><td>Считает ресурсы, тюнит пул, обновляет версии, ведёт легаси</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и применение</td><td>Компромиссы, цифры, порядок действий</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ГРАБЛИ ==================== -->
+<section class="level lvl-n" id="gotchas">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Грабли и идиомы</h2>
+    <p>Особенности, на которых спотыкаются даже опытные, и приёмы, которые стоит довести до автоматизма.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Классические грабли</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Что ломается чаще всего</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Ссылка, пережившая цикл: последний элемент затирается</span>
+<span class="kw">foreach</span> ($items <span class="kw">as</span> &amp;$item) { $item = <span class="fn">trim</span>($item); }
+<span class="fn">unset</span>($item);                       <span class="cm">// ← обязательно!</span>
+<span class="kw">foreach</span> ($items <span class="kw">as</span> $item) { }        <span class="cm">// без unset здесь начнётся магия</span>
+
+<span class="cm">// 2. Числовые строки как ключи: '42' превращается в int</span>
+$a = [<span class="st">'42'</span> =&gt; <span class="st">'a'</span>, 42 =&gt; <span class="st">'b'</span>];       <span class="cm">// в массиве ОДИН элемент</span>
+
+<span class="cm">// 3. array_filter сохраняет ключи → json_encode отдаёт объект</span>
+<span class="fn">json_encode</span>(<span class="fn">array_filter</span>([1, 2, 3], <span class="kw">fn</span> ($v) =&gt; $v &gt; 1));   <span class="cm">// {"1":2,"2":3}</span>
+<span class="fn">json_encode</span>(<span class="fn">array_values</span>(<span class="fn">array_filter</span>(...)));                 <span class="cm">// [2,3] — то, что ждали</span>
+
+<span class="cm">// 4. Плавающая точка: не для денег и не для сравнения</span>
+0.1 + 0.2 === 0.3;                  <span class="cm">// false</span>
+<span class="fn">intdiv</span>(1000, 3);                     <span class="cm">// целочисленное деление без сюрпризов</span>
+
+<span class="cm">// 5. Строки — байты: обрезка ломает UTF-8</span>
+<span class="fn">substr</span>(<span class="st">'привет'</span>, 0, 5);             <span class="cm">// «кракозябра» на конце</span>
+<span class="fn">mb_substr</span>(<span class="st">'привет'</span>, 0, 5);          <span class="cm">// 'приве'</span>
+
+<span class="cm">// 6. Сортировка меняет массив на месте и возвращает bool</span>
+$sorted = <span class="fn">sort</span>($items);             <span class="cm">// $sorted === true, а не массив!</span>
+
+<span class="cm">// 7. Раннее закрытие тега: лишний перенос строки ломает заголовки и файлы</span>
+<span class="cm">// В файлах, содержащих только PHP, закрывающий ?&gt; НЕ ставится.</span>
+
+<span class="cm">// 8. Модификация массива во время обхода</span>
+<span class="kw">foreach</span> ($items <span class="kw">as</span> $k =&gt; $v) { <span class="fn">unset</span>($items[$k]); }   <span class="cm">// работает с копией — не то, что кажется</span>
+
+<span class="cm">// 9. Сравнение объектов: == сравнивает поля, === сравнивает экземпляры</span>
+<span class="kw">new</span> Money(100, <span class="st">'RUB'</span>) == <span class="kw">new</span> Money(100, <span class="st">'RUB'</span>);    <span class="cm">// true</span>
+<span class="kw">new</span> Money(100, <span class="st">'RUB'</span>) === <span class="kw">new</span> Money(100, <span class="st">'RUB'</span>);   <span class="cm">// false</span>
+
+<span class="cm">// 10. Обработка JSON без проверки ошибок</span>
+<span class="fn">json_decode</span>($raw, <span class="kw">true</span>);                              <span class="cm">// null и тишина</span>
+<span class="fn">json_decode</span>($raw, <span class="kw">true</span>, flags: <span class="nm">JSON_THROW_ON_ERROR</span>);   <span class="cm">// исключение</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Идиомы, которые стоит довести до автоматизма</span></div><pre><code>&lt;?php
+<span class="cm">// Индексация коллекции для доступа за O(1) вместо поиска в цикле</span>
+$byId = <span class="fn">array_column</span>($rows, <span class="kw">null</span>, <span class="st">'id'</span>);
+
+<span class="cm">// Множество для проверки принадлежности</span>
+$allowed = <span class="fn">array_flip</span>([<span class="st">'admin'</span>, <span class="st">'editor'</span>]);
+<span class="kw">if</span> (<span class="fn">isset</span>($allowed[$role])) { }
+
+<span class="cm">// Группировка за один проход</span>
+$byType = [];
+<span class="kw">foreach</span> ($rows <span class="kw">as</span> $row) { $byType[$row[<span class="st">'type'</span>]][] = $row; }
+
+<span class="cm">// Значения по умолчанию без ветвлений</span>
+$limit = (<span class="kw">int</span>) ($input[<span class="st">'limit'</span>] ?? 20);
+$config[<span class="st">'retries'</span>] ??= 3;
+
+<span class="cm">// match вместо switch: строгое сравнение, значение-выражение, без провалов</span>
+$label = <span class="kw">match</span>(<span class="kw">true</span>) {
+    $n &lt; 0   =&gt; <span class="st">'отрицательное'</span>,
+    $n === 0 =&gt; <span class="st">'ноль'</span>,
+    <span class="kw">default</span>  =&gt; <span class="st">'положительное'</span>,
+};
+
+<span class="cm">// Ранний возврат вместо лестницы вложенных условий</span>
+<span class="kw">if</span> ($user === <span class="kw">null</span>) { <span class="kw">return</span> Result::<span class="fn">notFound</span>(); }
+<span class="kw">if</span> (!$user-&gt;<span class="fn">isActive</span>()) { <span class="kw">return</span> Result::<span class="fn">forbidden</span>(); }
+<span class="cm">// ... основной сценарий на верхнем уровне вложенности</span>
+
+<span class="cm">// Освобождение ресурсов при любом исходе</span>
+<span class="kw">try</span> { $lock-&gt;<span class="fn">acquire</span>(); <span class="cm">/* ... */</span> } <span class="kw">finally</span> { $lock-&gt;<span class="fn">release</span>(); }
+
+<span class="cm">// Списки и неизменяемость</span>
+<span class="fn">array_is_list</span>($a);                 <span class="cm">// это последовательный список? (8.1)</span></code></pre></div>
+    <div class="box good"><span class="lbl">Практический вывод</span>Почти все грабли из первого блока ловятся статическим анализатором и включёнными строгими типами — их не нужно держать в голове, нужно один раз настроить инструменты. В голове стоит держать второй блок: идиомы, которые делают код короче и понятнее без потери контроля.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы намеренно короткие — это каркас, а не пересказ документации. Структура сильного ответа: определение → как работает → пример из практики → компромисс.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Почему переменные не сохраняются между запросами?</span><span class="aa">Из-за модели shared-nothing: процесс инициализируется на запрос и полностью очищается после ответа. Состояние живёт в сессии, кэше или базе, а не в памяти PHP.</span></li>
+      <li><span class="qq">Что делает opcache и зачем он нужен?</span><span class="aa">Хранит скомпилированный байткод в разделяемой памяти, поэтому следующий запрос пропускает парсинг и компиляцию файлов. На проде обязателен: без него каждый запрос заново компилирует сотни файлов.</span></li>
+      <li><span class="qq">Чем CLI отличается от FPM?</span><span class="aa">Разные окружения выполнения: в CLI по умолчанию нет ограничения на время выполнения и нет веб-контекста, в FPM есть лимиты времени и таймауты веб-сервера. Долгие операции — в CLI и очереди, а не в веб-запрос.</span></li>
+      <li><span class="qq">Чем <code>==</code> отличается от <code>===</code>?</span><span class="aa">Первое сравнивает после приведения типов, второе — значение и тип без приведения. В прикладном коде по умолчанию используется строгое сравнение.</span></li>
+      <li><span class="qq">Что изменилось в сравнении строк и чисел в PHP 8?</span><span class="aa">Если строка нечисловая, теперь число приводится к строке, а не наоборот. Поэтому <code>0 == 'foo'</code> стало <code>false</code>, хотя раньше было <code>true</code>. Это убрало целый класс ошибок в проверках.</span></li>
+      <li><span class="qq">Какие значения приводятся к <code>false</code>?</span><span class="aa"><code>false</code>, <code>0</code>, <code>0.0</code>, пустая строка, строка <code>'0'</code>, пустой массив и <code>null</code>. Строки <code>'0.0'</code>, <code>'false'</code> и пробел — истинные, что регулярно удивляет.</span></li>
+      <li><span class="qq">Чем <code>isset</code> отличается от <code>empty</code> и <code>array_key_exists</code>?</span><span class="aa"><code>isset</code> — ключ есть и значение не <code>null</code>. <code>array_key_exists</code> — ключ есть, даже если значение <code>null</code>. <code>empty</code> — ключа нет или значение ложное, поэтому <code>'0'</code> считается пустым.</span></li>
+      <li><span class="qq">Массив в PHP — это массив?</span><span class="aa">Это упорядоченная хеш-таблица: ключи только целые и строковые, порядок вставки сохраняется. Для последовательных целых ключей движок хранит компактное представление без хеш-части.</span></li>
+      <li><span class="qq">Чем <code>array_merge</code> отличается от оператора <code>+</code>?</span><span class="aa"><code>array_merge</code> переиндексирует целочисленные ключи и склеивает значения, оператор <code>+</code> оставляет ключи первого массива и добавляет только отсутствующие. Для списков нужен первый, для слияния настроек по ключам — второй.</span></li>
+      <li><span class="qq">Почему <code>strlen('привет')</code> возвращает 12?</span><span class="aa">Строка — массив байтов, а кириллический символ в UTF-8 занимает два байта. Для работы с символами нужны <code>mb_*</code>-функции, иначе обрезка ломает текст.</span></li>
+      <li><span class="qq">Что делает <code>declare(strict_types=1)</code>?</span><span class="aa">Отключает неявное приведение скалярных аргументов и возвращаемых значений для вызовов из этого файла: несоответствие типа сразу вызывает <code>TypeError</code>. Объявление действует на файл, а не на весь проект.</span></li>
+      <li><span class="qq">Чем стрелочная функция отличается от замыкания?</span><span class="aa">Стрелочная автоматически захватывает внешние переменные по значению и содержит одно выражение; замыкание требует явного <code>use</code>, но допускает любой код и захват по ссылке.</span></li>
+      <li><span class="qq">Интерфейс или абстрактный класс?</span><span class="aa">Интерфейс — только контракт, реализовать можно несколько. Абстрактный класс — контракт плюс общая реализация и состояние, но наследоваться можно лишь от одного. По умолчанию берут интерфейс и композицию.</span></li>
+      <li><span class="qq">Что такое трейт и когда он уместен?</span><span class="aa">Механизм примешивания методов в класс. Уместен для технических повторяющихся вещей, но не для бизнес-логики: трейт копирует код в класс, скрывает источник поведения и легко приводит к конфликтам.</span></li>
+      <li><span class="qq">В чём разница <code>self</code> и <code>static</code>?</span><span class="aa"><code>self</code> — класс, где написан код, <code>static</code> — класс, у которого метод вызвали (позднее статическое связывание). Для фабричных методов в базовом классе нужен <code>static</code>, иначе потомок получит экземпляр родителя.</span></li>
+      <li><span class="qq">Чем <code>Error</code> отличается от <code>Exception</code>?</span><span class="aa">Оба реализуют <code>Throwable</code>. <code>Error</code> — проблемы уровня языка (неверный тип, деление на ноль), обычно это баг. <code>Exception</code> — прикладные ситуации, на которые предусмотрена реакция.</span></li>
+      <li><span class="qq">Зачем нужен <code>finally</code>?</span><span class="aa">Чтобы освободить ресурсы независимо от исхода: блок выполнится и при успехе, и при исключении, и при досрочном возврате. Типичное применение — закрытие файлов, снятие блокировок, завершение транзакций.</span></li>
+      <li><span class="qq">Что такое PSR-4?</span><span class="aa">Стандарт автозагрузки: пространство имён отображается на каталог, класс находится по имени файла. Благодаря ему не нужно вручную подключать файлы, а структура проекта становится предсказуемой.</span></li>
+      <li><span class="qq">Чем <code>composer install</code> отличается от <code>update</code>?</span><span class="aa"><code>install</code> ставит точные версии из lock-файла — воспроизводимо, поэтому применяется в CI и на проде. <code>update</code> пересчитывает версии в пределах ограничений и переписывает lock; это осознанное действие разработчика.</span></li>
+      <li><span class="qq">Как защититься от SQL-инъекции?</span><span class="aa">Подготовленными выражениями с плейсхолдерами: запрос и данные передаются раздельно, поэтому значение не может стать частью синтаксиса. Имена таблиц, колонок и направление сортировки параметрами не передаются — только через белый список.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что дают типизированные свойства?</span><span class="aa">Невозможность присвоить значение неверного типа и ошибку при чтении неинициализированного свойства вместо тихого <code>null</code>. Ошибка возникает в точке присвоения, а не через несколько слоёв.</span></li>
+      <li><span class="qq">Что такое <code>readonly</code> и чем он полезен?</span><span class="aa">Свойство можно задать только при инициализации из области класса; дальнейшая запись вызывает ошибку. Это неизменяемость на уровне языка: объект-значение нельзя случайно испортить, а изменение оформляется созданием нового экземпляра.</span></li>
+      <li><span class="qq">Зачем перечисления, если есть константы?</span><span class="aa">Перечисление — тип с конечным множеством значений: нельзя передать несуществующий статус, а <code>match</code> заставляет обработать все варианты. Плюс поведение живёт рядом со значениями, а не в условных конструкциях по всему проекту.</span></li>
+      <li><span class="qq">Чем backed-перечисление отличается от чистого?</span><span class="aa">У backed есть скалярное значение для хранения и передачи наружу, к нему применимы <code>from()</code> и <code>tryFrom()</code>. Чистое перечисление значения не имеет и годится, когда наружу оно не выходит.</span></li>
+      <li><span class="qq">Что такое объект-значение и зачем он?</span><span class="aa">Небольшой неизменяемый объект, определяемый своим значением: деньги, email, период. Он переносит инварианты в тип — проверка выполняется один раз при создании, дальше объект корректен по построению, а поведение живёт рядом с данными.</span></li>
+      <li><span class="qq">Чем опасны <code>__get</code> и <code>__call</code>?</span><span class="aa">Публичный интерфейс становится невидимым для IDE и анализатора, опечатки превращаются в рантайм-ошибки, отладка усложняется. Оправданы в прокси и обёртках, но не в обычном коде.</span></li>
+      <li><span class="qq">Что делает <code>clone</code> и когда нужен <code>__clone</code>?</span><span class="aa">Создаёт поверхностную копию: вложенные объекты остаются общими с оригиналом. <code>__clone</code> нужен, чтобы скопировать и их, иначе изменение копии затронет исходный объект.</span></li>
+      <li><span class="qq">Объясните инверсию зависимостей на примере.</span><span class="aa">Класс зависит от интерфейса, а конкретная реализация приходит снаружи: вместо создания SMTP-отправителя внутри сервис принимает интерфейс <code>Mailer</code>. В проде это SMTP, в тестах — заглушка, код не меняется.</span></li>
+      <li><span class="qq">Чем внедрение зависимостей отличается от DI-контейнера?</span><span class="aa">Внедрение — приём: зависимости приходят через конструктор. Контейнер — инструмент, который их собирает. Контейнер без приёма превращается в service locator, когда класс сам достаёт что хочет, и зависимости снова становятся скрытыми.</span></li>
+      <li><span class="qq">Что такое генератор и когда он необходим?</span><span class="aa">Функция, отдающая значения по одному через <code>yield</code> без построения всего результата в памяти. Необходим, когда данных больше, чем помещается: обработка больших файлов, выгрузки, постраничные обходы API.</span></li>
+      <li><span class="qq">Какие ограничения у генератора?</span><span class="aa">Односторонний проход: пройти повторно нельзя, <code>count()</code> неприменим, произвольный доступ отсутствует. Если данные нужны дважды, их приходится материализовать осознанно или перезапускать источник.</span></li>
+      <li><span class="qq">Что такое copy-on-write?</span><span class="aa">Массивы и строки разделяют внутреннее представление, пока никто не пишет; копия создаётся при первой записи. Поэтому передача большого массива в функцию бесплатна, а изменение внутри стоит полного копирования.</span></li>
+      <li><span class="qq">Как в PHP управляется память?</span><span class="aa">Подсчётом ссылок: значение освобождается сразу при обнулении счётчика. Циклические ссылки между объектами счётчик не обнуляет — их собирает отдельный сборщик, который можно вызвать вручную в длинных процессах.</span></li>
+      <li><span class="qq">Чем опасны ссылки (<code>&amp;</code>)?</span><span class="aa">Они отключают copy-on-write, делают поток данных непредсказуемым и дают классическую ошибку с <code>foreach</code>, когда переменная после цикла остаётся ссылкой на последний элемент. Почти всегда лучше возвращать новое значение.</span></li>
+      <li><span class="qq">Скрипт падает по нехватке памяти на большом файле. Что делать?</span><span class="aa">Не поднимать лимит, а убрать материализацию: читать потоком через генератор, обрабатывать пачками, не хранить всё в массиве, агрегировать на лету. Память тогда перестаёт зависеть от объёма входа.</span></li>
+      <li><span class="qq">Как организовать иерархию исключений?</span><span class="aa">Интерфейс-маркер на модуль, конкретные типы с данными в свойствах, оборачивание чужих исключений с сохранением причины. Ловят по типу, а данные берут из свойств, а не разбирают текст сообщения.</span></li>
+      <li><span class="qq">Чем мок отличается от заглушки?</span><span class="aa">Заглушка возвращает подготовленные данные, чтобы код мог работать. Мок дополнительно проверяет факт и характер вызова: был ли метод вызван, сколько раз и с какими аргументами.</span></li>
+      <li><span class="qq">Зачем статический анализ, если есть тесты?</span><span class="aa">Он ловит другой класс ошибок и без запуска кода: несуществующие методы, неверные типы, недостижимые ветки, потенциальные <code>null</code>. Тесты проверяют поведение на выбранных сценариях, анализатор — весь код разом.</span></li>
+      <li><span class="qq">Как правильно хранить пароли?</span><span class="aa">Через <code>password_hash</code> с параметрами по умолчанию: современный алгоритм, автоматическая соль, подобранная стоимость. Проверка — <code>password_verify</code>, при входе — проверка необходимости пересчёта хеша. Быстрые хеши вроде <code>md5</code> для паролей непригодны.</span></li>
+      <li><span class="qq">Есть ли в PHP многопоточность?</span><span class="aa">В обычном режиме нет: код выполняется последовательно, а параллелизм обеспечивается несколькими процессами. Файберы дают приостановку и возобновление в одном потоке и служат основой асинхронных библиотек, но это не параллельное исполнение.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что происходит с кодом от файла до выполнения?</span><span class="aa">Исходник разбирается в синтаксическое дерево, компилируется в опкоды и выполняется виртуальной машиной. Opcache сохраняет опкоды в разделяемой памяти, устраняя парсинг и компиляцию на последующих запросах.</span></li>
+      <li><span class="qq">Даст ли JIT ускорение вашему приложению?</span><span class="aa">Обычно нет: в веб-нагрузке время уходит на базу и сеть, а JIT ускоряет вычисления. Он оправдан на счётных задачах. Приоритет оптимизаций: запросы к БД, кэш, объёмы данных — и только потом JIT.</span></li>
+      <li><span class="qq">Зачем нужна предзагрузка классов и чем она неудобна?</span><span class="aa">Классы компилируются один раз при старте и живут в памяти всех воркеров, что заметно ускоряет старт запроса на больших кодовых базах. Неудобство: при изменении кода требуется перезапуск, поэтому она жёстко связана с процедурой деплоя.</span></li>
+      <li><span class="qq">Как подобрать <code>pm.max_children</code>?</span><span class="aa">Доступная память минус запас, делённая на измеренный средний размер процесса. Больше ставить бессмысленно: при исчерпании памяти сервер уходит в своп и деградирует целиком. Если процессов не хватает, сначала сокращают время запроса.</span></li>
+      <li><span class="qq">Что делать, если под нагрузкой начинаются 502 и 504?</span><span class="aa">Смотреть, заняты ли все процессы и чем именно: обычно это долгие запросы к базе или зависшие внешние вызовы без таймаутов. Лечится таймаутами, выносом долгого в очередь и сокращением времени запроса, а не механическим увеличением числа процессов.</span></li>
+      <li><span class="qq">Почему после деплоя работает старый код?</span><span class="aa">При выключенной проверке времени изменения файлов opcache отдаёт старый байткод, пока процессы не перезапущены. В деплой добавляется перезагрузка FPM; для воркеров — их корректный перезапуск.</span></li>
+      <li><span class="qq">Как согласовать таймауты?</span><span class="aa">По всей цепочке: веб-сервер, FPM, ограничение времени выполнения, таймауты HTTP-клиента и базы. Внутренние должны быть меньше внешних, чтобы ошибка была осмысленной, а не обрывом соединения. Всё, что не укладывается, переносится в фон.</span></li>
+      <li><span class="qq">Что ломается при переходе на долгоживущие воркеры?</span><span class="aa">Состояние между задачами: статические свойства и синглтоны, накопление утечек, отвалившиеся по таймауту соединения с БД, старый код после деплоя. Решается сбросом состояния на границе задачи, лимитами по числу задач, времени и памяти, переподключением и перезапуском по сигналу.</span></li>
+      <li><span class="qq">Как корректно останавливать воркер?</span><span class="aa">По сигналу завершения выставлять флаг, дорабатывать текущую задачу и выходить из цикла; супервизор поднимет новый процесс. Резкое убийство процесса теряет задачу или оставляет её в промежуточном состоянии.</span></li>
+      <li><span class="qq">С чего начинать разбор медленного эндпоинта?</span><span class="aa">С разбивки времени по слоям и подсчёта запросов к базе и внешних вызовов. Почти всегда причина там. Профиль CPU нужен, только если после этого время всё ещё внутри PHP. И замер после каждого изменения.</span></li>
+      <li><span class="qq">Почему микрооптимизации языка обычно бесполезны?</span><span class="aa">Потому что на фоне одного лишнего запроса к базе или внешнего вызова разница между конструкциями языка теряется в шуме. Оптимизируют то, что показал замер: запросы, объёмы данных, повторные вычисления.</span></li>
+      <li><span class="qq">Как внедрить статический анализ в большой легаси-проект?</span><span class="aa">Зафиксировать текущие ошибки как исходное состояние, запретить появление новых и постепенно повышать уровень строгости, разгребая накопленное по мере правок. Попытка сразу включить максимальный уровень заканчивается отключением инструмента.</span></li>
+      <li><span class="qq">Как подойти к обновлению версии PHP на легаси?</span><span class="aa">Сначала покрыть ключевые сценарии хотя бы грубыми тестами, затем обновляться последовательно по версиям, каждый шаг проверяя и выкатывая отдельно. Помогают автоматический рефакторинг устаревшего синтаксиса и анализатор. Главная преграда обычно — заброшенные зависимости.</span></li>
+      <li><span class="qq">Почему нельзя оставаться на неподдерживаемой версии PHP?</span><span class="aa">Потому что для неё перестают выходить исправления, включая уязвимости, а разрыв с актуальной версией растёт, делая будущее обновление дороже. Плюс новые версии дают производительность и возможности языка бесплатно.</span></li>
+      <li><span class="qq">Стоит ли изолировать код от фреймворка?</span><span class="aa">Частично: доменные правила и вычисления имеет смысл держать независимыми — они тестируются мгновенно и переживают обновления. Контроллеры, конфигурация и шаблоны изолировать незачем. Полная независимость — цель, которая обычно не окупается.</span></li>
+      <li><span class="qq">Как решить, писать своё или взять библиотеку?</span><span class="aa">По объёму задачи и цене сопровождения. Стандартизованная инфраструктура — библиотека. Функция на двадцать строк — свой код, чтобы не тянуть дерево зависимостей. Отдельно оценивается активность проекта, поддерживаемые версии PHP и глубина проникновения библиотеки в код.</span></li>
+      <li><span class="qq">Как поддерживать зависимости в порядке?</span><span class="aa">Аудит уязвимостей в CI, регулярные небольшие обновления вместо накопления, отслеживание заброшенных пакетов и тех, кто блокирует обновление версии PHP. Lock-файл в репозитории, на проде только установка по нему.</span></li>
+      <li><span class="qq">Где в PHP-приложении обычно теряется безопасность?</span><span class="aa">В местах, которые подготовленные выражения не покрывают: сортировка и имена колонок из запроса, подключение файлов по пользовательскому пути, загрузка файлов с доверием расширению, десериализация недоверенных данных, самодельная криптография и секреты в репозитории.</span></li>
+      <li><span class="qq">Как обеспечить, что ошибки не теряются?</span><span class="aa">Перевести предупреждения и ошибки PHP в исключения обработчиком, добавить обработчик непойманных исключений и обработчик завершения для фатальных, логировать структурированно со сквозным идентификатором и отправлять в трекер ошибок с оповещением.</span></li>
+      <li><span class="qq">Спроектируйте обработку 10 млн записей за ночь на одном сервере.</span><span class="aa">Ожидается разговор о компромиссах: чтение потоком и обработка пачками с постоянной памятью; параллелизм несколькими процессами с разбиением диапазона по первичному ключу; идемпотентность и возобновляемость с сохранением позиции; пакетные операции с базой вместо построчных; контроль лага реплик и нагрузки; лимиты памяти и плановый перезапуск воркеров; логирование прогресса и алерт на остановку.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Каждое задание даёт артефакт: работающий код, замеры или отчёт. Язык учится не чтением документации, а замерами и попытками сломать собственный код.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Таблица сравнений</h4>
+    <p>Сравните каждое с каждым: <code>0</code>, <code>'0'</code>, <code>''</code>, <code>null</code>, <code>false</code>, <code>[]</code>, <code>'foo'</code>, <code>'1'</code> — через <code>==</code> и <code>===</code>. Объясните каждое расхождение.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица, после которой нестрогие сравнения перестают удивлять.</div>
+
+    <h4>2. Работа с текстом без поломок</h4>
+    <p>Функция обрезки анонса до N символов с многоточием: не режет слова, не ломает UTF-8, корректна на тексте с эмодзи. Плюс замер сборки строки конкатенацией против <code>implode</code>.</p>
+    <div class="box task"><span class="lbl">Результат</span>Рабочая функция с тестами и цифры по скорости сборки строк.</div>
+
+    <h4>3. Мини-приложение без фреймворка</h4>
+    <p>Одна точка входа, простая маршрутизация, PSR-4 автозагрузка через Composer, PDO с подготовленными выражениями, шаблон с экранированием вывода.</p>
+    <div class="box task"><span class="lbl">Результат</span>Понимание того, что фреймворк делает за вас, — и почему это стоит его веса.</div>
+
+    <h4>4. Безопасная загрузка файлов</h4>
+    <p>Форма загрузки аватара: проверка размера, определение типа по содержимому, генерация имени, хранение вне корня сайта. Затем попытки её обойти.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список попыток обхода и того, что каждую из них остановило.</div>
+
+    <h4>5. Иерархия исключений</h4>
+    <p>Базовое исключение модуля и три конкретных с данными в свойствах. Глобальные обработчики ошибок и исключений, логирование, корректный ответ пользователю без деталей.</p>
+    <div class="box task"><span class="lbl">Результат</span>Ни одна ошибка не теряется; на проде трассировка не попадает в вывод.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. От массива к типам</h4>
+    <p>Возьмите функцию, принимающую ассоциативный массив, и переведите её на объекты: перечисление для статуса, объект-значение для денег, DTO для входных данных.</p>
+    <div class="box task"><span class="lbl">Результат</span>Сравнение находок статического анализатора до и после.</div>
+
+    <h4>7. Ленивый конвейер обработки</h4>
+    <p>CSV на 5 млн строк: импорт через <code>file()</code> и через генератор с ленивыми фильтрацией и преобразованием, плюс пакетная вставка в базу по 1000 строк.</p>
+    <div class="box task"><span class="lbl">Результат</span>Замер пиковой памяти и времени для обоих вариантов.</div>
+
+    <h4>8. Инверсия зависимостей</h4>
+    <p>Класс, который сам создаёт PDO и почтовый транспорт, перевести на внедрение через конструктор с интерфейсами и написать тест с заглушками.</p>
+    <div class="box task"><span class="lbl">Результат</span>Тест выполняется за миллисекунды, без сети и без базы.</div>
+
+    <h4>9. Качество в CI</h4>
+    <p>Подключить PHPUnit, статический анализатор с фиксацией текущих ошибок и проверку стиля. Настроить прогон в CI и поднять уровень строгости на один.</p>
+    <div class="box task"><span class="lbl">Результат</span>Зелёный пайплайн и разобранная первая сотня находок анализатора.</div>
+
+    <h4>10. Модуль аутентификации</h4>
+    <p>Без фреймворка: регистрация с корректным хешированием, вход с защитой от перебора, токен восстановления с ограниченным сроком и безопасным сравнением.</p>
+    <div class="box task"><span class="lbl">Результат</span>Попытка сломать каждый пункт таблицы безопасности и отчёт по результатам.</div>
+
+    <h4>11. Параллельные внешние вызовы</h4>
+    <p>Страницу, которая последовательно дёргает три API, перевести на параллельные запросы с таймаутами и обработкой частичного отказа.</p>
+    <div class="box task"><span class="lbl">Результат</span>Время ответа до и после плюс корректное поведение при недоступности одного сервиса.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Влияние настроек движка</h4>
+    <p>Замерить время ответа приложения без opcache, с opcache, с предзагрузкой и с включённым JIT — на веб-нагрузке и на синтетическом вычислительном тесте.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица, объясняющая, почему порядок оптимизаций именно такой.</div>
+
+    <h4>13. Воркер, живущий сутки</h4>
+    <p>Написать воркер с обработкой сигналов, лимитами по числу задач, времени и памяти, сбросом состояния между задачами и переподключением к базе. Запустить на сутки.</p>
+    <div class="box task"><span class="lbl">Результат</span>График потребления памяти за сутки — утечка видна сразу.</div>
+
+    <h4>14. Тюнинг пула и таймаутов</h4>
+    <p>Измерить средний размер процесса FPM под реальной нагрузкой, пересчитать <code>max_children</code>, включить лог медленных запросов и согласовать таймауты по цепочке.</p>
+    <div class="box task"><span class="lbl">Результат</span>Обоснованные цифры конфигурации и разбор топ-5 медленных запросов за сутки.</div>
+
+    <h4>15. План жизни легаси</h4>
+    <p>Для реального проекта: покрытие ключевых сценариев тестами, план обновления версии PHP по шагам, список блокирующих зависимостей, стратегия постепенной замены модулей.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ на 2–3 страницы с оценкой объёма и порядком работ, пригодный для обсуждения с руководством.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Каждая неделя заканчивается кодом и замерами. Язык проверяется не пересказом документации, а вопросами вида «что здесь произойдёт и почему» — на них отвечает только практика.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Язык и его особенности</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Модель исполнения и opcache, CLI против FPM, типы и сравнения, ложные значения, массивы и строки, функции и замыкания, основы ООП, исключения, Composer и PSR, работа с вводом.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: таблица сравнений, работа с текстом, мини-приложение без фреймворка, загрузка файлов, иерархия исключений.</li>
+      <li>Включить <code>declare(strict_types=1)</code> в существующем проекте и разобрать всё, что сломается.</li>
+      <li>Прочитать разделы руководства по типам и по массивам целиком — там половина «магии» объясняется.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Мини-приложение без фреймворка со строгими типами, безопасной работой с вводом и обработкой ошибок.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Почему переменные не живут между запросами?</li>
+      <li>Что изменилось в сравнении строки с числом в PHP 8?</li>
+      <li>Чем <code>isset</code> отличается от <code>empty</code>?</li>
+      <li>Почему <code>strlen</code> и <code>mb_strlen</code> дают разный результат?</li>
+      <li>Чем <code>Error</code> отличается от <code>Exception</code>?</li>
+      <li>Чем <code>composer install</code> отличается от <code>update</code>?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Типы, ООП, архитектура кода</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Строгая типизация и возможности системы типов, перечисления, объекты-значения, неизменяемость, интерфейсы против наследования, магические методы и их цена, SOLID, внедрение зависимостей.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6 и 8: перевод функции с массивов на типы, инверсия зависимостей с тестом на заглушках.</li>
+      <li>Заменить в проекте строковые статусы на перечисления и работу с деньгами на объект-значение.</li>
+      <li>Найти в проекте класс, который сам создаёт свои зависимости, и переписать его.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Модуль с типизированным интерфейсом, перечислениями и объектами-значениями, покрытый быстрыми тестами без базы.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что даёт <code>declare(strict_types=1)</code>?</li>
+      <li>Зачем нужны <code>readonly</code>-свойства?</li>
+      <li>Чем перечисление лучше набора констант?</li>
+      <li>Зачем объекты-значения, если есть скалярные типы?</li>
+      <li>Чем опасны <code>__get</code> и <code>__call</code>?</li>
+      <li>Объясните инверсию зависимостей на примере.</li>
+      <li>Чем внедрение зависимостей отличается от контейнера?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Объёмы, качество, безопасность</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Итераторы и генераторы, ленивые конвейеры, память и copy-on-write, ссылки и их опасности, иерархия исключений и логирование по PSR-3, тесты и тестовые двойники, статический анализ, безопасность, параллельные вызовы и таймауты.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 7, 9, 10, 11: ленивый конвейер, качество в CI, модуль аутентификации, параллельные вызовы.</li>
+      <li>Замерить пиковую память на миллионе элементов в трёх сценариях передачи массива.</li>
+      <li>Пройти таблицу рисков безопасности по своему проекту и закрыть найденное тестами.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Импорт с постоянной памятью, зелёный CI с анализатором и тестами, модуль аутентификации, выдержавший попытки его сломать.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Когда генератор обязателен и в чём его ограничение?</li>
+      <li>Что такое copy-on-write и когда происходит копирование?</li>
+      <li>Чем опасны ссылки?</li>
+      <li>Чем мок отличается от заглушки?</li>
+      <li>Зачем статический анализ, если есть тесты?</li>
+      <li>Как правильно хранить пароли и сравнивать секреты?</li>
+      <li>Почему у внешних вызовов обязателен таймаут?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Движок, эксплуатация, легаси</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Опкоды, opcache, предзагрузка и JIT, порядок профилирования, долгоживущие процессы и утечки состояния, настройка FPM и согласование таймаутов, границы архитектуры, легаси и обновление версий, работа с зависимостями.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: влияние настроек движка, суточный воркер, тюнинг пула, план жизни легаси.</li>
+      <li>Разложить время самого медленного эндпоинта по слоям и оптимизировать по порядку.</li>
+      <li>Провести ревизию зависимостей: аудит, устаревшие, заброшенные, блокирующие обновление.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ со структурой «определение → механизм → пример → компромисс».</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Таблица влияния настроек движка, суточный график памяти воркера, обоснованная конфигурация пула, документ по легаси и уверенные ответы на все 60 вопросов.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что делает opcache и поможет ли JIT?</li>
+      <li>Как подобрать число процессов FPM?</li>
+      <li>Почему после деплоя работает старый код?</li>
+      <li>Что ломается при переходе на долгоживущие воркеры?</li>
+      <li>С чего начинать разбор медленного эндпоинта?</li>
+      <li>Как внедрить статический анализ в легаси?</li>
+      <li>Как обновлять версию PHP на старом проекте?</li>
+      <li>Как решать, брать библиотеку или писать своё?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Структура ответа:</strong> определение в одну фразу → как это работает внутри → пример из вашей практики → компромисс или ограничение. Последний пункт отличает middle от senior.</li>
+      <li><strong>Отвечайте про механизм, а не про синтаксис.</strong> Вопрос «что такое генератор» проверяет, понимаете ли вы работу с памятью. Ответ «функция с <code>yield</code>» слабый; «функция, отдающая значения по одному, за счёт чего память не зависит от объёма данных» — сильный.</li>
+      <li><strong>Говорите цифрами:</strong> «пик памяти упал с 900 МБ до 12 МБ», «страница с 201 запроса до 3», «время ответа с 4,2 с до 180 мс». В разговоре о языке цифры особенно убедительны.</li>
+      <li><strong>Признавайте границы инструмента.</strong> Сказать «здесь JIT не поможет», «здесь не нужен интерфейс», «здесь достаточно массива» — сильный ход: он показывает, что вы считаете стоимость сложности.</li>
+      <li><strong>Не выдумывайте.</strong> На вопрос про малознакомую возможность лучше сказать, что не сталкивались, и объяснить, как разобрались бы. Выдуманный ответ проверяется одним уточняющим вопросом.</li>
+      <li><strong>Приносите артефакты:</strong> замеры памяти, отчёт по оптимизации, конфигурацию пула с обоснованием, план обновления легаси. Они превращают рассказ в доказательство.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «PHP для разработчиков» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

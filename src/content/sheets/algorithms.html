@@ -1,0 +1,1837 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · алгоритмические задачи · собеседование</p>
+  <h1>Алгоритмы для live-coding</h1>
+  <p class="lead">Секция с задачей у доски или в общем редакторе — самая нелюбимая часть собеседования для большинства PHP-разработчиков. Причина понятна: в повседневной работе редко приходится писать бинарный поиск руками, а формат ставит в неудобное положение — нужно думать, говорить и писать код одновременно, под наблюдением.</p>
+  <p class="lead">Хорошая новость в том, что на собеседованиях спрашивают не олимпиадные задачи, а десяток повторяющихся паттернов: частотный словарь, два указателя, скользящее окно, бинарный поиск, обход графа, простая динамика. Их можно выучить за месяц. И оценивают чаще не идеальное решение, а процесс: уточнили ли требования, проговорили ли подход, заметили ли граничные случаи, оценили ли сложность.</p>
+  <p class="lead">Конспект построен вокруг этого: сначала протокол решения и базовые приёмы, затем паттерны, которые закрывают большинство задач, затем то, что отличает senior — выбор между вариантами вслух, работа с граничными случаями и умение не зависнуть. Все примеры на PHP. Смежная тема — <a href="data-structures.html">структуры данных</a>, где разобрано, что внутри у массивов, куч и графов.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Протокол решения задачи, оценка сложности, хеш-таблицы и префиксные суммы, два указателя, скользящее окно, бинарный поиск.</span></div>
+    <div class="aud m"><b>Middle</b><span>Сортировка и интервалы, рекурсия и бэктрекинг, динамическое программирование, обходы графов, куча и топ-K, задачи на строки.</span></div>
+    <div class="aud s"><b>Senior</b><span>Компромиссы время-память, граничные случаи, задачи из практики, коммуникация во время решения, стратегия подготовки.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>16</i></span>
+    <span>Блоков кода: <i>26</i></span>
+    <span>Сравнительных таблиц: <i>15</i></span>
+    <span>Задач и вопросов: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#process">Протокол решения</a></li>
+    <li><span class="tree">├─</span> <a href="#complexity">Сложность за десять минут</a></li>
+    <li><span class="tree">├─</span> <a href="#hash">Хеш-таблицы и счётчики</a></li>
+    <li><span class="tree">├─</span> <a href="#twopointers">Два указателя и окно</a></li>
+    <li><span class="tree">├─</span> <a href="#binsearch">Бинарный поиск</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#sorting">Сортировка и интервалы</a></li>
+    <li><span class="tree">├─</span> <a href="#recursion">Рекурсия и бэктрекинг</a></li>
+    <li><span class="tree">├─</span> <a href="#dp">Динамическое программирование</a></li>
+    <li><span class="tree">├─</span> <a href="#graphs">Обходы графов</a></li>
+    <li><span class="tree">├─</span> <a href="#heap">Куча и топ-K</a></li>
+    <li><span class="tree">├─</span> <a href="#strings">Задачи на строки</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tradeoffs">Компромиссы решения</a></li>
+    <li><span class="tree">├─</span> <a href="#edge">Граничные случаи</a></li>
+    <li><span class="tree">├─</span> <a href="#realistic">Задачи из практики</a></li>
+    <li><span class="tree">├─</span> <a href="#comm">Коммуникация</a></li>
+    <li><span class="tree">├─</span> <a href="#prep">Стратегия подготовки</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">PHP для live-coding</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Задачи и вопросы</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · процесс и база</p>
+    <h2>Junior: как решать и с чего начать</h2>
+    <p>Первое, что стоит понять: на live-coding оценивают не только код. Кандидат, который уточнил условие, проговорил подход, написал рабочее решение с одной неточностью и сам её нашёл, производит лучшее впечатление, чем тот, кто молча написал идеальный код за минуту.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="process">
+    <p class="path">junior / метод</p>
+    <div class="card-top"><h3>Протокол решения</h3><span class="badge b-1">База</span></div>
+    <p>У решения задачи есть повторяемая последовательность. Она защищает от главной ошибки — броситься писать код, не поняв условие, — и заодно показывает интервьюеру ход мысли.</p>
+
+    <div class="flow" role="img" aria-label="Шесть шагов решения задачи">
+      <div class="node">1 · Уточнить<small>вход, границы, крайние случаи</small></div><span class="arr">→</span>
+      <div class="node">2 · Примеры<small>разобрать на бумаге</small></div><span class="arr">→</span>
+      <div class="node">3 · Подход<small>наивный, потом лучше</small></div><span class="arr">→</span>
+      <div class="node">4 · Код<small>писать вслух</small></div><span class="arr">→</span>
+      <div class="node">5 · Проверить<small>прогнать пример руками</small></div><span class="arr">→</span>
+      <div class="node">6 · Сложность<small>время и память</small></div>
+    </div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Что спрашивать на первом шаге</span></div><pre><code>Задача: «Найдите два числа в массиве, дающие в сумме target».
+
+Вопросы, которые стоит задать (это не придирки — это часть оценки):
+
+  Про вход:      массив отсортирован? числа целые? могут быть отрицательные?
+                 какого размера массив — сотни или миллионы?
+                 могут ли быть дубликаты?
+  Про выход:     вернуть индексы или значения? любую пару или все?
+                 что вернуть, если пары нет?
+  Про ограничения: можно ли изменять входной массив?
+                 есть ли ограничения по памяти?
+  Про крайние:   пустой массив? один элемент? все элементы одинаковые?
+
+Половина этих вопросов меняет решение. Например, «массив отсортирован»
+превращает задачу из хеш-таблицы за O(n) памяти в два указателя за O(1).
+
+Интервьюер часто НАМЕРЕННО формулирует условие неполно — именно чтобы
+посмотреть, спросите ли вы. Молчаливое додумывание за него — минус.</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · что оценивают на самом деле</caption>
+      <thead><tr><th>Что оценивают</th><th>Как это выглядит</th></tr></thead>
+      <tbody>
+        <tr><td>Понимание задачи</td><td>Уточняющие вопросы до начала кода</td></tr>
+        <tr><td>Ход мысли</td><td>Проговаривание подхода вслух, а не молчание</td></tr>
+        <tr><td>Умение улучшать</td><td>Сначала наивное решение, потом оптимизация</td></tr>
+        <tr><td>Качество кода</td><td>Понятные имена, отсутствие копипасты, ранний возврат</td></tr>
+        <tr><td>Внимание к краям</td><td>Пустой вход, один элемент, переполнение, дубликаты</td></tr>
+        <tr><td>Самопроверка</td><td>Прогон примера руками до того, как скажут «а если...»</td></tr>
+        <tr><td>Оценка сложности</td><td>Названы время и память без наводящих вопросов</td></tr>
+        <tr><td>Реакция на подсказку</td><td>Услышал, встроил, не заспорил и не сдался</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Наивное решение — не поражение, а правильный первый шаг. Сказать «сначала опишу решение перебором за O(n²), потом улучшим» — сильный ход: он показывает, что вы понимаете задачу и умеете сравнивать варианты. Кандидаты, которые пытаются сразу выдать оптимальное и зависают на десять минут в тишине, выглядят гораздо хуже.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>С чего вы начнёте решать задачу?</b><br>С уточнения условия: размер входа, типы данных, допустимые крайние случаи, что возвращать при отсутствии ответа. Затем разберу пару примеров на бумаге, чтобы убедиться, что понял задачу одинаково с вами. Потом опишу наивное решение и его сложность, предложу улучшение — и только после этого начну писать код, проговаривая, что делаю.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="complexity">
+    <p class="path">junior / оценка</p>
+    <div class="card-top"><h3>Сложность за десять минут</h3><span class="badge b-1">База</span></div>
+    <p>Оценка сложности нужна не ради теории: на собеседовании её спрашивают почти всегда, а в работе она отвечает на вопрос «выдержит ли это миллион записей». Подробный разбор — в конспекте по <a href="data-structures.html">структурам данных</a>; здесь минимум, который нужен на задаче.</p>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Как считать сложность по коду</span></div><pre><code>Правило: считаем, сколько раз выполнится самое внутреннее действие.
+
+  один проход по массиву                     O(n)
+  вложенный цикл по тому же массиву          O(n²)
+  деление задачи пополам на каждом шаге      O(log n)
+  проход + деление пополам внутри            O(n log n)
+  перебор всех подмножеств                   O(2ⁿ)
+  перебор всех перестановок                  O(n!)
+
+Что НЕ влияет: константы и младшие члены.
+  O(3n + 100) → O(n)      O(n² + n) → O(n²)
+
+Память считается так же: сколько дополнительного места заняли.
+  массив-счётчик размера n                   O(n)
+  несколько переменных                       O(1)
+  рекурсия глубиной n                        O(n) — стек тоже память!
+
+Ориентир «пройдёт ли по времени» для типичного лимита в секунду:
+  n ≤ 10        O(n!) и O(2ⁿ) допустимы
+  n ≤ 1 000     O(n²) нормально
+  n ≤ 100 000   нужно O(n log n)
+  n ≤ 10⁷       только O(n) или O(log n)
+
+Этот ориентир полезен и на собеседовании: он подсказывает, какого
+класса решение от вас ждут, ещё до того, как вы его придумали.</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · сложность типовых операций в PHP</caption>
+      <thead><tr><th>Операция</th><th>Сложность</th><th>Комментарий</th></tr></thead>
+      <tbody>
+        <tr><td><code>$arr[] = $x</code></td><td>O(1)</td><td>Амортизированно</td></tr>
+        <tr><td><code>$arr[$key]</code>, <code>isset()</code></td><td>O(1)</td><td>Массив PHP — хеш-таблица</td></tr>
+        <tr><td><code>in_array()</code></td><td>O(n)</td><td>Частая причина случайного O(n²)</td></tr>
+        <tr><td><code>array_search()</code></td><td>O(n)</td><td>То же</td></tr>
+        <tr><td><code>array_unshift()</code></td><td>O(n)</td><td>Переиндексация всего массива</td></tr>
+        <tr><td><code>array_shift()</code></td><td>O(n)</td><td>Для очереди берите <code>SplQueue</code></td></tr>
+        <tr><td><code>sort()</code>, <code>usort()</code></td><td>O(n log n)</td><td>Сортировка на месте</td></tr>
+        <tr><td><code>array_merge()</code> в цикле</td><td>O(n²)</td><td>Классическая ловушка: копирует каждый раз</td></tr>
+        <tr><td><code>array_flip()</code>, <code>array_column()</code></td><td>O(n)</td><td>Готовые индексы за один проход</td></tr>
+        <tr><td><code>str_contains()</code></td><td>O(n·m)</td><td>Достаточно почти всегда</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span><code>in_array()</code> внутри цикла — самый частый способ незаметно получить квадрат. Код выглядит как один цикл и читается как O(n), а на деле каждая проверка проходит по всему массиву. Лечится за одну строку: заранее построить множество через <code>array_flip()</code> и проверять через <code>isset()</code>. Этот приём стоит довести до автоматизма — он же нужен в половине задач.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какая сложность у вашего решения?</b><br>Нужно назвать и время, и память, а не только время. Считается по числу выполнений самого внутреннего действия; константы отбрасываются. Полезно сразу сказать, где узкое место: «время O(n log n) из-за сортировки, память O(n) на словарь; если бы вход был отсортирован, память была бы O(1)». Такой ответ показывает, что вы понимаете структуру решения, а не заучили формулу.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="hash">
+    <p class="path">junior / словари</p>
+    <div class="card-top"><h3>Хеш-таблицы и счётчики</h3><span class="badge b-1">База</span></div>
+    <p>Самый частый приём на собеседованиях: обменять память на время. Если в задаче есть слова «найти», «встречается», «дубликат», «пара», «сколько раз» — почти наверняка решение начинается с ассоциативного массива.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Четыре базовых шаблона, закрывающих десятки задач</span></div><pre><code>&lt;?php
+<span class="cm">// 1. ЧАСТОТНЫЙ СЛОВАРЬ: сколько раз встречается каждый элемент</span>
+$freq = [];
+<span class="kw">foreach</span> ($items <span class="kw">as</span> $item) {
+    $freq[$item] = ($freq[$item] ?? 0) + 1;
+}
+<span class="cm">// Готовые варианты для простых случаев:</span>
+$freq = <span class="fn">array_count_values</span>($items);        <span class="cm">// только строки и целые</span>
+
+<span class="cm">// 2. МНОЖЕСТВО: быстрая проверка принадлежности за O(1)</span>
+$seen = [];
+<span class="kw">foreach</span> ($items <span class="kw">as</span> $item) {
+    <span class="kw">if</span> (<span class="fn">isset</span>($seen[$item])) {
+        <span class="kw">return</span> <span class="kw">true</span>;                    <span class="cm">// нашли дубликат за один проход</span>
+    }
+    $seen[$item] = <span class="kw">true</span>;
+}
+
+<span class="cm">// 3. ИНДЕКС: значение → позиция. Основа «двух сумм» и подобных задач</span>
+<span class="kw">function</span> <span class="fn">twoSum</span>(<span class="nm">array</span> $nums, <span class="nm">int</span> $target): ?<span class="nm">array</span>
+{
+    $index = [];                              <span class="cm">// значение =&gt; индекс</span>
+
+    <span class="kw">foreach</span> ($nums <span class="kw">as</span> $i =&gt; $num) {
+        $need = $target - $num;
+
+        <span class="cm">// Ключевая идея: ищем недостающее среди УЖЕ просмотренных.</span>
+        <span class="cm">// Один проход вместо двух вложенных циклов: O(n) вместо O(n²).</span>
+        <span class="kw">if</span> (<span class="fn">isset</span>($index[$need])) {
+            <span class="kw">return</span> [$index[$need], $i];
+        }
+
+        $index[$num] = $i;
+    }
+
+    <span class="kw">return</span> <span class="kw">null</span>;
+}
+
+<span class="cm">// 4. ГРУППИРОВКА: собрать элементы по ключу за один проход</span>
+$byType = [];
+<span class="kw">foreach</span> ($rows <span class="kw">as</span> $row) {
+    $byType[$row[<span class="st">'type'</span>]][] = $row;
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Префиксные суммы: диапазонные запросы за O(1)</span></div><pre><code>&lt;?php
+<span class="cm">// Задача: много запросов «сумма на отрезке [l, r]».</span>
+<span class="cm">// Наивно — O(n) на каждый запрос. С префиксами — O(n) один раз и O(1) на запрос.</span>
+
+$prefix = [0];                                <span class="cm">// prefix[i] = сумма первых i элементов</span>
+<span class="kw">foreach</span> ($nums <span class="kw">as</span> $i =&gt; $num) {
+    $prefix[$i + 1] = $prefix[$i] + $num;
+}
+
+<span class="cm">// Сумма на отрезке [l, r] включительно</span>
+$sum = $prefix[$r + 1] - $prefix[$l];
+
+<span class="cm">// Та же идея решает популярную задачу «число подмассивов с суммой k»:</span>
+<span class="cm">// если prefix[j] - prefix[i] == k, значит отрезок (i, j] подходит.</span>
+<span class="cm">// Ищем среди уже встреченных префиксов нужное значение — снова словарь.</span>
+<span class="kw">function</span> <span class="fn">subarraysWithSum</span>(<span class="nm">array</span> $nums, <span class="nm">int</span> $k): <span class="nm">int</span>
+{
+    $count = 0;
+    $sum = 0;
+    $seen = [0 =&gt; 1];                         <span class="cm">// пустой префикс встречался один раз</span>
+
+    <span class="kw">foreach</span> ($nums <span class="kw">as</span> $num) {
+        $sum += $num;
+        $count += $seen[$sum - $k] ?? 0;      <span class="cm">// сколько подходящих начал</span>
+        $seen[$sum] = ($seen[$sum] ?? 0) + 1;
+    }
+
+    <span class="kw">return</span> $count;
+}</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Связка «словарь уже увиденного + один проход» решает удивительно много задач: две суммы, первый повтор, самый частый элемент, подмассив с заданной суммой, анаграммы, пересечение массивов. Если задача выглядит как вложенный цикл, первый вопрос к себе — можно ли заменить внутренний цикл поиском в словаре.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как найти два числа с заданной суммой?</b><br>За один проход со словарём: для каждого элемента считаем недостающее слагаемое и проверяем, встречалось ли оно раньше; если да — ответ найден, если нет — запоминаем текущий элемент. Время O(n), память O(n). Если массив отсортирован, лучше два указателя с концов: то же время без дополнительной памяти. Уточнить это стоит до написания кода.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="twopointers">
+    <p class="path">junior / указатели</p>
+    <div class="card-top"><h3>Два указателя и окно</h3><span class="badge b-1">База</span></div>
+    <p>Приём для задач, где нужно рассмотреть пары элементов или непрерывные отрезки. Он превращает вложенный цикл в один проход, а память из O(n) в O(1).</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Два указателя: с концов и в одном направлении</span></div><pre><code>&lt;?php
+<span class="cm">// ВАРИАНТ 1: указатели с двух концов. Требует отсортированного массива.</span>
+<span class="kw">function</span> <span class="fn">twoSumSorted</span>(<span class="nm">array</span> $nums, <span class="nm">int</span> $target): ?<span class="nm">array</span>
+{
+    $left = 0;
+    $right = <span class="fn">count</span>($nums) - 1;
+
+    <span class="kw">while</span> ($left &lt; $right) {
+        $sum = $nums[$left] + $nums[$right];
+
+        <span class="cm">// Сумма мала — двигаем левый (значения растут).</span>
+        <span class="cm">// Сумма велика — двигаем правый (значения убывают).</span>
+        <span class="kw">if</span> ($sum === $target) { <span class="kw">return</span> [$left, $right]; }
+
+        $sum &lt; $target ? $left++ : $right--;
+    }
+
+    <span class="kw">return</span> <span class="kw">null</span>;                            <span class="cm">// O(n) времени, O(1) памяти</span>
+}
+
+<span class="cm">// ВАРИАНТ 2: медленный и быстрый указатели в одном направлении.</span>
+<span class="cm">// Классика: удалить дубликаты из отсортированного массива на месте.</span>
+<span class="kw">function</span> <span class="fn">removeDuplicates</span>(<span class="nm">array</span> &amp;$nums): <span class="nm">int</span>
+{
+    <span class="kw">if</span> ($nums === []) { <span class="kw">return</span> 0; }
+
+    $write = 1;                              <span class="cm">// куда пишем следующий уникальный</span>
+
+    <span class="kw">for</span> ($read = 1; $read &lt; <span class="fn">count</span>($nums); $read++) {
+        <span class="kw">if</span> ($nums[$read] !== $nums[$read - 1]) {
+            $nums[$write++] = $nums[$read];
+        }
+    }
+
+    <span class="kw">return</span> $write;                           <span class="cm">// длина уникальной части</span>
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Скользящее окно: фиксированное и переменное</span></div><pre><code>&lt;?php
+<span class="cm">// ФИКСИРОВАННОЕ ОКНО: максимальная сумма k подряд идущих элементов.</span>
+<span class="cm">// Идея: не пересчитывать сумму заново, а сдвигать окно.</span>
+<span class="kw">function</span> <span class="fn">maxSumWindow</span>(<span class="nm">array</span> $nums, <span class="nm">int</span> $k): <span class="nm">int</span>
+{
+    $sum = <span class="fn">array_sum</span>(<span class="fn">array_slice</span>($nums, 0, $k));
+    $max = $sum;
+
+    <span class="kw">for</span> ($i = $k; $i &lt; <span class="fn">count</span>($nums); $i++) {
+        $sum += $nums[$i] - $nums[$i - $k];   <span class="cm">// добавили справа, убрали слева</span>
+        $max = <span class="fn">max</span>($max, $sum);
+    }
+
+    <span class="kw">return</span> $max;                             <span class="cm">// O(n), а не O(n·k)</span>
+}
+
+<span class="cm">// ПЕРЕМЕННОЕ ОКНО: самая длинная подстрока без повторов.</span>
+<span class="cm">// Шаблон: правый расширяет окно, левый сжимает при нарушении условия.</span>
+<span class="kw">function</span> <span class="fn">longestUnique</span>(<span class="nm">string</span> $s): <span class="nm">int</span>
+{
+    $lastPos = [];                           <span class="cm">// символ =&gt; последняя позиция</span>
+    $start = 0;
+    $best = 0;
+
+    <span class="kw">for</span> ($i = 0; $i &lt; <span class="fn">strlen</span>($s); $i++) {
+        $ch = $s[$i];
+
+        <span class="cm">// Символ уже в текущем окне — сдвигаем левую границу за его прошлую позицию</span>
+        <span class="kw">if</span> (<span class="fn">isset</span>($lastPos[$ch]) &amp;&amp; $lastPos[$ch] &gt;= $start) {
+            $start = $lastPos[$ch] + 1;
+        }
+
+        $lastPos[$ch] = $i;
+        $best = <span class="fn">max</span>($best, $i - $start + 1);
+    }
+
+    <span class="kw">return</span> $best;                            <span class="cm">// O(n) времени</span>
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · когда какой вариант</caption>
+      <thead><tr><th>Признак в задаче</th><th>Приём</th></tr></thead>
+      <tbody>
+        <tr><td>Массив отсортирован, ищем пару</td><td>Два указателя с концов</td></tr>
+        <tr><td>Нужно изменить массив на месте</td><td>Медленный и быстрый указатели</td></tr>
+        <tr><td>«Подряд идущие», «подмассив», «подстрока»</td><td>Скользящее окно</td></tr>
+        <tr><td>Длина отрезка задана</td><td>Фиксированное окно</td></tr>
+        <tr><td>«Самый длинный, при котором...»</td><td>Переменное окно</td></tr>
+        <tr><td>Связный список, поиск середины или цикла</td><td>Указатели с разной скоростью</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как найти самую длинную подстроку без повторяющихся символов?</b><br>Скользящим окном: правая граница движется по строке, словарь хранит последнюю позицию каждого символа. Если символ уже встречался внутри текущего окна, левая граница сдвигается за его прошлую позицию. На каждом шаге обновляем максимум. Время O(n), память O(k) по размеру алфавита. Важная деталь: сравнивать позицию с текущим началом окна, иначе граница уедет назад.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="binsearch">
+    <p class="path">junior / поиск</p>
+    <div class="card-top"><h3>Бинарный поиск</h3><span class="badge b-1">База</span></div>
+    <p>Простой на вид алгоритм, который почти все пишут с ошибкой на границах. Стоит один раз выучить шаблон, который не ломается, и понять вторую его форму — поиск по ответу, которая встречается на собеседованиях чаще классической.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Шаблон, который не ломается</span></div><pre><code>&lt;?php
+<span class="cm">// Классика: найти значение в отсортированном массиве</span>
+<span class="kw">function</span> <span class="fn">binarySearch</span>(<span class="nm">array</span> $nums, <span class="nm">int</span> $target): <span class="nm">int</span>
+{
+    $lo = 0;
+    $hi = <span class="fn">count</span>($nums) - 1;
+
+    <span class="kw">while</span> ($lo &lt;= $hi) {                       <span class="cm">// именно &lt;= : иначе пропустим элемент</span>
+        <span class="cm">// Так пишут ради защиты от переполнения; в PHP это скорее привычка,</span>
+        <span class="cm">// но на собеседовании её замечают и оценивают.</span>
+        $mid = $lo + <span class="fn">intdiv</span>($hi - $lo, 2);
+
+        <span class="kw">if</span> ($nums[$mid] === $target) { <span class="kw">return</span> $mid; }
+
+        $nums[$mid] &lt; $target ? $lo = $mid + 1 : $hi = $mid - 1;
+    }
+
+    <span class="kw">return</span> -1;
+}
+
+<span class="cm">// Чаще нужна другая форма: «первый элемент, удовлетворяющий условию».</span>
+<span class="cm">// Этот шаблон универсален и решает «нижнюю границу», «вставку», «первый ≥ x».</span>
+<span class="kw">function</span> <span class="fn">lowerBound</span>(<span class="nm">array</span> $nums, <span class="nm">int</span> $target): <span class="nm">int</span>
+{
+    $lo = 0;
+    $hi = <span class="fn">count</span>($nums);                       <span class="cm">// граница ЗА последним элементом</span>
+
+    <span class="kw">while</span> ($lo &lt; $hi) {                        <span class="cm">// здесь строгое &lt;</span>
+        $mid = $lo + <span class="fn">intdiv</span>($hi - $lo, 2);
+
+        <span class="cm">// «Не подходит» — двигаем нижнюю границу за середину,</span>
+        <span class="cm">// «подходит» — сжимаем верхнюю до середины, не теряя ответ.</span>
+        $nums[$mid] &lt; $target ? $lo = $mid + 1 : $hi = $mid;
+    }
+
+    <span class="kw">return</span> $lo;      <span class="cm">// позиция первого элемента ≥ target (может быть count)</span>
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Поиск по ответу: приём, который выручает чаще всего</span></div><pre><code>&lt;?php
+<span class="cm">// Признак задачи: «минимальное X, при котором возможно...» или</span>
+<span class="cm">// «максимальное X, при котором ещё...». Массива для поиска нет —</span>
+<span class="cm">// ищем по диапазону возможных ответов.</span>
+
+<span class="cm">// Задача: n посылок нужно развезти за d дней, порядок менять нельзя.</span>
+<span class="cm">// Какова минимальная грузоподъёмность машины?</span>
+<span class="kw">function</span> <span class="fn">minCapacity</span>(<span class="nm">array</span> $weights, <span class="nm">int</span> $days): <span class="nm">int</span>
+{
+    <span class="cm">// Проверка: хватит ли такой грузоподъёмности? Это простая линейная функция.</span>
+    $canDo = <span class="kw">static function</span> (<span class="nm">int</span> $capacity) <span class="kw">use</span> ($weights, $days): <span class="nm">bool</span> {
+        $needed = 1;
+        $current = 0;
+
+        <span class="kw">foreach</span> ($weights <span class="kw">as</span> $w) {
+            <span class="kw">if</span> ($current + $w &gt; $capacity) { $needed++; $current = 0; }
+            $current += $w;
+        }
+
+        <span class="kw">return</span> $needed &lt;= $days;
+    };
+
+    <span class="cm">// Границы: минимум — самая тяжёлая посылка, максимум — всё за один раз</span>
+    $lo = <span class="fn">max</span>($weights);
+    $hi = <span class="fn">array_sum</span>($weights);
+
+    <span class="cm">// Ключевое свойство: если capacity подходит, то и любая большая подходит.</span>
+    <span class="cm">// Значит ответы монотонны — и по ним работает бинарный поиск.</span>
+    <span class="kw">while</span> ($lo &lt; $hi) {
+        $mid = $lo + <span class="fn">intdiv</span>($hi - $lo, 2);
+        $canDo($mid) ? $hi = $mid : $lo = $mid + 1;
+    }
+
+    <span class="kw">return</span> $lo;      <span class="cm">// O(n · log(суммы)) вместо перебора всех вариантов</span>
+}</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Признак, по которому узнаётся поиск по ответу: в условии есть «минимальное/максимальное значение, при котором» и существует простая проверка «подходит ли данное значение». Если при этом проверка монотонна — подходит X, значит подходит и любое большее (или меньшее), — задача решается бинарным поиском по диапазону ответов. Это один из самых окупаемых приёмов: он превращает безнадёжный перебор в логарифм.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Где применяется бинарный поиск, кроме поиска в отсортированном массиве?</b><br>Поиск по ответу. Если задача формулируется как «найти минимальное значение параметра, при котором задача решается», и есть быстрая проверка выполнимости для конкретного значения, а свойство монотонно, то бинарный поиск по диапазону ответов даёт логарифм вместо перебора. Типичные примеры: минимальная грузоподъёмность, минимальная скорость, максимальный размер порции.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Уточняю условие до написания кода</li>
+        <li>Разбираю пример на бумаге и проговариваю подход</li>
+        <li>Начинаю с наивного решения, если оптимальное не пришло сразу</li>
+        <li>Называю время и память без наводящих вопросов</li>
+        <li>Помню ориентир: какой класс решения нужен при данном n</li>
+        <li>Не использую <code>in_array()</code> внутри цикла</li>
+      </ul>
+      <ul class="check">
+        <li>Владею частотным словарём, множеством, индексом и группировкой</li>
+        <li>Знаю приём «искать среди уже увиденных»</li>
+        <li>Умею строить префиксные суммы</li>
+        <li>Применяю два указателя на отсортированном массиве</li>
+        <li>Пишу скользящее окно фиксированной и переменной длины</li>
+        <li>Помню шаблон бинарного поиска и узнаю поиск по ответу</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>На junior-собеседовании задачи обычно закрываются двумя приёмами: словарь за один проход и два указателя. Если довести до автоматизма только их и научиться проговаривать подход вслух, большая часть задач этого уровня перестаёт быть проблемой. Остальное — вопрос практики, а не таланта.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · паттерны</p>
+    <h2>Middle: паттерны, закрывающие большинство задач</h2>
+    <p>Дальше начинаются приёмы, которые нужно узнавать по формулировке. Задач бесконечно много, паттернов — около десяти, и почти каждая задача на собеседовании оказывается одним из них с другой обёрткой. Умение сказать «это скользящее окно» или «это динамика по подотрезкам» экономит половину времени.</p>
+  </div>
+
+  <!-- 6 -->
+  <article class="card" id="sorting">
+    <p class="path">middle / сортировка</p>
+    <div class="card-top"><h3>Сортировка и интервалы</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Сортировка редко бывает самой задачей, но часто — первым шагом решения. Она стоит O(n log n) и взамен даёт порядок, из которого многое становится тривиальным: соседние элементы сравнимы, пересечения интервалов идут подряд, дубликаты стоят рядом.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Интервалы: слияние пересекающихся</span></div><pre><code>&lt;?php
+<span class="cm">// Задача-классика: даны отрезки, объединить пересекающиеся.</span>
+<span class="cm">// Ключевая идея: после сортировки по началу достаточно одного прохода —</span>
+<span class="cm">// пересекаться может только со следующим по порядку.</span>
+<span class="kw">function</span> <span class="fn">mergeIntervals</span>(<span class="nm">array</span> $intervals): <span class="nm">array</span>
+{
+    <span class="kw">if</span> ($intervals === []) { <span class="kw">return</span> []; }
+
+    <span class="fn">usort</span>($intervals, <span class="kw">static fn</span> ($a, $b) =&gt; $a[0] &lt;=&gt; $b[0]);
+
+    $result = [<span class="fn">array_shift</span>($intervals)];
+
+    <span class="kw">foreach</span> ($intervals <span class="kw">as</span> [$start, $end]) {
+        $last = &amp;$result[<span class="fn">count</span>($result) - 1];
+
+        <span class="cm">// Начало нового не позже конца предыдущего — значит пересекаются</span>
+        <span class="kw">if</span> ($start &lt;= $last[1]) {
+            $last[1] = <span class="fn">max</span>($last[1], $end);   <span class="cm">// расширяем текущий</span>
+        } <span class="kw">else</span> {
+            $result[] = [$start, $end];        <span class="cm">// начинаем новый</span>
+        }
+    }
+
+    <span class="kw">return</span> $result;                            <span class="cm">// O(n log n) на сортировку</span>
+}
+
+<span class="cm">// Родственная задача: максимальное число одновременных событий.</span>
+<span class="cm">// Приём другой — «события на прямой»: раскладываем начала и концы,</span>
+<span class="cm">// сортируем и идём со счётчиком.</span>
+<span class="kw">function</span> <span class="fn">maxOverlap</span>(<span class="nm">array</span> $intervals): <span class="nm">int</span>
+{
+    $events = [];
+
+    <span class="kw">foreach</span> ($intervals <span class="kw">as</span> [$start, $end]) {
+        $events[] = [$start, 1];               <span class="cm">// начало: +1</span>
+        $events[] = [$end, -1];                <span class="cm">// конец: −1</span>
+    }
+
+    <span class="cm">// При равных временах сначала обрабатываем концы: иначе посчитаем лишнее</span>
+    <span class="fn">usort</span>($events, <span class="kw">static fn</span> ($a, $b) =&gt; [$a[0], $a[1]] &lt;=&gt; [$b[0], $b[1]]);
+
+    $current = 0;
+    $max = 0;
+
+    <span class="kw">foreach</span> ($events <span class="kw">as</span> [, $delta]) {
+        $current += $delta;
+        $max = <span class="fn">max</span>($max, $current);
+    }
+
+    <span class="kw">return</span> $max;
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · когда сортировка помогает</caption>
+      <thead><tr><th>Формулировка</th><th>Что даёт сортировка</th></tr></thead>
+      <tbody>
+        <tr><td>Найти пару с суммой</td><td>Два указателя вместо словаря, память O(1)</td></tr>
+        <tr><td>Объединить или пересечь интервалы</td><td>Пересечения становятся соседними</td></tr>
+        <tr><td>K ближайших, K наибольших</td><td>Прямой доступ к нужной части (или куча без сортировки)</td></tr>
+        <tr><td>Сгруппировать анаграммы</td><td>Отсортированное слово — готовый ключ группы</td></tr>
+        <tr><td>Найти дубликаты</td><td>Одинаковые оказываются рядом</td></tr>
+        <tr><td>Задачи с расписанием и встречами</td><td>События на прямой обрабатываются одним проходом</td></tr>
+        <tr><td>Жадные алгоритмы</td><td>Порядок обычно и есть условие жадного выбора</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Сортировка ломает исходные индексы. Если в ответе нужны позиции элементов, сортируйте пары «значение и индекс» или используйте словарь. Это одна из самых частых ошибок на собеседованиях: решение верное по значениям, но возвращает индексы уже переставленного массива, и обнаруживается это только при проверке примера.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как объединить пересекающиеся интервалы?</b><br>Отсортировать по началу и пройти один раз, сравнивая начало текущего с концом предыдущего: если начало не позже конца — расширяем предыдущий максимумом концов, иначе начинаем новый. Время O(n log n) за счёт сортировки, память O(n) на результат. Отдельно стоит уточнить, считаются ли пересекающимися интервалы, соприкасающиеся в одной точке, — от этого зависит знак сравнения.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card" id="recursion">
+    <p class="path">middle / перебор</p>
+    <div class="card-top"><h3>Рекурсия и бэктрекинг</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Бэктрекинг — организованный перебор: строим решение по шагам, а если текущая ветка не ведёт к цели, откатываемся и пробуем другую. Так решаются задачи на комбинации, перестановки, подмножества, расстановки.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Шаблон бэктрекинга: подходит почти ко всем задачам перебора</span></div><pre><code>&lt;?php
+<span class="cm">// Общая форма:</span>
+<span class="cm">//   1. Условие завершения — записать текущее решение</span>
+<span class="cm">//   2. Перебрать варианты следующего шага</span>
+<span class="cm">//   3. Выбрать вариант → уйти вглубь → ОТМЕНИТЬ выбор</span>
+<span class="cm">// Третий пункт (откат) — то, что отличает бэктрекинг от обычной рекурсии.</span>
+
+<span class="kw">function</span> <span class="fn">combinations</span>(<span class="nm">array</span> $nums, <span class="nm">int</span> $k): <span class="nm">array</span>
+{
+    $result = [];
+    $current = [];
+
+    $backtrack = <span class="kw">static function</span> (<span class="nm">int</span> $start) <span class="kw">use</span> (&amp;$backtrack, &amp;$current, &amp;$result, $nums, $k): <span class="nm">void</span> {
+        <span class="cm">// 1. База: набрали нужное количество</span>
+        <span class="kw">if</span> (<span class="fn">count</span>($current) === $k) {
+            $result[] = $current;
+            <span class="kw">return</span>;
+        }
+
+        <span class="cm">// Отсечение: даже взяв всё оставшееся, не наберём k — выходим сразу.</span>
+        <span class="cm">// Такие отсечения превращают неподъёмный перебор в рабочий.</span>
+        <span class="kw">if</span> (<span class="fn">count</span>($nums) - $start &lt; $k - <span class="fn">count</span>($current)) {
+            <span class="kw">return</span>;
+        }
+
+        <span class="kw">for</span> ($i = $start; $i &lt; <span class="fn">count</span>($nums); $i++) {
+            $current[] = $nums[$i];            <span class="cm">// 2. выбрали</span>
+            $backtrack($i + 1);                <span class="cm">// 3. пошли вглубь</span>
+            <span class="fn">array_pop</span>($current);               <span class="cm">// 4. ОТКАТИЛИ выбор</span>
+        }
+    };
+
+    $backtrack(0);
+
+    <span class="kw">return</span> $result;
+}
+
+<span class="cm">// Тот же шаблон решает: перестановки (нужен массив «использовано»),</span>
+<span class="cm">// подмножества (нет условия на размер), расстановку ферзей,</span>
+<span class="cm">// разбиение строки на палиндромы, судоку.</span>
+<span class="cm">// Меняются только условие базы, варианты шага и отсечения.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · рекурсия: на что смотреть</caption>
+      <thead><tr><th>Вопрос</th><th>Зачем</th></tr></thead>
+      <tbody>
+        <tr><td>Что является базой?</td><td>Без неё бесконечная рекурсия и переполнение стека</td></tr>
+        <tr><td>Уменьшается ли задача на каждом шаге?</td><td>Иначе база недостижима</td></tr>
+        <tr><td>Нужен ли откат состояния?</td><td>Если состояние общее — обязательно</td></tr>
+        <tr><td>Есть ли повторяющиеся подзадачи?</td><td>Признак, что нужна мемоизация</td></tr>
+        <tr><td>Какая глубина рекурсии?</td><td>Стек — это память; при большой глубине нужен цикл</td></tr>
+        <tr><td>Можно ли отсечь заведомо плохие ветки?</td><td>Разница между «работает» и «не дожидается»</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Забыть откат состояния после ухода вглубь. Массив <code>$current</code> общий для всех веток, и если не вернуть его в прежнее состояние, следующая ветка получит мусор от предыдущей. Ошибка коварна тем, что на маленьких примерах результат может выглядеть правдоподобно. Правило: любое изменение общего состояния перед рекурсивным вызовом должно иметь парную отмену после него.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как сгенерировать все подмножества множества?</b><br>Бэктрекингом: на каждом шаге либо берём текущий элемент, либо нет, и уходим вглубь; после возврата откатываем выбор. Всего подмножеств 2ⁿ, поэтому сложность экспоненциальная — и это нормально, задача такова. Альтернатива без рекурсии: перебрать числа от 0 до 2ⁿ−1 и трактовать биты как маску включения элементов — часто короче и нагляднее.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="dp">
+    <p class="path">middle / динамика</p>
+    <div class="card-top"><h3>Динамическое программирование</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Тема, которая пугает больше всех остальных. На деле динамика — это рекурсия, в которой мы перестали пересчитывать одно и то же. Практичный способ решать её на собеседовании: сначала написать честный перебор, потом добавить кэш, потом при желании переписать в таблицу.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Три формы одного решения: перебор → мемоизация → таблица</span></div><pre><code>&lt;?php
+<span class="cm">// Задача: сколькими способами подняться по лестнице из n ступеней,</span>
+<span class="cm">// делая шаги по 1 или 2 ступени.</span>
+
+<span class="cm">// ФОРМА 1: честный перебор. O(2ⁿ) — при n=40 уже не дождётесь.</span>
+<span class="kw">function</span> <span class="fn">ways</span>(<span class="nm">int</span> $n): <span class="nm">int</span>
+{
+    <span class="kw">if</span> ($n &lt;= 1) { <span class="kw">return</span> 1; }
+
+    <span class="kw">return</span> <span class="fn">ways</span>($n - 1) + <span class="fn">ways</span>($n - 2);
+}
+
+<span class="cm">// ФОРМА 2: мемоизация — тот же код плюс кэш. O(n).</span>
+<span class="cm">// На собеседовании это часто лучший ответ: понятно и пишется быстро.</span>
+<span class="kw">function</span> <span class="fn">waysMemo</span>(<span class="nm">int</span> $n, <span class="nm">array</span> &amp;$memo = []): <span class="nm">int</span>
+{
+    <span class="kw">if</span> ($n &lt;= 1) { <span class="kw">return</span> 1; }
+    <span class="kw">if</span> (<span class="fn">isset</span>($memo[$n])) { <span class="kw">return</span> $memo[$n]; }
+
+    <span class="kw">return</span> $memo[$n] = <span class="fn">waysMemo</span>($n - 1, $memo) + <span class="fn">waysMemo</span>($n - 2, $memo);
+}
+
+<span class="cm">// ФОРМА 3: снизу вверх, таблицей. O(n) времени, O(1) памяти —</span>
+<span class="cm">// потому что нужны только два предыдущих значения.</span>
+<span class="kw">function</span> <span class="fn">waysTable</span>(<span class="nm">int</span> $n): <span class="nm">int</span>
+{
+    $prev = 1;
+    $curr = 1;
+
+    <span class="kw">for</span> ($i = 2; $i &lt;= $n; $i++) {
+        [$prev, $curr] = [$curr, $prev + $curr];
+    }
+
+    <span class="kw">return</span> $curr;
+}
+
+<span class="cm">// Практика на собеседовании: назвать перебор, сказать «здесь повторяются</span>
+<span class="cm">// подзадачи», добавить мемоизацию, и только если попросят —</span>
+<span class="cm">// переписать в таблицу и оптимизировать память.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Классика, которую стоит уметь писать: рюкзак и наибольшая возрастающая</span></div><pre><code>&lt;?php
+<span class="cm">// РЮКЗАК: максимальная стоимость при ограничении по весу.</span>
+<span class="cm">// dp[w] — лучшая стоимость при ёмкости w.</span>
+<span class="kw">function</span> <span class="fn">knapsack</span>(<span class="nm">array</span> $weights, <span class="nm">array</span> $values, <span class="nm">int</span> $capacity): <span class="nm">int</span>
+{
+    $dp = <span class="fn">array_fill</span>(0, $capacity + 1, 0);
+
+    <span class="kw">foreach</span> ($weights <span class="kw">as</span> $i =&gt; $w) {
+        <span class="cm">// Идём СПРАВА НАЛЕВО: иначе один предмет посчитается несколько раз</span>
+        <span class="kw">for</span> ($c = $capacity; $c &gt;= $w; $c--) {
+            $dp[$c] = <span class="fn">max</span>($dp[$c], $dp[$c - $w] + $values[$i]);
+        }
+    }
+
+    <span class="kw">return</span> $dp[$capacity];                    <span class="cm">// O(n · capacity)</span>
+}
+
+<span class="cm">// НАИБОЛЬШАЯ ВОЗРАСТАЮЩАЯ ПОДПОСЛЕДОВАТЕЛЬНОСТЬ, простая форма O(n²).</span>
+<span class="cm">// dp[i] — длина лучшей последовательности, заканчивающейся в i.</span>
+<span class="kw">function</span> <span class="fn">lis</span>(<span class="nm">array</span> $nums): <span class="nm">int</span>
+{
+    <span class="kw">if</span> ($nums === []) { <span class="kw">return</span> 0; }
+
+    $dp = <span class="fn">array_fill</span>(0, <span class="fn">count</span>($nums), 1);
+
+    <span class="kw">for</span> ($i = 1; $i &lt; <span class="fn">count</span>($nums); $i++) {
+        <span class="kw">for</span> ($j = 0; $j &lt; $i; $j++) {
+            <span class="kw">if</span> ($nums[$j] &lt; $nums[$i]) {
+                $dp[$i] = <span class="fn">max</span>($dp[$i], $dp[$j] + 1);
+            }
+        }
+    }
+
+    <span class="kw">return</span> <span class="fn">max</span>($dp);
+    <span class="cm">// Существует решение за O(n log n) через бинарный поиск —</span>
+    <span class="cm">// его стоит упомянуть, даже если пишете квадратичное.</span>
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · как узнать задачу на динамику</caption>
+      <thead><tr><th>Признак</th><th>Пример формулировки</th></tr></thead>
+      <tbody>
+        <tr><td>«Сколькими способами»</td><td>Число путей, число комбинаций монет</td></tr>
+        <tr><td>«Минимальная или максимальная стоимость»</td><td>Рюкзак, размен монет, путь в сетке</td></tr>
+        <tr><td>«Существует ли способ»</td><td>Разбиение на две равные части</td></tr>
+        <tr><td>Выбор «взять или не взять» на каждом шаге</td><td>Рюкзак, дом с ограблениями</td></tr>
+        <tr><td>Ответ зависит от ответов на подзадачи</td><td>Почти любая динамика</td></tr>
+        <tr><td>Перебор даёт повторяющиеся вызовы</td><td>Прямой сигнал добавить мемоизацию</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Если задача не даётся, честный порядок такой: напишите перебор, назовите его сложность, скажите «здесь повторяются подзадачи», добавьте кэш. Это уже полноценное решение за O(n) или O(n·k), и его почти всегда достаточно. Попытка сразу вывести формулу для таблицы — самый частый способ зависнуть на десять минут в тишине.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как понять, что задача решается динамическим программированием?</b><br>По двум признакам: ответ выражается через ответы на меньшие подзадачи, и эти подзадачи повторяются при переборе. Формулировки-подсказки — «сколькими способами», «минимальная стоимость», «можно ли набрать». Практический путь на собеседовании: написать рекурсивный перебор, заметить повторы, добавить мемоизацию. Переход к таблице снизу вверх — уже оптимизация, часто не обязательная.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="graphs">
+    <p class="path">middle / графы</p>
+    <div class="card-top"><h3>Обходы графов</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Графы на собеседованиях появляются чаще, чем кажется: сетка на плоскости, зависимости между задачами, друзья в социальной сети, связность островов — всё это графы, просто без слова «граф» в условии.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Два базовых обхода: в ширину и в глубину</span></div><pre><code>&lt;?php
+<span class="cm">// BFS — обход по слоям. Главное свойство: в невзвешенном графе</span>
+<span class="cm">// он находит КРАТЧАЙШИЙ путь. Если в задаче «минимальное число шагов» — это BFS.</span>
+<span class="kw">function</span> <span class="fn">shortestPath</span>(<span class="nm">array</span> $graph, <span class="nm">string</span> $from, <span class="nm">string</span> $to): <span class="nm">int</span>
+{
+    $queue = <span class="kw">new</span> <span class="nm">SplQueue</span>();
+    $queue-&gt;<span class="fn">enqueue</span>([$from, 0]);
+    $visited = [$from =&gt; <span class="kw">true</span>];          <span class="cm">// помечаем ПРИ ДОБАВЛЕНИИ, а не при извлечении</span>
+
+    <span class="kw">while</span> (!$queue-&gt;<span class="fn">isEmpty</span>()) {
+        [$node, $dist] = $queue-&gt;<span class="fn">dequeue</span>();
+
+        <span class="kw">if</span> ($node === $to) { <span class="kw">return</span> $dist; }
+
+        <span class="kw">foreach</span> ($graph[$node] ?? [] <span class="kw">as</span> $next) {
+            <span class="kw">if</span> (!<span class="fn">isset</span>($visited[$next])) {
+                $visited[$next] = <span class="kw">true</span>;
+                $queue-&gt;<span class="fn">enqueue</span>([$next, $dist + 1]);
+            }
+        }
+    }
+
+    <span class="kw">return</span> -1;                              <span class="cm">// пути нет</span>
+}
+
+<span class="cm">// DFS — вглубь. Подходит для связности, компонент, поиска циклов,</span>
+<span class="cm">// перебора путей. Часто пишется рекурсивно.</span>
+<span class="kw">function</span> <span class="fn">countIslands</span>(<span class="nm">array</span> $grid): <span class="nm">int</span>
+{
+    $rows = <span class="fn">count</span>($grid);
+    $cols = <span class="fn">count</span>($grid[0] ?? []);
+    $count = 0;
+
+    $sink = <span class="kw">static function</span> (<span class="nm">int</span> $r, <span class="nm">int</span> $c) <span class="kw">use</span> (&amp;$sink, &amp;$grid, $rows, $cols): <span class="nm">void</span> {
+        <span class="cm">// Единая проверка границ и «уже посещено» — так меньше шансов ошибиться</span>
+        <span class="kw">if</span> ($r &lt; 0 || $c &lt; 0 || $r &gt;= $rows || $c &gt;= $cols || $grid[$r][$c] !== <span class="st">'1'</span>) {
+            <span class="kw">return</span>;
+        }
+
+        $grid[$r][$c] = <span class="st">'0'</span>;                <span class="cm">// топим клетку вместо отдельного массива посещений</span>
+
+        $sink($r + 1, $c); $sink($r - 1, $c);
+        $sink($r, $c + 1); $sink($r, $c - 1);
+    };
+
+    <span class="kw">for</span> ($r = 0; $r &lt; $rows; $r++) {
+        <span class="kw">for</span> ($c = 0; $c &lt; $cols; $c++) {
+            <span class="kw">if</span> ($grid[$r][$c] === <span class="st">'1'</span>) { $count++; $sink($r, $c); }
+        }
+    }
+
+    <span class="kw">return</span> $count;                          <span class="cm">// O(строк × столбцов)</span>
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Топологическая сортировка: порядок с учётом зависимостей</span></div><pre><code>&lt;?php
+<span class="cm">// Задача из практики: в каком порядке выполнять задачи с зависимостями,</span>
+<span class="cm">// применять миграции, собирать модули. И заодно — есть ли циклы.</span>
+<span class="kw">function</span> <span class="fn">topologicalOrder</span>(<span class="nm">array</span> $graph): ?<span class="nm">array</span>
+{
+    $inDegree = [];
+
+    <span class="kw">foreach</span> ($graph <span class="kw">as</span> $node =&gt; $deps) {
+        $inDegree[$node] ??= 0;
+
+        <span class="kw">foreach</span> ($deps <span class="kw">as</span> $dep) {
+            $inDegree[$dep] = ($inDegree[$dep] ?? 0) + 1;
+        }
+    }
+
+    <span class="cm">// Начинаем с тех, у кого нет входящих зависимостей</span>
+    $queue = <span class="kw">new</span> <span class="nm">SplQueue</span>();
+    <span class="kw">foreach</span> ($inDegree <span class="kw">as</span> $node =&gt; $degree) {
+        <span class="kw">if</span> ($degree === 0) { $queue-&gt;<span class="fn">enqueue</span>($node); }
+    }
+
+    $order = [];
+
+    <span class="kw">while</span> (!$queue-&gt;<span class="fn">isEmpty</span>()) {
+        $node = $queue-&gt;<span class="fn">dequeue</span>();
+        $order[] = $node;
+
+        <span class="kw">foreach</span> ($graph[$node] ?? [] <span class="kw">as</span> $next) {
+            <span class="kw">if</span> (--$inDegree[$next] === 0) { $queue-&gt;<span class="fn">enqueue</span>($next); }
+        }
+    }
+
+    <span class="cm">// Обошли не все — значит есть цикл, порядка не существует</span>
+    <span class="kw">return</span> <span class="fn">count</span>($order) === <span class="fn">count</span>($inDegree) ? $order : <span class="kw">null</span>;
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · формулировка → алгоритм на графе</caption>
+      <thead><tr><th>Задача</th><th>Алгоритм</th></tr></thead>
+      <tbody>
+        <tr><td>Минимальное число шагов, рёбра равнозначны</td><td>BFS</td></tr>
+        <tr><td>Кратчайший путь с разными весами</td><td>Дейкстра (BFS с очередью с приоритетом)</td></tr>
+        <tr><td>Есть ли путь, компоненты связности</td><td>DFS или BFS</td></tr>
+        <tr><td>Порядок с учётом зависимостей</td><td>Топологическая сортировка</td></tr>
+        <tr><td>Есть ли цикл</td><td>DFS с цветами или топологическая сортировка</td></tr>
+        <tr><td>Острова, заливка области, лабиринт</td><td>DFS или BFS по сетке</td></tr>
+        <tr><td>Клонировать граф, обойти все узлы</td><td>DFS со словарём посещённых</td></tr>
+        <tr><td>Группы связанных элементов при слияниях</td><td>Система непересекающихся множеств</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>В BFS узел помечается посещённым в момент добавления в очередь, а не в момент извлечения. Иначе один и тот же узел попадает в очередь несколько раз, и на плотном графе сложность вырождается. Это самая частая ошибка в реализации обхода — и её замечают.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда BFS, а когда DFS?</b><br>BFS обходит по слоям и потому в невзвешенном графе даёт кратчайший путь — его берут, когда в задаче «минимальное число шагов». DFS идёт вглубь и удобнее для связности, компонент, поиска циклов и перебора путей; часто короче пишется рекурсивно. По сложности они одинаковы — O(вершин + рёбер), — а различаются гарантией и требованиями к памяти: BFS хранит слой, DFS — стек глубины.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="heap">
+    <p class="path">middle / приоритеты</p>
+    <div class="card-top"><h3>Куча и топ-K</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Куча нужна там, где постоянно требуется минимум или максимум из меняющегося набора. Типичная формулировка — «K наибольших», «K ближайших», «медиана потока», «слияние отсортированных источников».</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Топ-K: куча размера K вместо полной сортировки</span></div><pre><code>&lt;?php
+<span class="cm">// Наивно: отсортировать всё и взять K первых — O(n log n).</span>
+<span class="cm">// С кучей размера K — O(n log k), а память O(k) вместо O(n).</span>
+<span class="cm">// Разница принципиальна, когда n — это поток, который не влезает в память.</span>
+
+<span class="kw">function</span> <span class="fn">topK</span>(<span class="kw">iterable</span> $numbers, <span class="nm">int</span> $k): <span class="nm">array</span>
+{
+    <span class="cm">// Для K НАИБОЛЬШИХ держим кучу МИНИМУМОВ: на вершине самый слабый</span>
+    <span class="cm">// из отобранных, и его легко вытеснить более сильным кандидатом.</span>
+    $heap = <span class="kw">new</span> <span class="nm">SplMinHeap</span>();
+
+    <span class="kw">foreach</span> ($numbers <span class="kw">as</span> $number) {
+        $heap-&gt;<span class="fn">insert</span>($number);
+
+        <span class="kw">if</span> ($heap-&gt;<span class="fn">count</span>() &gt; $k) {
+            $heap-&gt;<span class="fn">extract</span>();                 <span class="cm">// выбрасываем наименьший</span>
+        }
+    }
+
+    <span class="kw">return</span> <span class="fn">iterator_to_array</span>($heap);      <span class="cm">// K наибольших</span>
+}
+
+<span class="cm">// Очередь с приоритетом: когда нужен свой порядок</span>
+$queue = <span class="kw">new</span> <span class="nm">SplPriorityQueue</span>();
+$queue-&gt;<span class="fn">insert</span>(<span class="st">'задача A'</span>, 5);              <span class="cm">// больший приоритет — раньше</span>
+$queue-&gt;<span class="fn">insert</span>(<span class="st">'задача B'</span>, 10);
+<span class="kw">echo</span> $queue-&gt;<span class="fn">extract</span>();                    <span class="cm">// «задача B»</span>
+
+<span class="cm">// Своя куча со сложным сравнением</span>
+<span class="kw">final class</span> <span class="nm">TaskHeap</span> <span class="kw">extends</span> <span class="nm">SplMinHeap</span>
+{
+    <span class="kw">protected function</span> <span class="fn">compare</span>($a, $b): <span class="nm">int</span>
+    {
+        <span class="cm">// Сначала по дедлайну, при равенстве — по приоритету</span>
+        <span class="kw">return</span> [$b-&gt;deadline, $b-&gt;priority] &lt;=&gt; [$a-&gt;deadline, $a-&gt;priority];
+    }
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Слияние отсортированных источников: практичная задача</span></div><pre><code>&lt;?php
+<span class="cm">// Задача, которая встречается и на собеседованиях, и в работе:</span>
+<span class="cm">// слить k отсортированных потоков в один отсортированный, не загружая всё в память.</span>
+<span class="kw">function</span> <span class="fn">mergeSorted</span>(<span class="nm">array</span> $iterators): <span class="nm">Generator</span>
+{
+    $heap = <span class="kw">new</span> <span class="nm">SplMinHeap</span>();
+
+    <span class="cm">// В кучу кладём по одному текущему элементу от каждого источника</span>
+    <span class="kw">foreach</span> ($iterators <span class="kw">as</span> $i =&gt; $it) {
+        <span class="kw">if</span> ($it-&gt;<span class="fn">valid</span>()) { $heap-&gt;<span class="fn">insert</span>([$it-&gt;<span class="fn">current</span>(), $i]); }
+    }
+
+    <span class="kw">while</span> (!$heap-&gt;<span class="fn">isEmpty</span>()) {
+        [$value, $i] = $heap-&gt;<span class="fn">extract</span>();
+        <span class="kw">yield</span> $value;
+
+        <span class="cm">// Подтягиваем следующий элемент из того же источника</span>
+        $iterators[$i]-&gt;<span class="fn">next</span>();
+
+        <span class="kw">if</span> ($iterators[$i]-&gt;<span class="fn">valid</span>()) {
+            $heap-&gt;<span class="fn">insert</span>([$iterators[$i]-&gt;<span class="fn">current</span>(), $i]);
+        }
+    }
+
+    <span class="cm">// Память O(k) независимо от объёма данных: в куче всегда k элементов.</span>
+    <span class="cm">// Это ровно тот приём, которым сливают отсортированные файлы выгрузок.</span>
+}</code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как найти K наибольших элементов в потоке из миллиона чисел?</b><br>Кучей минимумов размера K: добавляем каждый элемент, и если размер превысил K — извлекаем наименьший. В куче всегда остаются K лучших. Время O(n log k), память O(k) — принципиально важно, если поток не помещается в память. Сортировка всего массива дала бы O(n log n) и потребовала бы держать всё целиком.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="strings">
+    <p class="path">middle / строки</p>
+    <div class="card-top"><h3>Задачи на строки</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Строковые задачи любят на собеседованиях за компактность условия. В PHP у них есть своя специфика: строка — это байты, а не символы, и про это регулярно забывают.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Типовые приёмы: анаграммы, палиндромы, окно по строке</span></div><pre><code>&lt;?php
+<span class="cm">// АНАГРАММЫ: два слова — перестановки друг друга?</span>
+<span class="cm">// Способ 1: отсортировать оба — O(n log n), зато одна строка.</span>
+<span class="kw">function</span> <span class="fn">isAnagram</span>(<span class="nm">string</span> $a, <span class="nm">string</span> $b): <span class="nm">bool</span>
+{
+    <span class="kw">return</span> <span class="fn">count_chars</span>($a, 1) == <span class="fn">count_chars</span>($b, 1);   <span class="cm">// O(n), сравнение частот</span>
+}
+
+<span class="cm">// Группировка анаграмм: отсортированное слово — готовый ключ группы</span>
+<span class="kw">function</span> <span class="fn">groupAnagrams</span>(<span class="nm">array</span> $words): <span class="nm">array</span>
+{
+    $groups = [];
+
+    <span class="kw">foreach</span> ($words <span class="kw">as</span> $word) {
+        $chars = <span class="fn">str_split</span>($word);
+        <span class="fn">sort</span>($chars);
+        $groups[<span class="fn">implode</span>($chars)][] = $word;
+    }
+
+    <span class="kw">return</span> <span class="fn">array_values</span>($groups);
+}
+
+<span class="cm">// ПАЛИНДРОМ: два указателя с концов, пропуская лишние символы</span>
+<span class="kw">function</span> <span class="fn">isPalindrome</span>(<span class="nm">string</span> $s): <span class="nm">bool</span>
+{
+    $clean = <span class="fn">preg_replace</span>(<span class="st">'/[^a-z0-9]/u'</span>, <span class="st">''</span>, <span class="fn">mb_strtolower</span>($s));
+    <span class="kw">return</span> $clean === <span class="fn">strrev</span>($clean);
+}
+
+<span class="cm">// ОКНО ПО СТРОКЕ: минимальная подстрока, содержащая все нужные символы.</span>
+<span class="cm">// Шаблон тот же, что для массивов: правая граница расширяет,</span>
+<span class="cm">// левая сжимает, пока условие выполняется.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">PHP-специфика: байты против символов</span></div><pre><code>&lt;?php
+<span class="cm">// Строка в PHP — массив БАЙТОВ. Для латиницы это незаметно,</span>
+<span class="cm">// для кириллицы и эмодзи — источник неверных решений.</span>
+
+$s = <span class="st">'привет'</span>;
+<span class="fn">strlen</span>($s);              <span class="cm">// 12 — байты!</span>
+<span class="fn">mb_strlen</span>($s);           <span class="cm">// 6  — символы</span>
+$s[0];                   <span class="cm">// половина буквы «п» — мусор</span>
+<span class="fn">mb_substr</span>($s, 0, 1);     <span class="cm">// «п»</span>
+
+<span class="cm">// Разбор на символы для алгоритмов</span>
+$chars = <span class="fn">mb_str_split</span>($s);          <span class="cm">// корректно для любого текста</span>
+$chars = <span class="fn">str_split</span>($s);             <span class="cm">// только для однобайтовых данных</span>
+
+<span class="cm">// На собеседовании стоит спросить: «строка гарантированно латиница?»</span>
+<span class="cm">// Если да — работаем с байтами, это быстрее. Если нет — mb_*.</span>
+<span class="cm">// Сам вопрос уже показывает понимание темы.</span>
+
+<span class="cm">// Полезные функции, экономящие время на задаче:</span>
+<span class="fn">count_chars</span>($s, 1);              <span class="cm">// частоты байтов одним вызовом</span>
+<span class="fn">str_contains</span>($s, $needle);      <span class="cm">// подстрока (PHP 8)</span>
+<span class="fn">str_starts_with</span>($s, $prefix);
+<span class="fn">substr_count</span>($s, $needle);      <span class="cm">// число вхождений</span>
+<span class="fn">similar_text</span>($a, $b);           <span class="cm">// похожесть, если вдруг спросят</span>
+<span class="fn">levenshtein</span>($a, $b);            <span class="cm">// расстояние редактирования — встроено!</span></code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Про <code>levenshtein()</code> стоит помнить отдельно: классическая задача о расстоянии редактирования — популярный пример динамического программирования, и в PHP она встроена. На собеседовании правильный ход — сказать, что в PHP есть готовая функция, и тут же предложить написать её самому, раз задача про алгоритм. Знание стандартной библиотеки — это плюс, а не попытка увильнуть.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как проверить, что две строки — анаграммы?</b><br>Сравнить частоты символов за один проход: время O(n), память по размеру алфавита. Альтернатива — отсортировать обе строки и сравнить, это O(n log n), зато короче. В PHP есть <code>count_chars</code>, который считает частоты одним вызовом. Обязательно уточнить кодировку: для кириллицы посимвольная работа требует <code>mb_*</code>-функций, потому что обычные работают с байтами.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Узнаю задачи, где сортировка — первый шаг решения</li>
+        <li>Умею сливать интервалы и обрабатывать события на прямой</li>
+        <li>Помню, что сортировка ломает исходные индексы</li>
+        <li>Пишу бэктрекинг по шаблону с обязательным откатом</li>
+        <li>Добавляю отсечения в перебор</li>
+        <li>Иду по пути перебор → мемоизация → таблица</li>
+        <li>Узнаю задачи на динамику по формулировке</li>
+      </ul>
+      <ul class="check">
+        <li>Пишу рюкзак и наибольшую возрастающую подпоследовательность</li>
+        <li>Выбираю между BFS и DFS осознанно</li>
+        <li>Помечаю узел посещённым при добавлении в очередь</li>
+        <li>Умею топологическую сортировку и обнаружение цикла</li>
+        <li>Решаю топ-K кучей размера K, а не сортировкой</li>
+        <li>Знаю приём слияния отсортированных источников</li>
+        <li>Помню про байты и символы в строках PHP</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Практичный способ готовиться на этом уровне — не решать задачи подряд, а разбирать по паттернам: неделя на скользящее окно, неделя на графы, неделя на динамику. Тогда на собеседовании срабатывает узнавание: «это окно», «это BFS», — и время уходит на реализацию, а не на попытки понять, с какой стороны подойти.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · разбор и коммуникация</p>
+    <h2>Senior: выбор, границы, разговор</h2>
+    <p>От senior на алгоритмической секции ждут не более сложных алгоритмов, а другого качества разговора: сравнения вариантов вслух, внимания к граничным случаям, честной оценки применимости и умения не зависнуть, когда решение не приходит.</p>
+  </div>
+
+  <!-- 12 -->
+  <article class="card" id="tradeoffs">
+    <p class="path">senior / выбор</p>
+    <div class="card-top"><h3>Компромиссы решения</h3><span class="badge b-3">Разбор</span></div>
+    <p>У большинства задач есть несколько решений с разным балансом времени, памяти и читаемости. Senior отличается тем, что называет варианты и выбирает осознанно, а не выдаёт первое пришедшее в голову как единственное.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · типовые обмены в задачах</caption>
+      <thead><tr><th>Обмен</th><th>Пример</th><th>Когда оправдан</th></tr></thead>
+      <tbody>
+        <tr><td>Память за время</td><td>Словарь вместо вложенного цикла</td><td>Почти всегда, если память позволяет</td></tr>
+        <tr><td>Предобработка за скорость запросов</td><td>Префиксные суммы, индекс</td><td>Много запросов к одним данным</td></tr>
+        <tr><td>Сортировка за простоту</td><td>Отсортировать и идти одним проходом</td><td>Когда O(n log n) укладывается в ограничения</td></tr>
+        <tr><td>Точность за скорость</td><td>Приближённые счётчики, выборка</td><td>Когда точное значение не требуется</td></tr>
+        <tr><td>Память за поток</td><td>Обработка генератором вместо массива</td><td>Данные не помещаются в память</td></tr>
+        <tr><td>Читаемость за оптимальность</td><td>Мемоизация вместо таблицы с оптимизацией памяти</td><td>Когда разница в сложности несущественна</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Как проговаривать выбор вслух</span></div><pre><code>Задача: найти два числа с заданной суммой.
+
+Слабый ответ: сразу пишет решение со словарём и молчит.
+
+Сильный ответ звучит примерно так:
+
+  «Наивно — двойной цикл, O(n²) по времени, O(1) по памяти.
+   Со словарём — один проход, O(n) по времени, но O(n) по памяти.
+   Если массив отсортирован или его можно сортировать — два указателя:
+   O(n log n) по времени, зато O(1) по памяти и без хеширования.
+
+   Уточню: массив большой? память ограничена? индексы в ответе нужны
+   исходные или можно сортировать?
+
+   Раз индексы нужны исходные и память не ограничена — беру словарь.»
+
+Это тридцать секунд, которые показывают: вы видите пространство решений,
+понимаете стоимость каждого и умеете выбирать по условиям, а не по привычке.
+Для senior-позиции такой разговор ценится выше, чем скорость набора кода.</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Не всякую задачу нужно оптимизировать до предела. Если наивное решение укладывается в ограничения и читается втрое проще, честный ответ — «здесь достаточно O(n²), потому что n не превышает тысячи, а решение за O(n log n) будет заметно сложнее в поддержке». Это ровно тот инженерный подход, который ожидают от senior, — но озвучить его нужно явно, иначе это будет выглядеть как неумение оптимизировать.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Можно ли решить лучше?</b><br>Это приглашение к разговору, а не упрёк. Правильная реакция — назвать, что именно сейчас узкое место: «время O(n²) из-за вложенного цикла; его можно убрать словарём и получить O(n) ценой O(n) памяти». Если улучшения не видите — честно сказать, какое ограничение мешает и в какую сторону вы бы думали. Молчаливое переписывание кода наугад производит худшее впечатление, чем внятное «пока не вижу, вот что я пробую».</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="edge">
+    <p class="path">senior / края</p>
+    <div class="card-top"><h3>Граничные случаи</h3><span class="badge b-3">Разбор</span></div>
+    <p>Умение самому найти дыру в своём решении ценится очень высоко. Кандидат, который написал код и сказал «сейчас проверю на пустом массиве... действительно, здесь упадёт, исправляю», выглядит намного сильнее того, кому на это указали.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · чек-лист граничных случаев</caption>
+      <thead><tr><th>Категория</th><th>Что проверить</th></tr></thead>
+      <tbody>
+        <tr><td>Размер входа</td><td>Пусто, один элемент, два элемента</td></tr>
+        <tr><td>Значения</td><td>Ноль, отрицательные, максимально большие, одинаковые</td></tr>
+        <tr><td>Структура</td><td>Уже отсортировано, отсортировано в обратном порядке</td></tr>
+        <tr><td>Ответ</td><td>Ответа не существует, ответов несколько</td></tr>
+        <tr><td>Границы диапазона</td><td>Первый и последний элемент, границы окна</td></tr>
+        <tr><td>Строки</td><td>Пустая, один символ, пробелы, юникод, регистр</td></tr>
+        <tr><td>Графы</td><td>Изолированная вершина, цикл, несвязный граф</td></tr>
+        <tr><td>Числа</td><td>Деление на ноль, переполнение, целочисленное деление</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Проверка решения руками: то, что делают вслух перед сдачей</span></div><pre><code>&lt;?php
+<span class="cm">// Написали решение — прогоняем по шагам ДО того, как скажут «а если...»</span>
+
+<span class="kw">function</span> <span class="fn">maxSubarraySum</span>(<span class="nm">array</span> $nums): <span class="nm">int</span>
+{
+    $best = $nums[0];                     <span class="cm">// ← пустой массив уронит эту строку</span>
+    $current = $nums[0];
+
+    <span class="kw">for</span> ($i = 1; $i &lt; <span class="fn">count</span>($nums); $i++) {
+        $current = <span class="fn">max</span>($nums[$i], $current + $nums[$i]);
+        $best = <span class="fn">max</span>($best, $current);
+    }
+
+    <span class="kw">return</span> $best;
+}
+
+<span class="cm">// Проговариваем проверку:</span>
+<span class="cm">//   [] → падение на первой строке. Нужно решить: исключение или 0?</span>
+<span class="cm">//        Это вопрос к интервьюеру, а не додумывание.</span>
+<span class="cm">//   [5] → best = current = 5, цикл не выполняется, вернём 5. Верно.</span>
+<span class="cm">//   [-3, -1, -7] → все отрицательные: вернём −1, наибольший.</span>
+<span class="cm">//        Правильно ли это? Зависит от условия: разрешён ли пустой подмассив.</span>
+<span class="cm">//        Если да — ответ 0. Опять вопрос к условию.</span>
+<span class="cm">//   [1, 2, 3] → 1, 3, 6. Верно.</span>
+
+<span class="cm">// Обратите внимание: два из четырёх случаев привели не к правке кода,</span>
+<span class="cm">// а к вопросу об условии. Это нормально и это плюс.</span></code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Полезная привычка — начинать с одной строки-стража: <code>if ($nums === []) { return ...; }</code>. Она закрывает самый частый граничный случай и одновременно заставляет задуматься, что вообще возвращать при пустом входе. Второй по частоте случай — единственный элемент: на нём ломаются решения с двумя указателями и с обращением к соседу.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Ваше решение работает на пустом входе?</b><br>Правильная реакция — не оправдываться, а проверить вслух и починить: «на пустом массиве упадёт первая строка; вопрос, что здесь корректно вернуть — ноль или исключение. Если по условию вход всегда непустой, я бы всё равно добавил явную проверку, чтобы поведение было определённым». Лучше, конечно, задать этот вопрос самому — до того, как его задали вам.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="realistic">
+    <p class="path">senior / практика</p>
+    <div class="card-top"><h3>Задачи из практики</h3><span class="badge b-3">Разбор</span></div>
+    <p>На senior-собеседованиях всё чаще дают не олимпиадные, а прикладные задачи: обработать большой файл, слить потоки, ограничить частоту, дедуплицировать. В них важнее не хитрый алгоритм, а работа с памятью, потоками и краевыми ситуациями.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Обработка файла, который не помещается в память</span></div><pre><code>&lt;?php
+<span class="cm">// Задача: файл на 10 ГБ, найти топ-10 самых частых значений.</span>
+<span class="cm">// Первое, что проверяет интервьюер, — не загрузите ли вы файл целиком.</span>
+
+<span class="kw">function</span> <span class="fn">topValues</span>(<span class="nm">string</span> $path, <span class="nm">int</span> $k): <span class="nm">array</span>
+{
+    $counts = [];
+
+    <span class="cm">// Читаем потоком: память не зависит от размера файла</span>
+    $handle = <span class="fn">fopen</span>($path, <span class="st">'rb'</span>);
+
+    <span class="kw">try</span> {
+        <span class="kw">while</span> (($line = <span class="fn">fgets</span>($handle)) !== <span class="kw">false</span>) {
+            $value = <span class="fn">trim</span>($line);
+            $counts[$value] = ($counts[$value] ?? 0) + 1;
+        }
+    } <span class="kw">finally</span> {
+        <span class="fn">fclose</span>($handle);
+    }
+
+    <span class="cm">// Здесь стоит проговорить ограничение: словарь всё ещё держит</span>
+    <span class="cm">// ВСЕ уникальные значения. Если их миллиарды — не влезет.</span>
+    <span class="cm">// Тогда решение другое: разбить по хешу на файлы-корзины,</span>
+    <span class="cm">// посчитать каждую отдельно и слить результаты. Это уже</span>
+    <span class="cm">// внешняя обработка, и упоминание такого варианта — сильный ход.</span>
+
+    <span class="fn">arsort</span>($counts);
+
+    <span class="kw">return</span> <span class="fn">array_slice</span>($counts, 0, $k, preserve_keys: <span class="kw">true</span>);
+}
+
+<span class="cm">// Генератор как ленивый конвейер: фильтрация и преобразование</span>
+<span class="cm">// без материализации промежуточных массивов</span>
+<span class="kw">function</span> <span class="fn">readLines</span>(<span class="nm">string</span> $path): <span class="nm">Generator</span>
+{
+    $handle = <span class="fn">fopen</span>($path, <span class="st">'rb'</span>);
+
+    <span class="kw">try</span> {
+        <span class="kw">while</span> (($line = <span class="fn">fgets</span>($handle)) !== <span class="kw">false</span>) {
+            <span class="kw">yield</span> <span class="fn">rtrim</span>($line, <span class="st">"\r\n"</span>);
+        }
+    } <span class="kw">finally</span> {
+        <span class="fn">fclose</span>($handle);
+    }
+}
+
+<span class="cm">// Пачками: обработка с постоянной памятью и пакетными операциями к БД</span>
+<span class="kw">function</span> <span class="fn">chunked</span>(<span class="kw">iterable</span> $items, <span class="nm">int</span> $size): <span class="nm">Generator</span>
+{
+    $chunk = [];
+
+    <span class="kw">foreach</span> ($items <span class="kw">as</span> $item) {
+        $chunk[] = $item;
+
+        <span class="kw">if</span> (<span class="fn">count</span>($chunk) === $size) {
+            <span class="kw">yield</span> $chunk;
+            $chunk = [];
+        }
+    }
+
+    <span class="kw">if</span> ($chunk !== []) { <span class="kw">yield</span> $chunk; }   <span class="cm">// хвост — про него забывают чаще всего</span>
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · прикладные задачи и что в них проверяют</caption>
+      <thead><tr><th>Задача</th><th>Что на самом деле проверяют</th></tr></thead>
+      <tbody>
+        <tr><td>Обработать большой файл</td><td>Потоковое чтение, память не зависит от объёма</td></tr>
+        <tr><td>Найти дубликаты в большом наборе</td><td>Понимание, что словарь тоже занимает память</td></tr>
+        <tr><td>Ограничить частоту запросов</td><td>Скользящее окно, token bucket, атомарность</td></tr>
+        <tr><td>Слить отсортированные выгрузки</td><td>Куча размера k, потоковая обработка</td></tr>
+        <tr><td>Постраничный обход API</td><td>Курсор вместо offset, обработка изменений между страницами</td></tr>
+        <tr><td>Дедупликация потока событий</td><td>Идемпотентность, ограниченное окно памяти</td></tr>
+        <tr><td>Кэш с вытеснением</td><td>LRU: словарь плюс связный список</td></tr>
+        <tr><td>Разбор логов и агрегация</td><td>Один проход, потоки, отсутствие лишних материализаций</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>В прикладных задачах главный вопрос почти всегда один: «что произойдёт, если данных станет в тысячу раз больше». Ответ на него отличает решение уровня senior. Даже если вы пишете простой вариант, стоит вслух назвать, где он упрётся и каким было бы решение для большего масштаба, — это ровно то, что хочет услышать интервьюер.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как найти дубликаты в файле на 100 ГБ?</b><br>Читать потоком и складывать в словарь не получится: словарь держит все уникальные значения. Практичный путь — внешняя обработка: разбить строки по хешу на N файлов-корзин так, чтобы одинаковые значения гарантированно попали в одну корзину, затем обработать каждую отдельно в памяти и объединить результаты. Если допустима приблизительность, подойдёт фильтр Блума для предварительного отсева.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="comm">
+    <p class="path">senior / разговор</p>
+    <div class="card-top"><h3>Коммуникация</h3><span class="badge b-3">Разбор</span></div>
+    <p>Половина оценки на live-coding — это не код, а то, как вы себя ведёте, пока его пишете. Особенно в моменты, когда решение не приходит: именно там видно, каким человек будет в рабочей ситуации со сложной задачей.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · что делать в трудных ситуациях</caption>
+      <thead><tr><th>Ситуация</th><th>Плохо</th><th>Хорошо</th></tr></thead>
+      <tbody>
+        <tr><td>Не знаете, с чего начать</td><td>Молчать несколько минут</td><td>«Давайте разберу пример руками, чтобы увидеть закономерность»</td></tr>
+        <tr><td>Оптимальное решение не приходит</td><td>Ждать озарения</td><td>Написать наивное, назвать сложность, искать улучшение от него</td></tr>
+        <tr><td>Застряли посреди кода</td><td>Стирать всё и начинать заново</td><td>Проговорить, что именно не сходится</td></tr>
+        <tr><td>Дают подсказку</td><td>Спорить или игнорировать</td><td>«Да, это упрощает — тогда получается вот так»</td></tr>
+        <tr><td>Нашли свою ошибку</td><td>Молча исправлять</td><td>Назвать вслух: это плюс, а не минус</td></tr>
+        <tr><td>Не помните функцию языка</td><td>Изобретать её долго и молча</td><td>«Здесь нужна функция сортировки с компаратором, точное имя не помню»</td></tr>
+        <tr><td>Кончается время</td><td>Торопливо писать нерабочее</td><td>«Не успеваю дописать, но алгоритм такой, осталось вот это»</td></tr>
+        <tr><td>Задача кажется знакомой</td><td>Писать заученное наизусть молча</td><td>Сказать, что задача знакома, и всё равно объяснить логику</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Фразы, которые стоит держать наготове</span></div><pre><code>В начале:
+  «Правильно ли я понял: на входе..., нужно вернуть...?»
+  «Разберу пример руками, чтобы убедиться, что понимаю задачу так же.»
+  «Начну с простого решения, потом посмотрим, как улучшить.»
+
+По ходу:
+  «Сейчас я строю словарь значение → индекс, чтобы искать за O(1).»
+  «Здесь я сознательно жертвую памятью ради времени.»
+  «Пока напишу это как есть, вернусь и вынесу в функцию.»
+
+Когда застряли:
+  «Мысль пока такая..., но не сходится вот в этом месте.»
+  «Можно я разберу ещё один пример? Кажется, я упускаю случай.»
+  «Есть ли у вас подсказка, в какую сторону смотреть?»
+
+В конце:
+  «Проверю на пустом массиве и на одном элементе.»
+  «Время O(n), память O(n). Если бы вход был отсортирован, было бы O(1).»
+  «Здесь я бы вынес проверку в отдельный метод и добавил тесты на границы.»
+
+Просьба о подсказке — не признак слабости. Признак слабости —
+десять минут молчания, из которых интервьюер не понял ничего
+о вашем ходе мысли.</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Отдельно про честность: если задача знакома и решение помните наизусть, стоит сказать об этом. Во-первых, это заметно по скорости и уверенности. Во-вторых, интервьюер, скорее всего, даст другую задачу — и лучше, если это произойдёт по вашей инициативе. Попытка выдать заученное за только что придуманное разрушает доверие ко всему остальному разговору.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что делать, если решение не приходит совсем?</b><br>Не молчать. Проговорить, что уже понятно про задачу, разобрать конкретный пример руками — часто закономерность видна именно на примере. Написать заведомо неоптимальное решение: оно даёт работающую отправную точку и показывает, что вы понимаете задачу. И спросить подсказку, если время идёт: умение вовремя попросить помощь в работе ценится выше, чем сутки самостоятельного тупика.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="prep">
+    <p class="path">senior / подготовка</p>
+    <div class="card-top"><h3>Стратегия подготовки</h3><span class="badge b-3">Разбор</span></div>
+    <p>Типичная ошибка подготовки — решать случайные задачи подряд, пока не надоест. Это даёт ощущение работы и почти не даёт результата: без систематизации паттерны не откладываются, а на собеседовании нужно именно узнавание.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · как готовиться эффективно</caption>
+      <thead><tr><th>Работает</th><th>Не работает</th></tr></thead>
+      <tbody>
+        <tr><td>Разбирать по паттернам: неделя на окно, неделя на графы</td><td>Решать случайные задачи подряд</td></tr>
+        <tr><td>Писать код руками, без подсказок среды</td><td>Читать решения и кивать</td></tr>
+        <tr><td>Проговаривать решение вслух</td><td>Решать молча в голове</td></tr>
+        <tr><td>Возвращаться к задаче через неделю</td><td>Решил один раз и забыл</td></tr>
+        <tr><td>Ограничивать время: 25–30 минут на задачу</td><td>Сидеть над задачей три часа</td></tr>
+        <tr><td>Разбирать решение после сдачи, даже если решил</td><td>Переходить к следующей сразу</td></tr>
+        <tr><td>Вести список ошибок и перечитывать его</td><td>Надеяться, что запомнится само</td></tr>
+        <tr><td>Тренировочные собеседования с человеком</td><td>Только самостоятельное решение</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Рабочий режим подготовки за месяц</span></div><pre><code>Реалистичная цель для PHP-разработчика — не «решать любые задачи»,
+а уверенно закрывать типовые и не теряться на незнакомых.
+
+Формат одной задачи (30 минут):
+  5 мин  — уточнить условие вслух, разобрать пример
+  5 мин  — описать подход и сложность до кода
+  15 мин — написать решение, проговаривая
+  5 мин  — проверить границы, назвать сложность
+  После — разобрать чужое решение, даже если своё работает
+
+Порядок тем по отдаче для собеседований:
+  1. Словари и множества          — встречается чаще всего
+  2. Два указателя и окно         — вторые по частоте
+  3. Бинарный поиск, включая по ответу
+  4. Сортировка и интервалы
+  5. Обходы графов (BFS, DFS)
+  6. Простая динамика с мемоизацией
+  7. Куча и топ-K
+  8. Бэктрекинг                   — реже, но эффектно
+
+Список собственных ошибок — самый полезный артефакт подготовки.
+Записывайте не задачи, а ошибки: «забыл пустой вход», «перепутал
+границы в бинарном поиске», «не откатил состояние в бэктрекинге».
+Через месяц этот список короче любого учебника и точнее бьёт в цель.</code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Самое недооценённое упражнение — решать вслух, записывая себя. Слушать запись неприятно, зато сразу слышно всё: длинные паузы, невнятные объяснения, привычку начинать писать код до того, как сформулирован подход. Три-четыре таких прогона меняют качество разговора на собеседовании сильнее, чем двадцать решённых задач молча.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы поддерживаете алгоритмическую форму?</b><br>Честный ответ обычно лучше выдуманного: в работе алгоритмы почти не нужны, поэтому перед собеседованиями я разбираю типовые паттерны и решаю задачи с таймером, проговаривая вслух. Полезно добавить рабочий контекст: где алгоритмическое мышление реально пригодилось — обработка большого файла с постоянной памятью, замена вложенного цикла словарём, выбор структуры под задачу. Это соединяет секцию с реальной работой.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Называю несколько вариантов решения и выбираю осознанно</li>
+        <li>Проговариваю обмен времени на память вслух</li>
+        <li>Умею сказать, что оптимизация здесь не нужна, и обосновать</li>
+        <li>Сам проверяю пустой вход, один элемент и границы</li>
+        <li>Отличаю вопрос к условию от ошибки в коде</li>
+        <li>Пишу решения, устойчивые к росту объёма данных</li>
+      </ul>
+      <ul class="check">
+        <li>Читаю большие данные потоком, а не целиком</li>
+        <li>Знаю приём с корзинами по хешу для внешней обработки</li>
+        <li>Не молчу, когда решение не приходит</li>
+        <li>Прошу подсказку вовремя и встраиваю её</li>
+        <li>Называю свои ошибки вслух, а не исправляю молча</li>
+        <li>Говорю честно, если задача знакома</li>
+        <li>Готовлюсь по паттернам и веду список своих ошибок</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>На senior-уровне алгоритмическая секция — это проверка инженерного мышления, а не памяти. Сильное впечатление производит не идеальное решение, а разговор: «вот три варианта, вот их стоимость, вот почему для этих ограничений я беру второй, вот где он сломается при росте данных». Такой ответ отвечает сразу и на алгоритмические вопросы, и на вопросы о проектировании.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Главный справочник конспекта: как по формулировке задачи узнать нужный паттерн, какие ошибки допускают чаще всего и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Формулировка → паттерн</h3><span class="badge b-tag">Таблица 13</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 13 · слова в условии и что они подсказывают</caption>
+      <thead><tr><th>В условии звучит</th><th>Скорее всего нужен</th><th>Сложность</th></tr></thead>
+      <tbody>
+        <tr><td>«Сколько раз встречается», «есть ли дубликат»</td><td>Частотный словарь или множество</td><td>O(n)</td></tr>
+        <tr><td>«Пара с суммой», «найти недостающее»</td><td>Словарь уже увиденных</td><td>O(n)</td></tr>
+        <tr><td>«Сумма на отрезке», много запросов</td><td>Префиксные суммы</td><td>O(n) + O(1) на запрос</td></tr>
+        <tr><td>Массив отсортирован, ищем пару</td><td>Два указателя с концов</td><td>O(n), память O(1)</td></tr>
+        <tr><td>«Подряд идущие», «подстрока», «подмассив»</td><td>Скользящее окно</td><td>O(n)</td></tr>
+        <tr><td>«Найти в отсортированном»</td><td>Бинарный поиск</td><td>O(log n)</td></tr>
+        <tr><td>«Минимальное X, при котором возможно»</td><td>Бинарный поиск по ответу</td><td>O(n log диапазона)</td></tr>
+        <tr><td>Интервалы, встречи, расписание</td><td>Сортировка по началу, один проход</td><td>O(n log n)</td></tr>
+        <tr><td>«Все комбинации», «все перестановки»</td><td>Бэктрекинг</td><td>Экспоненциальная</td></tr>
+        <tr><td>«Сколькими способами», «минимальная стоимость»</td><td>Динамика с мемоизацией</td><td>Зависит от числа состояний</td></tr>
+        <tr><td>«Минимальное число шагов» в графе</td><td>BFS</td><td>O(V + E)</td></tr>
+        <tr><td>«Порядок с учётом зависимостей»</td><td>Топологическая сортировка</td><td>O(V + E)</td></tr>
+        <tr><td>«K наибольших», «медиана потока»</td><td>Куча</td><td>O(n log k)</td></tr>
+        <tr><td>«Островов», «залить область», лабиринт</td><td>DFS или BFS по сетке</td><td>O(клеток)</td></tr>
+        <tr><td>«Слить отсортированные источники»</td><td>Куча размера k</td><td>O(n log k)</td></tr>
+        <tr><td>Данные не помещаются в память</td><td>Потоковая обработка, корзины по хешу</td><td>Память O(1) или O(k)</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Частые ошибки на live-coding</h3><span class="badge b-tag">Таблица 14</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 14 · что ломается чаще всего</caption>
+      <thead><tr><th>Ошибка</th><th>Где проявляется</th><th>Как избежать</th></tr></thead>
+      <tbody>
+        <tr><td>Начать писать код, не уточнив условие</td><td>Всегда</td><td>Пять вопросов до первой строки</td></tr>
+        <tr><td>Молчание при затруднении</td><td>Всегда</td><td>Проговаривать ход мысли и просить подсказку</td></tr>
+        <tr><td><code>in_array()</code> в цикле</td><td>Незаметный O(n²)</td><td>Заранее построить множество</td></tr>
+        <tr><td>Ошибка на единицу в границах</td><td>Бинарный поиск, окно</td><td>Выученный шаблон и проверка на двух элементах</td></tr>
+        <tr><td>Не обработан пустой вход</td><td>Почти любое решение</td><td>Строка-страж в начале</td></tr>
+        <tr><td>Потеря исходных индексов</td><td>После сортировки</td><td>Сортировать пары «значение и индекс»</td></tr>
+        <tr><td>Нет отката состояния</td><td>Бэктрекинг</td><td>Парная отмена после рекурсивного вызова</td></tr>
+        <tr><td>Пометка посещённого при извлечении</td><td>BFS</td><td>Помечать при добавлении в очередь</td></tr>
+        <tr><td>Байты вместо символов</td><td>Строки с кириллицей</td><td><code>mb_*</code>-функции, уточнить кодировку</td></tr>
+        <tr><td>Забыт хвост при обработке пачками</td><td>Разбиение на блоки</td><td>Проверка непустого остатка после цикла</td></tr>
+        <tr><td>Не названа сложность</td><td>В конце решения</td><td>Говорить время и память самому</td></tr>
+        <tr><td>Спор с подсказкой</td><td>В разговоре</td><td>Услышать, встроить, поблагодарить</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 15</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 15 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Процесс</td><td>Уточняет условие</td><td>Ведёт разговор по структуре</td><td>Управляет диалогом и временем</td></tr>
+        <tr><td>Решение</td><td>Доводит наивное до рабочего</td><td>Узнаёт паттерн и оптимизирует</td><td>Сравнивает варианты и выбирает</td></tr>
+        <tr><td>Сложность</td><td>Называет время</td><td>Называет время и память</td><td>Объясняет, где узкое место и что менять</td></tr>
+        <tr><td>Границы</td><td>Проверяет по подсказке</td><td>Проверяет сам</td><td>Задаёт вопросы к условию заранее</td></tr>
+        <tr><td>Код</td><td>Работает</td><td>Читается, без дублирования</td><td>Годится в рабочий проект</td></tr>
+        <tr><td>Масштаб</td><td>—</td><td>Понимает ограничения по памяти</td><td>Решает для данных, не влезающих в память</td></tr>
+        <tr><td>Реакция на затруднение</td><td>Может замолчать</td><td>Проговаривает варианты</td><td>Вовремя просит подсказку и встраивает</td></tr>
+        <tr><td>Связь с работой</td><td>—</td><td>Приводит примеры из практики</td><td>Объясняет, где это нужно и где нет</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>PHP для live-coding</h2>
+    <p>Функции и конструкции, которые экономят время на задаче, — их стоит держать в активной памяти, чтобы не изобретать заново под наблюдением.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Массивы: что помнить наизусть</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Функции, которые экономят минуты</span></div><pre><code>&lt;?php
+<span class="cm">// Индексы и множества</span>
+<span class="fn">array_flip</span>($values);            <span class="cm">// значения → ключи: готовое множество</span>
+<span class="fn">array_column</span>($rows, <span class="kw">null</span>, <span class="st">'id'</span>);  <span class="cm">// индекс по полю: доступ за O(1)</span>
+<span class="fn">array_column</span>($rows, <span class="st">'name'</span>, <span class="st">'id'</span>); <span class="cm">// словарь id → name</span>
+<span class="fn">array_count_values</span>($values);     <span class="cm">// частоты одним вызовом</span>
+<span class="fn">array_unique</span>($values);           <span class="cm">// уникальные (сохраняет ключи!)</span>
+
+<span class="cm">// Множества</span>
+<span class="fn">array_intersect</span>($a, $b);         <span class="cm">// пересечение</span>
+<span class="fn">array_diff</span>($a, $b);              <span class="cm">// разность</span>
+<span class="fn">array_intersect_key</span>($a, $b);     <span class="cm">// по ключам — быстрее для больших наборов</span>
+
+<span class="cm">// Преобразования</span>
+<span class="fn">array_map</span>(<span class="kw">fn</span> ($x) =&gt; $x * 2, $a);
+<span class="fn">array_filter</span>($a, <span class="kw">fn</span> ($x) =&gt; $x &gt; 0);   <span class="cm">// СОХРАНЯЕТ КЛЮЧИ — частая ловушка</span>
+<span class="fn">array_values</span>(<span class="fn">array_filter</span>(...));      <span class="cm">// переиндексация</span>
+<span class="fn">array_reduce</span>($a, <span class="kw">fn</span> ($c, $x) =&gt; $c + $x, 0);
+<span class="fn">array_combine</span>($keys, $values);
+
+<span class="cm">// Срезы и части</span>
+<span class="fn">array_slice</span>($a, 0, 10);           <span class="cm">// копия части</span>
+<span class="fn">array_splice</span>($a, 2, 3);          <span class="cm">// вырезать на месте</span>
+<span class="fn">array_chunk</span>($a, 100);            <span class="cm">// разбить на пачки</span>
+
+<span class="cm">// Агрегаты</span>
+<span class="fn">array_sum</span>($a); <span class="fn">max</span>($a); <span class="fn">min</span>($a); <span class="fn">count</span>($a);
+<span class="fn">array_key_exists</span>($k, $a);        <span class="cm">// в отличие от isset видит null</span>
+
+<span class="cm">// Поиск (осторожно: O(n))</span>
+<span class="fn">in_array</span>($x, $a, <span class="kw">true</span>);          <span class="cm">// третий аргумент — строгое сравнение!</span>
+<span class="fn">array_search</span>($x, $a, <span class="kw">true</span>);      <span class="cm">// вернёт ключ или false</span></code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Сортировка и структуры</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сортировки и SPL</span></div><pre><code>&lt;?php
+<span class="cm">// Сортировки: все на месте, возвращают bool, а не массив</span>
+<span class="fn">sort</span>($a);        <span class="cm">// по значениям, ключи теряются</span>
+<span class="fn">rsort</span>($a);       <span class="cm">// по убыванию</span>
+<span class="fn">asort</span>($a);       <span class="cm">// по значениям, ключи сохраняются</span>
+<span class="fn">ksort</span>($a);       <span class="cm">// по ключам</span>
+<span class="fn">arsort</span>($a);      <span class="cm">// по значениям убывая, ключи сохраняются</span>
+
+<span class="cm">// Своё сравнение: оператор &lt;=&gt; возвращает -1, 0 или 1</span>
+<span class="fn">usort</span>($rows, <span class="kw">fn</span> ($a, $b) =&gt; $a[<span class="st">'age'</span>] &lt;=&gt; $b[<span class="st">'age'</span>]);
+
+<span class="cm">// Сортировка по нескольким полям — сравнение массивов работает лексикографически</span>
+<span class="fn">usort</span>($rows, <span class="kw">fn</span> ($a, $b) =&gt; [$a[<span class="st">'dept'</span>], -$a[<span class="st">'salary'</span>]] &lt;=&gt; [$b[<span class="st">'dept'</span>], -$b[<span class="st">'salary'</span>]]);
+
+<span class="cm">// Стабильность: с PHP 8.0 все сортировки стабильны — равные сохраняют порядок</span>
+
+<span class="cm">// --- SPL: когда массива недостаточно ---</span>
+$stack = <span class="kw">new</span> <span class="nm">SplStack</span>();          <span class="cm">// push/pop, O(1)</span>
+$queue = <span class="kw">new</span> <span class="nm">SplQueue</span>();          <span class="cm">// enqueue/dequeue, O(1) — для BFS</span>
+$heap  = <span class="kw">new</span> <span class="nm">SplMinHeap</span>();        <span class="cm">// минимум за O(log n)</span>
+$heap  = <span class="kw">new</span> <span class="nm">SplMaxHeap</span>();
+$pq    = <span class="kw">new</span> <span class="nm">SplPriorityQueue</span>();  <span class="cm">// со своим приоритетом</span>
+$set   = <span class="kw">new</span> <span class="nm">SplObjectStorage</span>();  <span class="cm">// множество объектов</span>
+$fixed = <span class="kw">new</span> <span class="nm">SplFixedArray</span>(1000);  <span class="cm">// экономия памяти на больших массивах</span>
+
+<span class="cm">// Важно: array_shift() на массиве — O(n)!</span>
+<span class="cm">// Для очереди в цикле берите SplQueue, иначе получите скрытый O(n²).</span></code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Идиомы и заготовки</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">То, что пишется на автомате</span></div><pre><code>&lt;?php
+<span class="cm">// Счётчик без проверки существования</span>
+$freq[$key] = ($freq[$key] ?? 0) + 1;
+
+<span class="cm">// Значение по умолчанию и инициализация</span>
+$config[<span class="st">'retries'</span>] ??= 3;
+$groups[$key][] = $item;              <span class="cm">// автосоздание вложенного массива</span>
+
+<span class="cm">// Обмен значениями без временной переменной</span>
+[$a, $b] = [$b, $a];
+
+<span class="cm">// Распаковка в foreach</span>
+<span class="kw">foreach</span> ($pairs <span class="kw">as</span> [$start, $end]) { }
+
+<span class="cm">// Целочисленное деление без сюрпризов</span>
+<span class="fn">intdiv</span>($a, 2);                       <span class="cm">// вместо (int)($a / 2)</span>
+
+<span class="cm">// Бесконечности для инициализации минимума и максимума</span>
+$min = <span class="nm">PHP_INT_MAX</span>;
+$max = <span class="nm">PHP_INT_MIN</span>;
+
+<span class="cm">// Заполнение массива</span>
+$dp = <span class="fn">array_fill</span>(0, $n + 1, 0);
+$grid = <span class="fn">array_fill</span>(0, $rows, <span class="fn">array_fill</span>(0, $cols, 0));
+
+<span class="cm">// Рекурсивная функция-замыкание (нужна ссылка на саму себя)</span>
+$dfs = <span class="kw">static function</span> (<span class="nm">int</span> $node) <span class="kw">use</span> (&amp;$dfs, &amp;$visited, $graph): <span class="nm">void</span> {
+    <span class="kw">if</span> (<span class="fn">isset</span>($visited[$node])) { <span class="kw">return</span>; }
+    $visited[$node] = <span class="kw">true</span>;
+    <span class="kw">foreach</span> ($graph[$node] ?? [] <span class="kw">as</span> $next) { $dfs($next); }
+};
+
+<span class="cm">// Генератор: обработка без загрузки всего в память</span>
+<span class="kw">function</span> <span class="fn">lines</span>(<span class="nm">string</span> $path): <span class="nm">Generator</span> {
+    $h = <span class="fn">fopen</span>($path, <span class="st">'rb'</span>);
+    <span class="kw">try</span> { <span class="kw">while</span> (($l = <span class="fn">fgets</span>($h)) !== <span class="kw">false</span>) { <span class="kw">yield</span> <span class="fn">rtrim</span>($l); } }
+    <span class="kw">finally</span> { <span class="fn">fclose</span>($h); }
+}
+
+<span class="cm">// Быстрая проверка решения прямо в задаче</span>
+<span class="kw">assert</span>(<span class="fn">twoSum</span>([2, 7, 11], 9) === [0, 1]);</code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Три функции стоит довести до автоматизма, потому что они встречаются в половине задач: <code>array_flip</code> для превращения массива в множество, <code>array_column</code> с третьим аргументом для индекса по полю и <code>usort</code> со сравнением массивов для сортировки по нескольким полям. Каждая экономит несколько минут и делает решение короче и понятнее.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ЗАДАЧИ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 задач и вопросов с разбором подхода</h2>
+    <p>Здесь не готовый код, а то, что важнее на собеседовании: как узнать паттерн и что сказать вслух. Каждая формулировка — реальная задача, которую дают; ответ — подход и сложность.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 задач и вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">С чего начать решение любой задачи?</span><span class="aa">С уточнения условия: размер входа, типы, дубликаты, что вернуть при отсутствии ответа. Затем разбор примера на бумаге, описание подхода и сложности — и только потом код. Условие часто намеренно неполно: вопросы к нему входят в оценку.</span></li>
+      <li><span class="qq">Найти два числа с заданной суммой.</span><span class="aa">Один проход со словарём: для каждого элемента ищем недостающее слагаемое среди уже увиденных. Время O(n), память O(n). Если массив отсортирован — два указателя с концов: O(n) времени и O(1) памяти. Уточнить, нужны ли исходные индексы.</span></li>
+      <li><span class="qq">Есть ли в массиве дубликаты?</span><span class="aa">Множество увиденных и ранний возврат при первом повторе: O(n) времени, O(n) памяти. Если память критична и массив можно менять — отсортировать и сравнить соседей: O(n log n), память O(1). Выбор зависит от того, что дороже.</span></li>
+      <li><span class="qq">Найти элемент, который встречается чаще всех.</span><span class="aa">Частотный словарь за один проход, затем максимум по значениям: O(n). В PHP частоты считаются одним вызовом <code>array_count_values</code>. Стоит уточнить, что делать при нескольких одинаково частых элементах.</span></li>
+      <li><span class="qq">Найти единственное число, встречающееся один раз, остальные — дважды.</span><span class="aa">Ответ, которого ждут: исключающее ИЛИ всех элементов — одинаковые взаимно уничтожаются, остаётся уникальное. O(n) времени, O(1) памяти. Словарь тоже решает, но требует O(n) памяти, и упоминание побитового решения ценится.</span></li>
+      <li><span class="qq">Найти пропущенное число в диапазоне от 1 до n.</span><span class="aa">Сумма арифметической прогрессии минус фактическая сумма массива: O(n) времени, O(1) памяти. Альтернатива — исключающее ИЛИ. Стоит упомянуть риск переполнения при очень больших n, хотя в PHP это редко проблема.</span></li>
+      <li><span class="qq">Развернуть массив или строку на месте.</span><span class="aa">Два указателя с концов, обмен значениями до встречи: O(n) времени, O(1) памяти. Для строк в PHP есть <code>strrev</code>, но если просят реализовать — писать с указателями и не забыть про многобайтовые символы.</span></li>
+      <li><span class="qq">Проверить, является ли строка палиндромом.</span><span class="aa">Два указателя с концов с пропуском незначащих символов и приведением регистра. O(n) времени, O(1) памяти. Обязательно уточнить: учитывать ли пробелы и знаки, есть ли кириллица — от этого зависит, нужны ли <code>mb_*</code>-функции.</span></li>
+      <li><span class="qq">Максимальная сумма k подряд идущих элементов.</span><span class="aa">Скользящее окно фиксированной длины: считаем первую сумму, затем сдвигаем окно, добавляя правый элемент и вычитая левый. O(n) вместо O(n·k). Уточнить, что делать, если k больше длины массива.</span></li>
+      <li><span class="qq">Самая длинная подстрока без повторяющихся символов.</span><span class="aa">Переменное скользящее окно: словарь последних позиций символов, левая граница сдвигается за прошлую позицию повторившегося символа. O(n) времени. Важная деталь — сравнивать позицию с текущим началом окна, иначе граница уедет назад.</span></li>
+      <li><span class="qq">Найти элемент в отсортированном массиве.</span><span class="aa">Бинарный поиск: O(log n). Границы <code>lo &lt;= hi</code>, середина через <code>lo + intdiv(hi - lo, 2)</code>. Проверять на массиве из двух элементов — там ломаются почти все ошибочные варианты.</span></li>
+      <li><span class="qq">Найти позицию для вставки в отсортированный массив.</span><span class="aa">Вариант бинарного поиска «нижняя граница»: <code>hi</code> начинается за последним элементом, цикл со строгим сравнением, при подходящем элементе сжимаем <code>hi</code> до середины. Возвращает индекс первого элемента, не меньшего искомого. O(log n).</span></li>
+      <li><span class="qq">Пересечение двух массивов.</span><span class="aa">Меньший массив превратить в множество, пройти по большему и собрать совпадения: O(n + m) времени, O(min) памяти. В PHP есть <code>array_intersect</code>, но если просят алгоритм — писать через множество и уточнить, нужны ли дубликаты в результате.</span></li>
+      <li><span class="qq">Сгруппировать анаграммы.</span><span class="aa">Ключом группы делаем отсортированное слово: O(n · k log k), где k — длина слова. Альтернативный ключ — вектор частот символов, это O(n · k) без сортировки. Второй вариант упомянуть стоит: он показывает понимание стоимости.</span></li>
+      <li><span class="qq">Переместить все нули в конец массива, сохранив порядок остальных.</span><span class="aa">Два указателя в одном направлении: медленный указывает, куда писать следующий ненулевой элемент, быстрый идёт по массиву. Затем заполнить хвост нулями. O(n) времени, O(1) памяти, порядок сохраняется.</span></li>
+      <li><span class="qq">Сумма на отрезке при множестве запросов.</span><span class="aa">Префиксные суммы: один проход подготовки O(n), затем каждый запрос за O(1) как разность двух префиксов. Классическая ловушка — сдвиг на единицу: удобнее хранить префиксы с нулём в начале.</span></li>
+      <li><span class="qq">Какая сложность у вложенного цикла по одному массиву?</span><span class="aa">O(n²). Важнее другое — умение заметить скрытый квадрат: <code>in_array</code> или <code>array_search</code> внутри цикла выглядят как один проход, но дают то же самое. Лечится построением множества заранее.</span></li>
+      <li><span class="qq">Чем <code>isset</code> отличается от <code>array_key_exists</code>?</span><span class="aa"><code>isset</code> возвращает <code>false</code> для существующего ключа со значением <code>null</code>, а <code>array_key_exists</code> — <code>true</code>. В алгоритмах это важно, когда <code>null</code> — значимое значение; для счётчиков и множеств <code>isset</code> быстрее и достаточно.</span></li>
+      <li><span class="qq">Почему <code>array_shift</code> опасен в цикле?</span><span class="aa">Он удаляет первый элемент и переиндексирует весь массив, то есть стоит O(n). В цикле это даёт O(n²) там, где ожидался линейный проход. Для очереди нужен <code>SplQueue</code>, у которого извлечение за O(1), — например, в BFS.</span></li>
+      <li><span class="qq">Что делать, если решение не приходит?</span><span class="aa">Не молчать: разобрать пример руками, написать наивное решение и назвать его сложность, проговорить, что именно не сходится. Наивное решение — правильный первый шаг, а не поражение. Просьба о подсказке лучше, чем несколько минут тишины.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 задач и вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Объединить пересекающиеся интервалы.</span><span class="aa">Отсортировать по началу и пройти один раз: если начало текущего не позже конца предыдущего — расширить предыдущий максимумом концов, иначе начать новый. O(n log n). Уточнить, считаются ли пересекающимися соприкасающиеся интервалы.</span></li>
+      <li><span class="qq">Максимальное число одновременных встреч в переговорной.</span><span class="aa">Разложить на события: начало +1, конец −1, отсортировать и пройти со счётчиком, запоминая максимум. Важная деталь — при равном времени сначала обрабатывать концы, иначе получится завышенный результат. O(n log n).</span></li>
+      <li><span class="qq">Минимальная грузоподъёмность, чтобы развезти посылки за d дней.</span><span class="aa">Бинарный поиск по ответу: диапазон от самой тяжёлой посылки до суммы всех, проверка «хватит ли данной грузоподъёмности» линейна и монотонна. O(n log суммы). Ключ к решению — заметить монотонность.</span></li>
+      <li><span class="qq">Как узнать задачу на бинарный поиск по ответу?</span><span class="aa">По формулировке «минимальное или максимальное значение X, при котором возможно» и наличию быстрой проверки для конкретного X. Если проверка монотонна — подходит X, значит подходит и любое большее, — работает бинарный поиск по диапазону ответов.</span></li>
+      <li><span class="qq">Сгенерировать все подмножества множества.</span><span class="aa">Бэктрекинг: на каждом шаге берём элемент или пропускаем, после возврата откатываем выбор. Всего 2ⁿ подмножеств. Альтернатива без рекурсии — перебор чисел от 0 до 2ⁿ−1 с трактовкой битов как маски включения.</span></li>
+      <li><span class="qq">Сгенерировать все перестановки.</span><span class="aa">Бэктрекинг с массивом использованных элементов: на каждом уровне перебираем неиспользованные, помечаем, уходим вглубь, снимаем пометку. O(n!) — и это неизбежно. При дубликатах во входе нужна сортировка и пропуск одинаковых на одном уровне.</span></li>
+      <li><span class="qq">Какая главная ошибка в бэктрекинге?</span><span class="aa">Забыть откат состояния после рекурсивного вызова: общий массив тянет мусор из предыдущей ветки. Правило — любое изменение состояния перед уходом вглубь должно иметь парную отмену. Вторая по частоте ошибка — отсутствие отсечений, из-за чего перебор не дожидается конца.</span></li>
+      <li><span class="qq">Сколькими способами подняться по лестнице шагами 1 и 2?</span><span class="aa">Классическая динамика: число способов для n равно сумме для n−1 и n−2. Практичный путь на собеседовании — написать рекурсию, заметить повторы, добавить мемоизацию за O(n), затем при желании свернуть в две переменные и получить O(1) памяти.</span></li>
+      <li><span class="qq">Задача о рюкзаке.</span><span class="aa">Динамика по остаточной ёмкости: <code>dp[c]</code> — лучшая стоимость при ёмкости c, для каждого предмета обновляем массив справа налево. Направление обхода критично: слева направо предмет учтётся многократно. Время O(n · capacity).</span></li>
+      <li><span class="qq">Наибольшая возрастающая подпоследовательность.</span><span class="aa">Простая динамика за O(n²): <code>dp[i]</code> — длина лучшей последовательности, заканчивающейся в i. Существует решение за O(n log n) через поддержание массива минимальных концов и бинарный поиск — его стоит упомянуть даже при написании квадратичного.</span></li>
+      <li><span class="qq">Как распознать задачу на динамику?</span><span class="aa">Ответ выражается через ответы на меньшие подзадачи, и при переборе эти подзадачи повторяются. Формулировки-маркеры: «сколькими способами», «минимальная стоимость», «можно ли набрать». Практический путь — перебор, затем мемоизация; таблица снизу вверх уже оптимизация.</span></li>
+      <li><span class="qq">Подсчитать острова в сетке.</span><span class="aa">Обход в глубину или в ширину от каждой непосещённой клетки суши, помечая всю связную область. Удобно «топить» посещённые клетки прямо в сетке вместо отдельного массива. O(строк × столбцов). Проверку границ и посещённости лучше делать одним условием на входе в функцию.</span></li>
+      <li><span class="qq">Кратчайший путь в невзвешенном графе.</span><span class="aa">Обход в ширину: он идёт по слоям и потому первый достигнутый путь и есть кратчайший. Узел помечается посещённым в момент добавления в очередь, а не извлечения, — иначе он попадёт в очередь несколько раз. O(вершин + рёбер).</span></li>
+      <li><span class="qq">Определить порядок выполнения задач с зависимостями.</span><span class="aa">Топологическая сортировка: считаем входящие степени, начинаем с нулевых, при обработке уменьшаем степени соседей и добавляем достигшие нуля. Если обошли не все вершины — есть цикл, и порядка не существует. O(V + E).</span></li>
+      <li><span class="qq">Обнаружить цикл в графе.</span><span class="aa">Для ориентированного — обход в глубину с тремя состояниями вершины: не посещена, в обработке, завершена; ребро в вершину «в обработке» означает цикл. Или через топологическую сортировку по числу обработанных вершин. Для неориентированного проще система непересекающихся множеств.</span></li>
+      <li><span class="qq">Найти K наибольших элементов.</span><span class="aa">Куча минимумов размера K: добавляем элемент, при превышении размера извлекаем наименьший. Время O(n log k), память O(k). Это принципиально лучше полной сортировки, когда n велико или данные приходят потоком.</span></li>
+      <li><span class="qq">Слить k отсортированных списков.</span><span class="aa">Куча размера k: держим по одному текущему элементу от каждого источника, извлекаем минимум и подтягиваем следующий из того же источника. O(n log k) времени и O(k) памяти — именно так сливают большие отсортированные файлы.</span></li>
+      <li><span class="qq">Проверить, что две строки — анаграммы.</span><span class="aa">Сравнить частоты символов за один проход: O(n). В PHP частоты байтов даёт <code>count_chars</code>. Либо отсортировать обе строки — короче, но O(n log n). Обязательно уточнить кодировку: для кириллицы нужна посимвольная работа через <code>mb_*</code>.</span></li>
+      <li><span class="qq">Почему в PHP нужно помнить про байты в строках?</span><span class="aa">Строка — это массив байтов, поэтому <code>strlen</code> и обращение по индексу дают неверный результат для многобайтовых символов: одна кириллическая буква занимает два байта. В алгоритмических задачах нужно либо уточнить, что вход латинский, либо использовать <code>mb_*</code>-функции.</span></li>
+      <li><span class="qq">Реализовать LRU-кэш.</span><span class="aa">Словарь для доступа за O(1) плюс двусвязный список для порядка использования: при обращении элемент перемещается в начало, при переполнении удаляется с конца. В PHP порядок вставки в массиве упорядочен, поэтому упрощённый вариант делается на массиве с удалением и повторной вставкой ключа.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 задач и вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Можно ли решить лучше?</span><span class="aa">Это приглашение к разговору. Правильная реакция — назвать текущее узкое место и путь его устранения: «время O(n²) из-за вложенного цикла, убирается словарём до O(n) ценой O(n) памяти». Если улучшения не видите — честно сказать, какое ограничение мешает и в какую сторону думаете.</span></li>
+      <li><span class="qq">Когда оптимизация не нужна?</span><span class="aa">Когда наивное решение укладывается в ограничения, а оптимальное заметно сложнее в поддержке: при n до тысячи квадратичное решение работает мгновенно. Такой выбор нужно озвучить явно с оценкой, иначе он будет выглядеть как неумение оптимизировать.</span></li>
+      <li><span class="qq">Как выбрать между словарём и двумя указателями?</span><span class="aa">По ограничениям и по входу. Словарь — один проход и O(n) памяти, работает на неотсортированных данных и сохраняет индексы. Два указателя требуют порядка, зато дают O(1) памяти. Если сортировать нельзя из-за нужных исходных индексов — только словарь.</span></li>
+      <li><span class="qq">Найти топ-10 самых частых значений в файле на 10 ГБ.</span><span class="aa">Читать потоком, а не загружать файл: память тогда не зависит от размера. Но словарь всё ещё держит все уникальные значения, и это надо назвать вслух. Если уникальных слишком много — разбить по хешу на файлы-корзины, обработать каждую отдельно и слить результаты.</span></li>
+      <li><span class="qq">Найти дубликаты в наборе, не влезающем в память.</span><span class="aa">Внешняя обработка: разложить записи по N файлам по хешу так, чтобы одинаковые гарантированно попали в один файл, затем обработать каждый в памяти. Если допустима приблизительность — фильтр Блума для предварительного отсева с последующей точной проверкой кандидатов.</span></li>
+      <li><span class="qq">Как обработать миллион записей с постоянной памятью?</span><span class="aa">Потоком через генератор, пачками для операций к базе, без промежуточных материализаций в массивы. Ключевой признак правильного решения — память не зависит от объёма входа. Отдельно стоит упомянуть возобновляемость: сохранение позиции, чтобы обработку можно было продолжить после сбоя.</span></li>
+      <li><span class="qq">Реализовать ограничение частоты запросов.</span><span class="aa">Token bucket: пополняем «токены» пропорционально прошедшему времени, каждый запрос списывает один. Допускает короткие всплески и ограничивает среднюю скорость. Скользящее окно точнее, но дороже по памяти. Важно, чтобы проверка и списание были атомарными, иначе при конкурентности лимит превышается.</span></li>
+      <li><span class="qq">Дедуплицировать поток событий с ограниченной памятью.</span><span class="aa">Хранить идентификаторы только за окно, в котором дубликаты реально возможны, с вытеснением по времени. Полное множество за всю историю не влезет. Если допустимы редкие ложные срабатывания — фильтр Блума. Точный ответ зависит от того, что дороже: пропустить дубликат или отвергнуть уникальное.</span></li>
+      <li><span class="qq">Постранично обойти API, который меняется во время обхода.</span><span class="aa">Курсорной пагинацией по стабильному ключу, а не смещением: при вставках и удалениях смещение даёт дубликаты и пропуски. Дополнительно — идемпотентная обработка, чтобы повтор страницы не ломал результат, и фиксация позиции для возобновления.</span></li>
+      <li><span class="qq">Как проверить своё решение на собеседовании?</span><span class="aa">Прогнать вслух на четырёх входах: пустой, один элемент, обычный случай, вырожденный (все одинаковые или отсортированные наоборот). Часть проверок приведёт не к правке кода, а к вопросу об условии — это нормально и это плюс. Главное — сделать это до того, как спросят.</span></li>
+      <li><span class="qq">Какие граничные случаи проверяете всегда?</span><span class="aa">Пустой вход, один элемент, два элемента (на них ломаются указатели и границы окна), одинаковые значения, отсутствие ответа, границы диапазона. Для строк — пустая строка и юникод. Для графов — изолированная вершина, цикл, несвязный граф.</span></li>
+      <li><span class="qq">Что делать, если дали подсказку?</span><span class="aa">Услышать, повторить своими словами, встроить в решение. Спорить или игнорировать — худшая реакция: подсказка означает, что интервьюер хочет вывести вас к решению, а не поймать. Умение принять чужую идею и развить её — то же качество, что нужно на код-ревью.</span></li>
+      <li><span class="qq">Как вести себя, если задача знакома и решение помните?</span><span class="aa">Сказать об этом прямо. Скорость и уверенность всё равно выдадут, а признание сохраняет доверие. И всё равно объяснить логику: цель секции — увидеть ход мысли, а не факт, что вы видели задачу. Часто в ответ дают другую задачу, и лучше, если это произойдёт по вашей инициативе.</span></li>
+      <li><span class="qq">Как не зависнуть, если решение не приходит совсем?</span><span class="aa">Разобрать конкретный пример руками — закономерность часто видна именно там. Написать заведомо неоптимальное решение как отправную точку. Проговорить, что именно не сходится. Попросить подсказку. Молчание — единственный вариант, который точно не работает.</span></li>
+      <li><span class="qq">Как связать алгоритмическую секцию с реальной работой?</span><span class="aa">Примерами из практики: замена вложенного цикла словарём в медленном отчёте, потоковая обработка большого файла с постоянной памятью, выбор структуры данных под задачу, курсорная пагинация вместо смещения. Это показывает, что вы понимаете, где алгоритмическое мышление нужно, а где достаточно готовой функции.</span></li>
+      <li><span class="qq">Стоит ли использовать встроенные функции PHP?</span><span class="aa">Да, если задача не про реализацию алгоритма: <code>usort</code>, <code>array_column</code>, <code>levenshtein</code> экономят время и показывают знание стандартной библиотеки. Но если просят написать бинарный поиск, писать нужно самому. Правильный ход — назвать готовую функцию и уточнить, нужна ли своя реализация.</span></li>
+      <li><span class="qq">Как оценить, уложится ли решение по времени?</span><span class="aa">По размеру входа: до тысячи допустимо O(n²), до ста тысяч нужно O(n log n), при десятках миллионов — только линейное или логарифмическое. Этот ориентир подсказывает класс ожидаемого решения ещё до того, как оно придумано, и его полезно назвать вслух.</span></li>
+      <li><span class="qq">Что важнее на live-coding — код или разговор?</span><span class="aa">Разговор. Рабочее решение с одной неточностью, которую кандидат нашёл сам, объяснив ход мысли, оценивается выше идеального кода, написанного молча. Оценивают понимание задачи, умение сравнивать варианты, внимание к границам и реакцию на подсказку — то есть то, как человек будет работать.</span></li>
+      <li><span class="qq">Как готовиться к алгоритмической секции?</span><span class="aa">По паттернам, а не случайными задачами: словари, два указателя, бинарный поиск, сортировка, графы, простая динамика. Писать код руками с таймером на 25–30 минут, проговаривать вслух, возвращаться к задачам через неделю и вести список собственных ошибок — он полезнее любого учебника.</span></li>
+      <li><span class="qq">Нужны ли алгоритмы PHP-разработчику в работе?</span><span class="aa">Редко в чистом виде и постоянно в виде мышления: заметить скрытый квадрат, выбрать структуру данных, обработать большой объём с постоянной памятью, понять, почему запрос медленный. Честный ответ такой и есть: наизусть алгоритмы не нужны, а понимание сложности и умение видеть узкое место — нужны каждый день.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Задания устроены так, чтобы тренировать не только решение, но и формат: время, проговаривание, проверка границ. Именно это отличает подготовку от бессистемного решения задач.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Пять задач на словарь</h4>
+    <p>Решите за раз: две суммы, поиск дубликата, самый частый элемент, пересечение массивов, подмассив с заданной суммой. Все — одним проходом со словарём, без вложенных циклов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Автоматизм в приёме «искать среди уже увиденных» — он закрывает больше задач, чем любой другой.</div>
+
+    <h4>2. Шаблон бинарного поиска</h4>
+    <p>Напишите оба варианта — классический поиск и нижнюю границу — и проверьте на массивах из нуля, одного и двух элементов, а также при отсутствии искомого значения.</p>
+    <div class="box task"><span class="lbl">Результат</span>Шаблон, который не ломается на границах. Проверка на двух элементах отсекает почти все ошибочные варианты.</div>
+
+    <h4>3. Скользящее окно двух видов</h4>
+    <p>Решите задачу с фиксированным окном (максимальная сумма k подряд) и с переменным (самая длинная подстрока без повторов). Сравните структуру решений — она почти одинакова.</p>
+    <div class="box task"><span class="lbl">Результат</span>Узнавание паттерна по формулировке «подряд идущие» или «подстрока».</div>
+
+    <h4>4. Оценка сложности чужого кода</h4>
+    <p>Возьмите пять фрагментов из своего проекта и оцените их сложность. Найдите хотя бы один скрытый квадрат — <code>in_array</code> в цикле, <code>array_shift</code> в цикле или <code>array_merge</code> внутри итерации.</p>
+    <div class="box task"><span class="lbl">Результат</span>Найденное место с квадратичной сложностью в рабочем коде и его исправление.</div>
+
+    <h4>5. Решение вслух с записью</h4>
+    <p>Возьмите одну задачу и решите её, записывая себя: уточнение условия, подход, код, проверка границ, сложность. Прослушайте запись.</p>
+    <div class="box task"><span class="lbl">Результат</span>Понимание, как вы звучите со стороны: длинные паузы, невнятные объяснения, привычка писать код до формулировки подхода.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Неделя на графы</h4>
+    <p>Решите пять задач: подсчёт островов, кратчайший путь в сетке, топологическая сортировка, обнаружение цикла, компоненты связности. Все — на BFS и DFS, без специальных алгоритмов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Готовые заготовки обходов, которые пишутся по памяти, и понимание, когда какой брать.</div>
+
+    <h4>7. Динамика через мемоизацию</h4>
+    <p>Решите три задачи путём «перебор → мемоизация»: лестница, размен монет, максимальная сумма без соседних элементов. Затем перепишите одну из них в таблицу и оптимизируйте память.</p>
+    <div class="box task"><span class="lbl">Результат</span>Рабочий подход к динамике, который не требует угадывать формулу сразу.</div>
+
+    <h4>8. Бэктрекинг по шаблону</h4>
+    <p>Реализуйте подмножества, перестановки и комбинации по одному шаблону, меняя только базу и варианты шага. Добавьте отсечения и замерьте разницу во времени.</p>
+    <div class="box task"><span class="lbl">Результат</span>Один шаблон вместо трёх решений и наглядный эффект отсечений.</div>
+
+    <h4>9. Задачи на интервалы</h4>
+    <p>Решите слияние интервалов, максимальное число одновременных встреч и вставку интервала в отсортированный список. Обратите внимание на обработку соприкасающихся границ.</p>
+    <div class="box task"><span class="lbl">Результат</span>Понимание приёма «события на прямой», который решает целый класс задач с расписаниями.</div>
+
+    <h4>10. Куча и потоки</h4>
+    <p>Реализуйте топ-K для потока чисел, слияние трёх отсортированных генераторов и очередь с приоритетом со сравнением по двум полям.</p>
+    <div class="box task"><span class="lbl">Результат</span>Решения с памятью O(k) вместо O(n) — то, что отличает работу с потоками от работы с массивами.</div>
+
+    <h4>11. Тренировка с таймером</h4>
+    <p>Десять задач по 30 минут: 5 минут на уточнение и подход, 15 на код, 5 на проверку границ и сложность, 5 на разбор чужого решения. Обязательно вслух.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список собственных ошибок — самый полезный артефакт подготовки.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Задачи из практики</h4>
+    <p>Решите четыре прикладные задачи: топ-K в большом файле потоком, слияние отсортированных выгрузок, ограничение частоты запросов, LRU-кэш. Для каждой назовите, где решение упрётся при росте данных.</p>
+    <div class="box task"><span class="lbl">Результат</span>Решения, устойчивые к масштабу, и умение проговорить их предел.</div>
+
+    <h4>13. Разбор пространства решений</h4>
+    <p>Возьмите пять задач и для каждой опишите три решения с разной сложностью и памятью, а затем обоснуйте выбор при разных ограничениях: маленький вход, большой вход, жёсткий лимит памяти.</p>
+    <div class="box task"><span class="lbl">Результат</span>Заготовки для главного senior-навыка — обсуждать варианты, а не выдавать один.</div>
+
+    <h4>14. Тренировочные собеседования</h4>
+    <p>Проведите три сессии с коллегой в роли интервьюера, поменявшись ролями. В роли интервьюера специально давайте неполное условие и подсказки — это лучший способ понять, как выглядит хороший кандидат.</p>
+    <div class="box task"><span class="lbl">Результат</span>Опыт с обеих сторон стола: он меняет поведение на реальном собеседовании сильнее всего.</div>
+
+    <h4>15. Связь с рабочими задачами</h4>
+    <p>Найдите в своём проекте три места, где применим алгоритмический приём: словарь вместо вложенного цикла, потоковая обработка вместо загрузки в память, курсор вместо смещения. Реализуйте и замерьте.</p>
+    <div class="box task"><span class="lbl">Результат</span>Замеры до и после — готовые примеры для ответа на вопрос «где вам это пригодилось».</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час в будний день и два-три часа в выходной — этого достаточно, если заниматься системно. Ключевое правило: не решать задачи подряд случайно, а закрывать по одному паттерну за раз.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Процесс и базовые приёмы</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Протокол решения и уточняющие вопросы, оценка сложности и ориентиры по размеру входа, частотный словарь, множество, индекс, группировка, префиксные суммы, два указателя, скользящее окно, бинарный поиск и поиск по ответу.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: пять задач на словарь, шаблон бинарного поиска, два вида окна, оценка сложности своего кода, решение вслух с записью.</li>
+      <li>Выучить наизусть ориентир «какой класс решения нужен при данном n».</li>
+      <li>Довести до автоматизма замену <code>in_array</code> в цикле на множество.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Уверенные словарь, два указателя, окно и бинарный поиск плюс привычка проговаривать подход и сложность.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>С чего начинается решение задачи?</li>
+      <li>Как оценить, уложится ли решение по времени?</li>
+      <li>Как найти два числа с заданной суммой двумя способами?</li>
+      <li>Когда работает скользящее окно?</li>
+      <li>Как выглядит шаблон бинарного поиска, который не ломается?</li>
+      <li>Как узнать бинарный поиск по ответу?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Сортировка, перебор, динамика</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Сортировка как первый шаг решения, интервалы и события на прямой, рекурсия и шаблон бэктрекинга с откатом и отсечениями, путь «перебор → мемоизация → таблица», рюкзак и наибольшая возрастающая подпоследовательность, признаки задач на динамику.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 7–9: динамика через мемоизацию, бэктрекинг по одному шаблону, задачи на интервалы.</li>
+      <li>Написать шаблон бэктрекинга и решить им три разные задачи, меняя только базу и шаг.</li>
+      <li>Проверить каждое решение на пустом входе и на одном элементе.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Один шаблон перебора вместо разрозненных решений и рабочий подход к динамике без угадывания формулы.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Когда сортировка помогает и что она ломает?</li>
+      <li>Как объединить пересекающиеся интервалы?</li>
+      <li>Какая главная ошибка в бэктрекинге?</li>
+      <li>Как распознать задачу на динамику?</li>
+      <li>Почему в рюкзаке важно направление обхода?</li>
+      <li>Зачем нужны отсечения в переборе?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Графы, куча, строки</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Обходы в ширину и в глубину, кратчайший путь, компоненты и острова, топологическая сортировка и обнаружение цикла, куча и топ-K, слияние отсортированных источников, задачи на строки и специфика байтов в PHP.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6 и 10: неделя на графы (пять задач), куча и потоки.</li>
+      <li>Написать заготовки BFS, DFS и топологической сортировки, которые воспроизводятся по памяти.</li>
+      <li>Решить три строковые задачи, каждый раз уточняя вопрос про кодировку.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Заготовки обходов, решения топ-K с памятью O(k) и понимание строковой специфики PHP.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Когда BFS, а когда DFS?</li>
+      <li>Почему узел помечается посещённым при добавлении в очередь?</li>
+      <li>Как найти порядок задач с зависимостями и обнаружить цикл?</li>
+      <li>Как решать топ-K и почему не сортировкой?</li>
+      <li>Как слить k отсортированных источников?</li>
+      <li>Почему в PHP важно помнить про байты в строках?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Формат, компромиссы, практика</h3><span class="badge b-3">Разбор</span></div>
+    <h4>Темы</h4>
+    <p>Пространство решений и обмен времени на память, когда оптимизация не нужна, граничные случаи и самопроверка, прикладные задачи с большими данными, потоки и корзины по хешу, коммуникация и поведение при затруднении, стратегия подготовки.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 11–15: тренировка с таймером, задачи из практики, разбор пространства решений, тренировочные собеседования, связь с рабочими задачами.</li>
+      <li>Провести три сессии с коллегой, побывав и кандидатом, и интервьюером.</li>
+      <li>Составить финальный список своих ошибок и перечитать его накануне собеседования.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Умение обсуждать варианты вслух, решения, устойчивые к масштабу, три записанных прогона собеседования и список личных ошибок.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как проговаривать выбор между решениями?</li>
+      <li>Когда оптимизация не нужна и как это сказать?</li>
+      <li>Какие граничные случаи проверяете всегда?</li>
+      <li>Как найти топ-K в файле, не влезающем в память?</li>
+      <li>Что делать, если решение не приходит совсем?</li>
+      <li>Как вести себя, если задача знакома?</li>
+      <li>Что важнее — код или разговор?</li>
+      <li>Нужны ли алгоритмы PHP-разработчику в работе?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как вести себя на live-coding</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Сначала вопросы, потом код.</strong> Пять уточнений про вход, выход и края занимают минуту и часто меняют решение целиком. Молчаливое додумывание условия — минус, а не экономия времени.</li>
+      <li><strong>Говорите то, что думаете.</strong> Интервьюер оценивает ход мысли, а не результат телепатии. «Сейчас я строю индекс, чтобы искать за O(1)» — короткая фраза, которая меняет впечатление от всего решения.</li>
+      <li><strong>Наивное решение — законный первый шаг.</strong> Назвать перебор и его сложность, а потом улучшать — сильная стратегия. Попытка выдать оптимальное сразу заканчивается молчанием, которое выглядит хуже любого квадрата.</li>
+      <li><strong>Проверяйте себя первым.</strong> Прогнать пустой вход и один элемент до того, как спросят, — самый дешёвый способ выглядеть аккуратным инженером.</li>
+      <li><strong>Называйте сложность сами.</strong> Время и память, без наводящего вопроса. И лучше добавить условие: «если бы вход был отсортирован, память была бы O(1)».</li>
+      <li><strong>Подсказка — это помощь, а не ловушка.</strong> Услышать, повторить своими словами, встроить. Спор с подсказкой портит впечатление сильнее нерешённой задачи.</li>
+      <li><strong>Связывайте с работой.</strong> Упоминание реального случая — вложенный цикл в отчёте, обработка большого файла потоком — превращает абстрактную секцию в разговор двух инженеров.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Алгоритмы для live-coding» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

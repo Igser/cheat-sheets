@@ -1,0 +1,193 @@
+name: cheatsheets-db
+
+# Песочница под задания из sql.html и nosql.html.
+# Профили: без профиля — ядро (postgres, mysql, redis, adminer);
+#   --profile nosql   -> mongo
+#   --profile search  -> elasticsearch
+#   --profile kibana  -> kibana (тянет за собой elasticsearch)
+#   --profile olap    -> clickhouse
+#   --profile all     -> всё сразу
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: cs-postgres
+    environment:
+      POSTGRES_USER: practice
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: practice
+      # ru-морфология для tsvector работает и без этого, но сортировки будут корректнее
+      LANG: ru_RU.utf8
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements,auto_explain
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - work_mem=32MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - track_io_timing=on
+      - -c
+      - log_min_duration_statement=200
+      - -c
+      - auto_explain.log_min_duration=500
+    ports:
+      - "127.0.0.1:${PG_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U practice -d practice"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  mysql:
+    image: mysql:8.4
+    container_name: cs-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: practice
+      MYSQL_USER: practice
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    command:
+      - --local-infile=1
+      - --performance-schema=ON
+      - --slow-query-log=ON
+      - --long-query-time=0.2
+      - --innodb-buffer-pool-size=1G
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      - "127.0.0.1:${MYSQL_PORT}:3306"
+    volumes:
+      - mysqldata:/var/lib/mysql
+      - ./init/mysql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: cs-redis
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  adminer:
+    image: adminer:latest
+    container_name: cs-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: dracula
+    ports:
+      - "127.0.0.1:${ADMINER_PORT}:8080"
+    depends_on:
+      - postgres
+      - mysql
+
+  mongo:
+    image: mongo:7
+    container_name: cs-mongo
+    profiles: ["nosql", "all"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: practice
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MONGO_INITDB_DATABASE: practice
+    ports:
+      - "127.0.0.1:${MONGO_PORT}:27017"
+    volumes:
+      - mongodata:/data/db
+      - ./init/mongo:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: cs-elasticsearch
+    profiles: ["search", "kibana", "all"]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.enrollment.enabled: "false"
+      ES_JAVA_OPTS: -Xms1g -Xmx1g
+      cluster.name: cheatsheets
+      bootstrap.memory_lock: "true"
+    ulimits:
+      memlock: { soft: -1, hard: -1 }
+      nofile: { soft: 65536, hard: 65536 }
+    ports:
+      - "127.0.0.1:${ES_PORT}:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.3
+    container_name: cs-kibana
+    profiles: ["kibana", "all"]
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      I18N_LOCALE: ru-RU
+    ports:
+      - "127.0.0.1:${KIBANA_PORT}:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8-alpine
+    container_name: cs-clickhouse
+    profiles: ["olap", "all"]
+    environment:
+      CLICKHOUSE_USER: practice
+      CLICKHOUSE_PASSWORD: ${DB_PASSWORD}
+      CLICKHOUSE_DB: practice
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    ports:
+      - "127.0.0.1:${CH_HTTP_PORT}:8123"
+      - "127.0.0.1:${CH_NATIVE_PORT}:9000"
+    volumes:
+      - chdata:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8123/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  mysqldata:
+  redisdata:
+  mongodata:
+  esdata:
+  chdata:

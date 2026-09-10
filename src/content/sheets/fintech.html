@@ -1,0 +1,1895 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · платежи · деньги · финансовый контур</p>
+  <h1>Финтех и платёжные системы</h1>
+  <p class="lead">Финтех отличается от остальной разработки одним свойством: здесь у ошибки есть сумма. Потерянный запрос в интернет-магазине — это не показанная карточка товара; потерянный запрос в платёжном сервисе — это списанные и не зачисленные деньги, о которых узнают не из мониторинга, а из обращения клиента. Поэтому в предметной области почти всё устроено вокруг одного вопроса: что произойдёт, если операция прервалась в середине и мы не знаем её результата.</p>
+  <p class="lead">Из этого вопроса вырастает весь набор практик темы. Сумма хранится в целых минимальных единицах, потому что дробная арифметика не сходится при сверке. Платёжный запрос идемпотентен, потому что его придётся повторить. Состояние платежа меняется по явной статусной машине, потому что «обновить статус» из двух мест приводит к двойному зачислению. Движение денег пишется двойной записью, потому что баланс должен выводиться из проводок, а не храниться отдельным числом, которое кто-то однажды поправит руками. Каждое из этих правил — не догма, а следствие конкретной аварии, которая случается без него.</p>
+  <p class="lead">Конспект идёт от денег к контуру: представление сумм, участники платежа, жизненный цикл, идемпотентность, вебхуки → двойная запись, гонки и блокировки, статусная машина, сверка, возвраты и споры, рекуррентные платежи, интеграция с провайдером → архитектура платёжного контура, антифрод, KYC и AML, PCI DSS, аудит и отчётность, эксплуатация денег. Смежные темы: <a href="http-api.html">HTTP и дизайн API</a> (идемпотентность, вебхуки, коды ответов), <a href="messaging.html">брокеры сообщений</a> (outbox, DLQ, семантика доставки), <a href="sql.html">базы данных</a> (транзакции, уровни изоляции, блокировки), <a href="security.html">безопасность</a>, <a href="system-design.html">system design</a>, <a href="observability.html">наблюдаемость</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Деньги в коде и минимальные единицы, участники платежа, жизненный цикл операции, идемпотентность запроса, вебхуки провайдера и проверка подписи.</span></div>
+    <div class="aud m"><b>Middle</b><span>Двойная запись и ledger, гонки при списании и блокировки, статусная машина и события, сверка с провайдером, возвраты и споры, рекуррентные платежи, интеграция с PSP.</span></div>
+    <div class="aud s"><b>Senior</b><span>Архитектура платёжного контура и мультипровайдерность, антифрод и риск, KYC и AML, PCI DSS, аудит и закрытие периода, метрики денег и инциденты.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>19</i></span>
+    <span>Блоков кода: <i>14</i></span>
+    <span>Сравнительных таблиц: <i>35</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#money">Деньги в коде</a></li>
+    <li><span class="tree">├─</span> <a href="#actors">Кто участвует в платеже</a></li>
+    <li><span class="tree">├─</span> <a href="#lifecycle">Жизненный цикл платежа</a></li>
+    <li><span class="tree">├─</span> <a href="#idempotency">Идемпотентность и повторы</a></li>
+    <li><span class="tree">├─</span> <a href="#webhooks">Вебхуки провайдера</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#ledger">Двойная запись и ledger</a></li>
+    <li><span class="tree">├─</span> <a href="#consistency">Гонки, транзакции, блокировки</a></li>
+    <li><span class="tree">├─</span> <a href="#states">Статусная машина и события</a></li>
+    <li><span class="tree">├─</span> <a href="#reconciliation">Сверка с провайдером</a></li>
+    <li><span class="tree">├─</span> <a href="#refunds">Возвраты, chargeback и споры</a></li>
+    <li><span class="tree">├─</span> <a href="#recurring">Рекуррентные платежи и токены</a></li>
+    <li><span class="tree">├─</span> <a href="#provider">Интеграция с провайдером</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#architecture">Архитектура платёжного контура</a></li>
+    <li><span class="tree">├─</span> <a href="#antifraud">Антифрод и риск</a></li>
+    <li><span class="tree">├─</span> <a href="#compliance">KYC, AML и санкции</a></li>
+    <li><span class="tree">├─</span> <a href="#pci">PCI DSS и карточные данные</a></li>
+    <li><span class="tree">├─</span> <a href="#audit">Аудит и закрытие периода</a></li>
+    <li><span class="tree">├─</span> <a href="#ops">Эксплуатация денег</a></li>
+    <li><span class="tree">├─</span> <a href="#antipatterns">Антипаттерны</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Шаблоны и заготовки</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · деньги и платёжный поток</p>
+    <h2>Junior: как устроены деньги и как проходит платёж</h2>
+    <p>Первый уровень закрывает то, на чём спотыкаются почти все, кто пришёл в финтех из обычного веба: представление суммы в коде, кто на самом деле переводит деньги при оплате картой, из каких стадий состоит платёж и почему любой платёжный запрос обязан переживать повтор.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="money">
+    <p class="path">junior / деньги</p>
+    <div class="card-top"><h3>Деньги в коде</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Деньги — не число. Это пара «сумма и валюта» с фиксированной точностью, набором правил округления и запретом на молчаливое смешивание валют. Первая же попытка положить сумму в <span class="nm">float</span> заканчивается тем, что <code>0.1 + 0.2</code> даёт <code>0.30000000000000004</code>, а сверка с банком расходится на копейки, которые невозможно объяснить.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · чем представлять сумму</caption>
+      <thead><tr><th>Способ</th><th>Точность</th><th>Риск</th><th>Когда применим</th></tr></thead>
+      <tbody>
+        <tr><td><code>float</code></td><td>Двоичная, неточная для десятичных дробей</td><td>Накопление ошибки, несходящаяся сверка</td><td>Никогда для денег</td></tr>
+        <tr><td><code>string</code> + bcmath</td><td>Произвольная, задаётся масштабом</td><td>Легко забыть масштаб в одной операции</td><td>Проценты, курсы, промежуточные расчёты</td></tr>
+        <tr><td><code>DECIMAL(19,4)</code> в базе</td><td>Точная десятичная</td><td>Драйвер вернёт строку, случайное приведение к float</td><td>Хранение, аналитика, отчётность</td></tr>
+        <tr><td><code>int</code> в минимальных единицах</td><td>Точная, целочисленная</td><td>Переполнение на 32 битах, забытый масштаб валюты</td><td>Основной вариант для операций</td></tr>
+        <tr><td>Объект <code>Money</code> поверх <code>int</code></td><td>Точная, с валютой в типе</td><td>Нет, кроме дисциплины использования</td><td>Промышленный стандарт домена</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Минимальная единица</strong> — копейка, цент, филс. Сумма 199,90 ₽ хранится как целое <code>19990</code>. Масштаб зависит от валюты: у рубля и доллара две цифры после запятой, у японской иены — ноль, у динара Кувейта — три. Поэтому «умножить на 100» не универсальное правило, а частный случай; масштаб берут из справочника валют ISO 4217.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Объект-значение Money: точность, валюта, распределение остатка</span></div><pre><span class="kw">final class</span> <span class="nm">Money</span>
+{
+    <span class="cm">// amount — всегда целое в минимальных единицах валюты</span>
+    <span class="kw">private function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> <span class="nm">$amount</span>,
+        <span class="kw">public readonly</span> <span class="nm">Currency</span> <span class="nm">$currency</span>,
+    ) {}
+
+    <span class="kw">public static function</span> <span class="fn">of</span>(<span class="kw">int</span> <span class="nm">$minorUnits</span>, <span class="nm">Currency</span> <span class="nm">$currency</span>): <span class="kw">self</span>
+    {
+        <span class="kw">return new</span> <span class="kw">self</span>(<span class="nm">$minorUnits</span>, <span class="nm">$currency</span>);
+    }
+
+    <span class="cm">// Единственная точка входа для «человеческих» строк вида 199.90</span>
+    <span class="kw">public static function</span> <span class="fn">fromDecimalString</span>(<span class="kw">string</span> <span class="nm">$value</span>, <span class="nm">Currency</span> <span class="nm">$currency</span>): <span class="kw">self</span>
+    {
+        <span class="nm">$scale</span>  = <span class="nm">$currency</span>-&gt;<span class="fn">exponent</span>();          <span class="cm">// RUB и USD — 2, JPY — 0, KWD — 3</span>
+        <span class="nm">$scaled</span> = <span class="fn">bcmul</span>(<span class="nm">$value</span>, <span class="fn">bcpow</span>(<span class="st">&quot;10&quot;</span>, (<span class="kw">string</span>) <span class="nm">$scale</span>), 0);
+
+        <span class="kw">return new</span> <span class="kw">self</span>((<span class="kw">int</span>) <span class="nm">$scaled</span>, <span class="nm">$currency</span>);
+    }
+
+    <span class="kw">public function</span> <span class="fn">add</span>(<span class="kw">self</span> <span class="nm">$other</span>): <span class="kw">self</span>
+    {
+        <span class="nm">$this</span>-&gt;<span class="fn">assertSameCurrency</span>(<span class="nm">$other</span>);
+
+        <span class="kw">return new</span> <span class="kw">self</span>(<span class="nm">$this</span>-&gt;amount + <span class="nm">$other</span>-&gt;amount, <span class="nm">$this</span>-&gt;currency);
+    }
+
+    <span class="cm">// Деление денег без потери копеек: остаток раздаётся по одной единице</span>
+    <span class="cm">// Money::of(10000, RUB)-&gt;allocate([1, 1, 1]) =&gt; 33.34 + 33.33 + 33.33</span>
+    <span class="kw">public function</span> <span class="fn">allocate</span>(<span class="kw">array</span> <span class="nm">$ratios</span>): <span class="kw">array</span>
+    {
+        <span class="nm">$total</span>       = <span class="fn">array_sum</span>(<span class="nm">$ratios</span>);
+        <span class="nm">$shares</span>      = [];
+        <span class="nm">$distributed</span> = 0;
+
+        <span class="kw">foreach</span> (<span class="nm">$ratios</span> <span class="kw">as</span> <span class="nm">$ratio</span>) {
+            <span class="nm">$share</span> = <span class="fn">intdiv</span>(<span class="nm">$this</span>-&gt;amount * <span class="nm">$ratio</span>, <span class="nm">$total</span>);  <span class="cm">// всегда вниз</span>
+            <span class="nm">$shares</span>[]   = <span class="nm">$share</span>;
+            <span class="nm">$distributed</span> += <span class="nm">$share</span>;
+        }
+
+        <span class="cm">// Остаток от округления вниз раздаём по копейке, начиная с первой доли</span>
+        <span class="kw">for</span> (<span class="nm">$i</span> = 0; <span class="nm">$i</span> &lt; <span class="nm">$this</span>-&gt;amount - <span class="nm">$distributed</span>; <span class="nm">$i</span>++) {
+            <span class="nm">$shares</span>[<span class="nm">$i</span> % <span class="fn">count</span>(<span class="nm">$shares</span>)]++;
+        }
+
+        <span class="kw">return</span> <span class="fn">array_map</span>(<span class="kw">fn</span>(<span class="kw">int</span> <span class="nm">$a</span>) =&gt; <span class="kw">new</span> <span class="kw">self</span>(<span class="nm">$a</span>, <span class="nm">$this</span>-&gt;currency), <span class="nm">$shares</span>);
+    }
+
+    <span class="kw">private function</span> <span class="fn">assertSameCurrency</span>(<span class="kw">self</span> <span class="nm">$other</span>): <span class="kw">void</span>
+    {
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;currency !== <span class="nm">$other</span>-&gt;currency) {
+            <span class="kw">throw new</span> <span class="nm">CurrencyMismatch</span>(<span class="nm">$this</span>-&gt;currency, <span class="nm">$other</span>-&gt;currency);
+        }
+    }
+}
+</pre></div>
+
+    <p><strong>Распределение остатка</strong> — отдельная задача, всплывающая при делении суммы на части: комиссия маркетплейса, разбиение платежа между продавцами, рассрочка на три месяца. Сумма частей обязана точно равняться исходной сумме, поэтому округлять каждую часть отдельно нельзя: 100,00 ₽ на троих дадут 33,33 × 3 = 99,99 и потерянную копейку, которая через месяц станет расхождением в отчёте.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · режимы округления и где они уместны</caption>
+      <thead><tr><th>Режим</th><th>Поведение</th><th>Где применяется</th></tr></thead>
+      <tbody>
+        <tr><td>Вниз, отбрасывание</td><td>Дробная часть отбрасывается</td><td>Начисление бонусов и процентов, распределение с последующей раздачей остатка</td></tr>
+        <tr><td>Вверх</td><td>Всегда в большую сторону</td><td>Комиссии, где недобор недопустим, минимальные платежи</td></tr>
+        <tr><td>Половина вверх</td><td>Ровно половина идёт вверх</td><td>Значение по умолчанию в большинстве прикладных расчётов</td></tr>
+        <tr><td>Банковское, половина к чётному</td><td>Ровно половина идёт к чётной цифре</td><td>Массовые начисления процентов: нет систематического смещения</td></tr>
+        <tr><td>К нулю и от нуля</td><td>Зависит от знака суммы</td><td>Возвраты и корректировки, где важна симметрия с исходной операцией</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Валюта — часть типа, а не подпись рядом. Если сложение <code>Money</code> в рублях и <code>Money</code> в долларах не выбрасывает исключение, однажды оно даст «сумму» из 500 рублей и 20 долларов, равную 520 чего-то. Конвертация — всегда явная операция с указанием курса и его источника, и её результат сохраняется вместе с курсом и меткой времени: через полгода придётся объяснить, откуда взялась именно эта сумма.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему деньги нельзя хранить во float?</b><br>Потому что двоичная плавающая точка не представляет большинство десятичных дробей точно: 0,1 и 0,2 хранятся приближённо, и их сумма не равна 0,3. На одной операции ошибка невидима, на миллионе — это расхождение с банковской выпиской, которое нельзя ни объяснить, ни списать. Стандартное решение — целое число минимальных единиц валюты, обёрнутое в объект <code>Money</code>, который знает свою валюту и не даёт смешивать разные.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="actors">
+    <p class="path">junior / участники</p>
+    <div class="card-top"><h3>Кто участвует в платеже</h3><span class="badge b-1">Карта рынка</span></div>
+    <p>«Оплата картой» выглядит как один HTTP-запрос, а на деле это цепочка из пяти-шести организаций, у каждой из которых свои сроки, комиссии и правила отказа. Понимание этой цепочки объясняет вещи, которые иначе выглядят абсурдом: почему деньги списались, а магазин их ещё не получил, почему возврат идёт пять дней и почему отказ по операции приходит без внятной причины.</p>
+
+    <div class="flow">
+      <div class="node">Плательщик<small>держатель карты</small></div>
+      <span class="arr">→</span>
+      <div class="node">Мерчант<small>ваше приложение</small></div>
+      <span class="arr">→</span>
+      <div class="node">PSP / шлюз<small>единый API, форма оплаты</small></div>
+      <span class="arr">→</span>
+      <div class="node">Банк-эквайер<small>принимает платёж, платит мерчанту</small></div>
+      <span class="arr">→</span>
+      <div class="node">Платёжная система<small>маршрутизация и правила</small></div>
+      <span class="arr">→</span>
+      <div class="node">Банк-эмитент<small>выпустил карту, одобряет операцию</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · роли и зона ответственности</caption>
+      <thead><tr><th>Участник</th><th>Что делает</th><th>Что от него зависит для вас</th></tr></thead>
+      <tbody>
+        <tr><td>Мерчант</td><td>Продаёт товар или услугу, инициирует платёж</td><td>Корректность суммы, идемпотентность, хранение результата</td></tr>
+        <tr><td>PSP, платёжный шлюз</td><td>Единый API поверх нескольких эквайеров, форма оплаты, токенизация</td><td>Формат вебхуков, набор методов оплаты, стабильность интеграции</td></tr>
+        <tr><td>Банк-эквайер</td><td>Обслуживает мерчанта, проводит расчёты, перечисляет выручку</td><td>Сроки зачисления, комиссия, лимиты, реестры для сверки</td></tr>
+        <tr><td>Платёжная система</td><td>Маршрутизирует авторизацию, задаёт правила и сроки споров</td><td>Правила chargeback, требования к 3-D Secure</td></tr>
+        <tr><td>Банк-эмитент</td><td>Выпустил карту клиента, одобряет или отклоняет операцию</td><td>Итоговое решение по платежу, антифрод на своей стороне</td></tr>
+        <tr><td>Процессинг</td><td>Техническая обработка операций для банка</td><td>Технологические окна, регламентные работы, ночные паузы</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Отдельно стоят небанковские способы оплаты:</strong> платёжные ссылки и QR по системе быстрых платежей, электронные кошельки, оплата по счёту для юридических лиц, рассрочка от партнёра. У каждого своя механика подтверждения и свои сроки: у карточного платежа результат известен за секунды, у счёта для юрлица — на следующий рабочий день, а у части кошельков подтверждение приходит только вебхуком и никак иначе.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Отказ эмитента почти никогда не содержит настоящей причины: коды вида «отказ без объяснения» покрывают и недостаток средств, и срабатывание антифрода, и блокировку карты. Показывать пользователю технический код бессмысленно, а строить на нём логику повторов опасно. Работать нужно с крупными категориями: «недостаточно средств» — предложить другую карту, «отказ эмитента» — предложить связаться с банком, «техническая ошибка» — повторить.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем эквайер отличается от PSP?</b><br>Эквайер — банк, который заключил договор с мерчантом, проводит расчёты и физически перечисляет выручку на его счёт. PSP — технологическая прослойка: единое API, форма оплаты, токенизация карт, вебхуки, часто маршрутизация между несколькими эквайерами. Мерчант обычно интегрируется с PSP, но деньги и сроки зачисления определяет эквайер, и при разборе расхождений разговаривать приходится с обоими.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="lifecycle">
+    <p class="path">junior / жизненный цикл</p>
+    <div class="card-top"><h3>Жизненный цикл платежа</h3><span class="badge b-1">Механика</span></div>
+    <p>Платёж — не событие, а процесс с несколькими точками невозврата. Между «клиент нажал оплатить» и «деньги на счёте компании» проходит от нескольких секунд до нескольких дней, и на каждой стадии деньги находятся в разном состоянии. Путаница между стадиями — источник классических багов: заказ отгружают по факту авторизации, которая потом не подтвердилась, или считают выручку по списанию, не дождавшись расчётов.</p>
+
+    <div class="flow">
+      <div class="node">Создание<small>наш платёж, сумма зафиксирована</small></div>
+      <span class="arr">→</span>
+      <div class="node">Авторизация<small>эмитент удерживает сумму</small></div>
+      <span class="arr">→</span>
+      <div class="node">Списание<small>подтверждение операции</small></div>
+      <span class="arr">→</span>
+      <div class="node">Расчёты<small>перевод выручки мерчанту</small></div>
+      <span class="arr">→</span>
+      <div class="node">Выплата<small>деньги на счёте компании</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · стадии платежа и состояние денег</caption>
+      <thead><tr><th>Стадия</th><th>Что произошло</th><th>Где деньги</th><th>Что можно делать</th></tr></thead>
+      <tbody>
+        <tr><td>Создание</td><td>Заведён платёж, сумма и валюта зафиксированы</td><td>У клиента</td><td>Отменить бесплатно</td></tr>
+        <tr><td>Авторизация, холд</td><td>Эмитент подтвердил и заморозил сумму</td><td>Заморожены на карте клиента</td><td>Списать, частично списать, отменить холд</td></tr>
+        <tr><td>Списание</td><td>Мерчант подтвердил операцию</td><td>Списаны, ещё не у мерчанта</td><td>Возврат, полный или частичный</td></tr>
+        <tr><td>Расчёты</td><td>Операция попала в реестр эквайера</td><td>В расчётах эквайера</td><td>Возврат, сверка по реестру</td></tr>
+        <tr><td>Выплата</td><td>Выручка перечислена за вычетом комиссии</td><td>На расчётном счёте компании</td><td>Возврат за счёт следующих поступлений</td></tr>
+        <tr><td>Спор</td><td>Клиент оспорил операцию в своём банке</td><td>Списаны обратно до разбирательства</td><td>Предоставить документы, оспорить</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Одностадийная и двухстадийная схема.</strong> В одностадийной авторизация и списание происходят одним запросом — это подходит для цифровых товаров и всего, что отдаётся мгновенно. В двухстадийной сначала делается холд, а списание выполняется отдельным вызовом, когда товар собран и отгружен. Двухстадийная схема нужна везде, где между оплатой и отгрузкой есть время и возможность не выполнить заказ.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · одностадийная и двухстадийная схема</caption>
+      <thead><tr><th>Признак</th><th>Одностадийная</th><th>Двухстадийная</th></tr></thead>
+      <tbody>
+        <tr><td>Число вызовов провайдера</td><td>Один</td><td>Два: холд и списание</td></tr>
+        <tr><td>Товара нет в наличии</td><td>Возврат, деньги уже списаны</td><td>Отмена холда, списания не было</td></tr>
+        <tr><td>Сумма изменилась</td><td>Частичный возврат</td><td>Списание на меньшую сумму</td></tr>
+        <tr><td>Срок жизни</td><td>Не применимо</td><td>Холд живёт ограниченное число дней и сгорает</td></tr>
+        <tr><td>Комиссия при отмене</td><td>Комиссия за платёж часто не возвращается</td><td>Отмена холда обычно бесплатна</td></tr>
+        <tr><td>Типичное применение</td><td>Цифровые товары, подписки, услуги на месте</td><td>Товары со склада, доставка, аренда, депозиты</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Срок жизни холда — не бесконечный и не одинаковый: у разных схем и эмитентов он составляет от нескольких дней до месяца, после чего сумма разблокируется автоматически, и списать по этой авторизации уже нельзя. Отсюда практическое правило: если заказ висит дольше срока холда, его нужно либо списать, либо отменить явно и уведомить клиента, а не оставлять «до выяснения». Отдельная неприятность — клиент видит замороженную сумму как списание и приходит с вопросом, почему деньги сняли дважды.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем авторизация отличается от списания?</b><br>Авторизация — проверка и заморозка суммы на стороне эмитента: деньги ещё у клиента, но потратить их он не может. Списание — подтверждение операции мерчантом, после которого сумма уходит в расчёты. Разделение даёт возможность не брать деньги, если заказ не может быть выполнен: отмена холда дешевле и быстрее возврата, а для клиента выглядит гораздо лучше.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="idempotency">
+    <p class="path">junior / идемпотентность</p>
+    <div class="card-top"><h3>Идемпотентность и повторы</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Любой сетевой вызов имеет три исхода, а не два: успех, явная ошибка и неизвестность. Третий — самый важный: таймаут, обрыв соединения, ответ 502 от промежуточного прокси. В этом случае операция могла выполниться полностью, а могла не начаться, и определить это по коду ответа невозможно. Всё устройство платёжных API вращается вокруг того, чтобы повтор такого запроса не создал вторую операцию.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · три исхода платёжного запроса</caption>
+      <thead><tr><th>Исход</th><th>Что известно</th><th>Правильная реакция</th><th>Частая ошибка</th></tr></thead>
+      <tbody>
+        <tr><td>Успешный ответ</td><td>Операция создана, статус известен</td><td>Сохранить идентификатор провайдера и статус</td><td>Не сохранить идентификатор до фиксации транзакции</td></tr>
+        <tr><td>Явная ошибка провайдера</td><td>Операция не создана</td><td>Показать причину, разрешить новую попытку</td><td>Автоматический повтор при отказе эмитента</td></tr>
+        <tr><td>Таймаут или обрыв</td><td>Ничего не известно</td><td>Повтор с тем же ключом идемпотентности, затем запрос статуса</td><td>Повтор без ключа: два списания</td></tr>
+        <tr><td>Ответ пришёл, но мы упали</td><td>Операция создана, у нас не записана</td><td>Найти по своему идентификатору в API провайдера, дописать</td><td>Считать платёж несостоявшимся и создать новый</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Ключ идемпотентности</strong> — строка, которую клиент генерирует до запроса и повторяет при каждой попытке. Провайдер по ней узнаёт повтор и возвращает результат первой операции вместо создания новой. Ключ должен быть детерминированным относительно намерения: один ключ на одну попытку оплаты заказа, а не случайный на каждый вызов, иначе смысл теряется.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Идемпотентное создание платежа: ключ, уникальный индекс, повтор</span></div><pre><span class="kw">final class</span> <span class="nm">CreatePaymentHandler</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">PaymentRepository</span> <span class="nm">$payments</span>,
+        <span class="kw">private readonly</span> <span class="nm">PaymentGateway</span> <span class="nm">$gateway</span>,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">handle</span>(<span class="nm">CreatePayment</span> <span class="nm">$command</span>): <span class="nm">Payment</span>
+    {
+        <span class="cm">// 1. Ключ пришёл от клиента и одинаков во всех его повторах.</span>
+        <span class="cm">//    В базе на него стоит UNIQUE — это и есть защита от гонки.</span>
+        <span class="nm">$existing</span> = <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">findByIdempotencyKey</span>(<span class="nm">$command</span>-&gt;idempotencyKey);
+
+        <span class="kw">if</span> (<span class="nm">$existing</span> !== <span class="kw">null</span>) {
+            <span class="cm">// 2. Повтор с теми же параметрами — отдаём прежний результат.</span>
+            <span class="cm">//    Другая сумма под тем же ключом — ошибка вызывающего, а не новый платёж.</span>
+            <span class="kw">if</span> (!<span class="nm">$existing</span>-&gt;<span class="fn">matches</span>(<span class="nm">$command</span>)) {
+                <span class="kw">throw new</span> <span class="nm">IdempotencyKeyReused</span>(<span class="nm">$command</span>-&gt;idempotencyKey);
+            }
+
+            <span class="kw">return</span> <span class="nm">$existing</span>;
+        }
+
+        <span class="cm">// 3. Сначала фиксируем намерение у себя, потом идём в сеть.</span>
+        <span class="cm">//    Платёж в статусе pending уже существует, даже если вызов не вернётся.</span>
+        <span class="nm">$payment</span> = <span class="nm">Payment</span>::<span class="fn">pending</span>(
+            <span class="nm">$command</span>-&gt;orderId,
+            <span class="nm">$command</span>-&gt;amount,
+            <span class="nm">$command</span>-&gt;idempotencyKey,
+        );
+        <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">save</span>(<span class="nm">$payment</span>);
+
+        <span class="kw">try</span> {
+            <span class="nm">$result</span> = <span class="nm">$this</span>-&gt;gateway-&gt;<span class="fn">authorize</span>(
+                <span class="nm">$payment</span>,
+                idempotencyKey: <span class="nm">$command</span>-&gt;idempotencyKey,
+            );
+        } <span class="kw">catch</span> (<span class="nm">GatewayUnknownState</span> <span class="nm">$e</span>) {
+            <span class="cm">// 4. Таймаут: НЕ считаем платёж неудавшимся.</span>
+            <span class="cm">//    Статус выяснит фоновая задача, опрашивая провайдера.</span>
+            <span class="nm">$payment</span>-&gt;<span class="fn">markUnknown</span>(<span class="nm">$e</span>-&gt;<span class="fn">getMessage</span>());
+            <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">save</span>(<span class="nm">$payment</span>);
+
+            <span class="kw">return</span> <span class="nm">$payment</span>;
+        }
+
+        <span class="nm">$payment</span>-&gt;<span class="fn">applyGatewayResult</span>(<span class="nm">$result</span>);
+        <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">save</span>(<span class="nm">$payment</span>);
+
+        <span class="kw">return</span> <span class="nm">$payment</span>;
+    }
+}
+</pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Повтор запроса на списание без ключа идемпотентности «потому что первый упал по таймауту». Это самый прямой способ списать с клиента дважды: первая операция дошла до эмитента и прошла, ответ потерялся по дороге, повтор создал вторую независимую операцию. Второй вариант той же ошибки — генерировать ключ внутри цикла повторов, из-за чего каждая попытка получает новый ключ и перестаёт быть повтором.</div>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Записывайте намерение в свою базу до сетевого вызова и всегда передавайте провайдеру собственный идентификатор платежа. Тогда после любого сбоя есть две опоры: своя запись, по которой видно, что операция начиналась, и возможность найти её у провайдера по своему идентификатору, даже если его ответ до вас не дошёл.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Запрос на списание завершился таймаутом. Ваши действия?</b><br>Не считать операцию неуспешной. Платёж переводится в состояние «результат неизвестен», а дальше — повтор с тем же ключом идемпотентности либо явный запрос статуса по своему идентификатору. Клиенту показывается «платёж обрабатывается», а не ошибка с кнопкой «попробовать снова», которая создаст вторую операцию. Окончательный статус выставляет фоновая проверка или вебхук провайдера.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="webhooks">
+    <p class="path">junior / вебхуки</p>
+    <div class="card-top"><h3>Вебхуки провайдера</h3><span class="badge b-1">Интеграция</span></div>
+    <p>Вебхук — способ провайдера сообщить об изменении статуса: платёж подтверждён, возврат исполнен, спор открыт. Он приходит в произвольный момент, может прийти дважды, может прийти не по порядку и может не прийти вовсе. Обработчик, написанный в предположении «пришло один раз и вовремя», ломается на первой же неделе продакшена.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Обработчик вебхука: подпись, дедупликация, быстрый ответ</span></div><pre><span class="kw">final class</span> <span class="nm">WebhookController</span>
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">Request</span> <span class="nm">$request</span>): <span class="nm">Response</span>
+    {
+        <span class="nm">$raw</span> = <span class="nm">$request</span>-&gt;<span class="fn">getContent</span>();
+
+        <span class="cm">// 1. Подпись считается по сырому телу, до любого декодирования.</span>
+        <span class="cm">//    Сравнение — только hash_equals: обычное === уязвимо к тайминг-атаке.</span>
+        <span class="nm">$expected</span> = <span class="fn">hash_hmac</span>(<span class="st">&quot;sha256&quot;</span>, <span class="nm">$raw</span>, <span class="nm">$this</span>-&gt;secret);
+
+        <span class="kw">if</span> (!<span class="fn">hash_equals</span>(<span class="nm">$expected</span>, <span class="nm">$request</span>-&gt;headers-&gt;<span class="fn">get</span>(<span class="st">&quot;X-Signature&quot;</span>, <span class="st">&quot;&quot;</span>))) {
+            <span class="kw">return new</span> <span class="nm">Response</span>(status: 401);
+        }
+
+        <span class="nm">$event</span> = <span class="nm">$this</span>-&gt;serializer-&gt;<span class="fn">decode</span>(<span class="nm">$raw</span>);
+
+        <span class="cm">// 2. Дедупликация по идентификатору события провайдера.</span>
+        <span class="cm">//    UNIQUE на event_id: повтор упирается в базу, а не в проверку в коде.</span>
+        <span class="kw">if</span> (!<span class="nm">$this</span>-&gt;inbox-&gt;<span class="fn">register</span>(<span class="nm">$event</span>-&gt;id)) {
+            <span class="kw">return new</span> <span class="nm">Response</span>(status: 200);   <span class="cm">// уже обработан — молча подтверждаем</span>
+        }
+
+        <span class="cm">// 3. Тяжёлую работу — в очередь. Ответ провайдеру нужен быстро,</span>
+        <span class="cm">//    иначе он посчитает доставку неуспешной и повторит её.</span>
+        <span class="nm">$this</span>-&gt;bus-&gt;<span class="fn">dispatch</span>(<span class="kw">new</span> <span class="nm">ProcessGatewayEvent</span>(<span class="nm">$event</span>-&gt;id));
+
+        <span class="kw">return new</span> <span class="nm">Response</span>(status: 200);
+    }
+}
+
+<span class="cm">// В обработчике очереди статус применяется через статусную машину,</span>
+<span class="cm">// а не присваиванием: событие «оплачен» после «возвращён» игнорируется.</span>
+<span class="kw">final class</span> <span class="nm">ProcessGatewayEventHandler</span>
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">ProcessGatewayEvent</span> <span class="nm">$message</span>): <span class="kw">void</span>
+    {
+        <span class="nm">$event</span>   = <span class="nm">$this</span>-&gt;inbox-&gt;<span class="fn">get</span>(<span class="nm">$message</span>-&gt;eventId);
+        <span class="nm">$payment</span> = <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">lockByGatewayId</span>(<span class="nm">$event</span>-&gt;paymentId);
+
+        <span class="cm">// Вебхук — сигнал, а не источник истины. Для операций с деньгами</span>
+        <span class="cm">// статус подтверждается запросом к API провайдера.</span>
+        <span class="nm">$actual</span> = <span class="nm">$this</span>-&gt;gateway-&gt;<span class="fn">fetchStatus</span>(<span class="nm">$event</span>-&gt;paymentId);
+
+        <span class="nm">$payment</span>-&gt;<span class="fn">transitionTo</span>(<span class="nm">$actual</span>-&gt;status, <span class="nm">$actual</span>-&gt;amount);
+        <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">save</span>(<span class="nm">$payment</span>);
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · свойства вебхуков и что с ними делать</caption>
+      <thead><tr><th>Свойство</th><th>Как проявляется</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>Повторная доставка</td><td>Одно событие приходит два и более раз</td><td>Уникальный индекс по идентификатору события, обработка через inbox</td></tr>
+        <tr><td>Нарушение порядка</td><td>«Возврат» приходит раньше «оплачен»</td><td>Статусная машина плюс проверка версии или метки времени события</td></tr>
+        <tr><td>Задержка</td><td>Событие приходит через часы после операции</td><td>Опрос статуса по расписанию как страховка</td></tr>
+        <tr><td>Потеря</td><td>Событие не приходит вообще</td><td>Сверка и фоновый опрос зависших платежей</td></tr>
+        <tr><td>Подделка</td><td>Запрос от постороннего на публичный адрес</td><td>Подпись по сырому телу, проверка через <code>hash_equals</code>, список адресов</td></tr>
+        <tr><td>Медленный ответ</td><td>Провайдер считает доставку неуспешной и шлёт повторы</td><td>Ответ 200 сразу, работа в очереди</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Вебхук — уведомление о том, что что-то изменилось, а не документ о движении денег. Решения на сумму принимаются по ответу API провайдера, полученному по вашему запросу: тело вебхука может быть устаревшим, обрезанным или, при ошибке в проверке подписи, вообще чужим. Практическое правило: вебхук говорит «посмотри на платёж X», а сумму и статус вы читаете сами.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как обработать вебхук, который приходит дважды?</b><br>Через таблицу входящих событий с уникальным индексом по идентификатору события: вторая вставка не проходит, обработчик молча отвечает 200. Одной проверки «есть ли такая запись» недостаточно — две параллельные доставки пройдут её одновременно, поэтому защищает именно ограничение в базе. Дополнительно сам переход статуса делается идемпотентным: повторное применение «оплачен» к уже оплаченному платежу не меняет ничего.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card lvl-j" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Проверка</span></div>
+    <p>Что должно быть понятно перед переходом на следующий уровень.</p>
+    <ul class="check">
+      <li>Объяснить, почему сумма хранится целым числом минимальных единиц, и назвать валюты с другим масштабом.</li>
+      <li>Разделить 100,00 ₽ на троих без потери копейки и объяснить, куда она девается при наивном округлении.</li>
+      <li>Назвать режимы округления и сказать, где уместно банковское.</li>
+      <li>Перечислить участников карточного платежа и объяснить разницу между эквайером и PSP.</li>
+      <li>Назвать стадии платежа и сказать, где находятся деньги на каждой.</li>
+      <li>Объяснить разницу между авторизацией и списанием и когда нужна двухстадийная схема.</li>
+      <li>Назвать три исхода платёжного запроса и правильную реакцию на неизвестный.</li>
+      <li>Объяснить, что такое ключ идемпотентности и почему он генерируется до первой попытки.</li>
+      <li>Описать обработчик вебхука с проверкой подписи и дедупликацией.</li>
+      <li>Объяснить, почему статус платежа подтверждается запросом к API, а не берётся из тела вебхука.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · надёжность денежных операций</p>
+    <h2>Middle: учёт, состояние и согласие с внешним миром</h2>
+    <p>Уровень, на котором платёж перестаёт быть строкой в таблице заказов. Появляется отдельный учётный контур с двойной записью, явная статусная машина, защита от гонок, сверка с провайдером и работа с тем, что деньги умеют возвращаться назад — по инициативе клиента, банка или регулятора.</p>
+  </div>
+
+  <!-- 7 -->
+  <article class="card" id="ledger">
+    <p class="path">middle / учёт</p>
+    <div class="card-top"><h3>Двойная запись и ledger</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Соблазнительный вариант учёта — колонка <code>balance</code> в таблице пользователей и запросы вида <code>UPDATE users SET balance = balance - 500</code>. Он работает ровно до первого вопроса «почему у клиента 1 320 ₽, откуда эта сумма». Ответа нет: история движений не хранится, восстановить её невозможно, а любая ошибка кода навсегда остаётся в числе.</p>
+
+    <p><strong>Двойная запись</strong> решает это структурно: денег не появляется и не исчезает, они только перемещаются между счетами. Каждая операция порождает минимум две проводки — списание с одного счёта и зачисление на другой, — и их сумма по операции всегда равна нулю. Баланс перестаёт быть хранимым числом и становится вычисляемым: это сумма проводок по счёту.</p>
+
+    <div class="formula">SUM(entries.amount) по операции = 0<span>инвариант двойной записи: сколько ушло с одних счетов, столько пришло на другие</span></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · проводки при оплате заказа на 1 000 ₽ с комиссией 30 ₽</caption>
+      <thead><tr><th>Операция</th><th>Счёт</th><th>Сумма</th><th>Смысл</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="2">Оплата картой</td><td><code>gateway:acquirer</code></td><td>+1 000,00</td><td>Деньги пришли в контур от эквайера</td></tr>
+        <tr><td><code>user:42:wallet</code></td><td>−1 000,00</td><td>Обязательство перед клиентом на эту сумму</td></tr>
+        <tr><td rowspan="2">Удержание комиссии</td><td><code>user:42:wallet</code></td><td>+30,00</td><td>Обязательство уменьшилось</td></tr>
+        <tr><td><code>revenue:fee</code></td><td>−30,00</td><td>Доход компании</td></tr>
+        <tr><td rowspan="2">Выплата продавцу</td><td><code>user:42:wallet</code></td><td>+970,00</td><td>Обязательство закрыто</td></tr>
+        <tr><td><code>gateway:payout</code></td><td>−970,00</td><td>Деньги ушли из контура</td></tr>
+      </tbody>
+    </table></div>
+
+    <p>Знаки в примере выбраны по бухгалтерскому соглашению: положительная сумма на счёте обязательств означает уменьшение долга. Конкретное соглашение неважно, важно другое — оно должно быть одно на всю систему и записано в документации, иначе через год половина проводок будет считаться в одну сторону, половина в другую.</p>
+
+    <div class="code"><div class="bar"><span>SQL</span><span class="r">Минимальная схема ledger: счета, операции, проводки</span></div><pre><span class="cm">-- Счёт: и клиентский кошелёк, и технический счёт эквайера, и доходы</span>
+<span class="kw">CREATE TABLE</span> <span class="nm">accounts</span> (
+    <span class="nm">id</span>          <span class="kw">BIGSERIAL PRIMARY KEY</span>,
+    <span class="nm">code</span>        <span class="kw">TEXT NOT NULL UNIQUE</span>,        <span class="cm">-- user:42:wallet, revenue:fee</span>
+    <span class="nm">currency</span>    <span class="kw">CHAR</span>(3) <span class="kw">NOT NULL</span>,
+    <span class="nm">kind</span>        <span class="kw">TEXT NOT NULL</span>,               <span class="cm">-- liability, asset, revenue</span>
+    <span class="nm">created_at</span>  <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="cm">-- Операция: то, что произошло в предметной области</span>
+<span class="kw">CREATE TABLE</span> <span class="nm">ledger_transactions</span> (
+    <span class="nm">id</span>              <span class="kw">BIGSERIAL PRIMARY KEY</span>,
+    <span class="nm">idempotency_key</span> <span class="kw">TEXT NOT NULL UNIQUE</span>,    <span class="cm">-- защита от двойного проведения</span>
+    <span class="nm">kind</span>            <span class="kw">TEXT NOT NULL</span>,           <span class="cm">-- payment, refund, fee, payout</span>
+    <span class="nm">reference</span>       <span class="kw">TEXT NOT NULL</span>,           <span class="cm">-- ссылка на платёж или заказ</span>
+    <span class="nm">created_at</span>      <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="cm">-- Проводка: неизменяемая строка. UPDATE и DELETE здесь запрещены.</span>
+<span class="kw">CREATE TABLE</span> <span class="nm">ledger_entries</span> (
+    <span class="nm">id</span>             <span class="kw">BIGSERIAL PRIMARY KEY</span>,
+    <span class="nm">transaction_id</span> <span class="kw">BIGINT NOT NULL REFERENCES</span> <span class="nm">ledger_transactions</span>(<span class="nm">id</span>),
+    <span class="nm">account_id</span>     <span class="kw">BIGINT NOT NULL REFERENCES</span> <span class="nm">accounts</span>(<span class="nm">id</span>),
+    <span class="nm">amount</span>         <span class="kw">BIGINT NOT NULL</span>,        <span class="cm">-- минимальные единицы, знак = направление</span>
+    <span class="nm">currency</span>       <span class="kw">CHAR</span>(3) <span class="kw">NOT NULL</span>,
+    <span class="nm">created_at</span>     <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>()
+);
+
+<span class="kw">CREATE INDEX</span> <span class="nm">idx_entries_account</span> <span class="kw">ON</span> <span class="nm">ledger_entries</span> (<span class="nm">account_id</span>, <span class="nm">id</span>);
+
+<span class="cm">-- Баланс не хранится, а выводится из проводок</span>
+<span class="kw">SELECT</span> <span class="fn">COALESCE</span>(<span class="fn">SUM</span>(<span class="nm">amount</span>), 0) <span class="kw">AS</span> <span class="nm">balance</span>
+<span class="kw">FROM</span> <span class="nm">ledger_entries</span>
+<span class="kw">WHERE</span> <span class="nm">account_id</span> = :<span class="nm">account_id</span>;
+
+<span class="cm">-- Ежедневная проверка инварианта: сумма всех проводок операции равна нулю</span>
+<span class="kw">SELECT</span> <span class="nm">transaction_id</span>, <span class="fn">SUM</span>(<span class="nm">amount</span>) <span class="kw">AS</span> <span class="nm">imbalance</span>
+<span class="kw">FROM</span> <span class="nm">ledger_entries</span>
+<span class="kw">GROUP BY</span> <span class="nm">transaction_id</span>
+<span class="kw">HAVING</span> <span class="fn">SUM</span>(<span class="nm">amount</span>) &lt;&gt; 0;
+</pre></div>
+
+    <p><strong>Цена подхода</strong> — рост таблицы проводок и стоимость вычисления баланса. Обе проблемы решаются одинаково: периодические снимки. Раз в сутки на каждый счёт пишется строка с балансом на конец дня, и текущий баланс считается как «последний снимок плюс проводки после него». Снимок при этом остаётся производной величиной: его всегда можно пересчитать заново из проводок, поэтому он не создаёт второго источника истины.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · колонка с балансом против ledger</caption>
+      <thead><tr><th>Критерий</th><th>Колонка <code>balance</code></th><th>Двойная запись</th></tr></thead>
+      <tbody>
+        <tr><td>Ответ на вопрос «откуда сумма»</td><td>Отсутствует</td><td>Полная история проводок</td></tr>
+        <tr><td>Последствия ошибки в коде</td><td>Навсегда в числе, следов нет</td><td>Видна как перекос, исправляется сторнирующей операцией</td></tr>
+        <tr><td>Проверка целостности</td><td>Не с чем сверять</td><td>Сумма проводок по операции равна нулю</td></tr>
+        <tr><td>Сверка с банком</td><td>Только по внешним данным</td><td>По техническим счётам шлюза</td></tr>
+        <tr><td>Стоимость чтения баланса</td><td>Одна строка</td><td>Агрегация или снимок</td></tr>
+        <tr><td>Стоимость записи</td><td>Один <code>UPDATE</code></td><td>Вставка нескольких строк в транзакции</td></tr>
+        <tr><td>Когда достаточно</td><td>Счётчик бонусов без денежного смысла</td><td>Всё, что связано с реальными деньгами</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Проводки неизменяемы. Ошибочная операция не правится и не удаляется — на неё делается обратная, сторнирующая операция, а затем правильная. Это не бюрократия: восстанавливаемая история и есть единственная защита от ситуации, когда через полгода нужно доказать регулятору или клиенту, что именно произошло с деньгами и в каком порядке. Разрешение на <code>UPDATE</code> в таблице проводок обесценивает всю конструкцию.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем двойная запись, если можно хранить баланс числом?</b><br>Потому что баланс — производная величина, а истина — история движений. Двойная запись даёт три вещи, которых нет у колонки: ответ на вопрос «из чего сложилась сумма», встроенный инвариант, по которому расхождение обнаруживается автоматически, и возможность сверки с банком по техническим счетам. Хранимый баланс допустим как кэш или снимок, но не как источник истины.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="consistency">
+    <p class="path">middle / согласованность</p>
+    <div class="card-top"><h3>Гонки, транзакции, блокировки</h3><span class="badge b-2">Механика</span></div>
+    <p>Списание средств — учебный пример состояния гонки, только с деньгами. Два параллельных запроса читают баланс 1 000 ₽, оба видят, что 800 ₽ списать можно, оба списывают. Итог — минус 600 ₽ на счёте, который по бизнес-правилам не может уходить в минус. Проверка в коде здесь не помогает вообще: между чтением и записью есть окно, и на нагрузке в него попадают регулярно.</p>
+
+    <div class="code"><div class="bar"><span>PHP + SQL</span><span class="r">Списание с блокировкой строки и проверкой инварианта</span></div><pre><span class="cm">// Неправильно: проверка и запись разнесены во времени</span>
+<span class="nm">$balance</span> = <span class="nm">$this</span>-&gt;<span class="fn">balanceOf</span>(<span class="nm">$accountId</span>);          <span class="cm">// 1 000</span>
+<span class="kw">if</span> (<span class="nm">$balance</span> &gt;= <span class="nm">$amount</span>) {                          <span class="cm">// оба запроса проходят</span>
+    <span class="nm">$this</span>-&gt;<span class="fn">insertEntry</span>(<span class="nm">$accountId</span>, -<span class="nm">$amount</span>);       <span class="cm">// оба списывают</span>
+}
+
+<span class="cm">// Правильно: конкуренты выстраиваются в очередь на строке счёта</span>
+<span class="kw">public function</span> <span class="fn">withdraw</span>(<span class="kw">int</span> <span class="nm">$accountId</span>, <span class="nm">Money</span> <span class="nm">$amount</span>, <span class="kw">string</span> <span class="nm">$key</span>): <span class="kw">void</span>
+{
+    <span class="nm">$this</span>-&gt;connection-&gt;<span class="fn">transactional</span>(<span class="kw">function</span> (<span class="nm">$db</span>) <span class="kw">use</span> (<span class="nm">$accountId</span>, <span class="nm">$amount</span>, <span class="nm">$key</span>) {
+        <span class="cm">// 1. Блокируем счёт: параллельная транзакция ждёт здесь.</span>
+        <span class="cm">//    Порядок блокировки счетов фиксирован (по id) — иначе взаимоблокировка.</span>
+        <span class="nm">$db</span>-&gt;<span class="fn">executeStatement</span>(
+            <span class="st">&quot;SELECT id FROM accounts WHERE id = ? FOR UPDATE&quot;</span>,
+            [<span class="nm">$accountId</span>],
+        );
+
+        <span class="cm">// 2. Баланс читается уже под блокировкой — значение актуально.</span>
+        <span class="nm">$balance</span> = (<span class="kw">int</span>) <span class="nm">$db</span>-&gt;<span class="fn">fetchOne</span>(
+            <span class="st">&quot;SELECT COALESCE(SUM(amount), 0) FROM ledger_entries WHERE account_id = ?&quot;</span>,
+            [<span class="nm">$accountId</span>],
+        );
+
+        <span class="kw">if</span> (<span class="nm">$balance</span> &lt; <span class="nm">$amount</span>-&gt;amount) {
+            <span class="kw">throw new</span> <span class="nm">InsufficientFunds</span>(<span class="nm">$accountId</span>, <span class="nm">$balance</span>, <span class="nm">$amount</span>);
+        }
+
+        <span class="cm">// 3. Ключ идемпотентности с UNIQUE — вторая попытка того же</span>
+        <span class="cm">//    списания упрётся в ограничение и не создаст вторую операцию.</span>
+        <span class="nm">$txId</span> = <span class="nm">$this</span>-&gt;<span class="fn">insertTransaction</span>(<span class="nm">$db</span>, <span class="nm">$key</span>, <span class="st">&quot;withdrawal&quot;</span>);
+
+        <span class="nm">$this</span>-&gt;<span class="fn">insertEntry</span>(<span class="nm">$db</span>, <span class="nm">$txId</span>, <span class="nm">$accountId</span>, -<span class="nm">$amount</span>-&gt;amount);
+        <span class="nm">$this</span>-&gt;<span class="fn">insertEntry</span>(<span class="nm">$db</span>, <span class="nm">$txId</span>, <span class="nm">$this</span>-&gt;payoutAccountId, +<span class="nm">$amount</span>-&gt;amount);
+    });
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · способы защиты от гонки при списании</caption>
+      <thead><tr><th>Способ</th><th>Как работает</th><th>Цена</th><th>Когда выбирать</th></tr></thead>
+      <tbody>
+        <tr><td>Пессимистическая блокировка</td><td><code>SELECT ... FOR UPDATE</code> на счёте</td><td>Сериализация операций по счёту, риск взаимоблокировок</td><td>Списания и переводы: конкуренция реальна</td></tr>
+        <tr><td>Оптимистическая блокировка</td><td>Версия строки, проверка при записи</td><td>Повторы при конфликте</td><td>Редкая конкуренция, длинные операции</td></tr>
+        <tr><td>Уникальный индекс</td><td>База отвергает дубликат</td><td>Нужен подходящий ключ</td><td>Идемпотентность, защита от двойного проведения</td></tr>
+        <tr><td>Условный <code>UPDATE</code></td><td><code>WHERE balance &gt;= ?</code>, проверка числа строк</td><td>Работает только с хранимым балансом</td><td>Простые счётчики и лимиты</td></tr>
+        <tr><td>Очередь на сущность</td><td>Все операции по счёту в одном потоке</td><td>Задержка, сложность инфраструктуры</td><td>Высокая конкуренция на один счёт</td></tr>
+        <tr><td>Уровень изоляции serializable</td><td>База сама отвергает конфликтующие транзакции</td><td>Откаты и повторы, падение пропускной способности</td><td>Сложные инварианты по нескольким таблицам</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Порядок блокировок</strong> — источник взаимоблокировок при переводах. Транзакция A блокирует счёт 1, затем счёт 2; транзакция B — в обратном порядке; обе ждут вечно, пока база не убьёт одну из них по таймауту. Лечится соглашением: счета всегда блокируются в порядке возрастания идентификатора, независимо от того, кто кому переводит.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Транзакция базы, внутри которой делается HTTP-вызов провайдера. Блокировки держатся всё время сетевого ожидания, при таймауте в десять секунд счёт заблокирован десять секунд, а при откате транзакции запрос к провайдеру всё равно уже ушёл, и деньги списаны, хотя у нас записи нет. Правильный порядок: короткая транзакция фиксирует намерение, сетевой вызов идёт вне транзакции, результат применяется отдельной короткой транзакцией.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Два запроса одновременно списывают деньги с одного счёта. Как не уйти в минус?</b><br>Проверка в коде не помогает: между чтением баланса и вставкой проводки есть окно. Нужна блокировка строки счёта <code>FOR UPDATE</code> внутри транзакции — второй запрос ждёт и читает уже актуальный баланс. Дополнительно ставится ограничение уровня базы, чтобы даже ошибка в коде не смогла создать отрицательный остаток, а ключ идемпотентности с уникальным индексом защищает от повторного проведения той же операции.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="states">
+    <p class="path">middle / состояние</p>
+    <div class="card-top"><h3>Статусная машина и события</h3><span class="badge b-2">Дисциплина</span></div>
+    <p>Платёж меняет статус под влиянием четырёх независимых источников: действий пользователя, ответов API провайдера, вебхуков и фоновых задач. Если каждый из них присваивает статус напрямую, порядок событий определяет случай, и рано или поздно возврат перезатирается пришедшим позже подтверждением оплаты. Единственное лекарство — явная статусная машина, через которую проходят все изменения.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · статусы платежа и допустимые переходы</caption>
+      <thead><tr><th>Статус</th><th>Смысл</th><th>Куда можно перейти</th></tr></thead>
+      <tbody>
+        <tr><td><code>created</code></td><td>Платёж заведён, к провайдеру не уходил</td><td><code>pending</code>, <code>canceled</code></td></tr>
+        <tr><td><code>pending</code></td><td>Отправлен провайдеру, ждём результата</td><td><code>authorized</code>, <code>captured</code>, <code>failed</code>, <code>unknown</code></td></tr>
+        <tr><td><code>unknown</code></td><td>Ответ не получен, результат выясняется</td><td>Любой определённый статус после опроса</td></tr>
+        <tr><td><code>authorized</code></td><td>Сумма захолдирована у эмитента</td><td><code>captured</code>, <code>canceled</code>, <code>expired</code></td></tr>
+        <tr><td><code>captured</code></td><td>Операция подтверждена, деньги списаны</td><td><code>refunded</code>, <code>partially_refunded</code>, <code>disputed</code></td></tr>
+        <tr><td><code>failed</code></td><td>Отказ, деньги не тронуты</td><td>Терминальный, новая попытка — новый платёж</td></tr>
+        <tr><td><code>refunded</code></td><td>Возврат исполнен полностью</td><td><code>disputed</code> в редких случаях</td></tr>
+        <tr><td><code>disputed</code></td><td>Открыт спор, сумма удержана банком</td><td><code>dispute_won</code>, <code>dispute_lost</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Переходы в одном месте плюс событие в outbox</span></div><pre><span class="kw">enum</span> <span class="nm">PaymentStatus</span>: <span class="kw">string</span>
+{
+    <span class="kw">case</span> <span class="nm">Created</span>    = <span class="st">&quot;created&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Pending</span>    = <span class="st">&quot;pending&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Unknown</span>    = <span class="st">&quot;unknown&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Authorized</span> = <span class="st">&quot;authorized&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Captured</span>   = <span class="st">&quot;captured&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Failed</span>     = <span class="st">&quot;failed&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Refunded</span>   = <span class="st">&quot;refunded&quot;</span>;
+    <span class="kw">case</span> <span class="nm">Disputed</span>   = <span class="st">&quot;disputed&quot;</span>;
+
+    <span class="cm">// Разрешённые переходы описаны данными, а не разбросанными if-ами</span>
+    <span class="kw">public function</span> <span class="fn">canTransitionTo</span>(<span class="kw">self</span> <span class="nm">$next</span>): <span class="kw">bool</span>
+    {
+        <span class="kw">return</span> <span class="fn">in_array</span>(<span class="nm">$next</span>, <span class="kw">match</span> (<span class="nm">$this</span>) {
+            <span class="kw">self</span>::<span class="nm">Created</span>    =&gt; [<span class="kw">self</span>::<span class="nm">Pending</span>, <span class="kw">self</span>::<span class="nm">Failed</span>],
+            <span class="kw">self</span>::<span class="nm">Pending</span>    =&gt; [<span class="kw">self</span>::<span class="nm">Authorized</span>, <span class="kw">self</span>::<span class="nm">Captured</span>, <span class="kw">self</span>::<span class="nm">Failed</span>, <span class="kw">self</span>::<span class="nm">Unknown</span>],
+            <span class="kw">self</span>::<span class="nm">Unknown</span>    =&gt; [<span class="kw">self</span>::<span class="nm">Authorized</span>, <span class="kw">self</span>::<span class="nm">Captured</span>, <span class="kw">self</span>::<span class="nm">Failed</span>],
+            <span class="kw">self</span>::<span class="nm">Authorized</span> =&gt; [<span class="kw">self</span>::<span class="nm">Captured</span>, <span class="kw">self</span>::<span class="nm">Failed</span>],
+            <span class="kw">self</span>::<span class="nm">Captured</span>   =&gt; [<span class="kw">self</span>::<span class="nm">Refunded</span>, <span class="kw">self</span>::<span class="nm">Disputed</span>],
+            <span class="kw">self</span>::<span class="nm">Refunded</span>   =&gt; [<span class="kw">self</span>::<span class="nm">Disputed</span>],
+            <span class="kw">self</span>::<span class="nm">Failed</span>, <span class="kw">self</span>::<span class="nm">Disputed</span> =&gt; [],
+        }, <span class="kw">true</span>);
+    }
+}
+
+<span class="kw">final class</span> <span class="nm">Payment</span>
+{
+    <span class="kw">public function</span> <span class="fn">transitionTo</span>(<span class="nm">PaymentStatus</span> <span class="nm">$next</span>, <span class="nm">Money</span> <span class="nm">$amount</span>): <span class="kw">void</span>
+    {
+        <span class="cm">// Повторное применение того же статуса — не ошибка, а обычное дело:</span>
+        <span class="cm">// вебхук пришёл дважды. Просто ничего не делаем.</span>
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;status === <span class="nm">$next</span>) {
+            <span class="kw">return</span>;
+        }
+
+        <span class="cm">// Запоздавшее событие «оплачен» после возврата не откатывает статус</span>
+        <span class="kw">if</span> (!<span class="nm">$this</span>-&gt;status-&gt;<span class="fn">canTransitionTo</span>(<span class="nm">$next</span>)) {
+            <span class="kw">throw new</span> <span class="nm">IllegalTransition</span>(<span class="nm">$this</span>-&gt;id, <span class="nm">$this</span>-&gt;status, <span class="nm">$next</span>);
+        }
+
+        <span class="nm">$this</span>-&gt;status = <span class="nm">$next</span>;
+
+        <span class="cm">// Событие пишется в ту же транзакцию, что и смена статуса (outbox):</span>
+        <span class="cm">// либо есть и статус, и событие, либо нет ни того, ни другого.</span>
+        <span class="nm">$this</span>-&gt;<span class="fn">recordEvent</span>(<span class="kw">new</span> <span class="nm">PaymentStatusChanged</span>(<span class="nm">$this</span>-&gt;id, <span class="nm">$next</span>, <span class="nm">$amount</span>));
+    }
+}
+</pre></div>
+
+    <p><strong>Почему outbox обязателен именно здесь.</strong> Смена статуса на «оплачен» и отправка события в очередь — две операции в разных системах. Если сначала публиковать в брокер, а потом фиксировать транзакцию, откат оставит миру событие о платеже, которого нет. Если наоборот — падение между фиксацией и публикацией потеряет событие, и заказ никогда не уедет в отгрузку. Запись события в таблицу той же транзакцией снимает вопрос: отдельный процесс потом дочитывает таблицу и публикует. Подробности — в конспекте по <a href="messaging.html">брокерам сообщений</a>.</p>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Держите историю переходов отдельной таблицей: платёж, старый статус, новый статус, источник, метка времени, идентификатор входящего события. Это стоит одной вставки на переход и окупается при первом же разборе — «почему платёж стал возвращённым в 3:40 ночи» превращается из расследования по логам в один запрос.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Вебхуки приходят не в том порядке. Как не сломать статус?</b><br>Через статусную машину с явным списком допустимых переходов: запоздавшее «оплачен» после «возвращён» не проходит проверку и отбрасывается, а не перезаписывает статус. Повтор того же статуса при этом считается нормой и обрабатывается без ошибки. Дополнительно у событий сравнивается версия или метка времени провайдера, чтобы отличить старое событие от нового.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="reconciliation">
+    <p class="path">middle / сверка</p>
+    <div class="card-top"><h3>Сверка с провайдером</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Сверка отвечает на вопрос, который нельзя решить внутри системы: совпадает ли наша картина мира с картиной банка. Провайдер присылает реестр операций за день, мы сравниваем его со своими данными, и каждое расхождение — либо потерянные деньги, либо лишние обязательства. Система без сверки не «работает без ошибок», она просто не знает о них.</p>
+
+    <div class="flow">
+      <div class="node">Реестр<small>выгрузка провайдера за день</small></div>
+      <span class="arr">→</span>
+      <div class="node">Сопоставление<small>по идентификатору операции</small></div>
+      <span class="arr">→</span>
+      <div class="node">Расхождения<small>только у нас, только у них, разная сумма</small></div>
+      <span class="arr">→</span>
+      <div class="node">Разбор<small>автоправила и ручной разбор</small></div>
+      <span class="arr">→</span>
+      <div class="node">Корректировки<small>проводки и повторные запросы</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · типы расхождений и что они означают</caption>
+      <thead><tr><th>Расхождение</th><th>Вероятная причина</th><th>Действие</th></tr></thead>
+      <tbody>
+        <tr><td>Есть у провайдера, нет у нас</td><td>Мы упали после вызова, вебхук потерян</td><td>Дописать платёж по данным провайдера, провести в ledger</td></tr>
+        <tr><td>Есть у нас, нет у провайдера</td><td>Запрос не дошёл, платёж завис в <code>pending</code></td><td>Запросить статус, при отсутствии — закрыть как несостоявшийся</td></tr>
+        <tr><td>Разные суммы</td><td>Частичное списание, комиссия, конвертация</td><td>Разложить на комиссию и основную сумму, довести проводки</td></tr>
+        <tr><td>Разные статусы</td><td>Событие в пути или потеряно</td><td>Принять статус провайдера как истину, применить через статусную машину</td></tr>
+        <tr><td>Операция на следующий день</td><td>Платёж прошёл около полуночи</td><td>Сверять с перекрытием окна, а не строго по календарным суткам</td></tr>
+        <tr><td>Возврат без исходного платежа</td><td>Возврат сделан вручную в кабинете провайдера</td><td>Создать операцию у себя, разобраться с процессом ручных действий</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>SQL</span><span class="r">Сопоставление реестра со своими операциями</span></div><pre><span class="cm">-- Реестр провайдера загружен как есть в отдельную таблицу.</span>
+<span class="cm">-- Полное внешнее соединение показывает все три вида расхождений сразу.</span>
+<span class="kw">SELECT</span>
+    <span class="fn">COALESCE</span>(<span class="nm">p</span>.<span class="nm">gateway_id</span>, <span class="nm">s</span>.<span class="nm">gateway_id</span>) <span class="kw">AS</span> <span class="nm">gateway_id</span>,
+    <span class="nm">p</span>.<span class="nm">amount</span>      <span class="kw">AS</span> <span class="nm">our_amount</span>,
+    <span class="nm">s</span>.<span class="nm">amount</span>      <span class="kw">AS</span> <span class="nm">their_amount</span>,
+    <span class="nm">p</span>.<span class="nm">status</span>      <span class="kw">AS</span> <span class="nm">our_status</span>,
+    <span class="nm">s</span>.<span class="nm">status</span>      <span class="kw">AS</span> <span class="nm">their_status</span>,
+    <span class="kw">CASE</span>
+        <span class="kw">WHEN</span> <span class="nm">p</span>.<span class="nm">gateway_id</span> <span class="kw">IS NULL</span>            <span class="kw">THEN</span> <span class="st">&quot;missing_locally&quot;</span>
+        <span class="kw">WHEN</span> <span class="nm">s</span>.<span class="nm">gateway_id</span> <span class="kw">IS NULL</span>            <span class="kw">THEN</span> <span class="st">&quot;missing_remotely&quot;</span>
+        <span class="kw">WHEN</span> <span class="nm">p</span>.<span class="nm">amount</span> &lt;&gt; <span class="nm">s</span>.<span class="nm">amount</span>          <span class="kw">THEN</span> <span class="st">&quot;amount_mismatch&quot;</span>
+        <span class="kw">WHEN</span> <span class="nm">p</span>.<span class="nm">status</span> &lt;&gt; <span class="nm">s</span>.<span class="nm">status</span>          <span class="kw">THEN</span> <span class="st">&quot;status_mismatch&quot;</span>
+    <span class="kw">END</span> <span class="kw">AS</span> <span class="nm">discrepancy</span>
+<span class="kw">FROM</span> <span class="nm">payments</span> <span class="nm">p</span>
+<span class="kw">FULL OUTER JOIN</span> <span class="nm">settlement_rows</span> <span class="nm">s</span> <span class="kw">ON</span> <span class="nm">s</span>.<span class="nm">gateway_id</span> = <span class="nm">p</span>.<span class="nm">gateway_id</span>
+<span class="cm">-- Окно с перекрытием: операции около полуночи попадают в соседний реестр</span>
+<span class="kw">WHERE</span> <span class="fn">COALESCE</span>(<span class="nm">p</span>.<span class="nm">created_at</span>, <span class="nm">s</span>.<span class="nm">created_at</span>)
+      <span class="kw">BETWEEN</span> :<span class="nm">from</span> - <span class="kw">INTERVAL</span> <span class="st">&quot;2 hours&quot;</span> <span class="kw">AND</span> :<span class="nm">to</span> + <span class="kw">INTERVAL</span> <span class="st">&quot;2 hours&quot;</span>
+  <span class="kw">AND</span> (
+        <span class="nm">p</span>.<span class="nm">gateway_id</span> <span class="kw">IS NULL</span>
+     <span class="kw">OR</span> <span class="nm">s</span>.<span class="nm">gateway_id</span> <span class="kw">IS NULL</span>
+     <span class="kw">OR</span> <span class="nm">p</span>.<span class="nm">amount</span> &lt;&gt; <span class="nm">s</span>.<span class="nm">amount</span>
+     <span class="kw">OR</span> <span class="nm">p</span>.<span class="nm">status</span> &lt;&gt; <span class="nm">s</span>.<span class="nm">status</span>
+      );
+</pre></div>
+
+    <p><strong>Три уровня сверки.</strong> Первый — операционный: наши платежи против реестра провайдера, ежедневно. Второй — учётный: технические счета ledger против сумм в реестре, включая комиссии. Третий — банковский: сумма выплат провайдера против поступлений на расчётный счёт компании. Расхождение на каждом уровне означает разное, и склеивать их в один отчёт бесполезно: непонятно, где именно потерялись деньги.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Сверка бессмысленна без процесса разбора. Отчёт, который никто не открывает, отличается от отсутствия сверки только потраченным временем. Работающая схема: расхождения попадают в очередь задач с ответственным и сроком, автоматические правила закрывают типовые случаи вроде «платёж около полуночи», а всё остальное разбирает человек. Количество нерасследованных расхождений старше суток — хорошая метрика здоровья финансового контура.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как понять, что в платёжном контуре что-то потерялось?</b><br>Только сверкой с внешним источником: реестр провайдера против наших операций, наши технические счета против реестра, выплаты против выписки по расчётному счёту. Внутренние проверки покажут только внутреннюю несогласованность, а типичная потеря — платёж, который прошёл у провайдера и не дошёл до нас, — по нашим данным вообще не существует и обнаруживается исключительно снаружи.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="refunds">
+    <p class="path">middle / деньги назад</p>
+    <div class="card-top"><h3>Возвраты, chargeback и споры</h3><span class="badge b-2">Обратный поток</span></div>
+    <p>Деньги в финтехе двигаются в обе стороны, и обратный поток устроен сложнее прямого. Возврат инициирует мерчант, спор — клиент через свой банк, и от того, какой это случай, зависит и стоимость, и сроки, и то, кто в итоге платит. Система, где возврат реализован как «списание с обратным знаком», ломается на первом же частичном возврате и первом же споре.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · три способа вернуть деньги</caption>
+      <thead><tr><th>Признак</th><th>Отмена холда</th><th>Возврат</th><th>Chargeback</th></tr></thead>
+      <tbody>
+        <tr><td>Кто инициирует</td><td>Мерчант</td><td>Мерчант</td><td>Клиент через свой банк</td></tr>
+        <tr><td>Когда возможен</td><td>До списания</td><td>После списания</td><td>В течение срока, установленного платёжной системой</td></tr>
+        <tr><td>Скорость для клиента</td><td>Разблокировка, до нескольких дней</td><td>Обычно несколько дней</td><td>Недели, до решения по спору</td></tr>
+        <tr><td>Комиссия мерчанта</td><td>Обычно возвращается</td><td>Часто не возвращается</td><td>Не возвращается, плюс штраф за спор</td></tr>
+        <tr><td>Частичность</td><td>Списать можно меньшую сумму</td><td>Поддерживается, часто многократно</td><td>Определяется банком клиента</td></tr>
+        <tr><td>Влияние на репутацию</td><td>Нет</td><td>Незначительное</td><td>Высокая доля споров грозит санкциями и повышенными тарифами</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Инварианты возврата,</strong> которые обязаны проверяться в коде, а не в голове менеджера: сумма всех возвратов по платежу не превышает сумму списания; возврат по неоплаченному платежу невозможен; повторный запрос возврата с тем же ключом не создаёт второй возврат; возврат уже возвращённой позиции заказа отклоняется. Последний пункт особенно важен для частичных возвратов по товарам: без учёта на уровне позиций легко вернуть один и тот же товар дважды.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Частичный возврат: инварианты и идемпотентность</span></div><pre><span class="kw">final class</span> <span class="nm">RefundPaymentHandler</span>
+{
+    <span class="kw">public function</span> <span class="fn">handle</span>(<span class="nm">RefundPayment</span> <span class="nm">$command</span>): <span class="nm">Refund</span>
+    {
+        <span class="kw">return</span> <span class="nm">$this</span>-&gt;connection-&gt;<span class="fn">transactional</span>(<span class="kw">function</span> () <span class="kw">use</span> (<span class="nm">$command</span>) {
+            <span class="cm">// Блокируем платёж: параллельные возвраты — обычное дело,</span>
+            <span class="cm">// когда клиент нажимает кнопку дважды или менеджер дублирует заявку.</span>
+            <span class="nm">$payment</span> = <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">lockById</span>(<span class="nm">$command</span>-&gt;paymentId);
+
+            <span class="kw">if</span> (<span class="nm">$payment</span>-&gt;status !== <span class="nm">PaymentStatus</span>::<span class="nm">Captured</span>) {
+                <span class="kw">throw new</span> <span class="nm">RefundNotAllowed</span>(<span class="nm">$payment</span>-&gt;status);
+            }
+
+            <span class="cm">// Ключевой инвариант: возвращено не больше, чем списано</span>
+            <span class="nm">$alreadyRefunded</span> = <span class="nm">$this</span>-&gt;refunds-&gt;<span class="fn">totalFor</span>(<span class="nm">$payment</span>-&gt;id);
+
+            <span class="kw">if</span> (<span class="nm">$alreadyRefunded</span>-&gt;<span class="fn">add</span>(<span class="nm">$command</span>-&gt;amount)-&gt;<span class="fn">greaterThan</span>(<span class="nm">$payment</span>-&gt;amount)) {
+                <span class="kw">throw new</span> <span class="nm">RefundExceedsPayment</span>(<span class="nm">$payment</span>-&gt;id, <span class="nm">$command</span>-&gt;amount);
+            }
+
+            <span class="cm">// Ключ идемпотентности возврата строится из намерения,</span>
+            <span class="cm">// а не генерируется случайно на каждый клик.</span>
+            <span class="nm">$refund</span> = <span class="nm">Refund</span>::<span class="fn">requested</span>(
+                <span class="nm">$payment</span>-&gt;id,
+                <span class="nm">$command</span>-&gt;amount,
+                <span class="nm">$command</span>-&gt;reason,
+                <span class="nm">$command</span>-&gt;idempotencyKey,
+            );
+
+            <span class="nm">$this</span>-&gt;refunds-&gt;<span class="fn">save</span>(<span class="nm">$refund</span>);   <span class="cm">// UNIQUE (payment_id, idempotency_key)</span>
+
+            <span class="cm">// Вызов провайдера — за пределами транзакции, из обработчика очереди</span>
+            <span class="nm">$refund</span>-&gt;<span class="fn">recordEvent</span>(<span class="kw">new</span> <span class="nm">RefundRequested</span>(<span class="nm">$refund</span>-&gt;id));
+
+            <span class="kw">return</span> <span class="nm">$refund</span>;
+        });
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · жизненный цикл спора</caption>
+      <thead><tr><th>Этап</th><th>Что происходит</th><th>Что делает мерчант</th></tr></thead>
+      <tbody>
+        <tr><td>Запрос информации</td><td>Банк клиента просит пояснить операцию</td><td>Отправить детали заказа, часто снимает вопрос без спора</td></tr>
+        <tr><td>Открытие спора</td><td>Сумма удерживается у мерчанта</td><td>Зафиксировать статус, заморозить связанные процессы</td></tr>
+        <tr><td>Представление доказательств</td><td>Срок ограничен и короткий</td><td>Чек, факт доставки, переписка, логи входа, подтверждение 3-D Secure</td></tr>
+        <tr><td>Решение</td><td>Спор выигран или проигран</td><td>Провести возврат удержания или окончательное списание</td></tr>
+        <tr><td>Повторный спор</td><td>Клиент оспаривает решение</td><td>Оценить целесообразность дальнейшей защиты</td></tr>
+        <tr><td>Арбитраж</td><td>Решает платёжная система</td><td>Дорого, применяется в исключительных случаях</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Доказательства по спору собираются не в момент спора, а в момент операции. Через два месяца, когда придёт запрос, у вас должно быть сохранено: идентификатор устройства и адрес, результат проверки 3-D Secure, время и способ доставки, подтверждение получения, история обращений клиента. Если это не логировалось заранее, спор проигрывается автоматически независимо от того, насколько вы правы.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем возврат отличается от chargeback?</b><br>Возврат инициирует мерчант добровольно, он проходит по обычному платёжному каналу и обходится в комиссию. Chargeback инициирует клиент через свой банк: деньги удерживаются принудительно, мерчант платит штраф за спор и обязан доказывать правоту документами в жёсткий срок. Высокая доля споров ведёт к повышенным тарифам и вплоть до отказа в обслуживании, поэтому дешевле вернуть деньги самому, чем доводить до спора.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="recurring">
+    <p class="path">middle / подписки</p>
+    <div class="card-top"><h3>Рекуррентные платежи и токены</h3><span class="badge b-2">Подписки</span></div>
+    <p>Подписка означает списание без участия клиента, а значит — сохранённый способ оплаты. Карту при этом хранит не мерчант, а провайдер: наружу отдаётся токен, бесполезный для кого-либо ещё. Это и требование стандарта безопасности, и практическое удобство: смена провайдера превращается в отдельный проект по переносу токенов, но хотя бы не в утечку.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · виды операций по сохранённой карте</caption>
+      <thead><tr><th>Тип</th><th>Кто инициирует</th><th>Подтверждение клиента</th><th>Пример</th></tr></thead>
+      <tbody>
+        <tr><td>Первичная операция</td><td>Клиент</td><td>Полное, обычно с 3-D Secure</td><td>Первая оплата подписки, привязка карты</td></tr>
+        <tr><td>Операция по инициативе клиента</td><td>Клиент</td><td>Возможно упрощённое</td><td>Оплата в один клик сохранённой картой</td></tr>
+        <tr><td>Операция по инициативе мерчанта</td><td>Мерчант</td><td>Нет, по ранее данному согласию</td><td>Ежемесячное списание за подписку</td></tr>
+        <tr><td>Проверочная операция</td><td>Мерчант</td><td>Нет</td><td>Проверка карты на минимальную сумму с отменой</td></tr>
+        <tr><td>Доплата</td><td>Мерчант</td><td>Нет, по согласованным правилам</td><td>Штраф за отмену, перерасход тарифа</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>3-D Secure</strong> переносит ответственность за мошенническую операцию с мерчанта на эмитента: если клиент прошёл подтверждение, спор по причине «я этого не делал» с высокой вероятностью решится в пользу мерчанта. Плата за это — падение конверсии на шаге подтверждения. Отсюда типичная настройка: подтверждение включается по рисковым признакам — новая карта, крупная сумма, нетипичная страна, — а не для всех подряд.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · отказы по подписке и что с ними делать</caption>
+      <thead><tr><th>Причина отказа</th><th>Повторять?</th><th>Стратегия</th></tr></thead>
+      <tbody>
+        <tr><td>Недостаточно средств</td><td>Да</td><td>Повторы с растущими интервалами, лучше около даты зарплаты</td></tr>
+        <tr><td>Срок действия карты истёк</td><td>Нет</td><td>Обновление реквизитов через сервис провайдера или письмо клиенту</td></tr>
+        <tr><td>Карта заблокирована или утеряна</td><td>Нет</td><td>Запросить новый способ оплаты</td></tr>
+        <tr><td>Отказ эмитента без причины</td><td>Ограниченно</td><td>Не более нескольких попыток: избыточные повторы штрафуются</td></tr>
+        <tr><td>Техническая ошибка провайдера</td><td>Да</td><td>Быстрый повтор с тем же ключом идемпотентности</td></tr>
+        <tr><td>Подозрение на мошенничество</td><td>Нет</td><td>Разбор вручную, повтор ухудшит репутацию мерчанта</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Цикл повторов по неудавшейся подписке — это не «повторять, пока не получится». Платёжные системы ограничивают количество попыток по одной операции и штрафуют за их превышение, а бесконечные попытки списать с пустой карты выглядят для антифрода эмитента как перебор. Разумная схема — три-четыре попытки с растущими интервалами, письмо клиенту после первой неудачи и приостановка услуги по исчерпании попыток.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как реализовать ежемесячное списание, не храня карту?</b><br>Карта сохраняется у провайдера при первой операции, мерчанту возвращается токен — идентификатор, привязанный к его аккаунту и бесполезный вне его. Дальнейшие списания идут по токену как операции по инициативе мерчанта, с сохранённым согласием клиента. Мерчант хранит только токен, маску номера и срок действия, что оставляет его вне зоны действия требований к хранению карточных данных.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="provider">
+    <p class="path">middle / интеграция</p>
+    <div class="card-top"><h3>Интеграция с провайдером</h3><span class="badge b-2">Надёжность</span></div>
+    <p>Платёжный провайдер — внешняя система, которая тормозит, отвечает ошибками и иногда лежит целиком. Разница с обычной интеграцией в том, что здесь неверная реакция на сбой стоит денег: лишний повтор создаёт второе списание, а преждевременный отказ — потерянную продажу и клиента, у которого деньги заморожены.</p>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Клиент провайдера: таймауты, классификация ошибок, повторы</span></div><pre><span class="kw">final class</span> <span class="nm">HttpPaymentGateway</span> <span class="kw">implements</span> <span class="nm">PaymentGateway</span>
+{
+    <span class="kw">public function</span> <span class="fn">authorize</span>(<span class="nm">Payment</span> <span class="nm">$payment</span>, <span class="kw">string</span> <span class="nm">$idempotencyKey</span>): <span class="nm">GatewayResult</span>
+    {
+        <span class="kw">try</span> {
+            <span class="nm">$response</span> = <span class="nm">$this</span>-&gt;http-&gt;<span class="fn">request</span>(<span class="st">&quot;POST&quot;</span>, <span class="st">&quot;/payments&quot;</span>, [
+                <span class="cm">// Разные таймауты: на соединение — короткий, на ответ — щедрый.</span>
+                <span class="cm">// Общий бюджет запроса меньше таймаута воркера, иначе процесс</span>
+                <span class="cm">// убьют раньше, чем он успеет записать результат.</span>
+                <span class="st">&quot;timeout&quot;</span>         =&gt; 25,
+                <span class="st">&quot;connect_timeout&quot;</span> =&gt; 3,
+                <span class="st">&quot;headers&quot;</span>         =&gt; [<span class="st">&quot;Idempotency-Key&quot;</span> =&gt; <span class="nm">$idempotencyKey</span>],
+                <span class="st">&quot;json&quot;</span>            =&gt; [
+                    <span class="st">&quot;amount&quot;</span>      =&gt; <span class="nm">$payment</span>-&gt;amount-&gt;amount,
+                    <span class="st">&quot;currency&quot;</span>    =&gt; <span class="nm">$payment</span>-&gt;amount-&gt;currency-&gt;code,
+                    <span class="cm">// Свой идентификатор — единственный способ найти операцию,</span>
+                    <span class="cm">// если ответ провайдера до нас не дошёл.</span>
+                    <span class="st">&quot;merchant_id&quot;</span> =&gt; <span class="nm">$payment</span>-&gt;id-&gt;<span class="fn">toString</span>(),
+                ],
+            ]);
+        } <span class="kw">catch</span> (<span class="nm">ConnectException</span> <span class="nm">$e</span>) {
+            <span class="cm">// Соединение не установлено — запрос точно не выполнен.</span>
+            <span class="cm">// Это безопасная ошибка: повторять можно сразу.</span>
+            <span class="kw">throw new</span> <span class="nm">GatewayUnavailable</span>(previous: <span class="nm">$e</span>);
+        } <span class="kw">catch</span> (<span class="nm">TransferException</span> <span class="nm">$e</span>) {
+            <span class="cm">// Таймаут ответа: операция могла выполниться. Опасное состояние,</span>
+            <span class="cm">// повтор допустим только с тем же ключом идемпотентности.</span>
+            <span class="kw">throw new</span> <span class="nm">GatewayUnknownState</span>(previous: <span class="nm">$e</span>);
+        }
+
+        <span class="kw">return match</span> (<span class="kw">true</span>) {
+            <span class="nm">$response</span>-&gt;<span class="fn">getStatusCode</span>() &gt;= 500 =&gt; <span class="kw">throw new</span> <span class="nm">GatewayUnknownState</span>(),
+            <span class="nm">$response</span>-&gt;<span class="fn">getStatusCode</span>() === 409 =&gt; <span class="nm">$this</span>-&gt;<span class="fn">fetchByMerchantId</span>(<span class="nm">$payment</span>-&gt;id),
+            <span class="kw">default</span> =&gt; <span class="nm">GatewayResult</span>::<span class="fn">fromResponse</span>(<span class="nm">$response</span>),
+        };
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · какие ошибки повторять</caption>
+      <thead><tr><th>Ситуация</th><th>Повтор</th><th>Условие</th></tr></thead>
+      <tbody>
+        <tr><td>Соединение не установлено</td><td>Да</td><td>Запрос не выполнялся, повтор безопасен</td></tr>
+        <tr><td>Таймаут ответа</td><td>Да, осторожно</td><td>Только с тем же ключом идемпотентности, затем опрос статуса</td></tr>
+        <tr><td>Ответ 5xx</td><td>Да</td><td>С задержкой и разбросом, ограниченное число раз</td></tr>
+        <tr><td>Ответ 429</td><td>Да</td><td>По заголовку с указанием паузы, не раньше</td></tr>
+        <tr><td>Ответ 4xx с ошибкой валидации</td><td>Нет</td><td>Повтор даст тот же результат, нужна правка запроса</td></tr>
+        <tr><td>Отказ эмитента</td><td>Нет</td><td>Это бизнес-ответ, а не сбой: повтор портит репутацию мерчанта</td></tr>
+        <tr><td>Провайдер лежит целиком</td><td>Прекратить</td><td>Разомкнуть предохранитель, переключиться на резервного или деградировать</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Бюджет времени.</strong> У каждого платёжного запроса есть общий срок, внутри которого укладываются все попытки: пользователь ждёт ответа, а воркер будет убит по таймауту. Поэтому повторы не бесконечны, а ограничены остатком бюджета: две попытки по десять секунд при бюджете в двадцать пять — предел. Всё, что не уместилось, уходит в асинхронный путь: клиенту показывается «платёж обрабатывается», а результат досылается уведомлением.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · как тестировать интеграцию</caption>
+      <thead><tr><th>Уровень</th><th>Что проверяет</th><th>Чем</th></tr></thead>
+      <tbody>
+        <tr><td>Модульный</td><td>Разбор ответов, классификация ошибок, статусная машина</td><td>Подставной HTTP-клиент с заготовленными ответами</td></tr>
+        <tr><td>Контрактный</td><td>Совпадение наших ожиданий со схемой провайдера</td><td>Проверка по спецификации, тесты на записанных ответах</td></tr>
+        <tr><td>Песочница провайдера</td><td>Полный сценарий с реальным API</td><td>Тестовые карты для успеха, отказа, 3-D Secure</td></tr>
+        <tr><td>Сбойные сценарии</td><td>Таймаут, 500, дубль вебхука, событие не по порядку</td><td>Прокси с искусственными задержками, ручная отправка вебхуков</td></tr>
+        <tr><td>Продакшен</td><td>Что интеграция жива</td><td>Регулярная проверочная операция на минимальную сумму с отменой</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Один общий таймаут на всё и повторы по любой ошибке. На отказе эмитента такой код делает три лишних запроса, ухудшая статистику мерчанта; на таймауте без ключа идемпотентности создаёт второе списание; при недоступности провайдера умножает нагрузку на лежащий сервис и заодно кладёт собственный пул воркеров. Каждая категория ошибки требует своей реакции — это ровно тот случай, где обобщение стоит денег.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Провайдер отвечает медленно и частью запросов — таймаутами. Что делать?</b><br>Разделить ошибки по смыслу: недоступность соединения безопасна для повтора, таймаут ответа — нет, отказ эмитента повторять нельзя вовсе. Ограничить повторы остатком бюджета запроса и разомкнуть предохранитель, когда доля ошибок превышает порог, чтобы не держать воркеры на заведомо неуспешных вызовах. Платежи в неизвестном состоянии передать фоновому опросу статуса, а пользователю показать «обрабатывается» вместо ошибки.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card lvl-m" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Проверка</span></div>
+    <p>Что должно быть в рабочем арсенале.</p>
+    <ul class="check">
+      <li>Спроектировать схему ledger из счетов, операций и проводок и объяснить инвариант двойной записи.</li>
+      <li>Назвать, чем плоха колонка с балансом, и когда снимок баланса допустим.</li>
+      <li>Защитить списание от гонки блокировкой строки и объяснить, почему проверки в коде недостаточно.</li>
+      <li>Назвать причину взаимоблокировки при переводе и правило фиксированного порядка блокировок.</li>
+      <li>Объяснить, почему сетевой вызов не делается внутри транзакции базы.</li>
+      <li>Описать статусную машину платежа и обработку запоздавшего события.</li>
+      <li>Объяснить, зачем нужен outbox при смене статуса.</li>
+      <li>Построить ежедневную сверку и перечислить типы расхождений с действиями по каждому.</li>
+      <li>Назвать инварианты частичного возврата и отличить возврат от спора.</li>
+      <li>Перечислить доказательства по спору и сказать, когда они должны быть собраны.</li>
+      <li>Объяснить схему подписки на токене и стратегию повторов при отказе.</li>
+      <li>Классифицировать ошибки провайдера по признаку «можно ли повторять».</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · контур, риск, регуляторика</p>
+    <h2>Senior: архитектура денег и ограничения извне</h2>
+    <p>На этом уровне решения принимаются не про код, а про контур целиком: где проходят границы сервисов, что делать при отказе половины цепочки, сколько мошенничества компания готова терпеть ради конверсии, что требует регулятор и как всё это доказывается через полгода при проверке.</p>
+  </div>
+
+  <!-- 15 -->
+  <article class="card" id="architecture">
+    <p class="path">senior / архитектура</p>
+    <div class="card-top"><h3>Архитектура платёжного контура</h3><span class="badge b-3">Дизайн</span></div>
+    <p>Главное архитектурное решение в финтехе — отделить учёт от процессинга. Учётный контур знает только о счетах и проводках, ничего не знает о картах и провайдерах и обязан быть строго согласованным. Процессинг работает с внешним миром, живёт в условиях таймаутов и неизвестных состояний и по определению согласован в конечном счёте. Смешение этих двух миров в одном сервисе даёт систему, которая не может быть ни надёжной, ни быстрой.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 19 · границы сервисов финансового контура</caption>
+      <thead><tr><th>Сервис</th><th>Отвечает за</th><th>Не должен знать</th><th>Согласованность</th></tr></thead>
+      <tbody>
+        <tr><td>Заказы</td><td>Состав, цена, обязательства перед клиентом</td><td>Как устроены карты и провайдеры</td><td>Своя транзакция</td></tr>
+        <tr><td>Платежи</td><td>Взаимодействие с провайдерами, статусы операций</td><td>Правила учёта и структуру счетов</td><td>В конечном счёте</td></tr>
+        <tr><td>Учёт, ledger</td><td>Счета, проводки, балансы, инварианты</td><td>Карты, токены, форму оплаты</td><td>Строгая, в одной базе</td></tr>
+        <tr><td>Выплаты</td><td>Перечисления наружу, реестры, статусы</td><td>Причину выплаты в бизнес-терминах</td><td>В конечном счёте</td></tr>
+        <tr><td>Риск и антифрод</td><td>Решение о допуске операции</td><td>Учётные детали</td><td>Синхронный ответ с ограничением по времени</td></tr>
+        <tr><td>Комплаенс</td><td>Проверки клиента, лимиты, отчётность</td><td>Техническую механику платежей</td><td>Асинхронная, с ручным разбором</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Распределённой транзакции между этими сервисами нет</strong> — и не будет: двухфазная фиксация через границы организаций не работает, потому что провайдер не участвует ни в каком вашем протоколе. Вместо неё используется сага: последовательность шагов, каждый со своей компенсацией. Компенсация не откатывает шаг, а совершает обратное действие, и это принципиально: отменить холд можно, а вот «отменить» отправленный клиенту товар нельзя, поэтому необратимые шаги ставятся последними.</p>
+
+    <div class="flow">
+      <div class="node">Резерв товара<small>компенсация: снять резерв</small></div>
+      <span class="arr">→</span>
+      <div class="node">Проверка риска<small>компенсация: не требуется</small></div>
+      <span class="arr">→</span>
+      <div class="node">Холд средств<small>компенсация: отмена холда</small></div>
+      <span class="arr">→</span>
+      <div class="node">Проводки в ledger<small>компенсация: сторнирующая операция</small></div>
+      <span class="arr">→</span>
+      <div class="node">Списание<small>компенсация: возврат, дорогая</small></div>
+      <span class="arr">→</span>
+      <div class="node">Отгрузка<small>необратимо, поэтому последняя</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 20 · оркестрация против хореографии в платежах</caption>
+      <thead><tr><th>Критерий</th><th>Оркестрация</th><th>Хореография</th></tr></thead>
+      <tbody>
+        <tr><td>Где живёт процесс</td><td>В явном координаторе</td><td>Размазан по подписчикам событий</td></tr>
+        <tr><td>Видимость состояния</td><td>Одна таблица, статус на виду</td><td>Собирается по журналам нескольких сервисов</td></tr>
+        <tr><td>Компенсации</td><td>Описаны явно и по шагам</td><td>Каждый сервис компенсирует себя сам</td></tr>
+        <tr><td>Добавление шага</td><td>Правка координатора</td><td>Новый подписчик, но связи неочевидны</td></tr>
+        <tr><td>Разбор инцидента</td><td>Понятно, где встал процесс</td><td>Трудоёмко</td></tr>
+        <tr><td>Рекомендация для денег</td><td>Основной выбор</td><td>Только для побочных эффектов: уведомления, аналитика</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Мультипровайдерность</strong> появляется по трём причинам: снижение комиссии за счёт маршрутизации, повышение доступности при отказе одного провайдера и покрытие способов оплаты, которых нет у основного. Цена — абстракция над разными API, отдельная сверка по каждому провайдеру и удвоение работы при каждом изменении. Начинать стоит с одного провайдера и честной абстракции внутри, а второго добавлять, когда есть измеримая причина.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 21 · маршрутизация между провайдерами</caption>
+      <thead><tr><th>Критерий</th><th>Как работает</th><th>Риск</th></tr></thead>
+      <tbody>
+        <tr><td>По стоимости</td><td>Дешёвый провайдер для подходящих операций</td><td>Более низкая конверсия съедает экономию</td></tr>
+        <tr><td>По конверсии</td><td>Провайдер с лучшим процентом одобрения по сегменту</td><td>Нужна статистика и постоянный пересчёт</td></tr>
+        <tr><td>По доступности</td><td>Переключение при росте ошибок</td><td>Двойное списание при слепом переключении на таймауте</td></tr>
+        <tr><td>Каскад</td><td>Повторная попытка у другого провайдера после отказа</td><td>Повтор после отказа эмитента бесполезен и вреден</td></tr>
+        <tr><td>По способу оплаты</td><td>Разные провайдеры под разные методы</td><td>Сложность сверки растёт линейно с числом провайдеров</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Каскадное переключение допустимо только при технических ошибках и никогда — при неизвестном состоянии. Если первый провайдер ответил таймаутом, операция могла пройти, и попытка у второго создаёт второе списание: клиент увидит две одинаковые суммы, а сверка покажет расхождение только на следующий день. Правильный порядок: сначала выяснить исход у первого провайдера, и только при подтверждённой неудаче идти ко второму.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как обеспечить согласованность между заказом, платежом и учётом?</b><br>Не распределённой транзакцией, а сагой с явными компенсациями и жёстким порядком шагов: обратимые впереди, необратимые в конце. Внутри учётного сервиса согласованность строгая — проводки пишутся одной транзакцией с проверкой инварианта. Между сервисами — согласованность в конечном счёте: события через outbox, идемпотентные обработчики и сверка, которая ловит то, что всё-таки разошлось.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="antifraud">
+    <p class="path">senior / риск</p>
+    <div class="card-top"><h3>Антифрод и риск</h3><span class="badge b-3">Риск</span></div>
+    <p>Антифрод — не задача «поймать всех мошенников», а задача найти точку, где сумма потерь от мошенничества и потерь от отклонённых честных операций минимальна. Ноль мошенничества достигается отклонением всех платежей и стоит бизнесу дороже любого мошенника, поэтому разговор всегда идёт о пороге, а не о наличии защиты.</p>
+
+    <div class="formula">потери = ущерб от пропущенного мошенничества + упущенная выручка от ложных отказов<span>задача — минимум суммы, а не минимум первого слагаемого</span></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 22 · сигналы для оценки риска операции</caption>
+      <thead><tr><th>Группа</th><th>Примеры сигналов</th><th>Что ловит</th></tr></thead>
+      <tbody>
+        <tr><td>Скорость</td><td>Число попыток с карты, устройства, адреса за час</td><td>Перебор карт, автоматизированные атаки</td></tr>
+        <tr><td>Устройство</td><td>Отпечаток браузера, эмулятор, автоматизация</td><td>Массовые операции с одной машины</td></tr>
+        <tr><td>География</td><td>Несовпадение страны карты, адреса и доставки</td><td>Использование украденных данных</td></tr>
+        <tr><td>Поведение</td><td>Скорость заполнения формы, вставка данных целиком</td><td>Ботов и заранее подготовленные данные</td></tr>
+        <tr><td>История клиента</td><td>Возраст аккаунта, прошлые споры и возвраты</td><td>Повторное недобросовестное поведение</td></tr>
+        <tr><td>Сумма и состав</td><td>Нетипичная сумма, ликвидный товар, срочная доставка</td><td>Схемы обналичивания через товар</td></tr>
+        <tr><td>Связи</td><td>Общие карта, устройство или адрес у разных аккаунтов</td><td>Сети аккаунтов, созданных одним человеком</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Правила скорости и решение с тремя исходами</span></div><pre><span class="kw">final class</span> <span class="nm">RiskEngine</span>
+{
+    <span class="cm">// Решение всегда одно из трёх, а не «да или нет»:</span>
+    <span class="cm">// пропустить, потребовать подтверждения, отклонить.</span>
+    <span class="kw">public function</span> <span class="fn">assess</span>(<span class="nm">PaymentAttempt</span> <span class="nm">$attempt</span>): <span class="nm">RiskDecision</span>
+    {
+        <span class="nm">$score</span>  = 0;
+        <span class="nm">$hits</span>   = [];
+
+        <span class="cm">// Скоростные правила считаются по окну, а не за всё время.</span>
+        <span class="cm">// Счётчики живут в Redis: обращение к базе тут не уложится в бюджет.</span>
+        <span class="kw">foreach</span> (<span class="nm">$this</span>-&gt;velocityRules <span class="kw">as</span> <span class="nm">$rule</span>) {
+            <span class="nm">$count</span> = <span class="nm">$this</span>-&gt;counters-&gt;<span class="fn">countInWindow</span>(
+                <span class="nm">$rule</span>-&gt;<span class="fn">keyFor</span>(<span class="nm">$attempt</span>),   <span class="cm">// card:hash, device:id, ip:subnet</span>
+                <span class="nm">$rule</span>-&gt;window,
+            );
+
+            <span class="kw">if</span> (<span class="nm">$count</span> &gt; <span class="nm">$rule</span>-&gt;threshold) {
+                <span class="nm">$score</span> += <span class="nm">$rule</span>-&gt;weight;
+                <span class="nm">$hits</span>[] = <span class="nm">$rule</span>-&gt;name;
+            }
+        }
+
+        <span class="cm">// Жёсткие блокировки не участвуют в скоринге: санкционный список</span>
+        <span class="cm">// и подтверждённое мошенничество отклоняют операцию сразу.</span>
+        <span class="kw">if</span> (<span class="nm">$this</span>-&gt;denyList-&gt;<span class="fn">contains</span>(<span class="nm">$attempt</span>)) {
+            <span class="kw">return</span> <span class="nm">RiskDecision</span>::<span class="fn">deny</span>(<span class="st">&quot;deny_list&quot;</span>);
+        }
+
+        <span class="cm">// Средняя зона — не отказ, а усиленное подтверждение: 3-D Secure</span>
+        <span class="cm">// переносит ответственность на эмитента и сохраняет конверсию.</span>
+        <span class="kw">return match</span> (<span class="kw">true</span>) {
+            <span class="nm">$score</span> &gt;= <span class="nm">$this</span>-&gt;denyThreshold      =&gt; <span class="nm">RiskDecision</span>::<span class="fn">deny</span>(...<span class="nm">$hits</span>),
+            <span class="nm">$score</span> &gt;= <span class="nm">$this</span>-&gt;challengeThreshold =&gt; <span class="nm">RiskDecision</span>::<span class="fn">challenge</span>(...<span class="nm">$hits</span>),
+            <span class="kw">default</span>                            =&gt; <span class="nm">RiskDecision</span>::<span class="fn">allow</span>(),
+        };
+    }
+}
+</pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 23 · цена ошибок антифрода</caption>
+      <thead><tr><th>Ошибка</th><th>Что происходит</th><th>Прямая цена</th><th>Скрытая цена</th></tr></thead>
+      <tbody>
+        <tr><td>Пропущенное мошенничество</td><td>Операция прошла, позже спор</td><td>Сумма, комиссия, штраф за спор</td><td>Рост доли споров, повышение тарифа</td></tr>
+        <tr><td>Ложный отказ</td><td>Честный клиент не смог заплатить</td><td>Упущенная продажа</td><td>Клиент уходит навсегда и рассказывает об этом</td></tr>
+        <tr><td>Избыточное подтверждение</td><td>Клиента гоняют через 3-D Secure</td><td>Отвал части покупателей</td><td>Ощущение недоверия к клиенту</td></tr>
+        <tr><td>Медленное решение</td><td>Проверка не уложилась в бюджет времени</td><td>Таймаут платежа</td><td>Непредсказуемость системы, всплески отказов</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Любое автоматическое решение о деньгах клиента должно быть объяснимым и обратимым. Объяснимым — потому что «система так решила» не годится ни для службы поддержки, ни для регулятора: нужно хранить, какие правила сработали и с какими значениями. Обратимым — потому что ошибки будут, и должен существовать процесс ручного разбора со сроком ответа, а не тупик, из которого клиент не выберется.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как построить антифрод, не убив конверсию?</b><br>Через три исхода вместо двух: пропустить, потребовать подтверждения, отклонить. Средняя зона риска уходит в 3-D Secure — это сохраняет операцию и переносит ответственность за мошенничество на эмитента. Пороги подбираются по деньгам: сравниваются потери от пропущенного мошенничества и упущенная выручка от ложных отказов. Обязательно нужны обратная связь по подтверждённым случаям, хранение сработавших правил и процесс ручного разбора спорных решений.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="compliance">
+    <p class="path">senior / комплаенс</p>
+    <div class="card-top"><h3>KYC, AML и санкции</h3><span class="badge b-3">Регуляторика</span></div>
+    <p>Комплаенс приходит в код в виде ограничений, которые невозможно обойти техническим решением: клиента нужно идентифицировать до определённых операций, подозрительные схемы — выявлять и сообщать о них, санкционные списки — проверять до, а не после платежа. Инженерная задача здесь — не спорить с требованиями, а встроить их так, чтобы они не превращали каждую покупку в анкету.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 24 · уровни идентификации клиента</caption>
+      <thead><tr><th>Уровень</th><th>Что собирается</th><th>Что открывает</th><th>Инженерные последствия</th></tr></thead>
+      <tbody>
+        <tr><td>Анонимный</td><td>Ничего, кроме способа оплаты</td><td>Разовые платежи в пределах низких лимитов</td><td>Жёсткие лимиты на сумму и частоту</td></tr>
+        <tr><td>Упрощённый</td><td>Имя, документ, телефон, проверка по базам</td><td>Более высокие лимиты, кошелёк</td><td>Хранение персональных данных, права доступа, срок хранения</td></tr>
+        <tr><td>Полный</td><td>Личное или видеоподтверждение, документы</td><td>Максимальные лимиты, выплаты, бизнес-операции</td><td>Хранение сканов, шифрование, журнал доступа</td></tr>
+        <tr><td>Юридическое лицо</td><td>Учредительные документы, бенефициары</td><td>Расчёты между компаниями</td><td>Периодическая перепроверка, отслеживание изменений</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 25 · что требуется от системы со стороны AML</caption>
+      <thead><tr><th>Требование</th><th>Как выглядит в коде</th><th>Типичная ошибка</th></tr></thead>
+      <tbody>
+        <tr><td>Проверка по санкционным и иным спискам</td><td>Синхронная проверка до проведения операции</td><td>Проверка после списания: деньги уже ушли</td></tr>
+        <tr><td>Лимиты по суммам и периодам</td><td>Счётчики за окно, разные для уровней идентификации</td><td>Лимит только на операцию, но не на сумму за период</td></tr>
+        <tr><td>Выявление дробления</td><td>Правила на серии операций одного клиента</td><td>Правила смотрят на одну операцию изолированно</td></tr>
+        <tr><td>Сохранение источника средств</td><td>Связь операции с подтверждающими документами</td><td>Документы лежат вне системы, связи нет</td></tr>
+        <tr><td>Отчётность</td><td>Регулярные выгрузки в заданном формате</td><td>Выгрузка собирается вручную каждый раз</td></tr>
+        <tr><td>Хранение и доступность истории</td><td>Неизменяемые записи с журналом доступа</td><td>Чистка старых данных ради экономии места</td></tr>
+        <tr><td>Заморозка операций</td><td>Возможность приостановить клиента и его средства</td><td>Заморозка реализована выключением аккаунта, деньги продолжают двигаться</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Персональные данные и деньги пересекаются</strong> ровно там, где регуляторные требования вступают в конфликт: право клиента на удаление данных против обязанности хранить историю операций. Работающее решение — разделение хранилищ: учётные записи о движении денег остаются с обезличенным идентификатором, а персональные сведения живут отдельно и удаляются или обезличиваются по истечении срока. Проектировать это нужно заранее: разделить сущности в работающей системе гораздо дороже.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Клиент требует удалить свои данные, а операции хранить обязаны. Как быть?</b><br>Разнести хранение: движение денег фиксируется по внутреннему идентификатору без персональных сведений, а персональные данные хранятся отдельно и обезличиваются по требованию или по истечении установленного срока. Тогда удаление профиля не разрушает историю операций и не нарушает обязанность её хранить. Отдельно фиксируется сам факт обращения и что именно было обезличено.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card" id="pci">
+    <p class="path">senior / карточные данные</p>
+    <div class="card-top"><h3>PCI DSS и карточные данные</h3><span class="badge b-must">Обязательно</span></div>
+    <p>Стандарт PCI DSS описывает требования к тем, кто хранит, обрабатывает или передаёт данные карт. Главная инженерная мысль здесь простая: самый дешёвый способ соответствовать требованиям — не прикасаться к карточным данным вообще. Каждый компонент, через который проходит номер карты, попадает в зону соответствия вместе со всей инфраструктурой вокруг него.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 26 · способы приёма карты и зона соответствия</caption>
+      <thead><tr><th>Способ</th><th>Кто видит номер карты</th><th>Зона соответствия</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>Переадресация на страницу провайдера</td><td>Только провайдер</td><td>Минимальная</td><td>Уход с сайта, слабый контроль над оформлением</td></tr>
+        <tr><td>Форма провайдера во фрейме</td><td>Только провайдер</td><td>Минимальная</td><td>Ограничения оформления, зависимость от скрипта провайдера</td></tr>
+        <tr><td>Поля провайдера внутри своей формы</td><td>Провайдер, данные не идут через ваш сервер</td><td>Небольшая, но требует контроля скриптов страницы</td><td>Сложнее интеграция, требования к целостности страницы</td></tr>
+        <tr><td>Приём формы на своём сервере</td><td>Ваши серверы</td><td>Полная и дорогая</td><td>Аудит, сегментация сети, сканирования, персонал</td></tr>
+        <tr><td>Хранение карт у себя</td><td>Ваша база</td><td>Максимальная</td><td>Оправдано лишь для крупных платёжных компаний</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Что нельзя хранить никогда:</strong> код проверки подлинности карты и содержимое магнитной полосы или чипа — даже в зашифрованном виде, даже временно, даже «для отладки». Номер карты, если он всё-таки хранится, маскируется при показе и защищается криптографически при хранении. На практике для мерчанта достаточно токена провайдера, маски вида «первые шесть и последние четыре» и срока действия — этого хватает и для интерфейса, и для поддержки.</p>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Полный номер карты в логах, в теле исключения, в сохранённом запросе для отладки или в системе отслеживания ошибок. Обычно это происходит не намеренно: логируется всё тело запроса, а карта оказалась внутри. Защита — фильтр по маске на уровне логгера и обработчика ошибок плюс тест, который прогоняет типичные полезные нагрузки через журналирование и проверяет, что номера не осталось нигде. Один такой лог превращает соответствие требованиям в фикцию и создаёт полноценную утечку.</div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Зона соответствия — это не только код приёма платежа, но и всё, что имеет к нему сетевой доступ: контейнеры на той же машине, база, резервные копии, скрипты аналитики на странице оплаты, сотрудники с доступом. Отсюда практический вывод: сокращение зоны почти всегда выгоднее её защиты. Замена собственной формы на поля провайдера обходится в несколько недель работы, тогда как поддержание полного соответствия — в постоянные расходы и регулярные аудиты.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как принимать оплату картой, не попадая в дорогую зону PCI DSS?</b><br>Не пропускать карточные данные через свои серверы: форма провайдера во фрейме, его поля внутри своей вёрстки или переадресация на его страницу. Мерчант получает токен и работает дальше с ним, а у себя хранит только маску и срок действия. Дополнительно проверяется, что номер карты не попадает в логи, трассировки и системы отслеживания ошибок, — это самая частая незаметная утечка данных за пределы зоны.</div>
+  </article>
+
+  <!-- 19 -->
+  <article class="card" id="audit">
+    <p class="path">senior / аудит</p>
+    <div class="card-top"><h3>Аудит и закрытие периода</h3><span class="badge b-3">Отчётность</span></div>
+    <p>Финансовая система должна уметь отвечать на вопрос «что произошло с этими деньгами» через год, с точностью до операции и с указанием, кто её инициировал. Это меняет требования к хранению: журнал операций перестаёт быть отладочным средством и становится частью продукта, а «почистить старые записи» превращается из оптимизации в нарушение.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 27 · требования к финансовому журналу</caption>
+      <thead><tr><th>Требование</th><th>Как реализуется</th><th>Что ломает нарушение</th></tr></thead>
+      <tbody>
+        <tr><td>Неизменяемость</td><td>Только вставка, исправления — сторнирующими операциями</td><td>История перестаёт быть доказательством</td></tr>
+        <tr><td>Полнота</td><td>Фиксируется каждое изменение, включая ручные</td><td>Невозможно объяснить разницу балансов</td></tr>
+        <tr><td>Авторство</td><td>Кто инициировал: клиент, сотрудник, задача</td><td>Нельзя разобрать злоупотребление</td></tr>
+        <tr><td>Время</td><td>UTC плюс момент по бизнес-календарю</td><td>Операции у границы суток попадают не в тот период</td></tr>
+        <tr><td>Связность</td><td>Ссылки на операцию провайдера и документ-основание</td><td>Сверка превращается в ручной поиск</td></tr>
+        <tr><td>Срок хранения</td><td>Определяется требованиями, обычно годы</td><td>Нечем ответить на запрос проверяющих</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Дата операции и дата учёта — разные вещи.</strong> Платёж, прошедший в 23:58 последнего дня месяца, попадает в отчёт этого месяца, даже если наш обработчик записал его в 00:03 следующего. Поэтому у операции хранятся обе метки: техническая, когда запись создана, и учётная, к какому периоду она относится. Без этого разделения ежемесячная отчётность расходится с данными провайдера каждый раз на границе месяца, и каждый раз это выясняется заново.</p>
+
+    <p><strong>Закрытие периода</strong> — момент, после которого проводки за период считаются окончательными. Всё, что обнаружено позже, оформляется корректирующими операциями текущего периода со ссылкой на исходную, а не правкой закрытых записей. Технически это означает запрет на вставку проводок с учётной датой в закрытом периоде — проверку удобно держать на уровне базы, чтобы её нельзя было обойти из кода.</p>
+
+    <div class="box good"><span class="lbl">Ориентир</span>Хороший признак зрелости финансового контура — возможность в любой момент воспроизвести баланс любого счёта на произвольную дату в прошлом, повторив расчёт из проводок. Если такой запрос требует восстановления резервной копии или ручных выкладок, значит, где-то в системе баланс всё-таки хранится как самостоятельная величина и однажды разойдётся с историей.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Обнаружилась ошибочная проводка недельной давности. Что с ней делать?</b><br>Не исправлять и не удалять. Создаётся сторнирующая операция, отменяющая эффект ошибочной, затем корректная операция — обе с текущей датой и ссылкой на исходную. История остаётся полной: видно, что произошла ошибка, когда её нашли и как исправили. Правка задним числом лишает журнал доказательной силы и почти всегда всплывает при сверке, только позже и дороже.</div>
+  </article>
+
+  <!-- 20 -->
+  <article class="card" id="ops">
+    <p class="path">senior / эксплуатация</p>
+    <div class="card-top"><h3>Эксплуатация денег</h3><span class="badge b-3">Продакшен</span></div>
+    <p>В платёжном контуре обычного технического мониторинга недостаточно. Сервис может отвечать за 50 мс с нулевым процентом ошибок и при этом не проводить ни одного платежа: провайдер отклоняет всё подряд, а с точки зрения инфраструктуры всё прекрасно. Поэтому основные метрики здесь — денежные и продуктовые, а не только технические.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 28 · метрики платёжного контура</caption>
+      <thead><tr><th>Метрика</th><th>Что показывает</th><th>Когда бить тревогу</th></tr></thead>
+      <tbody>
+        <tr><td>Доля успешных операций</td><td>Здоровье всей цепочки</td><td>Падение относительно того же часа прошлой недели</td></tr>
+        <tr><td>Распределение причин отказа</td><td>Что именно сломалось</td><td>Резкий рост одной категории</td></tr>
+        <tr><td>Платежи в неизвестном состоянии</td><td>Незакрытые операции</td><td>Любая запись старше установленного срока</td></tr>
+        <tr><td>Возраст незакрытых холдов</td><td>Замороженные деньги клиентов</td><td>Приближение к сроку сгорания холда</td></tr>
+        <tr><td>Нерасследованные расхождения</td><td>Качество сверки</td><td>Любое расхождение старше суток</td></tr>
+        <tr><td>Перекос ledger</td><td>Нарушение инварианта двойной записи</td><td>Всегда: ненулевая сумма проводок по операции</td></tr>
+        <tr><td>Задержка вебхуков</td><td>Живость канала уведомлений</td><td>Тишина дольше обычного интервала</td></tr>
+        <tr><td>Доля споров</td><td>Риск санкций платёжной системы</td><td>Приближение к порогу платёжной системы</td></tr>
+        <tr><td>Очередь возвратов и выплат</td><td>Обязательства, которые не исполняются</td><td>Рост очереди или возраст старше нормы</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 29 · денежные инциденты и первый шаг</caption>
+      <thead><tr><th>Симптом</th><th>Вероятная причина</th><th>Первый шаг</th></tr></thead>
+      <tbody>
+        <tr><td>Двойные списания у клиентов</td><td>Повторы без ключа идемпотентности или каскад после таймаута</td><td>Остановить повторы, найти дубли по своему идентификатору, вернуть деньги</td></tr>
+        <tr><td>Оплаты проходят, заказы не создаются</td><td>Потеря событий между платежами и заказами</td><td>Перезапустить обработку из outbox, сверить за период</td></tr>
+        <tr><td>Резкое падение конверсии</td><td>Сбой на стороне провайдера или ужесточение антифрода</td><td>Разложить отказы по причинам, сравнить с прошлой неделей</td></tr>
+        <tr><td>Перекос в ledger</td><td>Ошибка в коде проводок, ручное вмешательство</td><td>Прекратить операции по затронутым счетам, найти операцию с ненулевой суммой</td></tr>
+        <tr><td>Массовые зависшие платежи</td><td>Провайдер не отвечает или вебхуки не доходят</td><td>Включить опрос статусов, уведомить клиентов о задержке</td></tr>
+        <tr><td>Расхождение с банковской выпиской</td><td>Комиссии, споры, ручные операции провайдера</td><td>Развести по уровням сверки, начиная с реестра</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Ручные корректировки — необходимая часть эксплуатации денег: без них некоторые ситуации не разрешить. Опасны не они, а их отсутствие в системе. Правильная форма — операция того же типа, что и обычная, с обязательным указанием автора, причины и основания, проходящая через тот же ledger и те же инварианты. Прямой доступ к базе с <code>UPDATE</code> по балансу — самое дорогое, что может случиться с финансовым контуром: следов не остаётся, а разошедшийся баланс обнаруживается спустя месяцы.</div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какие алерты вы поставите на платёжный сервис?</b><br>Помимо технических — денежные: падение доли успешных операций относительно того же часа неделей ранее, всплеск конкретной причины отказа, платежи в неизвестном состоянии старше установленного срока, нерасследованные расхождения сверки старше суток и любое нарушение инварианта двойной записи. Технические метрики показывают, что сервис жив, но не показывают, что он перестал зарабатывать деньги.</div>
+  </article>
+
+  <!-- 21 -->
+  <article class="card" id="antipatterns">
+    <p class="path">senior / антипаттерны</p>
+    <div class="card-top"><h3>Антипаттерны финансовых систем</h3><span class="badge b-3">Разбор</span></div>
+    <p>Список того, что регулярно встречается в реальных проектах и предсказуемо заканчивается потерянными деньгами. Полезен как чек-лист для ревью чужого платёжного кода и как источник примеров на собеседовании.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 30 · антипаттерны и чем они заканчиваются</caption>
+      <thead><tr><th>Антипаттерн</th><th>Чем заканчивается</th><th>Замена</th></tr></thead>
+      <tbody>
+        <tr><td>Сумма во float</td><td>Расхождения в копейках, несходящаяся сверка</td><td>Целые минимальные единицы в объекте <code>Money</code></td></tr>
+        <tr><td>Баланс отдельной колонкой</td><td>Невосстановимая история, тихий уход в расхождение</td><td>Проводки как источник истины, снимки как кэш</td></tr>
+        <tr><td>Повтор без ключа идемпотентности</td><td>Двойные списания</td><td>Ключ на намерение плюс уникальный индекс</td></tr>
+        <tr><td>Вебхук как источник истины</td><td>Действия по подделанным или устаревшим данным</td><td>Подпись, дедупликация, подтверждение статуса через API</td></tr>
+        <tr><td>Присвоение статуса из нескольких мест</td><td>Возврат перезаписывается запоздавшей оплатой</td><td>Статусная машина с явными переходами</td></tr>
+        <tr><td>Сетевой вызов внутри транзакции</td><td>Долгие блокировки, деньги списаны без записи</td><td>Короткие транзакции, вызов между ними</td></tr>
+        <tr><td>Публикация события до фиксации транзакции</td><td>События о том, чего не произошло</td><td>Outbox в той же транзакции</td></tr>
+        <tr><td>Отсутствие сверки</td><td>Потери обнаруживает клиент, а не компания</td><td>Ежедневная сверка с разбором расхождений</td></tr>
+        <tr><td>Ручные правки базы</td><td>Необъяснимые балансы, отсутствие следов</td><td>Корректирующие операции через тот же ledger</td></tr>
+        <tr><td>Карточные данные на своих серверах без нужды</td><td>Дорогое соответствие требованиям и риск утечки</td><td>Форма провайдера и токены</td></tr>
+        <tr><td>Округление на каждом шаге расчёта</td><td>Сумма частей не равна целому</td><td>Округление один раз, распределение остатка</td></tr>
+        <tr><td>Повтор после отказа эмитента</td><td>Ухудшение статистики мерчанта, санкции</td><td>Различать бизнес-отказ и технический сбой</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Отдельно стоит «мы починим это потом»: платёжный контур почти никогда не переписывают заново, потому что миграция денежных данных дороже и рискованнее любой другой. Решения, принятые на старте — как хранится сумма, есть ли ledger, идемпотентны ли операции, — остаются с продуктом на годы. Это тот редкий случай, когда правильная архитектура с первого дня обходится дешевле, чем эволюционная.</div>
+  </article>
+
+  <!-- 22 -->
+  <article class="card lvl-s" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Проверка</span></div>
+    <p>Что должно быть в арсенале.</p>
+    <ul class="check">
+      <li>Развести учётный контур и процессинг и объяснить, почему у них разные требования к согласованности.</li>
+      <li>Спроектировать сагу оформления заказа с компенсациями и объяснить порядок необратимых шагов.</li>
+      <li>Обосновать выбор оркестрации для денежных процессов.</li>
+      <li>Назвать критерии маршрутизации между провайдерами и опасность каскада после таймаута.</li>
+      <li>Сформулировать задачу антифрода как минимизацию суммы двух видов потерь.</li>
+      <li>Описать решение с тремя исходами и роль 3-D Secure в переносе ответственности.</li>
+      <li>Перечислить требования KYC и AML, влияющие на архитектуру системы.</li>
+      <li>Развести хранение персональных данных и истории операций.</li>
+      <li>Назвать способы сократить зону соответствия PCI DSS и то, что нельзя хранить никогда.</li>
+      <li>Сформулировать требования к финансовому журналу и разницу между датой операции и датой учёта.</li>
+      <li>Объяснить закрытие периода и порядок исправления ошибки в закрытом периоде.</li>
+      <li>Перечислить денежные метрики и алерты, которых нет в обычном мониторинге.</li>
+      <li>Описать безопасную форму ручной корректировки и объяснить вред прямых правок базы.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Сводки для повторения перед собеседованием и для быстрой проверки собственного платёжного кода на ревью.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Словарь финтеха</h3><span class="badge b-tag">Таблица 31</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 31 · термины, которые звучат на каждом собеседовании</caption>
+      <thead><tr><th>Термин</th><th>Что означает</th><th>Что часто путают</th></tr></thead>
+      <tbody>
+        <tr><td>Авторизация</td><td>Проверка и заморозка суммы эмитентом</td><td>Считают, что деньги уже у мерчанта</td></tr>
+        <tr><td>Списание, capture</td><td>Подтверждение операции мерчантом</td><td>Путают с расчётами и зачислением</td></tr>
+        <tr><td>Расчёты, settlement</td><td>Перечисление выручки мерчанту эквайером</td><td>Считают моментом получения денег списание</td></tr>
+        <tr><td>Возврат, refund</td><td>Возврат по инициативе мерчанта</td><td>Путают со спором</td></tr>
+        <tr><td>Спор, chargeback</td><td>Принудительный возврат по инициативе банка клиента</td><td>Считают разновидностью возврата</td></tr>
+        <tr><td>Эквайер</td><td>Банк мерчанта</td><td>Путают с провайдером</td></tr>
+        <tr><td>Эмитент</td><td>Банк, выпустивший карту клиента</td><td>Путают с платёжной системой</td></tr>
+        <tr><td>Токенизация</td><td>Замена номера карты идентификатором провайдера</td><td>Считают шифрованием номера у себя</td></tr>
+        <tr><td>Проводка, entry</td><td>Одна строка движения по счёту</td><td>Путают с операцией целиком</td></tr>
+        <tr><td>Сторно</td><td>Обратная операция, отменяющая эффект ошибочной</td><td>Считают удалением записи</td></tr>
+        <tr><td>Реестр, реконсиляция</td><td>Выгрузка операций провайдера и её сверка</td><td>Считают отчётом для бухгалтерии</td></tr>
+        <tr><td>Минимальная единица</td><td>Копейка, цент — целочисленное представление суммы</td><td>Считают, что всегда одна сотая</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что хранить по платежу</h3><span class="badge b-tag">Таблица 32</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 32 · поля платёжной операции и зачем они нужны</caption>
+      <thead><tr><th>Поле</th><th>Зачем</th><th>Что ломается без него</th></tr></thead>
+      <tbody>
+        <tr><td>Свой идентификатор</td><td>Поиск операции у провайдера после сбоя</td><td>Потерянный платёж нельзя найти</td></tr>
+        <tr><td>Идентификатор провайдера</td><td>Сверка, возвраты, разбор споров</td><td>Ручной поиск по сумме и времени</td></tr>
+        <tr><td>Ключ идемпотентности</td><td>Защита от повторного проведения</td><td>Двойные списания</td></tr>
+        <tr><td>Сумма и валюта</td><td>Основа операции</td><td>Всё</td></tr>
+        <tr><td>Статус и время перехода</td><td>Разбор истории</td><td>Непонятно, когда и почему изменился статус</td></tr>
+        <tr><td>Код и причина отказа</td><td>Аналитика конверсии, поддержка</td><td>Нельзя понять, почему падают платежи</td></tr>
+        <tr><td>Результат проверки риска</td><td>Разбор споров и жалоб</td><td>Решение необъяснимо</td></tr>
+        <tr><td>Результат 3-D Secure</td><td>Доказательство в споре</td><td>Спор проигрывается автоматически</td></tr>
+        <tr><td>Маска карты и токен</td><td>Поддержка и повторные списания</td><td>Клиент не понимает, с какой карты списали</td></tr>
+        <tr><td>Комиссия провайдера</td><td>Сверка и учёт выручки</td><td>Расхождение при сравнении с выпиской</td></tr>
+        <tr><td>Ссылка на заказ или документ</td><td>Связь денег с обязательствами</td><td>Невозможно объяснить назначение платежа</td></tr>
+        <tr><td>Сырой ответ провайдера</td><td>Разбор нестандартных случаев</td><td>Спор с провайдером без доказательств</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Сроки в платёжном контуре</h3><span class="badge b-tag">Таблица 33</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 33 · характерные сроки и что из них следует</caption>
+      <thead><tr><th>Событие</th><th>Порядок срока</th><th>Инженерное следствие</th></tr></thead>
+      <tbody>
+        <tr><td>Ответ на авторизацию</td><td>Секунды</td><td>Синхронный путь с бюджетом запроса</td></tr>
+        <tr><td>Жизнь холда</td><td>Дни, до нескольких недель</td><td>Фоновая задача, закрывающая просроченные холды</td></tr>
+        <tr><td>Зачисление выручки</td><td>От суток до нескольких дней</td><td>Выручка признаётся не в момент оплаты</td></tr>
+        <tr><td>Возврат до клиента</td><td>Дни</td><td>Поддержка должна знать сроки и сообщать их</td></tr>
+        <tr><td>Срок открытия спора</td><td>Месяцы</td><td>Доказательства хранятся дольше, чем кажется</td></tr>
+        <tr><td>Ответ по спору</td><td>Жёсткое окно в днях</td><td>Алерт на непредставленные доказательства</td></tr>
+        <tr><td>Реестр за день</td><td>Следующий рабочий день</td><td>Сверка отстаёт на сутки, это нормально</td></tr>
+        <tr><td>Хранение финансовой истории</td><td>Годы</td><td>Архивирование вместо удаления</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Синхронное и асинхронное в платежах</h3><span class="badge b-tag">Таблица 34</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 34 · что делается в запросе пользователя, а что фоном</caption>
+      <thead><tr><th>Операция</th><th>Где выполняется</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Создание платежа и авторизация</td><td>Синхронно</td><td>Пользователь ждёт результата здесь и сейчас</td></tr>
+        <tr><td>Проверка риска</td><td>Синхронно, с жёстким лимитом времени</td><td>Решение нужно до операции, но не ценой таймаута</td></tr>
+        <tr><td>Проводки в ledger</td><td>Синхронно с подтверждением</td><td>Строгая согласованность внутри одной транзакции</td></tr>
+        <tr><td>Обработка вебхука</td><td>Асинхронно</td><td>Провайдеру нужен быстрый ответ</td></tr>
+        <tr><td>Опрос зависших платежей</td><td>Фоном по расписанию</td><td>Страховка от потерянных уведомлений</td></tr>
+        <tr><td>Уведомления клиенту</td><td>Асинхронно</td><td>Не должны влиять на исход платежа</td></tr>
+        <tr><td>Сверка и отчётность</td><td>Фоном, ночной задачей</td><td>Объёмные выборки, время терпит</td></tr>
+        <tr><td>Выплаты и переводы наружу</td><td>Асинхронно, с подтверждением</td><td>Долгие внешние операции с собственными статусами</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Подключение нового провайдера</h3><span class="badge b-tag">Таблица 35</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 35 · что выяснить до начала интеграции</caption>
+      <thead><tr><th>Вопрос</th><th>Почему важен</th><th>Плохой ответ</th></tr></thead>
+      <tbody>
+        <tr><td>Есть ли ключи идемпотентности</td><td>Определяет безопасность повторов</td><td>«Просто не повторяйте запросы»</td></tr>
+        <tr><td>Как найти операцию по нашему идентификатору</td><td>Восстановление после потери ответа</td><td>Поиск только по идентификатору провайдера</td></tr>
+        <tr><td>Формат и гарантии вебхуков</td><td>Дедупликация и порядок обработки</td><td>Нет идентификатора события или подписи</td></tr>
+        <tr><td>Есть ли реестр для сверки</td><td>Без него сверка невозможна</td><td>Только выгрузка из личного кабинета вручную</td></tr>
+        <tr><td>Поддержка двухстадийной схемы</td><td>Определяет продуктовые сценарии</td><td>Только одностадийная при физических товарах</td></tr>
+        <tr><td>Частичные возвраты и их лимиты</td><td>Влияет на модель заказа</td><td>Только полный возврат</td></tr>
+        <tr><td>Правила повторов и штрафы</td><td>Стратегия при отказах</td><td>Правила нигде не описаны</td></tr>
+        <tr><td>Песочница и тестовые сценарии</td><td>Возможность проверить сбои</td><td>Песочница без сценариев отказа</td></tr>
+        <tr><td>Перенос токенов при уходе</td><td>Возможность сменить провайдера</td><td>Токены не переносятся</td></tr>
+        <tr><td>Сроки зачисления и комиссии</td><td>Финансовая модель и сверка</td><td>Комиссия не разложена по операциям</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ШАБЛОНЫ ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Шаблоны и заготовки</h2>
+    <p>Схемы, запросы и куски кода, которые закрывают большую часть повседневных задач платёжного контура.</p>
+  </div>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Схема платёжного контура</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>SQL</span><span class="r">Платежи, возвраты, входящие события, outbox</span></div><pre><span class="kw">CREATE TABLE</span> <span class="nm">payments</span> (
+    <span class="nm">id</span>              <span class="kw">UUID PRIMARY KEY</span>,
+    <span class="nm">order_id</span>        <span class="kw">UUID NOT NULL</span>,
+    <span class="nm">amount</span>          <span class="kw">BIGINT NOT NULL CHECK</span> (<span class="nm">amount</span> &gt; 0),
+    <span class="nm">currency</span>        <span class="kw">CHAR</span>(3) <span class="kw">NOT NULL</span>,
+    <span class="nm">status</span>          <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">idempotency_key</span> <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">gateway</span>         <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">gateway_id</span>      <span class="kw">TEXT</span>,                 <span class="cm">-- появляется после ответа провайдера</span>
+    <span class="nm">fee</span>             <span class="kw">BIGINT</span>,               <span class="cm">-- комиссия, известна из реестра</span>
+    <span class="nm">failure_code</span>    <span class="kw">TEXT</span>,
+    <span class="nm">created_at</span>      <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+    <span class="nm">updated_at</span>      <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+
+    <span class="cm">-- Главная защита от двойного платежа: не проверка в коде, а ограничение</span>
+    <span class="kw">CONSTRAINT</span> <span class="nm">uniq_idempotency</span> <span class="kw">UNIQUE</span> (<span class="nm">gateway</span>, <span class="nm">idempotency_key</span>),
+    <span class="kw">CONSTRAINT</span> <span class="nm">uniq_gateway_id</span>  <span class="kw">UNIQUE</span> (<span class="nm">gateway</span>, <span class="nm">gateway_id</span>)
+);
+
+<span class="cm">-- Зависшие платежи ищутся по этому индексу фоновой задачей</span>
+<span class="kw">CREATE INDEX</span> <span class="nm">idx_payments_stuck</span> <span class="kw">ON</span> <span class="nm">payments</span> (<span class="nm">status</span>, <span class="nm">created_at</span>)
+    <span class="kw">WHERE</span> <span class="nm">status</span> <span class="kw">IN</span> (<span class="st">&quot;pending&quot;</span>, <span class="st">&quot;unknown&quot;</span>);
+
+<span class="kw">CREATE TABLE</span> <span class="nm">refunds</span> (
+    <span class="nm">id</span>              <span class="kw">UUID PRIMARY KEY</span>,
+    <span class="nm">payment_id</span>      <span class="kw">UUID NOT NULL REFERENCES</span> <span class="nm">payments</span>(<span class="nm">id</span>),
+    <span class="nm">amount</span>          <span class="kw">BIGINT NOT NULL CHECK</span> (<span class="nm">amount</span> &gt; 0),
+    <span class="nm">status</span>          <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">reason</span>          <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">idempotency_key</span> <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">created_at</span>      <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+
+    <span class="kw">CONSTRAINT</span> <span class="nm">uniq_refund_key</span> <span class="kw">UNIQUE</span> (<span class="nm">payment_id</span>, <span class="nm">idempotency_key</span>)
+);
+
+<span class="cm">-- Входящие события провайдера: дедупликация на уровне базы</span>
+<span class="kw">CREATE TABLE</span> <span class="nm">webhook_inbox</span> (
+    <span class="nm">event_id</span>     <span class="kw">TEXT PRIMARY KEY</span>,
+    <span class="nm">gateway</span>      <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">payload</span>      <span class="kw">JSONB NOT NULL</span>,
+    <span class="nm">received_at</span>  <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+    <span class="nm">processed_at</span> <span class="kw">TIMESTAMPTZ</span>
+);
+
+<span class="cm">-- Исходящие события: пишутся той же транзакцией, что и смена статуса</span>
+<span class="kw">CREATE TABLE</span> <span class="nm">outbox_messages</span> (
+    <span class="nm">id</span>           <span class="kw">BIGSERIAL PRIMARY KEY</span>,
+    <span class="nm">aggregate_id</span> <span class="kw">UUID NOT NULL</span>,
+    <span class="nm">type</span>         <span class="kw">TEXT NOT NULL</span>,
+    <span class="nm">payload</span>      <span class="kw">JSONB NOT NULL</span>,
+    <span class="nm">created_at</span>   <span class="kw">TIMESTAMPTZ NOT NULL DEFAULT</span> <span class="fn">now</span>(),
+    <span class="nm">published_at</span> <span class="kw">TIMESTAMPTZ</span>
+);
+
+<span class="kw">CREATE INDEX</span> <span class="nm">idx_outbox_pending</span> <span class="kw">ON</span> <span class="nm">outbox_messages</span> (<span class="nm">id</span>)
+    <span class="kw">WHERE</span> <span class="nm">published_at</span> <span class="kw">IS NULL</span>;
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Досмотр зависших платежей</h3><span class="badge b-tag">Шаблон</span></div>
+    <p>Задача, которая закрывает главную дыру любой интеграции: платежи, по которым мы не получили ни ответа, ни вебхука. Без неё такие операции живут в базе вечно и всплывают только при сверке или обращении клиента.</p>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">Периодический опрос статусов у провайдера</span></div><pre><span class="kw">final class</span> <span class="nm">ResolveStuckPayments</span>
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(): <span class="kw">void</span>
+    {
+        <span class="cm">// Берём платежи, застрявшие дольше разумного времени.</span>
+        <span class="cm">// Порог больше типичного времени ответа провайдера, но меньше</span>
+        <span class="cm">// срока, за который клиент успеет пожаловаться.</span>
+        <span class="nm">$stuck</span> = <span class="nm">$this</span>-&gt;payments-&gt;<span class="fn">findStuck</span>(
+            statuses: [<span class="nm">PaymentStatus</span>::<span class="nm">Pending</span>, <span class="nm">PaymentStatus</span>::<span class="nm">Unknown</span>],
+            olderThan: <span class="kw">new</span> <span class="nm">\DateInterval</span>(<span class="st">&quot;PT5M&quot;</span>),
+            limit: 200,
+        );
+
+        <span class="kw">foreach</span> (<span class="nm">$stuck</span> <span class="kw">as</span> <span class="nm">$payment</span>) {
+            <span class="kw">try</span> {
+                <span class="cm">// Ищем по СВОЕМУ идентификатору: идентификатора провайдера</span>
+                <span class="cm">// может не быть — ответ до нас не дошёл.</span>
+                <span class="nm">$state</span> = <span class="nm">$this</span>-&gt;gateways
+                    -&gt;<span class="fn">for</span>(<span class="nm">$payment</span>-&gt;gateway)
+                    -&gt;<span class="fn">findByMerchantId</span>(<span class="nm">$payment</span>-&gt;id);
+            } <span class="kw">catch</span> (<span class="nm">GatewayUnavailable</span>) {
+                <span class="kw">continue</span>;   <span class="cm">// провайдер лежит — вернёмся на следующем запуске</span>
+            }
+
+            <span class="kw">if</span> (<span class="nm">$state</span> === <span class="kw">null</span>) {
+                <span class="cm">// Операции нет у провайдера и прошло достаточно времени:</span>
+                <span class="cm">// платёж не состоялся, закрываем и освобождаем заказ.</span>
+                <span class="kw">if</span> (<span class="nm">$payment</span>-&gt;<span class="fn">olderThan</span>(<span class="kw">new</span> <span class="nm">\DateInterval</span>(<span class="st">&quot;PT1H&quot;</span>))) {
+                    <span class="nm">$this</span>-&gt;<span class="fn">apply</span>(<span class="nm">$payment</span>, <span class="nm">PaymentStatus</span>::<span class="nm">Failed</span>);
+                }
+
+                <span class="kw">continue</span>;
+            }
+
+            <span class="cm">// Статус провайдера — истина. Применяем через статусную машину:</span>
+            <span class="cm">// запрещённый переход означает, что вебхук нас уже опередил.</span>
+            <span class="nm">$this</span>-&gt;<span class="fn">apply</span>(<span class="nm">$payment</span>, <span class="nm">$state</span>-&gt;status);
+        }
+    }
+}
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Тесты, которые обязаны быть</h3><span class="badge b-tag">Шаблон</span></div>
+    <p>Платёжный код тестируется не по покрытию строк, а по списку способов потерять деньги. Минимальный набор проверок, который стоит завести в первый же день.</p>
+    <div class="code"><div class="bar"><span>PHP</span><span class="r">PHPUnit: идемпотентность, инварианты, гонка</span></div><pre><span class="kw">public function</span> <span class="fn">testRepeatedRequestDoesNotCreateSecondPayment</span>(): <span class="kw">void</span>
+{
+    <span class="nm">$command</span> = <span class="kw">new</span> <span class="nm">CreatePayment</span>(<span class="nm">$orderId</span>, <span class="nm">Money</span>::<span class="fn">of</span>(10000, <span class="nm">RUB</span>), <span class="st">&quot;key-1&quot;</span>);
+
+    <span class="nm">$first</span>  = <span class="nm">$this</span>-&gt;handler-&gt;<span class="fn">handle</span>(<span class="nm">$command</span>);
+    <span class="nm">$second</span> = <span class="nm">$this</span>-&gt;handler-&gt;<span class="fn">handle</span>(<span class="nm">$command</span>);   <span class="cm">// тот же ключ</span>
+
+    <span class="nm">$this</span>-&gt;<span class="fn">assertTrue</span>(<span class="nm">$first</span>-&gt;id-&gt;<span class="fn">equals</span>(<span class="nm">$second</span>-&gt;id));
+    <span class="nm">$this</span>-&gt;<span class="fn">assertSame</span>(1, <span class="nm">$this</span>-&gt;gateway-&gt;<span class="fn">authorizeCallCount</span>());
+}
+
+<span class="kw">public function</span> <span class="fn">testTimeoutDoesNotMarkPaymentFailed</span>(): <span class="kw">void</span>
+{
+    <span class="nm">$this</span>-&gt;gateway-&gt;<span class="fn">willTimeout</span>();
+
+    <span class="nm">$payment</span> = <span class="nm">$this</span>-&gt;handler-&gt;<span class="fn">handle</span>(<span class="nm">$this</span>-&gt;<span class="fn">command</span>());
+
+    <span class="cm">// Неизвестный результат — не отказ: деньги могли уйти</span>
+    <span class="nm">$this</span>-&gt;<span class="fn">assertSame</span>(<span class="nm">PaymentStatus</span>::<span class="nm">Unknown</span>, <span class="nm">$payment</span>-&gt;status);
+}
+
+<span class="kw">public function</span> <span class="fn">testRefundsCannotExceedPayment</span>(): <span class="kw">void</span>
+{
+    <span class="nm">$payment</span> = <span class="nm">$this</span>-&gt;<span class="fn">capturedPayment</span>(<span class="nm">Money</span>::<span class="fn">of</span>(10000, <span class="nm">RUB</span>));
+
+    <span class="nm">$this</span>-&gt;refunds-&gt;<span class="fn">handle</span>(<span class="kw">new</span> <span class="nm">RefundPayment</span>(<span class="nm">$payment</span>-&gt;id, <span class="nm">Money</span>::<span class="fn">of</span>(6000, <span class="nm">RUB</span>), <span class="st">&quot;r-1&quot;</span>));
+
+    <span class="nm">$this</span>-&gt;<span class="fn">expectException</span>(<span class="nm">RefundExceedsPayment</span>::<span class="kw">class</span>);
+    <span class="nm">$this</span>-&gt;refunds-&gt;<span class="fn">handle</span>(<span class="kw">new</span> <span class="nm">RefundPayment</span>(<span class="nm">$payment</span>-&gt;id, <span class="nm">Money</span>::<span class="fn">of</span>(5000, <span class="nm">RUB</span>), <span class="st">&quot;r-2&quot;</span>));
+}
+
+<span class="kw">public function</span> <span class="fn">testLateWebhookDoesNotRevertRefundedStatus</span>(): <span class="kw">void</span>
+{
+    <span class="nm">$payment</span> = <span class="nm">$this</span>-&gt;<span class="fn">refundedPayment</span>();
+
+    <span class="nm">$this</span>-&gt;<span class="fn">expectException</span>(<span class="nm">IllegalTransition</span>::<span class="kw">class</span>);
+    <span class="nm">$payment</span>-&gt;<span class="fn">transitionTo</span>(<span class="nm">PaymentStatus</span>::<span class="nm">Captured</span>, <span class="nm">$payment</span>-&gt;amount);
+}
+
+<span class="cm">// Гонка проверяется двумя настоящими соединениями к базе:</span>
+<span class="cm">// с одним соединением блокировка строки ничего не покажет.</span>
+<span class="kw">public function</span> <span class="fn">testConcurrentWithdrawalsCannotOverdraw</span>(): <span class="kw">void</span>
+{
+    <span class="nm">$this</span>-&gt;<span class="fn">seedBalance</span>(<span class="nm">$accountId</span>, <span class="nm">Money</span>::<span class="fn">of</span>(100000, <span class="nm">RUB</span>));
+
+    <span class="nm">$results</span> = <span class="nm">$this</span>-&gt;<span class="fn">runInParallel</span>(2, <span class="kw">fn</span>() =&gt; <span class="nm">$this</span>-&gt;ledger-&gt;<span class="fn">withdraw</span>(
+        <span class="nm">$accountId</span>, <span class="nm">Money</span>::<span class="fn">of</span>(80000, <span class="nm">RUB</span>), <span class="fn">uniqid</span>(),
+    ));
+
+    <span class="nm">$this</span>-&gt;<span class="fn">assertSame</span>(1, <span class="nm">$results</span>-&gt;<span class="fn">successCount</span>());
+    <span class="nm">$this</span>-&gt;<span class="fn">assertGreaterThanOrEqual</span>(0, <span class="nm">$this</span>-&gt;ledger-&gt;<span class="fn">balanceOf</span>(<span class="nm">$accountId</span>));
+}
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Настройки клиента провайдера</h3><span class="badge b-tag">Шаблон</span></div>
+    <div class="code"><div class="bar"><span>YAML</span><span class="r">Таймауты, повторы, предохранитель</span></div><pre><span class="nm">gateway</span>:
+  <span class="nm">base_uri</span>: <span class="st">&quot;https://api.provider.example&quot;</span>
+
+  <span class="cm"># Бюджет запроса меньше таймаута воркера и меньше таймаута nginx,</span>
+  <span class="cm"># иначе процесс убьют до записи результата.</span>
+  <span class="nm">connect_timeout</span>: <span class="nm">3</span>
+  <span class="nm">request_timeout</span>: <span class="nm">25</span>
+  <span class="nm">total_budget</span>: <span class="nm">40</span>
+
+  <span class="nm">retries</span>:
+    <span class="nm">max_attempts</span>: <span class="nm">3</span>
+    <span class="nm">base_delay_ms</span>: <span class="nm">200</span>
+    <span class="nm">multiplier</span>: <span class="nm">2</span>
+    <span class="cm"># Разброс обязателен: без него все воркеры повторяют синхронно</span>
+    <span class="nm">jitter</span>: <span class="nm">full</span>
+    <span class="cm"># Повторяем только безопасное. Отказ эмитента сюда не входит.</span>
+    <span class="nm">retry_on</span>: [<span class="st">&quot;connect_error&quot;</span>, <span class="st">&quot;http_5xx&quot;</span>, <span class="st">&quot;http_429&quot;</span>]
+    <span class="nm">retry_on_timeout</span>: <span class="nm">true</span>    <span class="cm"># только с тем же ключом идемпотентности</span>
+
+  <span class="nm">circuit_breaker</span>:
+    <span class="nm">failure_rate_threshold</span>: <span class="nm">0.5</span>
+    <span class="nm">min_requests</span>: <span class="nm">20</span>
+    <span class="nm">open_for_seconds</span>: <span class="nm">30</span>
+    <span class="nm">half_open_requests</span>: <span class="nm">3</span>
+
+  <span class="nm">webhooks</span>:
+    <span class="nm">signature_header</span>: <span class="st">&quot;X-Signature&quot;</span>
+    <span class="nm">tolerance_seconds</span>: <span class="nm">300</span>   <span class="cm"># защита от воспроизведения старого запроса</span>
+    <span class="nm">allowed_ips</span>: [<span class="st">&quot;203.0.113.0/24&quot;</span>]
+</pre></div>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Чек-лист ревью платёжного кода</h3><span class="badge b-tag">Проверка</span></div>
+    <ul class="check">
+      <li>Сумма — целое в минимальных единицах, валюта рядом и проверяется при операциях.</li>
+      <li>Округление происходит один раз, а остаток при делении распределяется явно.</li>
+      <li>У каждой операции есть ключ идемпотентности с уникальным индексом в базе.</li>
+      <li>Намерение записывается в базу до сетевого вызова, свой идентификатор уходит провайдеру.</li>
+      <li>Таймаут не приводит к статусу «отказ»: есть состояние «результат неизвестен» и его разбор.</li>
+      <li>Ошибки провайдера классифицированы: что повторять, что нет, когда размыкать предохранитель.</li>
+      <li>Внутри транзакции базы нет сетевых вызовов.</li>
+      <li>Статус меняется только через статусную машину, запрещённые переходы отбрасываются.</li>
+      <li>События публикуются через outbox в той же транзакции.</li>
+      <li>Вебхуки проверяются по подписи от сырого тела, дедуплицируются по идентификатору события.</li>
+      <li>Решения на сумму принимаются по ответу API, а не по телу вебхука.</li>
+      <li>Проводки только вставляются, исправления оформляются сторно.</li>
+      <li>Сумма возвратов не может превысить сумму платежа, и это проверяется под блокировкой.</li>
+      <li>Номер карты, код проверки и полные ответы с карточными данными не попадают в логи.</li>
+      <li>Есть ежедневная сверка и очередь разбора расхождений с ответственным.</li>
+      <li>Есть фоновая задача, закрывающая зависшие платежи и просроченные холды.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== СПРАВОЧНИК: ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Финтех — тема, где проверяют не знание терминов, а понимание того, что произойдёт с деньгами при сбое. Сильный ответ почти всегда содержит сценарий отказа и цену ошибки.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">База</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Почему деньги не хранят во float?</span><span class="aa">Двоичная плавающая точка не представляет десятичные дроби точно: 0,1 плюс 0,2 не равно 0,3. Ошибка накапливается и превращается в расхождение при сверке с банком, которое невозможно объяснить. Хранят целое число минимальных единиц валюты, обёрнутое в объект <code>Money</code>.</span></li>
+      <li><span class="qq">Что такое минимальная единица валюты?</span><span class="aa">Наименьшая неделимая часть: копейка, цент, филс. Сумма 199,90 ₽ хранится как 19990. Масштаб зависит от валюты: у рубля и доллара две цифры после запятой, у иены — ноль, у кувейтского динара — три, поэтому умножение на сто не универсально и берётся из справочника валют.</span></li>
+      <li><span class="qq">Можно ли использовать <code>DECIMAL</code> в базе?</span><span class="aa">Да, для хранения и отчётности это корректный тип с точной десятичной арифметикой. Осторожность нужна на границе: драйвер отдаёт значение строкой, и случайное приведение к float в PHP возвращает исходную проблему. В домене всё равно удобнее целое в минимальных единицах.</span></li>
+      <li><span class="qq">Как разделить 100 ₽ на троих?</span><span class="aa">Не округлением каждой доли — так получится 33,33 три раза и потерянная копейка. Каждая доля считается делением вниз, затем остаток раздаётся по одной минимальной единице: 33,34 плюс 33,33 плюс 33,33. Инвариант — сумма частей строго равна исходной сумме.</span></li>
+      <li><span class="qq">Что такое банковское округление и зачем оно?</span><span class="aa">Округление ровной половины к ближайшей чётной цифре. На массовых начислениях процентов обычное округление половины вверх даёт систематическое смещение в одну сторону, банковское его убирает. В прикладных расчётах чаще применяется половина вверх — важно, чтобы правило было одно на систему и зафиксировано.</span></li>
+      <li><span class="qq">Почему валюта — часть типа суммы?</span><span class="aa">Иначе появится сложение рублей с долларами, которое ничего не заметит. Объект <code>Money</code> хранит валюту рядом с числом и выбрасывает исключение при попытке сложить разные. Конвертация — отдельная явная операция, результат которой сохраняется вместе с курсом и его источником.</span></li>
+      <li><span class="qq">Кто такой эквайер?</span><span class="aa">Банк, обслуживающий мерчанта: он принимает платёж, участвует в расчётах и перечисляет выручку на счёт компании. От него зависят сроки зачисления, комиссии, лимиты и реестры для сверки. С провайдером его путают потому, что мерчант обычно общается с провайдером, а деньги идут через эквайера.</span></li>
+      <li><span class="qq">Чем PSP отличается от эквайера?</span><span class="aa">PSP — технологический слой: единое API, форма оплаты, токенизация карт, вебхуки, иногда маршрутизация между несколькими эквайерами. Эквайер — банк, который проводит расчёты. Один PSP может работать с несколькими эквайерами, и наоборот.</span></li>
+      <li><span class="qq">Кто принимает окончательное решение по операции?</span><span class="aa">Банк-эмитент, выпустивший карту клиента: он проверяет средства, лимиты и собственный антифрод. Мерчант и провайдер могут отклонить операцию раньше, но одобрение всегда за эмитентом. Причину отказа он обычно не раскрывает.</span></li>
+      <li><span class="qq">Чем авторизация отличается от списания?</span><span class="aa">Авторизация — проверка и заморозка суммы у эмитента: деньги ещё у клиента, но недоступны. Списание — подтверждение операции мерчантом, после которого сумма уходит в расчёты. Разделение позволяет не брать деньги, если заказ не может быть выполнен.</span></li>
+      <li><span class="qq">Когда нужна двухстадийная схема?</span><span class="aa">Когда между оплатой и исполнением есть время и возможность не выполнить заказ: товар со склада, доставка, аренда, депозит. Тогда сначала делается холд, а списание — по факту отгрузки, возможно на меньшую сумму. Для цифровых товаров и подписок хватает одностадийной.</span></li>
+      <li><span class="qq">Что происходит с холдом, если его не списать?</span><span class="aa">Он сгорает: срок жизни ограничен и зависит от схемы и эмитента, обычно от нескольких дней до месяца. После этого сумма разблокируется, а списать по этой авторизации уже нельзя. Поэтому заказы, висящие дольше срока холда, нужно либо списывать, либо явно отменять.</span></li>
+      <li><span class="qq">Клиент говорит, что деньги списались дважды. С чего начать?</span><span class="aa">Проверить, не является ли одна из сумм холдом: замороженная сумма в приложении банка выглядит как списание. Затем найти операции по своему идентификатору заказа и сверить с провайдером. Настоящий дубль обычно означает повтор запроса без ключа идемпотентности или переключение на другого провайдера после таймаута.</span></li>
+      <li><span class="qq">Что такое ключ идемпотентности?</span><span class="aa">Строка, генерируемая до первой попытки и повторяемая во всех повторах запроса. Провайдер по ней узнаёт повтор и возвращает результат первой операции вместо создания второй. Ключ соответствует намерению — одной попытке оплаты заказа, — а не отдельному вызову, иначе он бесполезен.</span></li>
+      <li><span class="qq">Запрос к провайдеру завершился таймаутом. Платёж прошёл?</span><span class="aa">Неизвестно — и это отдельное состояние, а не отказ. Операция могла выполниться полностью. Правильные действия: повтор с тем же ключом идемпотентности либо запрос статуса по своему идентификатору, а клиенту показывается «платёж обрабатывается». Считать такой платёж неуспешным — прямой путь к двойному списанию.</span></li>
+      <li><span class="qq">Зачем передавать провайдеру собственный идентификатор платежа?</span><span class="aa">Чтобы найти операцию, если его ответ до нас не дошёл. Без своего идентификатора поиск возможен только по сумме и времени, что при потоке платежей ненадёжно. Это самая дешёвая страховка от потерянных операций.</span></li>
+      <li><span class="qq">Что такое вебхук и зачем проверять его подпись?</span><span class="aa">Уведомление провайдера об изменении статуса, приходящее на публичный адрес. Публичный адрес доступен всем, поэтому без проверки подписи любой может прислать «платёж оплачен». Подпись считается по сырому телу до разбора и сравнивается через <code>hash_equals</code>, а не обычным сравнением строк.</span></li>
+      <li><span class="qq">Вебхук пришёл дважды. Что делать?</span><span class="aa">Дедуплицировать по идентификатору события через таблицу с уникальным индексом: вторая вставка не проходит, обработчик отвечает 200. Проверки «есть ли такая запись» в коде недостаточно — две параллельные доставки пройдут её одновременно. Сам переход статуса тоже делается идемпотентным.</span></li>
+      <li><span class="qq">Можно ли доверять сумме из тела вебхука?</span><span class="aa">Нет, вебхук — сигнал «посмотри на операцию», а не документ. Тело может быть устаревшим, урезанным, а при ошибке в проверке подписи — вообще чужим. Решения на сумму принимаются по ответу API провайдера, полученному собственным запросом.</span></li>
+      <li><span class="qq">Почему обработчик вебхука должен отвечать быстро?</span><span class="aa">Провайдер считает медленный ответ неуспешной доставкой и повторяет её, умножая нагрузку и создавая дубли в обработке. Правильная схема: проверить подпись, записать событие, поставить задачу в очередь, ответить 200. Вся тяжёлая работа делается в фоне.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Механика</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое двойная запись?</span><span class="aa">Способ учёта, при котором каждая операция порождает минимум две проводки: списание с одного счёта и зачисление на другой, а их сумма равна нулю. Деньги не появляются и не исчезают, они перемещаются. Отсюда встроенная проверка целостности и полная история движений.</span></li>
+      <li><span class="qq">Почему баланс не хранят числом?</span><span class="aa">Потому что баланс — производная от истории, а не самостоятельная величина. Хранимое число не отвечает на вопрос «из чего оно сложилось», навсегда впитывает любую ошибку кода и не с чем сверяться. Допустимо хранить снимок баланса как кэш, если он в любой момент пересчитывается из проводок.</span></li>
+      <li><span class="qq">Как быстро считать баланс на большом объёме проводок?</span><span class="aa">Периодическими снимками: раз в сутки на счёт пишется баланс на конец дня, текущий считается как снимок плюс проводки после него. Ключевое условие — снимок остаётся производной величиной и пересчитывается из истории, иначе появляется второй источник истины со всеми его проблемами.</span></li>
+      <li><span class="qq">Как обнаружить нарушение целостности ledger?</span><span class="aa">Регулярным запросом, который группирует проводки по операции и ищет те, где сумма не равна нулю. Это дешёвая проверка, которая ловит ошибки кода и последствия ручных вмешательств. Ненулевой перекос — всегда повод для алерта, а не для строки в отчёте.</span></li>
+      <li><span class="qq">Почему проводки нельзя изменять?</span><span class="aa">Потому что восстанавливаемая история — единственное доказательство того, что произошло с деньгами. Ошибка исправляется сторнирующей операцией и последующей корректной, обе с текущей датой и ссылкой на исходную. Разрешение на <code>UPDATE</code> обесценивает весь учётный контур.</span></li>
+      <li><span class="qq">Два параллельных списания с одного счёта. Как не уйти в минус?</span><span class="aa">Блокировкой строки счёта <code>FOR UPDATE</code> внутри транзакции: второй запрос ждёт и читает актуальный баланс. Проверка в коде не спасает — между чтением и записью есть окно. Дополнительно ставится ограничение на уровне базы, чтобы даже ошибка в коде не создала отрицательный остаток.</span></li>
+      <li><span class="qq">Откуда берутся взаимоблокировки при переводах?</span><span class="aa">Из разного порядка захвата блокировок: одна транзакция блокирует счёт A, потом B, другая — наоборот, и обе ждут. Лечится соглашением блокировать счета в фиксированном порядке, например по возрастанию идентификатора, независимо от направления перевода.</span></li>
+      <li><span class="qq">Почему нельзя вызывать API провайдера внутри транзакции базы?</span><span class="aa">Блокировки держатся всё время сетевого ожидания, и при таймауте в десять секунд строка заблокирована десять секунд. Хуже другое: при откате транзакции запрос уже ушёл, деньги списаны, а записи у нас нет. Правильный порядок — короткая транзакция, сетевой вызов вне её, ещё одна короткая транзакция для результата.</span></li>
+      <li><span class="qq">Что такое outbox и зачем он в платежах?</span><span class="aa">Таблица исходящих событий, куда событие пишется той же транзакцией, что и изменение состояния, а отдельный процесс публикует его в брокер. Это снимает выбор между «опубликовать до фиксации» — событие о том, чего не произошло — и «после» — потерянное событие при падении между операциями.</span></li>
+      <li><span class="qq">Как обработать вебхуки, приходящие не по порядку?</span><span class="aa">Статусной машиной с явным списком допустимых переходов: запоздавшее «оплачен» после «возвращён» не проходит проверку и отбрасывается. Повтор того же статуса считается нормой и обрабатывается без ошибки. При наличии версии или метки времени события они сравниваются дополнительно.</span></li>
+      <li><span class="qq">Зачем хранить историю переходов статуса?</span><span class="aa">Чтобы отвечать на вопрос «почему платёж оказался в этом состоянии». Строка с прежним статусом, новым, источником изменения и меткой времени превращает расследование по логам в один запрос. Стоит одной вставки на переход и окупается при первом же разборе.</span></li>
+      <li><span class="qq">Что такое сверка и зачем она нужна?</span><span class="aa">Сравнение наших данных с внешним источником: реестром провайдера, а затем и с выпиской по расчётному счёту. Внутренние проверки не видят самой опасной ситуации — платёж прошёл у провайдера и не дошёл до нас. Такая операция по нашим данным просто не существует, и найти её можно только снаружи.</span></li>
+      <li><span class="qq">Какие бывают расхождения при сверке?</span><span class="aa">Операция есть у провайдера и нет у нас — дописываем по его данным; есть у нас и нет у него — запрашиваем статус, при отсутствии закрываем как несостоявшуюся; разные суммы — обычно комиссия, частичное списание или конвертация; разные статусы — принимаем статус провайдера через статусную машину. Отдельный случай — операции у границы суток.</span></li>
+      <li><span class="qq">Почему сверку делают с перекрытием по времени?</span><span class="aa">Потому что операция, прошедшая в 23:59, может попасть в реестр следующего дня, а у нас записана в текущий. Строгое деление по календарным суткам даёт ложные расхождения каждый день. Окно берётся с запасом в обе стороны, а совпадения ищутся по идентификатору операции.</span></li>
+      <li><span class="qq">Какие инварианты у частичного возврата?</span><span class="aa">Сумма всех возвратов по платежу не превышает сумму списания; возврат возможен только по списанному платежу; повтор с тем же ключом не создаёт второй возврат; позиция заказа не возвращается дважды. Проверка суммы делается под блокировкой платежа, иначе два параллельных возврата пройдут вместе.</span></li>
+      <li><span class="qq">Чем chargeback отличается от возврата?</span><span class="aa">Возврат инициирует мерчант через обычный платёжный канал. Chargeback инициирует клиент через свой банк: деньги удерживаются принудительно, мерчант платит штраф и обязан представить доказательства в жёсткий срок. Высокая доля споров ведёт к повышенным тарифам и вплоть до отказа в обслуживании.</span></li>
+      <li><span class="qq">Что нужно сохранить, чтобы выиграть спор?</span><span class="aa">Всё, что доказывает исполнение и участие клиента: детали заказа, результат проверки 3-D Secure, адрес и устройство, факт и время доставки, подтверждение получения, переписку. Собирать это надо в момент операции, а не через два месяца при запросе — иначе спор проигрывается независимо от правоты.</span></li>
+      <li><span class="qq">Как устроено ежемесячное списание по подписке?</span><span class="aa">Карта сохраняется у провайдера при первой операции, мерчанту возвращается токен. Дальнейшие списания идут по токену как операции по инициативе мерчанта на основании ранее данного согласия. Мерчант хранит только токен, маску и срок действия, оставаясь вне зоны хранения карточных данных.</span></li>
+      <li><span class="qq">Что делать при отказе по подписке?</span><span class="aa">Смотреть на причину. Недостаточно средств — несколько повторов с растущими интервалами; истёкшая карта — запрос новых реквизитов; подозрение на мошенничество или блокировка карты — повторять нельзя. Число попыток ограничено правилами платёжных систем, а бесконечные повторы штрафуются и портят репутацию мерчанта.</span></li>
+      <li><span class="qq">Какие ошибки провайдера можно повторять?</span><span class="aa">Ошибку соединения — безопасно, запрос не выполнялся. Ответ 5xx и 429 — с задержкой и разбросом. Таймаут — только с тем же ключом идемпотентности и с последующей проверкой статуса. Ошибку валидации и отказ эмитента повторять нельзя: первая даст тот же результат, вторая ухудшит статистику мерчанта.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Архитектура</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как разделить платёжную систему на сервисы?</span><span class="aa">Главная граница — между учётом и процессингом. Учёт знает счета и проводки, требует строгой согласованности и живёт в одной базе. Процессинг работает с провайдерами, живёт в мире таймаутов и согласован в конечном счёте. Смешение делает систему одновременно медленной и ненадёжной.</span></li>
+      <li><span class="qq">Как обеспечить согласованность между заказом, платежом и учётом?</span><span class="aa">Сагой с явными компенсациями, а не распределённой транзакцией: двухфазная фиксация через границу организации невозможна, провайдер в вашем протоколе не участвует. Шаги упорядочиваются по обратимости — необратимые последними, — события идут через outbox, обработчики идемпотентны, а остаточные расхождения ловит сверка.</span></li>
+      <li><span class="qq">Что такое компенсация в саге и чем она отличается от отката?</span><span class="aa">Компенсация — не откат, а обратное действие: отмена холда, сторнирующая проводка, возврат. Она видима снаружи и иногда стоит денег, поэтому шаги выстраивают так, чтобы дешёвые компенсации шли раньше, а необратимые действия вроде отгрузки — в самом конце.</span></li>
+      <li><span class="qq">Оркестрация или хореография для платёжного процесса?</span><span class="aa">Для денег — оркестрация. Процесс живёт в явном координаторе с видимым состоянием, компенсации описаны по шагам, а при инциденте сразу понятно, где встал процесс. Хореография на событиях уместна для побочных эффектов: уведомлений, аналитики, начисления бонусов.</span></li>
+      <li><span class="qq">Зачем нужны несколько провайдеров и чем это опасно?</span><span class="aa">Нужны ради доступности, конверсии, стоимости и покрытия способов оплаты. Опасны удвоением работы: своя сверка на каждого, разные форматы вебхуков, разные правила возвратов. Главный технический риск — каскад после таймаута: операция могла пройти у первого провайдера, и попытка у второго создаст второе списание.</span></li>
+      <li><span class="qq">Когда каскадное переключение допустимо?</span><span class="aa">Только при подтверждённой неудаче: явный отказ провайдера по технической причине или недоступность соединения. При неизвестном состоянии сначала выясняется исход у первого провайдера — опросом статуса по своему идентификатору, — и лишь потом принимается решение. При отказе эмитента каскад бесполезен: другой канал получит тот же ответ.</span></li>
+      <li><span class="qq">Как измерять эффективность антифрода?</span><span class="aa">Суммой двух потерь: ущерб от пропущенного мошенничества плюс упущенная выручка от ложных отказов. Оптимум — минимум суммы, а не минимум первого слагаемого: нулевое мошенничество достигается отклонением всех операций и стоит дороже любого мошенника. Нужны и обратная связь по подтверждённым случаям, и регулярный пересчёт порогов.</span></li>
+      <li><span class="qq">Почему у решения антифрода три исхода, а не два?</span><span class="aa">Потому что средняя зона риска — самая массовая, и отклонять её дорого. Третий исход — усиленное подтверждение через 3-D Secure: операция сохраняется, а ответственность за мошенничество переходит к эмитенту. Отказ остаётся для явных случаев и списков блокировки.</span></li>
+      <li><span class="qq">Почему решения антифрода должны быть объяснимыми?</span><span class="aa">Потому что их придётся объяснять поддержке, клиенту и регулятору, а модель без объяснений даёт ответ «система так решила». Хранятся сработавшие правила и их значения, версия модели и итоговая оценка. Плюс обязателен процесс ручного пересмотра со сроком: ошибки будут, и клиент не должен попадать в тупик.</span></li>
+      <li><span class="qq">Как KYC влияет на архитектуру?</span><span class="aa">Появляются уровни идентификации, от которых зависят лимиты и доступные операции, а значит — проверки на каждом денежном пути, а не только в профиле. Добавляются хранение и защита персональных данных, журнал доступа к ним, сроки хранения и процессы перепроверки. Всё это дешевле заложить сразу, чем встроить потом.</span></li>
+      <li><span class="qq">Какие требования AML доходят до кода?</span><span class="aa">Проверка по санкционным и иным спискам до проведения операции, лимиты по суммам и периодам, правила на серии операций для выявления дробления, связь операции с подтверждающими документами, регулярная отчётность в заданном формате и техническая возможность заморозить операции клиента. Ключевое — «до», а не «после»: проверка после списания бесполезна.</span></li>
+      <li><span class="qq">Клиент требует удалить данные, а операции хранить обязаны. Как быть?</span><span class="aa">Разделить хранилища: движение денег фиксируется по внутреннему идентификатору без персональных сведений, персональные данные лежат отдельно и обезличиваются по требованию или по истечении срока. История операций остаётся полной, обязанность хранения не нарушается, а факт обращения и объём обезличивания фиксируются.</span></li>
+      <li><span class="qq">Как сократить зону соответствия PCI DSS?</span><span class="aa">Не пропускать карточные данные через свои серверы: форма провайдера во фрейме, его поля внутри своей вёрстки или переадресация на его страницу, а дальше работа по токену. У себя хранятся только маска, срок действия и токен. Отдельно проверяется, что номер карты не утекает в логи, трассировки и системы отслеживания ошибок.</span></li>
+      <li><span class="qq">Что нельзя хранить никогда?</span><span class="aa">Код проверки подлинности карты и содержимое магнитной полосы или чипа — ни в каком виде, включая зашифрованный и временный. Номер карты, если он хранится, маскируется при отображении и защищается криптографически. Самая частая утечка — не база, а логи и сохранённые тела запросов при отладке.</span></li>
+      <li><span class="qq">Какие требования предъявляются к финансовому журналу?</span><span class="aa">Неизменяемость записей, полнота, включая ручные действия, авторство каждой операции, точное время и учётный период, связи с операцией провайдера и документом-основанием, срок хранения в годы. Это не отладочный лог, а часть продукта: по нему отвечают на вопросы клиента, аудитора и регулятора.</span></li>
+      <li><span class="qq">Чем дата операции отличается от даты учёта?</span><span class="aa">Дата операции — когда она фактически произошла, дата учёта — к какому периоду она относится. Платёж в 23:58 последнего дня месяца учитывается в этом месяце, даже если запись создана в 00:03 следующего. Без разделения ежемесячные отчёты расходятся с данными провайдера на каждой границе периода.</span></li>
+      <li><span class="qq">Что такое закрытие периода?</span><span class="aa">Момент, после которого проводки периода считаются окончательными и не меняются. Всё найденное позже оформляется корректирующими операциями текущего периода со ссылкой на исходную. Технически это запрет на вставку проводок с учётной датой в закрытом периоде, который лучше держать на уровне базы, а не только в коде.</span></li>
+      <li><span class="qq">Какие метрики нужны платёжному сервису сверх технических?</span><span class="aa">Доля успешных операций в сравнении с тем же часом прошлой недели, распределение причин отказа, платежи в неизвестном состоянии старше порога, возраст незакрытых холдов, нерасследованные расхождения сверки, перекос в ledger, задержка вебхуков, доля споров и очередь возвратов. Сервис может отвечать за 50 мс без ошибок и при этом не проводить ни одного платежа.</span></li>
+      <li><span class="qq">Как правильно делать ручные корректировки?</span><span class="aa">Как обычную операцию системы: через тот же ledger, с теми же инвариантами, с обязательным указанием автора, причины и основания, желательно с подтверждением второго человека при крупных суммах. Прямой <code>UPDATE</code> по балансу не оставляет следов, и расхождение обнаруживается спустя месяцы, когда причину уже не восстановить.</span></li>
+      <li><span class="qq">Обнаружены массовые двойные списания. Порядок действий?</span><span class="aa">Сначала остановить источник: отключить повторы или каскад, чтобы дубли перестали появляться. Затем найти их по своему идентификатору операции и данным провайдера, а не по жалобам клиентов. Вернуть деньги проактивно и сообщить клиентам самим — это дешевле волны споров. После стабилизации — постмортем: почему повтор был без ключа идемпотентности и почему сверка не поймала это раньше.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== СПРАВОЧНИК: ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Задания рассчитаны на код: почти каждое начинается с того, что вы находите платёжный или учётный участок в своём проекте. Если платежей в проекте нет, подойдёт учебный сервис из трёх сущностей — заказ, платёж, ledger.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Основы</span></div>
+    <h4>1. Сломать float на деньгах</h4>
+    <p>Напишите цикл, складывающий 0,1 и 0,2 сто тысяч раз во float и в целых копейках. Сравните результаты и посчитайте расхождение в рублях. Затем найдите в своём проекте место, где сумма проходит через float.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Численная иллюстрация вместо веры на слово и, скорее всего, найденное место с реальным риском.</div>
+    <h4>2. Объект Money</h4>
+    <p>Реализуйте <code>Money</code> с целым в минимальных единицах, валютой, сложением с проверкой валюты, умножением на количество и методом распределения на доли. Покройте тестами: распределение 100,00 на троих, сложение разных валют, создание из строки.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Готовый тип, который дальше используется во всех остальных заданиях.</div>
+    <h4>3. Таблица стадий платежа</h4>
+    <p>Возьмите один реальный платёж в своём проекте и выпишите его путь: когда создан, когда авторизован, когда списан, когда деньги пришли на счёт компании. Найдите, где в системе фиксируется каждый момент.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Понимание, какие стадии система вообще различает, и обнаружение тех, что склеены в одну.</div>
+    <h4>4. Ключ идемпотентности</h4>
+    <p>Добавьте в создание платежа ключ идемпотентности с уникальным индексом в базе. Напишите тест, вызывающий обработчик дважды с одним ключом, и убедитесь, что провайдер вызван один раз.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Защита от двойного списания на уровне базы, а не на уровне надежды.</div>
+    <h4>5. Вебхук под обстрелом</h4>
+    <p>Отправьте своему обработчику вебхука: правильный запрос, запрос с испорченной подписью, дубль правильного и запрос с событием более старым, чем текущее состояние. Проверьте, что система реагирует правильно на все четыре случая.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Четыре сценария, которые в продакшене приходят в первую же неделю, проверены заранее.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Механика</span></div>
+    <h4>6. Мини-ledger</h4>
+    <p>Реализуйте схему из счетов, операций и проводок и проведите через неё оплату с комиссией: три операции, шесть проводок. Напишите запрос, проверяющий, что сумма проводок по каждой операции равна нулю.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Рабочее понимание двойной записи и готовая проверка целостности.</div>
+    <h4>7. Воспроизвести гонку</h4>
+    <p>Запустите два параллельных процесса, списывающих по 800 ₽ со счёта с балансом 1 000 ₽ без блокировки. Убедитесь, что баланс ушёл в минус. Добавьте блокировку строки и повторите тест.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Личный пример гонки на деньгах и тест, который её ловит.</div>
+    <h4>8. Убрать сеть из транзакции</h4>
+    <p>Найдите в проекте транзакцию базы, внутри которой делается HTTP-вызов или отправка в очередь. Разделите на короткую транзакцию, внешний вызов и вторую транзакцию. Измерьте время удержания блокировок до и после.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Уменьшение времени блокировок и устранение сценария «деньги списаны, записи нет».</div>
+    <h4>9. Статусная машина</h4>
+    <p>Соберите все места, где присваивается статус платежа. Замените присваивание единственным методом перехода с проверкой допустимости. Напишите тест на запоздавший вебхук, который пытается вернуть статус назад.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Один вход в изменение состояния вместо четырёх и исчезнувший класс багов с перезаписью статуса.</div>
+    <h4>10. Сверка за один день</h4>
+    <p>Выгрузите реестр провайдера за сутки, загрузите в таблицу и напишите запрос, показывающий все три вида расхождений. Разберите каждое найденное вручную и запишите причину.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Первое честное представление о том, сколько в системе незамеченных расхождений.</div>
+    <h4>11. Частичные возвраты</h4>
+    <p>Реализуйте частичный возврат с проверкой инварианта суммы под блокировкой платежа. Напишите тест, где два возврата по 60% суммы приходят параллельно, и убедитесь, что проходит только один.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Инвариант, проверяемый кодом, вместо надежды на дисциплину операторов.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Дизайн</span></div>
+    <h4>12. Карта отказов</h4>
+    <p>Нарисуйте путь платежа от кнопки до зачисления и отметьте на каждом шаге, что произойдёт при сбое: где деньги, что видит клиент, кто узнает об ошибке и через сколько. Найдите шаги, где ответ «никто и никогда».</p>
+    <div class="box qa"><span class="lbl">Результат</span>Список слепых зон контура, обычно неожиданно длинный, и приоритеты по их закрытию.</div>
+    <h4>13. Сага оформления заказа</h4>
+    <p>Опишите шаги оформления заказа с оплатой, для каждого — компенсацию и её стоимость. Переставьте шаги так, чтобы необратимые оказались в конце. Проверьте, что происходит при отказе на каждом шаге.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Явная модель процесса вместо неявной последовательности вызовов в контроллере.</div>
+    <h4>14. Аудит утечки карточных данных</h4>
+    <p>Прогоните через логгер и обработчик ошибок типичные тела платёжных запросов с тестовым номером карты. Найдите все места, где номер сохранился: логи, система ошибок, кэш, отладочные дампы. Закройте фильтром и закрепите тестом.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Устранение самой частой незаметной утечки за пределы зоны соответствия.</div>
+    <h4>15. Денежные алерты</h4>
+    <p>Заведите четыре метрики: доля успешных операций, платежи в неизвестном состоянии старше порога, нерасследованные расхождения, перекос в ledger. Настройте алерты и проверьте их, искусственно создав каждое условие в тестовой среде.</p>
+    <div class="box qa"><span class="lbl">Результат</span>Мониторинг, который замечает потерю денег раньше клиентов, и проверенные, а не воображаемые алерты.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+<!-- ==================== ФИНАЛ: ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на час-полтора в будний день. Тема плохо учится по определениям: почти каждый пункт полезно проверять на реальной интеграции или хотя бы на песочнице провайдера, где сбои можно вызвать намеренно.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Деньги и поток</h3><span class="badge b-1">База</span></div>
+    <h4>Задачи недели</h4>
+    <p>Перестать думать о платеже как об одном запросе и научиться обращаться с суммами так, чтобы они сходились.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Воспроизвести накопление ошибки во float и найти такое место у себя (задание 1).</li>
+      <li>Написать объект <code>Money</code> с распределением остатка и тестами (задание 2).</li>
+      <li>Разобрать путь одного реального платежа по стадиям и найти, где фиксируется каждая (задание 3).</li>
+      <li>Выписать, какие участники задействованы в вашей схеме оплаты и за что отвечает каждый.</li>
+      <li>Проверить, есть ли в системе двухстадийная схема и что происходит с просроченными холдами.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Умение объяснить на своём примере, где находятся деньги в каждый момент и почему сумма хранится именно так.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Надёжность</h3><span class="badge b-2">Механика</span></div>
+    <h4>Задачи недели</h4>
+    <p>Закрыть сценарии сбоя, из-за которых деньги списываются дважды или теряются между системами.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Ввести ключ идемпотентности с уникальным индексом и тестом на повтор (задание 4).</li>
+      <li>Обстрелять обработчик вебхука четырьмя сценариями и починить найденное (задание 5).</li>
+      <li>Убрать сетевые вызовы из транзакций базы и измерить время блокировок (задание 8).</li>
+      <li>Свести присваивание статуса в единственный метод перехода (задание 9).</li>
+      <li>Разобраться, что происходит в вашей системе при таймауте провайдера, и завести состояние «результат неизвестен».</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Ни один сбой сети больше не приводит к двойному списанию или потерянному платежу, и это подтверждено тестами.</p>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Учёт и сверка</h3><span class="badge b-2">Точность</span></div>
+    <h4>Задачи недели</h4>
+    <p>Научиться отвечать на вопрос «откуда взялась эта сумма» и обнаруживать расхождения раньше клиентов.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Собрать мини-ledger и провести через него оплату с комиссией (задание 6).</li>
+      <li>Воспроизвести гонку на списании и закрыть её блокировкой (задание 7).</li>
+      <li>Сделать сверку за сутки и разобрать каждое расхождение вручную (задание 10).</li>
+      <li>Реализовать частичный возврат с проверкой инварианта под блокировкой (задание 11).</li>
+      <li>Написать запрос проверки инварианта двойной записи и поставить его в расписание.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Баланс выводится из истории, расхождения находятся автоматически, а возврат больше не может превысить платёж.</p>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Контур целиком</h3><span class="badge b-3">Финиш</span></div>
+    <h4>Задачи недели</h4>
+    <p>Подняться с уровня отдельных операций до контура: отказы, риски, требования извне и эксплуатация.</p>
+    <h4>Что сделать</h4>
+    <ul>
+      <li>Составить карту отказов платёжного пути и найти слепые зоны (задание 12).</li>
+      <li>Описать сагу оформления заказа с компенсациями и переставить шаги по обратимости (задание 13).</li>
+      <li>Проверить, не утекают ли карточные данные в логи и системы ошибок (задание 14).</li>
+      <li>Завести денежные метрики и проверить алерты искусственными условиями (задание 15).</li>
+      <li>Прочитать требования провайдера к спорам и проверить, что доказательства действительно сохраняются.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Готовность обсуждать платёжный контур целиком: границы сервисов, поведение при отказах, риски и то, как всё это наблюдается в продакшене.</p>
+  </article>
+
+  <article class="card lvl-n">
+    <div class="card-top"><h3>Что помогает на собеседовании</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Начинайте со сценария отказа.</strong> На любой вопрос про платежи сильный ответ содержит фразу «а если запрос прервался здесь». Это моментально отличает человека, который видел продакшен, от того, кто читал документацию провайдера.</li>
+      <li><strong>Называйте цену ошибки в деньгах.</strong> «Двойное списание» звучит абстрактно, «двойное списание на тысяче клиентов плюс волна споров плюс повышенный тариф от платёжной системы» — конкретно. Финтех — область, где технические решения принято обосновывать суммами.</li>
+      <li><strong>Различайте бизнес-отказ и технический сбой.</strong> Отказ эмитента повторять нельзя, таймаут — можно и нужно, но только с ключом идемпотентности. Эта пара различений всплывает почти на каждом интервью и сразу показывает уровень.</li>
+      <li><strong>Помните про третий исход.</strong> На вопросы о надёжности отвечайте не «успех или ошибка», а «успех, ошибка и неизвестность». Обработка третьего случая — суть всей темы.</li>
+      <li><strong>Не обещайте распределённую транзакцию.</strong> Предложение использовать двухфазную фиксацию с внешним провайдером — заметный красный флаг. Правильный ответ — сага, идемпотентность и сверка.</li>
+      <li><strong>Упоминайте сверку без напоминания.</strong> Кандидатов, которые сами говорят «а ещё это поймает ежедневная сверка», заметно меньше, чем тех, кто помнит про идемпотентность. Это дешёвый способ выделиться.</li>
+      <li><strong>Будьте готовы к вопросу про легаси.</strong> «Переписать платежи с нуля» — слабый ответ: миграция денежных данных дороже и рискованнее любой другой. Сильный — двойная запись параллельно старому механизму, сверка двух контуров и переключение после схождения.</li>
+      <li><strong>Знайте границы своей ответственности.</strong> Требования регулятора и правила платёжных систем меняются, и никто не ждёт, что разработчик помнит их наизусть. Ждут другого: что вы понимаете, какие из них влияют на архитектуру, и умеете задать вопрос комплаенсу до, а не после реализации.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Финтех и платёжные системы» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

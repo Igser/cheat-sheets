@@ -1,0 +1,1454 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Справочник · эволюция языка · 2019 → 2026</p>
+  <h1>Что нового в PHP: 7.4 → 8.6</h1>
+  <p class="lead">За семь лет PHP превратился из «языка для скриптов с примесью ООП» в статически типизируемый язык с перечислениями, неизменяемыми объектами, хуками свойств и композицией функций. Если вы писали на PHP 7.2 и вернулись к нему в 2026-м — это почти другой язык: половина того, для чего раньше требовались библиотеки, докблоки и кодогенерация, теперь есть в ядре.</p>
+  <p class="lead">Этот конспект — по релизам. Для каждой версии: что реально меняет способ писать код, что просто удобно, что сломается при обновлении и что объявлено устаревшим. Порядок хронологический, потому что возможности наслаиваются друг на друга: <code>readonly</code> не имеет смысла без продвижения свойств из 8.0, а хуки свойств из 8.4 — без типизированных свойств из 7.4.</p>
+  <p class="lead">Смежные темы вынесены отдельно: <a href="php.html">PHP как язык</a> (модель исполнения, память, внутренности), <a href="laravel.html">Laravel</a>, <a href="symfony.html">Symfony</a>, <a href="sql.html">базы данных</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Догоняю</b><span>Работал на PHP 7.x, нужно понять, что изменилось и что переписывать в первую очередь.</span></div>
+    <div class="aud m"><b>Обновляю проект</b><span>Нужен список ломающих изменений, deprecations и порядок шагов миграции.</span></div>
+    <div class="aud s"><b>Готовлюсь к собесу</b><span>«Чем match отличается от switch», «зачем readonly», «что даёт JIT» — с ответами по существу.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Разобрано версий: <i>8</i></span>
+    <span>Тематических блоков: <i>29</i></span>
+    <span>Блоков кода: <i>42</i></span>
+    <span>Сравнительных таблиц: <i>9</i></span>
+    <span>Вопросов с ответами: <i>21</i></span>
+    <span>Актуально на: <i>август 2026</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp">Ориентиры</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#map">Карта версий и поддержка</a></li>
+    <li><span class="tree">└─</span> <a href="#howto">Как читать этот конспект</a></li>
+  </ul>
+
+  <p class="grp j">PHP 7.4 → 8.0</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#php74">7.4: типы и стрелочные функции</a></li>
+    <li><span class="tree">├─</span> <a href="#php74-more">7.4: остальное и BC</a></li>
+    <li><span class="tree">├─</span> <a href="#php80-args">8.0: аргументы и конструкторы</a></li>
+    <li><span class="tree">├─</span> <a href="#php80-types">8.0: union-типы и match</a></li>
+    <li><span class="tree">├─</span> <a href="#php80-attr">8.0: атрибуты</a></li>
+    <li><span class="tree">├─</span> <a href="#php80-misc">8.0: строки, JIT, мелочи</a></li>
+    <li><span class="tree">└─</span> <a href="#php80-bc">8.0: что сломалось</a></li>
+  </ul>
+
+  <p class="grp m">PHP 8.1 → 8.3</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#php81-enum">8.1: перечисления</a></li>
+    <li><span class="tree">├─</span> <a href="#php81-readonly">8.1: readonly и never</a></li>
+    <li><span class="tree">├─</span> <a href="#php81-callable">8.1: first-class callable, new в аргументах</a></li>
+    <li><span class="tree">├─</span> <a href="#php81-fibers">8.1: файберы и остальное</a></li>
+    <li><span class="tree">├─</span> <a href="#php82">8.2: readonly-классы и DNF</a></li>
+    <li><span class="tree">├─</span> <a href="#php82-more">8.2: random, трейты, секреты</a></li>
+    <li><span class="tree">├─</span> <a href="#php83">8.3: типизированные константы</a></li>
+    <li><span class="tree">└─</span> <a href="#php83-more">8.3: Override, json_validate, clone</a></li>
+  </ul>
+
+  <p class="grp s">PHP 8.4 → 8.6</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#php84-hooks">8.4: хуки свойств</a></li>
+    <li><span class="tree">├─</span> <a href="#php84-visibility">8.4: асимметричная видимость</a></li>
+    <li><span class="tree">├─</span> <a href="#php84-more">8.4: ленивые объекты, массивы, DOM</a></li>
+    <li><span class="tree">├─</span> <a href="#php85-pipe">8.5: оператор конвейера</a></li>
+    <li><span class="tree">├─</span> <a href="#php85-clone">8.5: clone with и NoDiscard</a></li>
+    <li><span class="tree">├─</span> <a href="#php85-more">8.5: URI, бэктрейсы, массивы</a></li>
+    <li><span class="tree">└─</span> <a href="#php86">8.6: что готовится</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сводные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#idioms">Было / стало: идиомы</a></li>
+    <li><span class="tree">├─</span> <a href="#migration">План миграции</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">└─</span> <a href="#sources">Источники</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== ОРИЕНТИРЫ ==================== -->
+<section class="level lvl-n" id="overview">
+  <div class="level-head">
+    <p class="kicker">Ориентиры · прежде чем читать дальше</p>
+    <h2>Карта версий</h2>
+    <p>PHP выпускает минорную версию раз в год, в ноябре. Каждая ветка живёт четыре года: два года активной поддержки (исправляются любые баги) и ещё два — только безопасность. Дата выхода фиксирована, поэтому «что нового» всегда привязано к ноябрю.</p>
+  </div>
+
+  <article class="card" id="map">
+    <p class="path">ориентиры / релизы / поддержка</p>
+    <div class="card-top"><h3>Версии, даты и сроки поддержки</h3><span class="badge b-ver">Факты</span></div>
+    <p>Первое, что нужно знать про свой проект, — не «какие возможности я хочу», а «на чём я сижу и сколько мне осталось». Работа на версии без поддержки означает, что найденная в PHP уязвимость не будет исправлена для вас никогда.</p>
+    <div class="tw"><table>
+      <caption>Таблица 1 · жизненный цикл веток (на август 2026)</caption>
+      <thead><tr><th>Версия</th><th>Выход</th><th>Активная поддержка до</th><th>Безопасность до</th><th>Статус</th></tr></thead>
+      <tbody>
+        <tr><td><b>7.4</b></td><td>28 ноя 2019</td><td>28 ноя 2021</td><td>28 ноя 2022</td><td class="eol">EOL, почти 4 года без патчей</td></tr>
+        <tr><td><b>8.0</b></td><td>26 ноя 2020</td><td>26 ноя 2022</td><td>26 ноя 2023</td><td class="eol">EOL</td></tr>
+        <tr><td><b>8.1</b></td><td>25 ноя 2021</td><td>31 дек 2023</td><td>31 дек 2025</td><td class="eol">EOL с начала 2026</td></tr>
+        <tr><td><b>8.2</b></td><td>8 дек 2022</td><td>31 дек 2024</td><td>31 дек 2026</td><td>Только безопасность, осталось ~4 месяца</td></tr>
+        <tr><td><b>8.3</b></td><td>23 ноя 2023</td><td>31 дек 2025</td><td>31 дек 2027</td><td>Только безопасность</td></tr>
+        <tr><td><b>8.4</b></td><td>21 ноя 2024</td><td>31 дек 2026</td><td>31 дек 2028</td><td class="live">Активная поддержка</td></tr>
+        <tr><td><b>8.5</b></td><td>20 ноя 2025</td><td>31 дек 2027</td><td>31 дек 2029</td><td class="live">Активная поддержка, текущая</td></tr>
+        <tr><td><b>8.6</b></td><td>19 ноя 2026 (план)</td><td>—</td><td>—</td><td>В разработке</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно</span>Если сегодня вы на <b>8.2</b> — у вас дедлайн: 31 декабря 2026 ветка умирает. Шаг 8.2 → 8.3 → 8.4 почти всегда механический, самое тяжёлое (переход на 8.0) давно позади. Целевая версия для новых проектов — <b>8.4</b>, если важна максимальная совместимость библиотек, и <b>8.5</b>, если хочется конвейера и <code>clone with</code>.</div>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Где проходят настоящие границы</span></div><pre><code>7.0 ──── 7.4 ────┃──── 8.0 ──── 8.1 ──── 8.2 ──── 8.3 ────┃──── 8.4 ──── 8.5 ──── 8.6
+                 ┃                                        ┃
+          главный разрыв:                        второй разрыв:
+       строгие сравнения строк,                хуки свойств и асимметричная
+       ошибки вместо warning'ов,               видимость меняют то, как вы
+       именованные аргументы                   проектируете модели данных
+
+Практический вывод:
+  7.4 → 8.0  — единственный болезненный шаг, требует тестов и статанализа
+  8.0 → 8.3  — обычно «поднял версию, поправил 3-5 deprecation'ов»
+  8.3 → 8.5  — новые возможности, ломающих изменений в прикладном коде почти нет</code></pre></div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>На какой версии PHP вы работаете и почему именно на ней?</b><br>Сильный ответ содержит три вещи: текущую версию, дату её EOL и причину, по которой вы не на более свежей. «8.3, безопасность до конца 2027, в феврале переходим на 8.5, держит один пакет без поддержки 8.5 — уже нашли замену» — это ответ инженера. «Какая на сервере стоит» — ответ, после которого спрашивают про эксплуатацию.</div>
+  </article>
+
+  <article class="card" id="howto">
+    <p class="path">ориентиры / как читать</p>
+    <div class="card-top"><h3>Как читать этот конспект</h3><span class="badge b-tag">Навигация</span></div>
+    <p>У возможностей разный «вес». Одни меняют архитектуру, другие экономят три строки. Поэтому в карточках используются метки:</p>
+    <ul>
+      <li><span class="badge b-new">Ключевое</span> — меняет то, как вы пишете код. Стоит внедрять целенаправленно.</li>
+      <li><span class="badge b-tag">Удобство</span> — применяется по ходу дела, специально переписывать ради этого не нужно.</li>
+      <li><span class="badge b-dep">Deprecated</span> — работает, но выдаёт предупреждение и будет удалено. Чинить до следующего мажора.</li>
+      <li><span class="badge b-bc">Ломает</span> — обратно несовместимое изменение. Именно из-за таких пунктов обновление требует тестов.</li>
+      <li><span class="badge b-draft">Черновик</span> — RFC принят, но версия ещё не вышла. Детали могут измениться.</li>
+    </ul>
+    <div class="box task"><span class="lbl">Практика</span>Прежде чем читать дальше, выполните в проекте <code>php -v</code> и <code>composer why-not php 8.5</code>. Первая команда скажет, откуда вы стартуете, вторая — какие зависимости держат вас на старой версии. Часто ответ — одна заброшенная библиотека, которую проще заменить, чем ждать.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 7.4 ==================== -->
+<section class="level lvl-j" id="v74">
+  <div class="level-head">
+    <p class="kicker">Ноябрь 2019 · последняя из семёрок</p>
+    <h2>PHP 7.4</h2>
+    <p>Релиз, который подготовил почву для восьмёрки. Типизированные свойства сделали осмысленной строгую типизацию всего класса, стрелочные функции убрали болезненное <code>use ($x, $y, $z)</code>, а preloading впервые дал заметный прирост производительности без изменения кода.</p>
+    <p class="vermeta"><span><i>Выход</i> 28 ноября 2019</span><span><i>Поддержка</i> <span class="eol">закончилась 28 ноября 2022</span></span><span><i>Итог</i> база современного синтаксиса</span></p>
+  </div>
+
+  <article class="card" id="php74">
+    <p class="path">7.4 / типы / свойства</p>
+    <div class="card-top"><h3>Типизированные свойства и стрелочные функции</h3><span class="badge b-new">Ключевое</span></div>
+    <p>До 7.4 тип свойства можно было объявить только в докблоке — и движок его не проверял. Класс мог сколько угодно обещать <code>@var int</code>, а получить строку. <span class="t">Типизированные свойства</span> перенесли эту проверку в рантайм.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Типизированные свойства</span></div><pre><code>&lt;?php
+<span class="cm">// Было: тип только в комментарии, никто его не проверяет</span>
+<span class="kw">class</span> <span class="nm">User</span> {
+    <span class="cm">/** @var int */</span>
+    <span class="kw">private</span> $id;
+    <span class="cm">/** @var string|null */</span>
+    <span class="kw">private</span> $email;
+}
+
+<span class="cm">// Стало: движок гарантирует тип при каждой записи</span>
+<span class="kw">class</span> <span class="nm">User</span> {
+    <span class="kw">private int</span> $id;
+    <span class="kw">private</span> ?<span class="kw">string</span> $email = <span class="kw">null</span>;
+    <span class="kw">private array</span> $roles = [];
+}
+
+$u = <span class="kw">new</span> <span class="nm">User</span>();
+<span class="cm">// $u-&gt;id = 'abc';  → TypeError</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно: состояние «uninitialized»</span>Типизированное свойство без значения по умолчанию не равно <code>null</code> — оно находится в особом состоянии <b>uninitialized</b>. Чтение до записи бросит <code>Error: Typed property User::$id must not be accessed before initialization</code>. Это не баг, а именно то, ради чего фича сделана: объект не может существовать в частично заполненном виде незаметно для вас. Обратная сторона — <code>isset()</code> на таком свойстве вернёт <code>false</code>, а <code>get_object_vars()</code> его не покажет.</div>
+    <p><span class="t">Стрелочные функции</span> решили другую боль: замыкание в PHP не захватывает область видимости автоматически, поэтому короткий колбэк раздувался до нечитаемого. Стрелочная функция захватывает переменные по значению неявно.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">fn() вместо function() use ()</span></div><pre><code>&lt;?php
+$multiplier = <span class="nm">3</span>;
+
+<span class="cm">// Было</span>
+$result = <span class="fn">array_map</span>(<span class="kw">function</span> ($n) <span class="kw">use</span> ($multiplier) {
+    <span class="kw">return</span> $n * $multiplier;
+}, $numbers);
+
+<span class="cm">// Стало</span>
+$result = <span class="fn">array_map</span>(<span class="kw">fn</span> ($n) =&gt; $n * $multiplier, $numbers);
+
+<span class="cm">// Ограничения, о которых спрашивают:</span>
+<span class="cm">//  • ровно одно выражение, никаких фигурных скобок и return;</span>
+<span class="cm">//  • захват ВСЕГДА по значению — fn () =&gt; $x++ не изменит внешний $x;</span>
+<span class="cm">//  • $this захватывается автоматически, как и в обычном замыкании.</span></code></pre></div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Чем <code>fn</code> отличается от <code>function</code>?</b><br>Тремя вещами: неявный захват внешних переменных (всегда по значению, <code>use (&amp;$x)</code> невозможен), тело — одно выражение с неявным возвратом, и нельзя опустить возвращаемое значение. Всё остальное совпадает: это тот же объект <code>Closure</code>, его можно связать через <code>bindTo</code>, он так же видит <code>$this</code>.</div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Многострочная стрелочная функция через вложенные тернарники и <code>&amp;&amp;</code>-цепочки ради того, чтобы уложиться в «одно выражение». Если логика не помещается в строку — это обычное замыкание или приватный метод, а не задача для <code>fn</code>.</div>
+  </article>
+
+  <article class="card" id="php74-more">
+    <p class="path">7.4 / синтаксис / производительность</p>
+    <div class="card-top"><h3>Остальное в 7.4: ??=, распаковка, preloading</h3><span class="badge b-tag">Удобство</span><span class="badge b-dep">Есть deprecations</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Синтаксический минимум 7.4</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Оператор ??= — присвоить, если не задано</span>
+$config[<span class="st">'timeout'</span>] ??= <span class="nm">30</span>;
+<span class="cm">// эквивалент: if (!isset($config['timeout'])) $config['timeout'] = 30;</span>
+
+<span class="cm">// 2. Распаковка внутри массива (только списки, без строковых ключей)</span>
+$base = [<span class="st">'a'</span>, <span class="st">'b'</span>];
+$all  = [...$base, <span class="st">'c'</span>];        <span class="cm">// ['a','b','c']</span>
+
+<span class="cm">// 3. Разделитель разрядов в числовых литералах</span>
+$price = <span class="nm">1_299_000</span>;             <span class="cm">// читается как 1 299 000</span>
+
+<span class="cm">// 4. Ковариантность возвращаемых типов</span>
+<span class="kw">class</span> <span class="nm">UserRepository</span> {
+    <span class="kw">public function</span> <span class="fn">find</span>(): ?<span class="nm">Entity</span> { <span class="cm">/* ... */</span> }
+}
+<span class="kw">class</span> <span class="nm">AdminRepository</span> <span class="kw">extends</span> <span class="nm">UserRepository</span> {
+    <span class="cm">// теперь можно сузить возвращаемый тип</span>
+    <span class="kw">public function</span> <span class="fn">find</span>(): ?<span class="nm">Admin</span> { <span class="cm">/* ... */</span> }
+}
+
+<span class="cm">// 5. Слабые ссылки — объект не удерживается от сборки мусора</span>
+$ref = <span class="nm">WeakReference</span>::<span class="fn">create</span>($object);
+$ref-&gt;<span class="fn">get</span>();  <span class="cm">// объект или null, если он уже уничтожен</span>
+
+<span class="cm">// 6. __serialize / __unserialize вместо Serializable</span>
+<span class="kw">public function</span> <span class="fn">__serialize</span>(): <span class="kw">array</span> { <span class="kw">return</span> [<span class="st">'id'</span> =&gt; <span class="kw">$this</span>-&gt;id]; }
+<span class="kw">public function</span> <span class="fn">__unserialize</span>(<span class="kw">array</span> $data): <span class="kw">void</span> { <span class="kw">$this</span>-&gt;id = $data[<span class="st">'id'</span>]; }</code></pre></div>
+    <h4>Preloading: прирост без изменения кода</h4>
+    <p><span class="t">Preloading</span> — механизм, при котором указанные файлы компилируются один раз при старте FPM и остаются в памяти на всё время жизни мастер-процесса. В отличие от обычного opcache, здесь пропускается ещё и связывание классов: не нужно каждый запрос проверять актуальность файла и заново разрешать наследование.</p>
+    <div class="code"><div class="bar"><span>ini + php</span><span class="r">Настройка preloading</span></div><pre><code>; php.ini
+opcache.preload=/var/www/preload.php
+opcache.preload_user=www-data
+
+&lt;?php <span class="cm">// preload.php</span>
+$files = <span class="kw">new</span> <span class="nm">RegexIterator</span>(
+    <span class="kw">new</span> <span class="nm">RecursiveIteratorIterator</span>(
+        <span class="kw">new</span> <span class="nm">RecursiveDirectoryIterator</span>(<span class="st">'/var/www/vendor'</span>)
+    ),
+    <span class="st">'/\.php$/'</span>
+);
+<span class="kw">foreach</span> ($files <span class="kw">as</span> $file) {
+    <span class="fn">opcache_compile_file</span>($file-&gt;<span class="fn">getRealPath</span>());
+}
+
+<span class="cm">// Цена: любое изменение кода требует перезапуска FPM.</span>
+<span class="cm">// Выигрыш: обычно 5-13% времени ответа на фреймворковом приложении.</span></code></pre></div>
+    <div class="box anti"><span class="lbl">Устарело в 7.4 — и уже удалено</span>
+    <ul>
+      <li><code>$str{0}</code> — фигурные скобки для доступа к символу строки. <b>Удалено в 8.0.</b> Используйте <code>$str[0]</code>.</li>
+      <li>Вложенные тернарники без скобок: <code>$a ? $b : $c ? $d : $e</code>. <b>Ошибка в 8.0.</b></li>
+      <li><code>(real)</code> и <code>is_real()</code>. <b>Удалены в 8.0.</b> Используйте <code>(float)</code>.</li>
+      <li><code>array_key_exists()</code> для объектов, <code>get_magic_quotes_gpc()</code>, интерфейс <code>Serializable</code> (в пользу магических методов).</li>
+      <li>Конкатенация без скобок рядом с <code>+</code>/<code>-</code>: <code>'x' . $a + $b</code> — приоритет изменился в 8.0.</li>
+    </ul>
+    </div>
+    <div class="box task"><span class="lbl">Практика</span>Возьмите любой класс-модель из своего проекта и добавьте типы всем свойствам. Прогоните тесты. Каждое падение — это место, где объект жил в неконсистентном состоянии; такие места обычно и оказываются источником «необъяснимых» багов.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 8.0 ==================== -->
+<section class="level lvl-j" id="v80">
+  <div class="level-head">
+    <p class="kicker">Ноябрь 2020 · главный разрыв</p>
+    <h2>PHP 8.0</h2>
+    <p>Единственный релиз в этом списке, обновление на который требует настоящей работы. Он одновременно дал самый большой набор новых возможностей и починил историческую слабость языка — нестрогое сравнение строк с числами. Всё, что было «предупреждением», стало ошибкой.</p>
+    <p class="vermeta"><span><i>Выход</i> 26 ноября 2020</span><span><i>Поддержка</i> <span class="eol">закончилась 26 ноября 2023</span></span><span><i>Итог</i> точка невозврата для легаси</span></p>
+  </div>
+
+  <article class="card" id="php80-args">
+    <p class="path">8.0 / синтаксис / вызовы</p>
+    <div class="card-top"><h3>Именованные аргументы и продвижение свойств</h3><span class="badge b-new">Ключевое</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p><span class="t">Именованные аргументы</span> позволяют передавать параметры по имени, а не по позиции. Это убирает три вещи сразу: необходимость помнить порядок, необходимость передавать «заглушки» ради последнего параметра и целый класс объектов-конфигураций, существовавших только чтобы избежать функции с восемью аргументами.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Именованные аргументы</span></div><pre><code>&lt;?php
+<span class="fn">htmlspecialchars</span>($string, <span class="kw">double_encode</span>: <span class="kw">false</span>);
+<span class="cm">// вместо htmlspecialchars($string, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', false);</span>
+
+<span class="fn">array_slice</span>($array, offset: <span class="nm">0</span>, preserve_keys: <span class="kw">true</span>);
+<span class="cm">// length пропущен — берётся значение по умолчанию</span>
+
+<span class="cm">// Позиционные и именованные вместе: именованные только после позиционных</span>
+$user = <span class="kw">new</span> <span class="nm">User</span>(<span class="st">'ivan@example.com'</span>, role: <span class="nm">Role</span>::Admin, active: <span class="kw">true</span>);
+
+<span class="cm">// Распаковка массива со строковыми ключами (тоже с 8.1 для списков)</span>
+$args = [<span class="st">'role'</span> =&gt; <span class="nm">Role</span>::Admin, <span class="st">'active'</span> =&gt; <span class="kw">true</span>];
+$user = <span class="kw">new</span> <span class="nm">User</span>(<span class="st">'ivan@example.com'</span>, ...$args);</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно для авторов библиотек</span>С появлением именованных аргументов <b>имя параметра стало частью публичного контракта</b>. Переименование <code>$userId</code> в <code>$id</code> — это ломающее изменение, даже если сигнатура по типам не изменилась. В библиотеках это повод к семантическому версионированию, а в приватном коде — повод не бояться, но помнить.</div>
+    <p><span class="t">Продвижение свойств конструктора</span> (constructor property promotion) убирает самый скучный шаблон в PHP: объявить свойство, объявить параметр, присвоить одно другому.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Было / стало</span></div><pre><code>&lt;?php
+<span class="cm">// Было — 12 строк, три повтора каждого имени</span>
+<span class="kw">final class</span> <span class="nm">Money</span> {
+    <span class="kw">private int</span> $amount;
+    <span class="kw">private string</span> $currency;
+
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">int</span> $amount, <span class="kw">string</span> $currency) {
+        <span class="kw">$this</span>-&gt;amount = $amount;
+        <span class="kw">$this</span>-&gt;currency = $currency;
+    }
+}
+
+<span class="cm">// Стало — 5 строк, имя встречается один раз</span>
+<span class="kw">final class</span> <span class="nm">Money</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private int</span> $amount,
+        <span class="kw">private string</span> $currency = <span class="st">'RUB'</span>,
+    ) {}
+}</code></pre></div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Продвижение свойств в классе, где конструктор делает работу: валидирует, нормализует, вычисляет. Смешивать продвинутые и обычные свойства можно, но если половина полей объявлена в сигнатуре, а половина — в теле класса, читатель теряет карту объекта. Правило простое: продвижение — для DTO, value-объектов и сервисов с чистым внедрением зависимостей.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Что делают именованные аргументы с производительностью?</b><br>Ничего заметного: сопоставление имени с позицией происходит на этапе компиляции опкода, когда сигнатура известна. Единственный случай накладных расходов — распаковка ассоциативного массива через <code>...$args</code>, где сопоставление идёт в рантайме. В прикладном коде это не измеряется.</div>
+  </article>
+
+  <article class="card" id="php80-types">
+    <p class="path">8.0 / типы / поток управления</p>
+    <div class="card-top"><h3>Union-типы, match и nullsafe</h3><span class="badge b-new">Ключевое</span></div>
+    <p><span class="t">Union-типы</span> позволяют объявить, что значение может быть одного из нескольких типов. До 8.0 это можно было выразить только в докблоке — и статический анализатор верил, а движок нет.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Union-типы и новые псевдотипы</span></div><pre><code>&lt;?php
+<span class="kw">function</span> <span class="fn">parse</span>(<span class="kw">string</span>|<span class="kw">int</span> $input): <span class="nm">Result</span>|<span class="kw">false</span> { <span class="cm">/* ... */</span> }
+
+<span class="cm">// static как возвращаемый тип — «тот же класс, что и вызванный»</span>
+<span class="kw">public function</span> <span class="fn">withStatus</span>(<span class="nm">Status</span> $s): <span class="kw">static</span> { <span class="cm">/* ... */</span> }
+
+<span class="cm">// mixed — явное «любой тип», в отличие от «тип не указан»</span>
+<span class="kw">function</span> <span class="fn">dump</span>(<span class="kw">mixed</span> $value): <span class="kw">void</span> {}
+
+<span class="cm">// get_debug_type() — правильная замена gettype()</span>
+<span class="fn">gettype</span>(<span class="nm">1.5</span>);           <span class="cm">// 'double'   — историческое название</span>
+<span class="fn">get_debug_type</span>(<span class="nm">1.5</span>);    <span class="cm">// 'float'    — как в объявлении типа</span>
+<span class="fn">get_debug_type</span>($obj);   <span class="cm">// 'App\User' — вместо 'object'</span></code></pre></div>
+    <p><span class="t">match</span> — выражение, а не оператор. Отличий от <code>switch</code> четыре, и все они важны.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">match против switch</span></div><pre><code>&lt;?php
+<span class="cm">// switch: нестрогое сравнение, проваливание, не возвращает значение</span>
+<span class="kw">switch</span> ($code) {
+    <span class="kw">case</span> <span class="nm">200</span>:
+    <span class="kw">case</span> <span class="nm">201</span>: $label = <span class="st">'ok'</span>; <span class="kw">break</span>;
+    <span class="kw">default</span>: $label = <span class="st">'error'</span>;
+}
+
+<span class="cm">// match: строгое ===, без break, возвращает значение, без default → ошибка</span>
+$label = <span class="kw">match</span>(<span class="kw">true</span>) {
+    $code &gt;= <span class="nm">500</span> =&gt; <span class="st">'server error'</span>,
+    $code &gt;= <span class="nm">400</span> =&gt; <span class="st">'client error'</span>,
+    $code &gt;= <span class="nm">200</span> =&gt; <span class="st">'ok'</span>,
+    <span class="kw">default</span>  =&gt; <span class="st">'unknown'</span>,
+};
+
+<span class="cm">// Ловушка switch, которой нет в match:</span>
+<span class="kw">switch</span> (<span class="st">'foo'</span>) { <span class="kw">case</span> <span class="nm">0</span>: <span class="cm">/* в PHP 7 сюда попадали! */</span> }</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 2 · match и switch</caption>
+      <thead><tr><th>Свойство</th><th>switch</th><th>match</th></tr></thead>
+      <tbody>
+        <tr><td>Сравнение</td><td><code>==</code> нестрогое</td><td><code>===</code> строгое</td></tr>
+        <tr><td>Это выражение?</td><td>Нет, оператор</td><td>Да, возвращает значение</td></tr>
+        <tr><td>Проваливание</td><td>Да, нужен <code>break</code></td><td>Нет</td></tr>
+        <tr><td>Ветка не найдена</td><td>Тихо ничего не делает</td><td><code>UnhandledMatchError</code></td></tr>
+        <tr><td>Несколько условий в ветке</td><td>Несколько <code>case</code> подряд</td><td>Через запятую: <code>1, 2 =&gt; ...</code></td></tr>
+        <tr><td>Тело из нескольких инструкций</td><td>Да</td><td>Нет, только выражение</td></tr>
+      </tbody>
+    </table></div>
+    <p><span class="t">Nullsafe-оператор</span> <code>?-&gt;</code> прерывает цепочку вызовов, если звено оказалось <code>null</code>, и возвращает <code>null</code> вместо фатальной ошибки.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">?-&gt; и его границы</span></div><pre><code>&lt;?php
+<span class="cm">// Было</span>
+$country = <span class="kw">null</span>;
+<span class="kw">if</span> ($user !== <span class="kw">null</span>) {
+    $address = $user-&gt;<span class="fn">getAddress</span>();
+    <span class="kw">if</span> ($address !== <span class="kw">null</span>) { $country = $address-&gt;country; }
+}
+
+<span class="cm">// Стало</span>
+$country = $user?-&gt;<span class="fn">getAddress</span>()?-&gt;country;
+
+<span class="cm">// Чего ?-&gt; НЕ делает:</span>
+<span class="cm">//  • не работает с массивами: $arr?['key'] — синтаксическая ошибка;</span>
+<span class="cm">//  • не работает со статикой: Foo?::bar();</span>
+<span class="cm">//  • нельзя писать слева от присваивания: $a?-&gt;b = 1;</span>
+<span class="cm">//  • не подавляет ошибку «метода не существует» — только null.</span></code></pre></div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Длинная цепочка <code>?-&gt;</code> как способ не думать о том, откуда берётся <code>null</code>. Запись <code>$order?-&gt;customer?-&gt;address?-&gt;city?-&gt;name</code> означает, что четыре связи в модели необязательны — и почти всегда это неправда: реальный ответ в том, что метод должен принимать уже гарантированно существующий объект. Nullsafe хорош для одного действительно опционального звена, а не для маскировки дырявой модели.</div>
+  </article>
+
+  <article class="card" id="php80-attr">
+    <p class="path">8.0 / метаданные / атрибуты</p>
+    <div class="card-top"><h3>Атрибуты вместо докблоков</h3><span class="badge b-new">Ключевое</span></div>
+    <p>До 8.0 метаданные для фреймворков жили в комментариях: Doctrine, Symfony и PHPUnit парсили докблоки регулярками и собственными лексерами. <span class="t">Атрибуты</span> — это те же метаданные, но синтаксис языка: они проверяются на этапе компиляции и читаются через рефлексию.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Объявление и чтение атрибута</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Атрибут — обычный класс, помеченный #[Attribute]</span>
+#[<span class="nm">Attribute</span>(<span class="nm">Attribute</span>::TARGET_METHOD)]
+<span class="kw">final class</span> <span class="nm">Route</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public string</span> $path,
+        <span class="kw">public string</span> $method = <span class="st">'GET'</span>,
+    ) {}
+}
+
+<span class="cm">// 2. Применение</span>
+<span class="kw">final class</span> <span class="nm">UserController</span> {
+    #[<span class="nm">Route</span>(<span class="st">'/users/{id}'</span>, method: <span class="st">'GET'</span>)]
+    <span class="kw">public function</span> <span class="fn">show</span>(<span class="kw">int</span> $id): <span class="nm">Response</span> { <span class="cm">/* ... */</span> }
+}
+
+<span class="cm">// 3. Чтение через рефлексию</span>
+$method = <span class="kw">new</span> <span class="nm">ReflectionMethod</span>(<span class="nm">UserController</span>::<span class="kw">class</span>, <span class="st">'show'</span>);
+<span class="kw">foreach</span> ($method-&gt;<span class="fn">getAttributes</span>(<span class="nm">Route</span>::<span class="kw">class</span>) <span class="kw">as</span> $attr) {
+    $route = $attr-&gt;<span class="fn">newInstance</span>();   <span class="cm">// вот здесь создаётся объект Route</span>
+    <span class="fn">register</span>($route-&gt;path, $route-&gt;method);
+}</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Атрибут не выполняется сам по себе. Пока кто-то не вызовет <code>getAttributes()</code> и <code>newInstance()</code>, это просто запись в структуре класса — нулевая стоимость в рантайме. Именно поэтому фреймворки сканируют атрибуты один раз и кладут результат в кэш: сканирование дорогое, само наличие атрибутов — нет.</div>
+    <div class="tw"><table>
+      <caption>Таблица 3 · встроенные атрибуты по версиям</caption>
+      <thead><tr><th>Атрибут</th><th>Версия</th><th>Зачем</th></tr></thead>
+      <tbody>
+        <tr><td><code>#[\Attribute]</code></td><td>8.0</td><td>Пометить класс как атрибут, ограничить цели</td></tr>
+        <tr><td><code>#[\ReturnTypeWillChange]</code></td><td>8.1</td><td>Заглушить предупреждение о несовместимом типе в методах интерфейсов ядра</td></tr>
+        <tr><td><code>#[\SensitiveParameter]</code></td><td>8.2</td><td>Скрыть значение аргумента (пароль, токен) в стек-трейсе</td></tr>
+        <tr><td><code>#[\AllowDynamicProperties]</code></td><td>8.2</td><td>Разрешить классу динамические свойства после их устаревания</td></tr>
+        <tr><td><code>#[\Override]</code></td><td>8.3</td><td>Проверить на этапе компиляции, что метод действительно переопределяет родительский</td></tr>
+        <tr><td><code>#[\Deprecated]</code></td><td>8.4</td><td>Пометить функцию/метод/константу устаревшей на уровне языка</td></tr>
+        <tr><td><code>#[\NoDiscard]</code></td><td>8.5</td><td>Предупреждать, если возвращённое значение проигнорировано</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card" id="php80-misc">
+    <p class="path">8.0 / стандартная библиотека / движок</p>
+    <div class="card-top"><h3>Строковые функции, throw-выражение, JIT</h3><span class="badge b-tag">Удобство</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Мелочи, которые используешь каждый день</span></div><pre><code>&lt;?php
+<span class="cm">// Наконец-то нормальные функции поиска подстроки</span>
+<span class="fn">str_contains</span>($haystack, $needle);      <span class="cm">// вместо strpos() !== false</span>
+<span class="fn">str_starts_with</span>($haystack, $needle);
+<span class="fn">str_ends_with</span>($haystack, $needle);
+
+<span class="cm">// throw стал выражением — можно в тернарнике, ?? и стрелочной функции</span>
+$user = $repo-&gt;<span class="fn">find</span>($id) ?? <span class="kw">throw new</span> <span class="nm">NotFound</span>(<span class="st">"user {$id}"</span>);
+$fn = <span class="kw">fn</span> ($x) =&gt; $x &gt; <span class="nm">0</span> ? $x : <span class="kw">throw new</span> <span class="nm">InvalidArgumentException</span>();
+
+<span class="cm">// catch без переменной, если исключение не нужно</span>
+<span class="kw">try</span> { $cache-&gt;<span class="fn">flush</span>(); } <span class="kw">catch</span> (<span class="nm">CacheException</span>) { <span class="cm">/* игнорируем */</span> }
+
+<span class="cm">// ::class на объекте, а не только на имени класса</span>
+$class = $object::<span class="kw">class</span>;                 <span class="cm">// вместо get_class($object)</span>
+
+<span class="cm">// WeakMap — ключ-объект не удерживается от сборки мусора</span>
+$meta = <span class="kw">new</span> <span class="nm">WeakMap</span>();
+$meta[$entity] = [<span class="st">'loaded_at'</span> =&gt; <span class="fn">time</span>()];  <span class="cm">// без утечки памяти</span>
+
+<span class="cm">// Висячая запятая в списке параметров</span>
+<span class="kw">function</span> <span class="fn">f</span>(
+    <span class="kw">int</span> $a,
+    <span class="kw">int</span> $b,          <span class="cm">// ← теперь можно</span>
+) {}</code></pre></div>
+    <h4>JIT: что это на самом деле даёт</h4>
+    <p><span class="t">JIT</span> компилирует горячий байткод в машинный код. На вычислительных задачах — матрицы, обработка изображений, Mandelbrot из бенчмарков — прирост кратный. На типичном веб-приложении прирост около нуля, и это не разочарование, а следствие того, где приложение проводит время.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Почему JIT не ускоряет веб</span></div><pre><code>Профиль обычного запроса Laravel/Symfony:
+
+  ожидание базы данных   ████████████████████████  ~60%
+  сеть, кэш, внешние API ██████████                ~20%
+  выполнение опкодов PHP ████                      ~12%
+  всё остальное          ██                        ~8%
+
+JIT ускоряет только последнюю четверть третьей полоски.
+Ускорить 12% на 20% = выиграть 2,4% времени ответа.
+
+Что реально ускоряет веб-приложение:
+  • opcache (обязателен: экономит парсинг и компиляцию — десятки процентов)
+  • preloading (5-13% сверху)
+  • устранение N+1 запросов (десятки процентов, иногда в разы)
+  • кэш и правильные индексы</code></pre></div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Стоит ли включать JIT в продакшене?</b><br>Для веб-приложения — обычно нет: выигрыш в пределах погрешности, а риск редких багов компилятора и лишнее потребление памяти есть. Для CLI-задач с интенсивными вычислениями (обработка изображений, математика, парсинг больших объёмов) — да, и там измеряется реальный прирост. Правильный ответ всегда включает «зависит от профиля нагрузки» и упоминание, что <code>opcache</code> важнее JIT на порядок.</div>
+  </article>
+
+  <article class="card" id="php80-bc">
+    <p class="path">8.0 / миграция / BC</p>
+    <div class="card-top"><h3>Что сломалось в 8.0</h3><span class="badge b-bc">Ломает</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>Самое важное изменение восьмёрки — не новая возможность, а починка сравнения строк с числами. В PHP 7 нечисловая строка при сравнении с числом превращалась в <code>0</code>, из-за чего <code>0 == 'foo'</code> было истиной — источник целой категории уязвимостей в проверках токенов и паролей.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Сравнение строк и чисел: 7.x против 8.0</span></div><pre><code>&lt;?php
+<span class="cm">//                        PHP 7.x     PHP 8.0</span>
+<span class="nm">0</span> == <span class="st">'foo'</span>          <span class="cm">//  true        false   ← самое важное</span>
+<span class="nm">0</span> == <span class="st">''</span>             <span class="cm">//  true        false</span>
+<span class="nm">0</span> == <span class="kw">null</span>           <span class="cm">//  true        true    (не изменилось)</span>
+<span class="st">'abc'</span> == <span class="nm">0</span>         <span class="cm">//  true        false</span>
+<span class="st">'1'</span> == <span class="st">'01'</span>         <span class="cm">//  true        true    (обе числовые)</span>
+<span class="st">'10'</span> == <span class="st">'1e1'</span>       <span class="cm">//  true        true</span>
+<span class="nm">100</span> == <span class="st">'1e2'</span>       <span class="cm">//  true        true</span>
+
+<span class="cm">// Логика 8.0: если строка числовая — сравниваем как числа,</span>
+<span class="cm">// если нет — приводим ЧИСЛО к строке и сравниваем строки.</span></code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 4 · ломающие изменения 8.0, которые встретятся в реальном коде</caption>
+      <thead><tr><th>Что было</th><th>Что стало</th><th>Как чинить</th></tr></thead>
+      <tbody>
+        <tr><td>Warning при неверных аргументах внутренних функций</td><td><code>TypeError</code></td><td>Проверять и приводить типы до вызова</td></tr>
+        <tr><td><code>Notice: Undefined index</code></td><td><code>Warning</code> (и уже никогда не тихо)</td><td><code>??</code>, <code>array_key_exists</code></td></tr>
+        <tr><td>Деление на ноль возвращало <code>false</code> с warning</td><td><code>DivisionByZeroError</code></td><td>Проверять делитель</td></tr>
+        <tr><td>Метод с именем класса = конструктор (стиль PHP 4)</td><td>Обычный метод</td><td>Переименовать в <code>__construct</code></td></tr>
+        <tr><td><code>$str{0}</code></td><td>Синтаксическая ошибка</td><td><code>$str[0]</code></td></tr>
+        <tr><td><code>(real)</code>, <code>is_real()</code>, <code>each()</code>, <code>create_function()</code></td><td>Удалены</td><td><code>(float)</code>, <code>foreach</code>, замыкания</td></tr>
+        <tr><td>Приоритет <code>.</code> относительно <code>+</code>/<code>-</code></td><td><code>+</code>/<code>-</code> теперь важнее</td><td>Расставить скобки</td></tr>
+        <tr><td>Тихая конкатенация массива со строкой</td><td><code>Array to string conversion</code> warning</td><td><code>implode()</code></td></tr>
+        <tr><td>Совместимость сигнатур наследников проверялась слабо</td><td>Строже: <code>Fatal error</code> при несовместимости</td><td>Привести сигнатуры к контракту</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Инструменты, а не глаза</span>Ручной аудит кодовой базы под 8.0 бессмыслен. Работающая связка: <b>Rector</b> с наборами <code>PHP_74</code>…<code>PHP_80</code> для автоматических правок, <b>PHPStan</b> или <b>Psalm</b> на уровне не ниже 5 для поиска мест, где типы не сходятся, и <b>PHPUnit</b> с <code>convertWarningsToExceptions</code>, чтобы deprecations падали тестами, а не терялись в логах.</div>
+    <div class="box task"><span class="lbl">Практика</span>Запустите <code>vendor/bin/rector process src --dry-run</code> с набором правил до вашей целевой версии. Даже если вы не собираетесь применять правки автоматически, вывод — это готовый список мест, которые нужно посмотреть глазами.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 8.1 ==================== -->
+<section class="level lvl-m" id="v81">
+  <div class="level-head">
+    <p class="kicker">Ноябрь 2021 · моделирование данных</p>
+    <h2>PHP 8.1</h2>
+    <p>Самый содержательный релиз после 8.0. Перечисления и <code>readonly</code> закрыли две дыры, из-за которых доменные модели на PHP выглядели беднее, чем на типизированных языках. Файберы дали основу для асинхронности без цветных функций.</p>
+    <p class="vermeta"><span><i>Выход</i> 25 ноября 2021</span><span><i>Поддержка</i> <span class="eol">закончилась 31 декабря 2025</span></span><span><i>Итог</i> enum + readonly = современная модель</span></p>
+  </div>
+
+  <article class="card" id="php81-enum">
+    <p class="path">8.1 / типы / перечисления</p>
+    <div class="card-top"><h3>Перечисления (enum)</h3><span class="badge b-new">Ключевое</span><span class="badge b-must">Спрашивают всегда</span></div>
+    <p>До 8.1 набор допустимых значений выражали константами класса или строками — и ни то, ни другое не защищало от опечатки и не давало типа. <span class="t">Enum</span> — это тип, у которого конечное число экземпляров, созданных движком один раз.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Чистый и типизированный enum</span></div><pre><code>&lt;?php
+<span class="cm">// Чистый enum: у case нет значения</span>
+<span class="kw">enum</span> <span class="nm">Suit</span> {
+    <span class="kw">case</span> Hearts;
+    <span class="kw">case</span> Spades;
+}
+
+<span class="cm">// Типизированный (backed): у case есть скалярное значение — int или string</span>
+<span class="kw">enum</span> <span class="nm">Status</span>: <span class="kw">string</span> {
+    <span class="kw">case</span> Draft     = <span class="st">'draft'</span>;
+    <span class="kw">case</span> Published = <span class="st">'published'</span>;
+    <span class="kw">case</span> Archived  = <span class="st">'archived'</span>;
+
+    <span class="cm">// В enum можно объявлять методы, константы и реализовывать интерфейсы</span>
+    <span class="kw">public function</span> <span class="fn">label</span>(): <span class="kw">string</span> {
+        <span class="kw">return match</span>(<span class="kw">$this</span>) {
+            <span class="nm">self</span>::Draft     =&gt; <span class="st">'Черновик'</span>,
+            <span class="nm">self</span>::Published =&gt; <span class="st">'Опубликовано'</span>,
+            <span class="nm">self</span>::Archived  =&gt; <span class="st">'В архиве'</span>,
+        };
+    }
+
+    <span class="kw">public function</span> <span class="fn">isVisible</span>(): <span class="kw">bool</span> {
+        <span class="kw">return</span> <span class="kw">$this</span> === <span class="nm">self</span>::Published;
+    }
+}
+
+<span class="cm">// Использование</span>
+<span class="kw">function</span> <span class="fn">publish</span>(<span class="nm">Status</span> $status): <span class="kw">void</span> {}   <span class="cm">// тип в сигнатуре</span>
+
+<span class="nm">Status</span>::Published-&gt;value;              <span class="cm">// 'published'</span>
+<span class="nm">Status</span>::Published-&gt;name;               <span class="cm">// 'Published'</span>
+<span class="nm">Status</span>::<span class="fn">from</span>(<span class="st">'draft'</span>);                 <span class="cm">// Status::Draft, иначе ValueError</span>
+<span class="nm">Status</span>::<span class="fn">tryFrom</span>(<span class="st">'nope'</span>);               <span class="cm">// null вместо исключения</span>
+<span class="nm">Status</span>::<span class="fn">cases</span>();                      <span class="cm">// [Draft, Published, Archived]</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно: enum — не класс</span>Enum-case является объектом, но с ограничениями: нельзя объявлять свойства (состояние запрещено), нельзя наследоваться, нельзя создать через <code>new</code>, нельзя клонировать. Сравнение всегда через <code>===</code> — case-ы синглтоны в пределах процесса. Именно поэтому <code>match($this)</code> внутри enum работает надёжно.</div>
+    <div class="tw"><table>
+      <caption>Таблица 5 · чем заменяли enum и почему это было хуже</caption>
+      <thead><tr><th>Подход</th><th>Проблема</th></tr></thead>
+      <tbody>
+        <tr><td>Строковые константы <code>const DRAFT = 'draft'</code></td><td>Тип — <code>string</code>. Любая строка пройдёт проверку, опечатка ловится в рантайме</td></tr>
+        <tr><td>Классы-константы с приватным конструктором</td><td>Много шаблонного кода, ручная реализация <code>values()</code> и сериализации</td></tr>
+        <tr><td>Библиотеки (myclabs/php-enum)</td><td>Зависимость, рефлексия в рантайме, отсутствие поддержки в IDE и анализаторах на уровне языка</td></tr>
+        <tr><td>Просто строки в аргументах</td><td>Ничего не проверяется, набор значений известен только по документации</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Enum как замена справочнику из базы. Enum компилируется вместе с кодом — добавление статуса означает деплой. Если список значений меняется администраторами, это таблица, а не enum. Enum подходит для того, что жёстко зашито в бизнес-логику: состояния конечного автомата, типы платежей, роли, обрабатываемые в <code>match</code>.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Как хранить enum в базе и почему backed-enum лучше чистого?</b><br>В колонке хранится <code>-&gt;value</code>, обратно объект получается через <code>tryFrom()</code>. У чистого enum значения нет — сериализовать его можно только по <code>name</code>, что хрупко при переименовании. Практическое правило: если значение уходит за пределы процесса (БД, JSON, очередь), берите <code>enum: string</code> и относитесь к значениям как к части контракта — их нельзя менять.</div>
+  </article>
+
+  <article class="card" id="php81-readonly">
+    <p class="path">8.1 / иммутабельность</p>
+    <div class="card-top"><h3>readonly-свойства и тип never</h3><span class="badge b-new">Ключевое</span></div>
+    <p><span class="t">readonly</span>-свойство можно записать ровно один раз — из области видимости объявившего класса. Обычно это происходит в конструкторе. Дальше любая попытка записи, включая запись изнутри класса, бросает <code>Error</code>.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">readonly и способ «изменить» значение</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> <span class="nm">Money</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> $amount,
+        <span class="kw">public readonly string</span> $currency,
+    ) {}
+
+    <span class="cm">// Изменение = новый объект (withers)</span>
+    <span class="kw">public function</span> <span class="fn">add</span>(<span class="nm">Money</span> $other): <span class="kw">static</span> {
+        <span class="kw">return new</span> <span class="nm">self</span>($this-&gt;amount + $other-&gt;amount, $this-&gt;currency);
+    }
+}
+
+$m = <span class="kw">new</span> <span class="nm">Money</span>(<span class="nm">100</span>, <span class="st">'RUB'</span>);
+<span class="cm">// $m-&gt;amount = 200;  → Error: Cannot modify readonly property</span>
+
+<span class="cm">// Ограничения readonly в 8.1:</span>
+<span class="cm">//  • только для типизированных свойств (без типа — Fatal error);</span>
+<span class="cm">//  • нельзя задать значение по умолчанию (снято только в 8.6);</span>
+<span class="cm">//  • защищает ССЫЛКУ, а не содержимое:</span>
+<span class="kw">final class</span> <span class="nm">Bag</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public readonly</span> <span class="nm">ArrayObject</span> $items) {}
+}
+$bag = <span class="kw">new</span> <span class="nm">Bag</span>(<span class="kw">new</span> <span class="nm">ArrayObject</span>());
+$bag-&gt;items[] = <span class="st">'x'</span>;   <span class="cm">// работает! readonly не делает объект неизменяемым</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно: readonly и клонирование</span>В 8.1 и 8.2 «wither» через <code>clone</code> с изменением свойства в <code>__clone()</code> не работал: readonly-свойство нельзя было переприсвоить даже при клонировании. Это исправлено в <b>8.3</b> (переинициализация внутри <code>__clone</code>) и доведено до удобного вида в <b>8.5</b> оператором <code>clone with</code>. Если вы пишете иммутабельные объекты и застряли на 8.1 — придётся создавать новый экземпляр через конструктор целиком.</div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Тип never</span></div><pre><code>&lt;?php
+<span class="cm">// never = функция гарантированно НЕ вернёт управление:</span>
+<span class="cm">// либо бросит исключение, либо завершит выполнение</span>
+<span class="kw">function</span> <span class="fn">redirect</span>(<span class="kw">string</span> $url): <span class="kw">never</span> {
+    <span class="fn">header</span>(<span class="st">"Location: {$url}"</span>);
+    <span class="kw">exit</span>;
+}
+
+<span class="kw">function</span> <span class="fn">fail</span>(<span class="kw">string</span> $message): <span class="kw">never</span> {
+    <span class="kw">throw new</span> <span class="nm">RuntimeException</span>($message);
+}
+
+<span class="cm">// Зачем: статический анализатор понимает, что код после вызова</span>
+<span class="cm">// недостижим, и перестаёт требовать возврат значения в этой ветке.</span>
+<span class="kw">function</span> <span class="fn">getUser</span>(<span class="kw">int</span> $id): <span class="nm">User</span> {
+    <span class="kw">return</span> $repo-&gt;<span class="fn">find</span>($id) ?? <span class="fn">fail</span>(<span class="st">'not found'</span>);  <span class="cm">// анализатор доволен</span>
+}
+
+<span class="cm">// void vs never: void возвращает управление, ничего не отдав;</span>
+<span class="cm">// never не возвращает управление вообще.</span></code></pre></div>
+  </article>
+
+  <article class="card" id="php81-callable">
+    <p class="path">8.1 / синтаксис / вызовы</p>
+    <div class="card-top"><h3>First-class callable, new в инициализаторах, чистые пересечения</h3><span class="badge b-tag">Удобство</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Синтаксис (...) для ссылки на функцию</span></div><pre><code>&lt;?php
+<span class="cm">// Было — строки и массивы, которые не проверяет ни IDE, ни анализатор</span>
+$fn = <span class="st">'strlen'</span>;
+$fn = [$this, <span class="st">'handle'</span>];
+$fn = [<span class="nm">Service</span>::<span class="kw">class</span>, <span class="st">'create'</span>];
+$fn = <span class="nm">Closure</span>::<span class="fn">fromCallable</span>([$this, <span class="st">'handle'</span>]);
+
+<span class="cm">// Стало — настоящая ссылка, ошибка в имени видна сразу</span>
+$fn = <span class="fn">strlen</span>(...);
+$fn = <span class="kw">$this</span>-&gt;<span class="fn">handle</span>(...);
+$fn = <span class="nm">Service</span>::<span class="fn">create</span>(...);
+
+$lengths = <span class="fn">array_map</span>(<span class="fn">strlen</span>(...), $words);</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">new в инициализаторах и пересечения типов</span></div><pre><code>&lt;?php
+<span class="cm">// new как значение по умолчанию — конец «null + проверка в теле»</span>
+<span class="kw">class</span> <span class="nm">Service</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private</span> <span class="nm">LoggerInterface</span> $logger = <span class="kw">new</span> <span class="nm">NullLogger</span>(),
+    ) {}
+}
+<span class="cm">// Работает в параметрах, в аргументах атрибутов, в static-переменных.</span>
+<span class="cm">// НЕ работает: значение свойства, значение константы класса.</span>
+
+<span class="cm">// Пересечения типов: значение должно реализовывать ВСЕ перечисленные</span>
+<span class="kw">function</span> <span class="fn">process</span>(<span class="nm">Countable</span>&amp;<span class="nm">Iterator</span> $collection): <span class="kw">void</span> {}
+<span class="cm">// В 8.1 — только «чистые» пересечения: смешивать с | нельзя.</span>
+<span class="cm">// Это ограничение снято в 8.2 (DNF-типы).</span>
+
+<span class="cm">// Массивы-списки — проверка «ключи 0..n-1 по порядку»</span>
+<span class="fn">array_is_list</span>([<span class="st">'a'</span>, <span class="st">'b'</span>]);            <span class="cm">// true</span>
+<span class="fn">array_is_list</span>([<span class="nm">1</span> =&gt; <span class="st">'a'</span>]);           <span class="cm">// false</span>
+
+<span class="cm">// Финальные константы класса</span>
+<span class="kw">class</span> <span class="nm">Base</span> { <span class="kw">final public const</span> VERSION = <span class="st">'1.0'</span>; }
+
+<span class="cm">// Распаковка со строковыми ключами</span>
+$merged = [...$defaults, ...$overrides];   <span class="cm">// с 8.1 работает и для ассоциативных</span></code></pre></div>
+  </article>
+
+  <article class="card" id="php81-fibers">
+    <p class="path">8.1 / асинхронность / прочее</p>
+    <div class="card-top"><h3>Файберы и остальное в 8.1</h3><span class="badge b-tag">Инфраструктура</span></div>
+    <p><span class="t">Fiber</span> — прерываемая функция с собственным стеком. Это низкоуровневый примитив: писать на нём прикладной код не нужно, он существует, чтобы библиотеки вроде AMPHP и ReactPHP могли предоставить асинхронность без «заражения» кода ключевым словом <code>async</code>.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Fiber: минимальный пример</span></div><pre><code>&lt;?php
+$fiber = <span class="kw">new</span> <span class="nm">Fiber</span>(<span class="kw">function</span> (<span class="kw">string</span> $start): <span class="kw">string</span> {
+    <span class="fn">echo</span> <span class="st">"начали: {$start}\n"</span>;
+    $resumed = <span class="nm">Fiber</span>::<span class="fn">suspend</span>(<span class="st">'жду'</span>);   <span class="cm">// приостановились, отдали значение</span>
+    <span class="fn">echo</span> <span class="st">"продолжили: {$resumed}\n"</span>;
+    <span class="kw">return</span> <span class="st">'готово'</span>;
+});
+
+$value = $fiber-&gt;<span class="fn">start</span>(<span class="st">'A'</span>);   <span class="cm">// 'жду'  — управление вернулось сюда</span>
+$fiber-&gt;<span class="fn">resume</span>(<span class="st">'B'</span>);            <span class="cm">// продолжили изнутри</span>
+$fiber-&gt;<span class="fn">getReturn</span>();            <span class="cm">// 'готово'</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Файбер — это не поток и не параллельность. В процессе по-прежнему выполняется ровно одна вещь одновременно; файбер лишь позволяет прерваться на месте ожидания и отдать управление планировщику. Без цикла событий (который дают библиотеки) сами по себе файберы бесполезны. На собеседовании ключевой момент: <b>файбер решает проблему «цветных функций»</b> — асинхронную операцию можно вызвать из обычной синхронной функции, не переписывая всю цепочку вызовов.</div>
+    <div class="box diag"><span class="lbl">Что ещё пришло в 8.1</span>
+    <ul>
+      <li><code>readonly</code> и <code>enum</code> (выше) — главное в релизе.</li>
+      <li>Явное восьмеричное: <code>0o777</code> вместо путающего <code>0777</code>.</li>
+      <li><code>fsync()</code> и <code>fdatasync()</code> — сброс буфера файла на диск.</li>
+      <li>Устарело: неявное приведение float → int с потерей точности (<code>$arr[1.5]</code>).</li>
+      <li>Устарело: передача <code>null</code> в непринимающий null параметр внутренней функции — <code>strlen(null)</code>. Массовая правка при миграции.</li>
+      <li><code>$GLOBALS</code> перестал быть обычным изменяемым массивом.</li>
+    </ul>
+    </div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 8.2 ==================== -->
+<section class="level lvl-m" id="v82">
+  <div class="level-head">
+    <p class="kicker">Декабрь 2022 · шлифовка</p>
+    <h2>PHP 8.2</h2>
+    <p>Релиз без единой большой фичи, но с важным сдвигом философии: динамические свойства объявлены устаревшими. PHP окончательно перестал считать нормой объект, у которого набор полей определяется по ходу выполнения.</p>
+    <p class="vermeta"><span><i>Выход</i> 8 декабря 2022</span><span><i>Безопасность до</i> 31 декабря 2026</span><span><i>Итог</i> конец динамических свойств</span></p>
+  </div>
+
+  <article class="card" id="php82">
+    <p class="path">8.2 / классы / типы</p>
+    <div class="card-top"><h3>readonly-классы, DNF-типы, автономные типы</h3><span class="badge b-new">Ключевое</span><span class="badge b-dep">Динамические свойства устарели</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">readonly на уровне класса</span></div><pre><code>&lt;?php
+<span class="cm">// Было: readonly у каждого свойства</span>
+<span class="kw">final class</span> <span class="nm">Point</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly int</span> $x,
+        <span class="kw">public readonly int</span> $y,
+        <span class="kw">public readonly int</span> $z,
+    ) {}
+}
+
+<span class="cm">// Стало: один модификатор на класс</span>
+<span class="kw">final readonly class</span> <span class="nm">Point</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public int</span> $x,
+        <span class="kw">public int</span> $y,
+        <span class="kw">public int</span> $z,
+    ) {}
+}
+<span class="cm">// Бонус: readonly-класс запрещает динамические свойства автоматически,</span>
+<span class="cm">// а все его свойства обязаны быть типизированными.</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">DNF-типы и автономные null/false/true</span></div><pre><code>&lt;?php
+<span class="cm">// DNF (дизъюнктивная нормальная форма): пересечения в скобках внутри union</span>
+<span class="kw">function</span> <span class="fn">handle</span>((<span class="nm">Countable</span>&amp;<span class="nm">Iterator</span>)|<span class="kw">null</span> $input): <span class="kw">void</span> {}
+<span class="kw">function</span> <span class="fn">save</span>((<span class="nm">Serializable</span>&amp;<span class="nm">JsonSerializable</span>)|<span class="kw">string</span> $data): <span class="kw">void</span> {}
+
+<span class="cm">// Автономные типы null, false и true — раньше только в составе union</span>
+<span class="kw">function</span> <span class="fn">alwaysFails</span>(): <span class="kw">false</span> { <span class="kw">return false</span>; }
+<span class="kw">function</span> <span class="fn">nothing</span>(): <span class="kw">null</span> { <span class="kw">return null</span>; }</code></pre></div>
+    <div class="box imp"><span class="lbl">Динамические свойства: что именно устарело</span>Запись <code>$obj-&gt;undeclared = 1</code> на объекте класса, где такое свойство не объявлено, теперь выдаёт deprecation, а в PHP 9 станет ошибкой. Это не касается <code>stdClass</code>, объектов из <code>json_decode()</code> и классов с <code>__get</code>/<code>__set</code>. Для легаси есть аварийный люк — атрибут <code>#[\AllowDynamicProperties]</code> над классом, но это отсрочка, а не решение: правильный путь — объявить свойства явно.</div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Динамические свойства</span></div><pre><code>&lt;?php
+<span class="kw">class</span> <span class="nm">User</span> { <span class="kw">public string</span> $name = <span class="st">''</span>; }
+
+$u = <span class="kw">new</span> <span class="nm">User</span>();
+$u-&gt;emial = <span class="st">'ivan@example.com'</span>;
+<span class="cm">// PHP 8.1: тихо создалось свойство с опечаткой</span>
+<span class="cm">// PHP 8.2: Deprecated: Creation of dynamic property User::$emial</span>
+<span class="cm">// PHP 9.0: Error</span>
+
+<span class="cm">// Аварийный люк для легаси</span>
+#[\<span class="nm">AllowDynamicProperties</span>]
+<span class="kw">class</span> <span class="nm">LegacyModel</span> {}</code></pre></div>
+  </article>
+
+  <article class="card" id="php82-more">
+    <p class="path">8.2 / библиотека / безопасность</p>
+    <div class="card-top"><h3>Расширение random, константы в трейтах, SensitiveParameter</h3><span class="badge b-tag">Удобство</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Новый ООП-интерфейс к случайным числам</span></div><pre><code>&lt;?php
+<span class="kw">use</span> <span class="nm">Random\Randomizer</span>;
+<span class="kw">use</span> <span class="nm">Random\Engine\Xoshiro256StarStar</span>;
+<span class="kw">use</span> <span class="nm">Random\Engine\Secure</span>;
+
+<span class="cm">// Криптостойкий источник (по умолчанию)</span>
+$r = <span class="kw">new</span> <span class="nm">Randomizer</span>();
+$r-&gt;<span class="fn">getInt</span>(<span class="nm">1</span>, <span class="nm">100</span>);
+$r-&gt;<span class="fn">shuffleArray</span>($deck);
+$r-&gt;<span class="fn">pickArrayKeys</span>($options, <span class="nm">2</span>);
+$r-&gt;<span class="fn">getBytes</span>(<span class="nm">16</span>);
+
+<span class="cm">// Воспроизводимая последовательность — для тестов и генерации данных</span>
+$seeded = <span class="kw">new</span> <span class="nm">Randomizer</span>(<span class="kw">new</span> <span class="nm">Xoshiro256StarStar</span>(seed: <span class="nm">12345</span>));
+$seeded-&gt;<span class="fn">getInt</span>(<span class="nm">1</span>, <span class="nm">100</span>);   <span class="cm">// одинаково при каждом запуске</span>
+
+<span class="cm">// Зачем: mt_srand() влиял на ГЛОБАЛЬНОЕ состояние — засеяв генератор</span>
+<span class="cm">// в тесте, вы ломали случайность во всём процессе, включая библиотеки.</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Константы в трейтах и защита секретов в трейсах</span></div><pre><code>&lt;?php
+<span class="kw">trait</span> <span class="nm">HasVersion</span> {
+    <span class="kw">public const</span> VERSION = <span class="st">'1.0'</span>;   <span class="cm">// с 8.2 можно</span>
+}
+
+<span class="cm">// #[\SensitiveParameter] прячет значение в стек-трейсе</span>
+<span class="kw">function</span> <span class="fn">login</span>(
+    <span class="kw">string</span> $user,
+    #[\<span class="nm">SensitiveParameter</span>] <span class="kw">string</span> $password,
+): <span class="kw">void</span> {
+    <span class="kw">throw new</span> <span class="nm">RuntimeException</span>(<span class="st">'auth failed'</span>);
+}
+<span class="cm">// В трейсе: login('ivan', Object(SensitiveParameterValue))</span>
+<span class="cm">// вместо login('ivan', 'p@ssw0rd') — пароль больше не утекает в логи.</span></code></pre></div>
+    <div class="box anti"><span class="lbl">Устарело в 8.2</span>
+    <ul>
+      <li>Интерполяция <code>"${var}"</code> и <code>"${expr}"</code> в строках — пишите <code>"{$var}"</code>.</li>
+      <li><code>utf8_encode()</code> / <code>utf8_decode()</code> — вводили в заблуждение именами (это ISO-8859-1 ↔ UTF-8). Замена: <code>mb_convert_encoding()</code>.</li>
+      <li>Частично поддерживаемые callable: <code>"self::method"</code>, <code>"parent::method"</code> как строки.</li>
+      <li><code>${}</code>-обращение к переменным, <code>strtolower()</code>/<code>strtoupper()</code> стали не зависеть от локали.</li>
+    </ul>
+    </div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 8.3 ==================== -->
+<section class="level lvl-m" id="v83">
+  <div class="level-head">
+    <p class="kicker">Ноябрь 2023 · надёжность</p>
+    <h2>PHP 8.3</h2>
+    <p>Релиз про то, чтобы ошибки ловились раньше. Типизированные константы, атрибут <code>#[\Override]</code>, <code>json_validate()</code> и починка исключений в дате-времени — всё это переносит проверки с этапа «упало на проде» на этап компиляции или явного исключения.</p>
+    <p class="vermeta"><span><i>Выход</i> 23 ноября 2023</span><span><i>Безопасность до</i> 31 декабря 2027</span><span><i>Итог</i> ошибки ловятся раньше</span></p>
+  </div>
+
+  <article class="card" id="php83">
+    <p class="path">8.3 / типы / константы</p>
+    <div class="card-top"><h3>Типизированные константы классов</h3><span class="badge b-new">Ключевое</span></div>
+    <p>Константа класса могла быть переопределена наследником с другим типом — и никто не возражал. Интерфейс объявлял <code>const LIMIT = 10</code>, реализация писала <code>const LIMIT = 'ten'</code>, а падало всё это где-то в третьем месте.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Тип у константы</span></div><pre><code>&lt;?php
+<span class="kw">interface</span> <span class="nm">Limits</span> {
+    <span class="kw">const int</span> MAX_RETRIES = <span class="nm">3</span>;
+    <span class="kw">const string</span> DEFAULT_LOCALE = <span class="st">'ru'</span>;
+}
+
+<span class="kw">class</span> <span class="nm">HttpClient</span> <span class="kw">implements</span> <span class="nm">Limits</span> {
+    <span class="kw">const int</span> MAX_RETRIES = <span class="nm">5</span>;        <span class="cm">// ок</span>
+    <span class="cm">// const int MAX_RETRIES = '5';   → Fatal error при компиляции</span>
+}
+
+<span class="cm">// Динамическое обращение к константе класса</span>
+$name = <span class="st">'MAX_RETRIES'</span>;
+$value = <span class="nm">HttpClient</span>::{$name};       <span class="cm">// раньше только через constant()</span>
+$value = <span class="fn">constant</span>(<span class="nm">HttpClient</span>::<span class="kw">class</span> . <span class="st">'::'</span> . $name);  <span class="cm">// старый способ</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Тип константы нельзя расширить в наследнике, только сохранить или сузить. Это та же логика, что у свойств: наследник обязан выполнять контракт родителя. И как у свойств, тип нельзя объявить для констант, объявленных без типа в родителе — добавление типа в базовом классе является ломающим изменением для наследников с несовместимыми значениями.</div>
+  </article>
+
+  <article class="card" id="php83-more">
+    <p class="path">8.3 / библиотека / клонирование</p>
+    <div class="card-top"><h3>#[\Override], json_validate, readonly при клонировании</h3><span class="badge b-tag">Удобство</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">#[\Override] — защита от опечатки в имени метода</span></div><pre><code>&lt;?php
+<span class="kw">class</span> <span class="nm">BaseController</span> {
+    <span class="kw">protected function</span> <span class="fn">handleRequest</span>(<span class="nm">Request</span> $r): <span class="nm">Response</span> { <span class="cm">/* ... */</span> }
+}
+
+<span class="kw">class</span> <span class="nm">UserController</span> <span class="kw">extends</span> <span class="nm">BaseController</span> {
+    #[\<span class="nm">Override</span>]
+    <span class="kw">protected function</span> <span class="fn">handleRequst</span>(<span class="nm">Request</span> $r): <span class="nm">Response</span> {}
+    <span class="cm">// Fatal error: UserController::handleRequst() has #[\Override]</span>
+    <span class="cm">// attribute, but no matching parent method exists</span>
+}
+
+<span class="cm">// Без атрибута опечатка тихо создала бы НОВЫЙ метод,</span>
+<span class="cm">// а родительский продолжил бы вызываться. Классический баг на полдня.</span>
+<span class="cm">// Второй сценарий: библиотека переименовала метод в новой мажорной</span>
+<span class="cm">// версии — ваш «переопределяющий» метод молча перестал вызываться.</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">json_validate и переинициализация readonly при клонировании</span></div><pre><code>&lt;?php
+<span class="cm">// Было: чтобы проверить JSON, приходилось его целиком декодировать</span>
+<span class="fn">json_decode</span>($big);
+<span class="kw">if</span> (<span class="fn">json_last_error</span>() !== JSON_ERROR_NONE) { <span class="cm">/* невалидно */</span> }
+
+<span class="cm">// Стало: проверка без построения структуры в памяти</span>
+<span class="kw">if</span> (!<span class="fn">json_validate</span>($big)) { <span class="cm">/* невалидно */</span> }
+<span class="cm">// Экономия памяти заметна на мегабайтных payload'ах API.</span>
+
+<span class="cm">// readonly-свойство можно переприсвоить внутри __clone (8.3)</span>
+<span class="kw">final class</span> <span class="nm">Article</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly string</span> $title,
+        <span class="kw">public readonly</span> <span class="nm">DateTimeImmutable</span> $createdAt,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">withTitle</span>(<span class="kw">string</span> $title): <span class="kw">static</span> {
+        $clone = <span class="kw">clone</span> <span class="kw">$this</span>;
+        <span class="cm">// в 8.1/8.2 здесь была бы Error, с 8.3 — работает</span>
+        <span class="kw">return</span> $clone;
+    }
+
+    <span class="kw">public function</span> <span class="fn">__clone</span>(): <span class="kw">void</span> {
+        <span class="cm">// именно здесь readonly разрешено переинициализировать</span>
+    }
+}</code></pre></div>
+    <div class="box diag"><span class="lbl">Что ещё в 8.3</span>
+    <ul>
+      <li><code>str_increment()</code> / <code>str_decrement()</code> — явная замена магии <code>$s++</code> для строк.</li>
+      <li><code>mb_str_pad()</code> — <code>str_pad()</code> ломал многобайтные строки, считая байты вместо символов.</li>
+      <li><code>array_sum()</code> и <code>array_product()</code> предупреждают о неприводимых значениях вместо тихого игнорирования.</li>
+      <li><code>Randomizer::getBytesFromString()</code> и <code>getFloat()</code> — генерация токенов из заданного алфавита.</li>
+      <li><code>range()</code> стал строже: нечисловые строки и float-шаги теперь приводят к <code>TypeError</code>/<code>ValueError</code> вместо неожиданного результата.</li>
+      <li>Исключения вместо предупреждений в <code>DateTime</code>: <code>DateMalformedStringException</code> и родственники.</li>
+      <li>Устарело: <code>get_class()</code> и <code>get_parent_class()</code> без аргументов внутри класса.</li>
+    </ul>
+    </div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Зачем нужен <code>#[\Override]</code>, если IDE и так подсвечивает переопределение?</b><br>IDE проверяет момент написания, а атрибут — момент компиляции, включая CI и продакшен-деплой. Главный сценарий не опечатка, а обновление зависимости: базовый класс библиотеки переименовал или удалил метод, ваш наследник продолжил компилироваться, но перестал что-либо переопределять. С атрибутом это падает на этапе сборки.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 8.4 ==================== -->
+<section class="level lvl-s" id="v84">
+  <div class="level-head">
+    <p class="kicker">Ноябрь 2024 · второй разрыв</p>
+    <h2>PHP 8.4</h2>
+    <p>Первый релиз после 8.1, который меняет проектирование, а не только синтаксис. Хуки свойств и асимметричная видимость убирают геттеры-сеттеры как жанр: свойство теперь само описывает своё поведение, а инкапсуляция достигается без обёрток.</p>
+    <p class="vermeta"><span><i>Выход</i> 21 ноября 2024</span><span><i>Активная поддержка до</i> <span class="live">31 декабря 2026</span></span><span><i>Итог</i> конец шаблонных геттеров</span></p>
+  </div>
+
+  <article class="card" id="php84-hooks">
+    <p class="path">8.4 / классы / свойства</p>
+    <div class="card-top"><h3>Хуки свойств</h3><span class="badge b-new">Ключевое</span><span class="badge b-must">Главное в 8.4</span></div>
+    <p><span class="t">Хуки свойств</span> позволяют объявить логику чтения и записи прямо на свойстве. Внешне это остаётся обычное свойство — <code>$user-&gt;fullName</code>, а не <code>$user-&gt;getFullName()</code>, — но за обращением стоит код.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">get и set на свойстве</span></div><pre><code>&lt;?php
+<span class="kw">class</span> <span class="nm">User</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private string</span> $first,
+        <span class="kw">private string</span> $last,
+    ) {}
+
+    <span class="cm">// Вычисляемое свойство: только get, места в памяти не занимает</span>
+    <span class="kw">public string</span> $fullName {
+        <span class="kw">get</span> =&gt; <span class="st">"{$this-&gt;first} {$this-&gt;last}"</span>;
+    }
+
+    <span class="cm">// Валидация при записи: $value — неявный параметр set</span>
+    <span class="kw">public string</span> $email {
+        <span class="kw">set</span> {
+            <span class="kw">if</span> (!<span class="fn">filter_var</span>($value, FILTER_VALIDATE_EMAIL)) {
+                <span class="kw">throw new</span> <span class="nm">InvalidArgumentException</span>(<span class="st">'bad email'</span>);
+            }
+            <span class="kw">$this</span>-&gt;email = <span class="fn">strtolower</span>($value);   <span class="cm">// запись в backing store</span>
+        }
+    }
+}
+
+$u = <span class="kw">new</span> <span class="nm">User</span>(<span class="st">'Иван'</span>, <span class="st">'Петров'</span>);
+<span class="fn">echo</span> $u-&gt;fullName;              <span class="cm">// «Иван Петров» — как обычное свойство</span>
+$u-&gt;email = <span class="st">'IVAN@EXAMPLE.COM'</span>;  <span class="cm">// сохранится 'ivan@example.com'</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Ключевая деталь: backing store</span>Свойство с хуком <b>только get</b> не хранит значение вообще — оно вычисляется при каждом обращении. Свойство, у которого хук ссылается на <code>$this-&gt;email</code> внутри себя, наоборот, получает реальное хранилище. Отсюда практическое следствие: вычисляемое свойство не кэшируется само по себе, и хук <code>get</code> с тяжёлым вычислением будет выполняться при каждом чтении.</div>
+    <p>Главное архитектурное следствие — <b>интерфейс может требовать свойство</b>. Раньше контракт «у объекта должно быть имя» выражался только методом <code>getName()</code>.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Свойства в интерфейсе</span></div><pre><code>&lt;?php
+<span class="kw">interface</span> <span class="nm">HasSlug</span> {
+    <span class="cm">// { get; } — реализация обязана предоставить читаемое свойство</span>
+    <span class="kw">public string</span> $slug { <span class="kw">get</span>; }
+}
+
+<span class="kw">final class</span> <span class="nm">Article</span> <span class="kw">implements</span> <span class="nm">HasSlug</span> {
+    <span class="cm">// Реализовать можно как угодно: обычным свойством...</span>
+    <span class="kw">public string</span> $slug;
+}
+
+<span class="kw">final class</span> <span class="nm">Page</span> <span class="kw">implements</span> <span class="nm">HasSlug</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private string</span> $title) {}
+
+    <span class="cm">// ...или вычислением — вызывающий код разницы не видит</span>
+    <span class="kw">public string</span> $slug {
+        <span class="kw">get</span> =&gt; <span class="fn">strtolower</span>(<span class="fn">str_replace</span>(<span class="st">' '</span>, <span class="st">'-'</span>, <span class="kw">$this</span>-&gt;title));
+    }
+}</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 6 · хуки против __get/__set и против геттеров</caption>
+      <thead><tr><th>Критерий</th><th>__get / __set</th><th>Геттеры и сеттеры</th><th>Хуки свойств</th></tr></thead>
+      <tbody>
+        <tr><td>Типы</td><td>Нет, всё <code>mixed</code></td><td>Есть</td><td>Есть, на самом свойстве</td></tr>
+        <tr><td>Видит IDE и анализатор</td><td>Только через докблок <code>@property</code></td><td>Да</td><td>Да</td></tr>
+        <tr><td>Требуется в интерфейсе</td><td>Нельзя</td><td>Через метод</td><td>Можно: <code>public string $x { get; }</code></td></tr>
+        <tr><td>Срабатывает</td><td>Только для необъявленных свойств</td><td>Всегда явный вызов</td><td>Всегда при обращении к свойству</td></tr>
+        <tr><td>Стоимость вызова</td><td>Высокая (магия + рефлексия)</td><td>Обычный вызов метода</td><td>Как вызов метода, без магии</td></tr>
+        <tr><td>Шаблонный код</td><td>Один большой switch</td><td>По два метода на поле</td><td>Ноль для «просто поля»</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Переписывать все существующие геттеры на хуки «потому что новее». Хуки дают выигрыш там, где логика тривиальна (вычисление, нормализация, валидация одного поля) или где нужен контракт-свойство в интерфейсе. Метод, который делает запрос в базу, ленивую загрузку или что-либо с побочными эффектами, должен остаться методом: обращение к свойству читается как дешёвая операция, и нарушать это ожидание — плохая идея.</div>
+  </article>
+
+  <article class="card" id="php84-visibility">
+    <p class="path">8.4 / классы / инкапсуляция</p>
+    <div class="card-top"><h3>Асимметричная видимость</h3><span class="badge b-new">Ключевое</span></div>
+    <p>Классическая дилемма: свойство должно быть открыто на чтение всем и закрыто на запись всем, кроме самого класса. До 8.4 это стоило приватного свойства плюс публичного геттера — двух сущностей ради одного поля. <span class="t">Асимметричная видимость</span> задаёт разные уровни доступа для чтения и записи.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">public private(set)</span></div><pre><code>&lt;?php
+<span class="cm">// Было</span>
+<span class="kw">class</span> <span class="nm">Order</span> {
+    <span class="kw">private</span> <span class="nm">Status</span> $status;
+
+    <span class="kw">public function</span> <span class="fn">getStatus</span>(): <span class="nm">Status</span> { <span class="kw">return</span> <span class="kw">$this</span>-&gt;status; }
+
+    <span class="kw">public function</span> <span class="fn">markPaid</span>(): <span class="kw">void</span> { <span class="kw">$this</span>-&gt;status = <span class="nm">Status</span>::Paid; }
+}
+
+<span class="cm">// Стало: читают все, пишет только сам класс</span>
+<span class="kw">class</span> <span class="nm">Order</span> {
+    <span class="kw">public private</span>(<span class="kw">set</span>) <span class="nm">Status</span> $status;
+
+    <span class="kw">public function</span> <span class="fn">markPaid</span>(): <span class="kw">void</span> { <span class="kw">$this</span>-&gt;status = <span class="nm">Status</span>::Paid; }
+}
+
+$order-&gt;status;                <span class="cm">// читается снаружи</span>
+<span class="cm">// $order-&gt;status = Status::Paid;  → Error: Cannot modify ... from global scope</span>
+
+<span class="cm">// Варианты: public protected(set), protected private(set)</span>
+<span class="cm">// Работает и в продвижении свойств конструктора:</span>
+<span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public protected</span>(<span class="kw">set</span>) <span class="kw">string</span> $name) {}</code></pre></div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Чем <code>public private(set)</code> отличается от <code>public readonly</code>?</b><br><code>readonly</code> разрешает ровно одну запись за всё время жизни объекта; <code>private(set)</code> разрешает сколько угодно записей, но только изнутри класса. Первое — про неизменяемость значения, второе — про то, кто имеет право его менять. Для value-объекта берут <code>readonly</code>, для сущности с жизненным циклом (заказ меняет статусы) — <code>private(set)</code>.</div>
+  </article>
+
+  <article class="card" id="php84-more">
+    <p class="path">8.4 / библиотека / рантайм</p>
+    <div class="card-top"><h3>Ленивые объекты, функции для массивов, новый DOM</h3><span class="badge b-tag">Удобство</span><span class="badge b-bc">Есть BC</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">new без скобок и функции поиска в массиве</span></div><pre><code>&lt;?php
+<span class="cm">// Было: обязательные скобки вокруг new</span>
+$name = (<span class="kw">new</span> <span class="nm">ReflectionClass</span>($obj))-&gt;<span class="fn">getShortName</span>();
+
+<span class="cm">// Стало</span>
+$name = <span class="kw">new</span> <span class="nm">ReflectionClass</span>($obj)-&gt;<span class="fn">getShortName</span>();
+
+<span class="cm">// Четыре функции, которые все писали руками</span>
+<span class="fn">array_find</span>($users, <span class="kw">fn</span> ($u) =&gt; $u-&gt;isAdmin());        <span class="cm">// первый подходящий или null</span>
+<span class="fn">array_find_key</span>($users, <span class="kw">fn</span> ($u) =&gt; $u-&gt;isAdmin());    <span class="cm">// его ключ или null</span>
+<span class="fn">array_any</span>($users, <span class="kw">fn</span> ($u) =&gt; $u-&gt;isAdmin());         <span class="cm">// bool: хоть один</span>
+<span class="fn">array_all</span>($users, <span class="kw">fn</span> ($u) =&gt; $u-&gt;isActive());        <span class="cm">// bool: все</span>
+
+<span class="cm">// exit и die стали настоящими функциями</span>
+<span class="fn">exit</span>(status: <span class="nm">1</span>);
+$handler = <span class="fn">exit</span>(...);   <span class="cm">// можно передавать как callable</span>
+
+<span class="cm">// #[\Deprecated] на уровне языка</span>
+#[\<span class="nm">Deprecated</span>(message: <span class="st">'используйте newApi()'</span>, since: <span class="st">'2.3'</span>)]
+<span class="kw">function</span> <span class="fn">oldApi</span>(): <span class="kw">void</span> {}
+<span class="cm">// Вызов выдаёт E_USER_DEPRECATED, атрибут виден в рефлексии и IDE.</span>
+
+<span class="cm">// mb_trim / mb_ltrim / mb_rtrim — trim для многобайтных строк</span>
+<span class="fn">mb_trim</span>(<span class="st">"\u{00A0}текст\u{00A0}"</span>);   <span class="cm">// уберёт неразрывные пробелы</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Ленивые объекты и HTML5-парсер</span></div><pre><code>&lt;?php
+<span class="cm">// Ленивый прокси: объект создаётся при первом обращении к нему.</span>
+<span class="cm">// Раньше это умели только DI-контейнеры и ORM через кодогенерацию.</span>
+$reflector = <span class="kw">new</span> <span class="nm">ReflectionClass</span>(<span class="nm">HeavyService</span>::<span class="kw">class</span>);
+$service = $reflector-&gt;<span class="fn">newLazyProxy</span>(<span class="kw">function</span> (<span class="nm">HeavyService</span> $proxy) {
+    <span class="kw">return new</span> <span class="nm">HeavyService</span>(<span class="fn">expensiveDependency</span>());
+});
+<span class="cm">// Пока никто не трогает $service — соединение не открыто, файл не прочитан.</span>
+$service-&gt;<span class="fn">doWork</span>();   <span class="cm">// вот здесь произойдёт инициализация</span>
+
+<span class="cm">// Наконец-то настоящий HTML5-парсер вместо DOMDocument с libxml-костылями</span>
+$dom = <span class="nm">\Dom\HTMLDocument</span>::<span class="fn">createFromString</span>($html);
+$nodes = $dom-&gt;<span class="fn">querySelectorAll</span>(<span class="st">'article &gt; h2.title'</span>);
+<span class="cm">// querySelector/querySelectorAll теперь есть из коробки,</span>
+<span class="cm">// а разбор соответствует спецификации HTML5, а не HTML4.</span>
+
+<span class="cm">// BCMath\Number — произвольная точность с перегрузкой операторов</span>
+$sum = <span class="kw">new</span> <span class="nm">BcMath\Number</span>(<span class="st">'0.1'</span>) + <span class="kw">new</span> <span class="nm">BcMath\Number</span>(<span class="st">'0.2'</span>);
+<span class="fn">echo</span> $sum;   <span class="cm">// 0.3 — ровно, без сюрпризов плавающей точки</span></code></pre></div>
+    <div class="box anti"><span class="lbl">Ломающее изменение 8.4: неявный nullable</span>Запись <code>function f(Book $book = null)</code> раньше молча означала тип <code>?Book</code>. Теперь это deprecated, а в PHP 9 станет ошибкой. Правка механическая — <code>function f(?Book $book = null)</code>, — но встречается в старом коде массово, особенно в сигнатурах методов фреймворков. Rector правит это одним правилом. Кроме того: удалён уровень ошибок <code>E_STRICT</code>, класс <code>GMP</code> стал <code>final</code>, устарели настройки <code>session.sid_length</code> и <code>session.sid_bits_per_character</code>.</div>
+    <div class="box task"><span class="lbl">Практика</span>Найдите в своём коде класс-сущность с полем, у которого есть только геттер (без сеттера). Перепишите его на <code>public private(set)</code> и удалите геттер. Затем посмотрите, сколько мест в кодовой базе вызывали этот геттер: если их сотни, вы только что оценили реальную стоимость шаблонного кода.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 8.5 ==================== -->
+<section class="level lvl-s" id="v85">
+  <div class="level-head">
+    <p class="kicker">Ноябрь 2025 · текущая версия</p>
+    <h2>PHP 8.5</h2>
+    <p>Релиз про композицию и удобство отладки. Оператор конвейера превращает вложенные вызовы в читаемую цепочку, <code>clone with</code> закрывает историю с иммутабельными объектами, а фатальные ошибки наконец печатают стек-трейс.</p>
+    <p class="vermeta"><span><i>Выход</i> 20 ноября 2025</span><span><i>Активная поддержка до</i> <span class="live">31 декабря 2027</span></span><span><i>Итог</i> функциональный стиль стал читаемым</span></p>
+  </div>
+
+  <article class="card" id="php85-pipe">
+    <p class="path">8.5 / синтаксис / композиция</p>
+    <div class="card-top"><h3>Оператор конвейера |&gt;</h3><span class="badge b-new">Ключевое</span></div>
+    <p>Вложенные вызовы читаются справа налево и изнутри наружу — то есть в порядке, обратном тому, в котором происходят действия. <span class="t">Оператор конвейера</span> передаёт результат левой части первым аргументом в правую, восстанавливая порядок чтения.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Было / стало</span></div><pre><code>&lt;?php
+<span class="cm">// Было: чтобы понять, что происходит, читаем изнутри наружу</span>
+$slug = <span class="fn">strtolower</span>(<span class="fn">str_replace</span>(<span class="st">' '</span>, <span class="st">'-'</span>, <span class="fn">trim</span>($title)));
+
+<span class="cm">// Или через временные переменные — многословно</span>
+$t = <span class="fn">trim</span>($title);
+$t = <span class="fn">str_replace</span>(<span class="st">' '</span>, <span class="st">'-'</span>, $t);
+$slug = <span class="fn">strtolower</span>($t);
+
+<span class="cm">// Стало: читается сверху вниз, в порядке выполнения</span>
+$slug = $title
+    |&gt; <span class="fn">trim</span>(...)
+    |&gt; (<span class="kw">fn</span> (<span class="kw">string</span> $s) =&gt; <span class="fn">str_replace</span>(<span class="st">' '</span>, <span class="st">'-'</span>, $s))
+    |&gt; <span class="fn">strtolower</span>(...);</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно: правая часть — callable одного аргумента</span>Конвейер передаёт значение <b>первым и единственным</b> аргументом. Функции вроде <code>str_replace()</code>, где значение идёт третьим параметром, напрямую в конвейер не встают — их оборачивают в стрелочную функцию. Именно поэтому в PHP 8.6 обсуждается частичное применение функций: <code>str_replace(' ', '-', ?)</code> даст готовый однопараметрический callable и снимет главное неудобство конвейера.</div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Где конвейер действительно уместен</span></div><pre><code>&lt;?php
+<span class="cm">// Обработка данных цепочкой шагов — основной сценарий</span>
+$report = $rawCsv
+    |&gt; <span class="fn">parseCsv</span>(...)
+    |&gt; <span class="fn">filterValidRows</span>(...)
+    |&gt; <span class="fn">groupByMonth</span>(...)
+    |&gt; <span class="fn">renderReport</span>(...);
+
+<span class="cm">// Хорошо сочетается с first-class callable синтаксисом из 8.1</span>
+<span class="cm">// и с методами сервисов:</span>
+$result = $input |&gt; <span class="kw">$this</span>-&gt;<span class="fn">normalize</span>(...) |&gt; <span class="kw">$this</span>-&gt;<span class="fn">validate</span>(...);
+
+<span class="cm">// Плохой сценарий: конвейер ради конвейера в две ступени,</span>
+<span class="cm">// где обычный вложенный вызов был короче и понятнее.</span></code></pre></div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Чем конвейер отличается от fluent-интерфейса (цепочки методов)?</b><br>Fluent-интерфейс требует, чтобы каждый шаг был методом одного класса и возвращал <code>$this</code> или новый экземпляр того же типа — это цепочка внутри одного API. Конвейер соединяет произвольные функции, включая встроенные, и не требует от них ничего, кроме одного параметра. Первое — свойство библиотеки, второе — свойство языка.</div>
+  </article>
+
+  <article class="card" id="php85-clone">
+    <p class="path">8.5 / объекты / контракты</p>
+    <div class="card-top"><h3>clone with и атрибут #[\NoDiscard]</h3><span class="badge b-new">Ключевое</span></div>
+    <p><code>clone with</code> завершает четырёхлетнюю историю: иммутабельный объект наконец можно «изменить» одним выражением, без <code>__clone</code> и без перечисления всех полей в конструкторе.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Эволюция wither'а по версиям</span></div><pre><code>&lt;?php
+<span class="kw">final readonly class</span> <span class="nm">Article</span> {
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public string</span> $title,
+        <span class="kw">public string</span> $body,
+        <span class="kw">public</span> ?<span class="nm">DateTimeImmutable</span> $publishedAt = <span class="kw">null</span>,
+    ) {}
+
+    <span class="cm">// PHP 8.1-8.2: только полное пересоздание — при добавлении поля</span>
+    <span class="cm">// нужно вспомнить и поправить КАЖДЫЙ wither</span>
+    <span class="kw">public function</span> <span class="fn">withTitleOld</span>(<span class="kw">string</span> $title): <span class="kw">static</span> {
+        <span class="kw">return new</span> <span class="nm">self</span>($title, <span class="kw">$this</span>-&gt;body, <span class="kw">$this</span>-&gt;publishedAt);
+    }
+
+    <span class="cm">// PHP 8.5: одно выражение, остальные поля копируются сами</span>
+    <span class="kw">public function</span> <span class="fn">withTitle</span>(<span class="kw">string</span> $title): <span class="kw">static</span> {
+        <span class="kw">return clone</span>(<span class="kw">$this</span>, [<span class="st">'title'</span> =&gt; $title]);
+    }
+
+    <span class="kw">public function</span> <span class="fn">published</span>(<span class="nm">DateTimeImmutable</span> $at): <span class="kw">static</span> {
+        <span class="kw">return clone</span>(<span class="kw">$this</span>, [<span class="st">'publishedAt'</span> =&gt; $at]);
+    }
+}</code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">#[\NoDiscard] — «результат нельзя игнорировать»</span></div><pre><code>&lt;?php
+<span class="cm">// Классическая ошибка с иммутабельными объектами:</span>
+$article-&gt;<span class="fn">withTitle</span>(<span class="st">'Новый заголовок'</span>);   <span class="cm">// результат потерян!</span>
+<span class="cm">// Объект не изменился, а выглядит будто изменился.</span>
+
+<span class="kw">final readonly class</span> <span class="nm">Article</span> {
+    #[\<span class="nm">NoDiscard</span>(<span class="st">'wither возвращает новый объект, старый не меняется'</span>)]
+    <span class="kw">public function</span> <span class="fn">withTitle</span>(<span class="kw">string</span> $title): <span class="kw">static</span> { <span class="cm">/* ... */</span> }
+}
+
+$article-&gt;<span class="fn">withTitle</span>(<span class="st">'x'</span>);
+<span class="cm">// Warning: Return value of Article::withTitle() should be used</span>
+
+<span class="cm">// Если игнорирование намеренное — явное приведение к void</span>
+(<span class="kw">void</span>) $article-&gt;<span class="fn">withTitle</span>(<span class="st">'x'</span>);   <span class="cm">// предупреждения не будет</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Где это пригодится сразу</span>Кандидаты на <code>#[\NoDiscard]</code> в вашем коде: все wither-методы, фабричные методы, любые функции вида «проверь и верни результат проверки», билдеры, возвращающие новый экземпляр. Правило: если игнорирование результата означает, что вызов не сделал вообще ничего, — вешайте атрибут.</div>
+  </article>
+
+  <article class="card" id="php85-more">
+    <p class="path">8.5 / отладка / библиотека</p>
+    <div class="card-top"><h3>Бэктрейсы фатальных ошибок, URI, array_first/last</h3><span class="badge b-tag">Удобство</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Мелочи с большим эффектом</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Фатальные ошибки теперь печатают стек-трейс.</span>
+<span class="cm">// Раньше: «Fatal error: Maximum execution time exceeded in File.php:42»</span>
+<span class="cm">// и ни малейшего намёка, кто это вызвал.</span>
+
+<span class="cm">// 2. Первый и последний элемент — без reset()/end() и порчи указателя</span>
+<span class="fn">array_first</span>($items);   <span class="cm">// вместо $items[array_key_first($items)] ?? null</span>
+<span class="fn">array_last</span>($items);
+
+<span class="cm">// 3. Разбор URI по стандарту, а не регуляркой и parse_url()</span>
+<span class="kw">use</span> <span class="nm">Uri\Rfc3986\Uri</span>;
+$uri = <span class="kw">new</span> <span class="nm">Uri</span>(<span class="st">'https://example.com:8443/path?a=1#frag'</span>);
+$uri-&gt;<span class="fn">getHost</span>();      <span class="cm">// 'example.com'</span>
+$uri-&gt;<span class="fn">getPort</span>();      <span class="cm">// 8443</span>
+$uri-&gt;<span class="fn">getPath</span>();      <span class="cm">// '/path'</span>
+<span class="cm">// Есть и Uri\WhatWg\Url — разбор по правилам браузеров,</span>
+<span class="cm">// включая интернационализованные домены.</span>
+
+<span class="cm">// 4. Замыкания в константных выражениях и атрибутах</span>
+#[<span class="nm">SkipDiscovery</span>(<span class="kw">static function</span> (<span class="nm">Container</span> $c): <span class="kw">bool</span> {
+    <span class="kw">return</span> !$c-&gt;<span class="fn">get</span>(<span class="nm">App</span>::<span class="kw">class</span>) <span class="kw">instanceof</span> <span class="nm">ConsoleApp</span>;
+})]
+<span class="kw">class</span> <span class="nm">SomeService</span> {}
+
+<span class="cm">// 5. Асимметричная видимость теперь и для статических свойств</span>
+<span class="kw">class</span> <span class="nm">Registry</span> { <span class="kw">public private</span>(<span class="kw">set</span>) <span class="kw">static array</span> $items = []; }
+
+<span class="cm">// 6. Получить текущие обработчики, не сбрасывая их</span>
+$current = <span class="fn">get_error_handler</span>();
+$currentEx = <span class="fn">get_exception_handler</span>();
+<span class="cm">// Раньше приходилось делать set_error_handler(null) и возвращать назад.</span>
+
+<span class="cm">// 7. Диагностика конфигурации</span>
+<span class="cm">// php --ini=diff — показывает только отличия от значений по умолчанию</span></code></pre></div>
+    <div class="box anti"><span class="lbl">Устарело в 8.5</span>
+    <ul>
+      <li>Нестандартные приведения <code>(boolean)</code>, <code>(integer)</code>, <code>(double)</code> — используйте <code>(bool)</code>, <code>(int)</code>, <code>(float)</code>.</li>
+      <li>Обратные кавычки <code>`ls -la`</code> как псевдоним <code>shell_exec()</code>.</li>
+      <li>Повторное объявление константы с тем же именем.</li>
+      <li>Удалена ini-настройка <code>disabled_classes</code>.</li>
+    </ul>
+    </div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== PHP 8.6 ==================== -->
+<section class="level lvl-a" id="v86">
+  <div class="level-head">
+    <p class="kicker">Ноябрь 2026 · в разработке</p>
+    <h2>PHP 8.6</h2>
+    <p>Релиз запланирован на 19 ноября 2026. Содержимое ниже основано на уже принятых RFC — до заморозки функциональности список может пополниться, а детали синтаксиса измениться. Читать стоит как «куда движется язык», а не как готовый справочник.</p>
+    <p class="vermeta"><span><i>План выхода</i> 19 ноября 2026</span><span><i>Статус</i> ветка в разработке</span><span><i>Тема релиза</i> композиция функций и чистка наследия</span></p>
+  </div>
+
+  <article class="card" id="php86">
+    <p class="path">8.6 / черновик / принятые RFC</p>
+    <div class="card-top"><h3>Что готовится в 8.6</h3><span class="badge b-draft">Черновик</span></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Частичное применение функций</span></div><pre><code>&lt;?php
+<span class="cm">// Плейсхолдер ? фиксирует часть аргументов и возвращает замыкание</span>
+$makeSlug = <span class="fn">str_replace</span>(<span class="st">' '</span>, <span class="st">'-'</span>, ?);
+$makeSlug(<span class="st">'Hello World'</span>);   <span class="cm">// 'Hello-World'</span>
+
+<span class="cm">// Главная ценность — снимает основное неудобство конвейера из 8.5</span>
+$slug = $title
+    |&gt; <span class="fn">trim</span>(...)
+    |&gt; <span class="fn">str_replace</span>(<span class="st">' '</span>, <span class="st">'-'</span>, ?)
+    |&gt; <span class="fn">strtolower</span>(...);
+<span class="cm">// Сравните с 8.5, где посередине была обёртка fn ($s) =&gt; ...</span></code></pre></div>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Прочие принятые изменения</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Значения по умолчанию у readonly-свойств</span>
+<span class="kw">final class</span> <span class="nm">CreateBooksTable</span> <span class="kw">implements</span> <span class="nm">MigratesUp</span> {
+    <span class="kw">public readonly string</span> $name = <span class="st">'2026_01_01_create_books_table'</span>;
+}
+<span class="cm">// Раньше запрещалось; нужно при реализации интерфейсов со свойствами.</span>
+
+<span class="cm">// 2. clamp() — зажать значение в диапазон</span>
+<span class="fn">clamp</span>(<span class="nm">10</span>,  min: <span class="nm">0</span>, max: <span class="nm">100</span>);   <span class="cm">// 10</span>
+<span class="fn">clamp</span>(<span class="nm">101</span>, min: <span class="nm">0</span>, max: <span class="nm">100</span>);   <span class="cm">// 100</span>
+<span class="fn">clamp</span>(-<span class="nm">1</span>,  min: <span class="nm">0</span>, max: <span class="nm">100</span>);   <span class="cm">// 0</span>
+
+<span class="cm">// 3. Встроенный enum SortDirection — общий словарь для библиотек</span>
+<span class="kw">enum</span> <span class="nm">SortDirection</span> { <span class="kw">case</span> Ascending; <span class="kw">case</span> Descending; }
+
+<span class="cm">// 4. Докблоки на параметрах функции</span>
+<span class="kw">function</span> <span class="fn">store</span>(
+    <span class="cm">/** @param Book[] */</span>
+    <span class="kw">array</span> $books,
+): <span class="kw">void</span> {}
+
+<span class="cm">// 5. Рефлексия: проверка доступности свойства с учётом области видимости</span>
+$property-&gt;<span class="fn">isReadable</span>(scope: <span class="nm">Book</span>::<span class="kw">class</span>);
+$property-&gt;<span class="fn">isWriteable</span>(scope: <span class="kw">null</span>, object: $book);
+
+<span class="cm">// 6. __debugInfo() у перечислений</span>
+
+<span class="cm">// 7. Io\Poll — мультиплексирование ввода-вывода (epoll / WSAPoll)</span>
+<span class="cm">//    Низкоуровневый примитив для асинхронных библиотек, как файберы в 8.1.</span></code></pre></div>
+    <div class="box imp"><span class="lbl">Безопасность сессий по умолчанию</span>В 8.6 меняются значения по умолчанию для сессий: <code>session.use_strict_mode=1</code> (не принимать неизвестный идентификатор сессии от клиента — защита от session fixation), <code>session.cookie_httponly=1</code> и <code>session.cookie_samesite=Lax</code>. Это первый случай, когда безопасные значения включены из коробки, а не в чек-листах. Если вы уже выставляли их вручную — ничего не изменится; если нет — стоит проверить сценарии с межсайтовыми редиректами и OAuth-возвратами.</div>
+    <div class="box anti"><span class="lbl">Крупные deprecations 8.6</span>
+    <ul>
+      <li><b>Возврат из блока <code>finally</code></b> — тихо отменяет исключение и возврат из <code>try</code>. Источник багов, которые невозможно объяснить по логам.</li>
+      <li>Возврат значения из конструктора и деструктора.</li>
+      <li>Псевдонимы: <code>is_double()</code>, <code>is_integer()</code>, <code>is_long()</code>, <code>doubleval()</code> — используйте <code>is_float()</code>, <code>is_int()</code>, <code>floatval()</code>.</li>
+      <li><code>spl_object_hash()</code> (в пользу <code>spl_object_id()</code>), <code>spl_classes()</code>, <code>strcoll()</code>, <code>metaphone()</code>.</li>
+      <li>Методы сортировки <code>ArrayIterator</code> и CSV-методы <code>SplFileObject</code>.</li>
+      <li>Резервируются идентификаторы <code>let</code>, <code>is</code>, <code>namespace</code> (как константа), <code>readonly</code> (как имя функции) — задел под будущий синтаксис.</li>
+    </ul>
+    </div>
+    <div class="box qa"><span class="lbl">Типичный вопрос</span><b>Почему возврат из <code>finally</code> решили объявить устаревшим?</b><br>Потому что <code>return</code> в <code>finally</code> побеждает всё: он отменяет и значение, возвращённое из <code>try</code>, и <b>исключение</b>, которое там было брошено. Функция, внутри которой произошла ошибка, тихо возвращает нормальное значение — и об ошибке никто не узнаёт. Это ровно тот случай, когда синтаксически корректный код почти никогда не выражает намерение автора.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== СПРАВОЧНИК ==================== -->
+<section class="level lvl-n" id="reference">
+  <div class="level-head">
+    <p class="kicker">Справочник · всё в одном месте</p>
+    <h2>Сводка, идиомы, миграция</h2>
+    <p>Дальше — то, к чему возвращаются: таблица «что в какой версии», список идиом «было / стало» для переписывания старого кода, порядок шагов при обновлении и вопросы, которые задают на собеседовании именно по версиям.</p>
+  </div>
+
+  <article class="card" id="tables">
+    <p class="path">справочник / таблицы</p>
+    <div class="card-top"><h3>Что появилось в какой версии</h3><span class="badge b-ver">Шпаргалка</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 7 · синтаксис и система типов</caption>
+      <thead><tr><th>Возможность</th><th>Версия</th><th>Вес</th></tr></thead>
+      <tbody>
+        <tr><td>Типизированные свойства <code>private int $id</code></td><td>7.4</td><td>Ключевое</td></tr>
+        <tr><td>Стрелочные функции <code>fn () =&gt;</code></td><td>7.4</td><td>Ключевое</td></tr>
+        <tr><td>Оператор <code>??=</code>, распаковка <code>[...$a]</code>, <code>1_000_000</code></td><td>7.4</td><td>Удобство</td></tr>
+        <tr><td>Ковариантность возврата, контравариантность параметров</td><td>7.4</td><td>Удобство</td></tr>
+        <tr><td>Именованные аргументы</td><td>8.0</td><td>Ключевое</td></tr>
+        <tr><td>Продвижение свойств конструктора</td><td>8.0</td><td>Ключевое</td></tr>
+        <tr><td>Union-типы <code>int|string</code>, <code>mixed</code>, <code>static</code></td><td>8.0</td><td>Ключевое</td></tr>
+        <tr><td>Выражение <code>match</code></td><td>8.0</td><td>Ключевое</td></tr>
+        <tr><td>Nullsafe <code>?-&gt;</code>, <code>throw</code> как выражение, <code>catch</code> без переменной</td><td>8.0</td><td>Удобство</td></tr>
+        <tr><td>Атрибуты <code>#[Attr]</code></td><td>8.0</td><td>Ключевое</td></tr>
+        <tr><td>Перечисления <code>enum</code></td><td>8.1</td><td>Ключевое</td></tr>
+        <tr><td><code>readonly</code>-свойства, тип <code>never</code></td><td>8.1</td><td>Ключевое</td></tr>
+        <tr><td>First-class callable <code>strlen(...)</code></td><td>8.1</td><td>Удобство</td></tr>
+        <tr><td><code>new</code> в инициализаторах, чистые пересечения <code>A&amp;B</code></td><td>8.1</td><td>Удобство</td></tr>
+        <tr><td><code>readonly class</code>, DNF-типы, автономные <code>null|false|true</code></td><td>8.2</td><td>Удобство</td></tr>
+        <tr><td>Константы в трейтах</td><td>8.2</td><td>Удобство</td></tr>
+        <tr><td>Типизированные константы классов</td><td>8.3</td><td>Ключевое</td></tr>
+        <tr><td>Динамическое <code>Foo::{$name}</code>, переинициализация readonly в <code>__clone</code></td><td>8.3</td><td>Удобство</td></tr>
+        <tr><td>Хуки свойств <code>{ get; set; }</code></td><td>8.4</td><td>Ключевое</td></tr>
+        <tr><td>Асимметричная видимость <code>public private(set)</code></td><td>8.4</td><td>Ключевое</td></tr>
+        <tr><td><code>new Foo()-&gt;bar()</code> без скобок</td><td>8.4</td><td>Удобство</td></tr>
+        <tr><td>Оператор конвейера <code>|&gt;</code></td><td>8.5</td><td>Ключевое</td></tr>
+        <tr><td><code>clone($obj, ['prop' =&gt; $v])</code></td><td>8.5</td><td>Ключевое</td></tr>
+        <tr><td>Замыкания в константных выражениях и атрибутах</td><td>8.5</td><td>Удобство</td></tr>
+        <tr><td>Асимметричная видимость для статических свойств</td><td>8.5</td><td>Удобство</td></tr>
+        <tr><td>Частичное применение <code>f($a, ?)</code>, readonly со значением по умолчанию</td><td>8.6*</td><td>Черновик</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tw"><table>
+      <caption>Таблица 8 · стандартная библиотека и рантайм</caption>
+      <thead><tr><th>Что</th><th>Версия</th><th>Заменяет</th></tr></thead>
+      <tbody>
+        <tr><td><code>WeakReference</code>, preloading, FFI</td><td>7.4</td><td>—</td></tr>
+        <tr><td><code>str_contains/starts_with/ends_with</code></td><td>8.0</td><td><code>strpos() !== false</code></td></tr>
+        <tr><td><code>get_debug_type()</code>, <code>WeakMap</code>, JIT</td><td>8.0</td><td><code>gettype()</code></td></tr>
+        <tr><td><code>array_is_list()</code>, <code>fsync()</code>, <code>Fiber</code></td><td>8.1</td><td>Ручные проверки, генераторы-корутины</td></tr>
+        <tr><td>Расширение <code>random</code> (<code>Randomizer</code>)</td><td>8.2</td><td><code>mt_rand</code>, <code>shuffle</code> с глобальным состоянием</td></tr>
+        <tr><td><code>#[\SensitiveParameter]</code></td><td>8.2</td><td>Ручная чистка стек-трейсов</td></tr>
+        <tr><td><code>json_validate()</code>, <code>mb_str_pad()</code>, <code>str_increment()</code></td><td>8.3</td><td><code>json_decode</code> ради проверки</td></tr>
+        <tr><td><code>#[\Override]</code></td><td>8.3</td><td>Надежда на внимательность</td></tr>
+        <tr><td><code>array_find/find_key/any/all</code>, <code>mb_trim()</code></td><td>8.4</td><td>Циклы <code>foreach</code> с <code>break</code></td></tr>
+        <tr><td>Ленивые объекты, <code>\Dom\HTMLDocument</code>, <code>BcMath\Number</code></td><td>8.4</td><td>Прокси от ORM, <code>DOMDocument</code> + libxml</td></tr>
+        <tr><td><code>#[\Deprecated]</code>, <code>exit()</code> как функция</td><td>8.4</td><td><code>@deprecated</code> в докблоке</td></tr>
+        <tr><td><code>array_first()</code>, <code>array_last()</code></td><td>8.5</td><td><code>reset()</code>/<code>end()</code>, порча указателя массива</td></tr>
+        <tr><td><code>Uri\Rfc3986\Uri</code>, <code>Uri\WhatWg\Url</code></td><td>8.5</td><td><code>parse_url()</code> и регулярки</td></tr>
+        <tr><td>Стек-трейс у фатальных ошибок, <code>#[\NoDiscard]</code></td><td>8.5</td><td>Догадки по логам</td></tr>
+        <tr><td><code>clamp()</code>, <code>SortDirection</code>, <code>Io\Poll</code></td><td>8.6*</td><td><code>min(max())</code>, строки <code>'asc'/'desc'</code></td></tr>
+      </tbody>
+    </table></div>
+    <p style="font-family:var(--f-mono);font-size:12px;color:var(--ink-3);margin-top:-6px">* PHP 8.6 находится в разработке, релиз запланирован на 19 ноября 2026.</p>
+  </article>
+
+  <article class="card" id="idioms">
+    <p class="path">справочник / рефакторинг</p>
+    <div class="card-top"><h3>Было / стало: что переписать в первую очередь</h3><span class="badge b-tag">Практика</span></div>
+    <p>Это не список «модного синтаксиса», а места, где старая идиома реально хуже: либо не проверяется типами, либо скрывает ошибку, либо стоит лишних строк на каждом использовании.</p>
+    <div class="code"><div class="bar"><span>php</span><span class="r">Десять замен, окупающихся сразу</span></div><pre><code>&lt;?php
+<span class="cm">// 1. Поиск подстроки</span>
+<span class="kw">if</span> (<span class="fn">strpos</span>($s, <span class="st">'abc'</span>) !== <span class="kw">false</span>)   →   <span class="kw">if</span> (<span class="fn">str_contains</span>($s, <span class="st">'abc'</span>))
+
+<span class="cm">// 2. Значение по умолчанию</span>
+<span class="fn">isset</span>($a[<span class="st">'k'</span>]) ? $a[<span class="st">'k'</span>] : <span class="st">'d'</span>       →   $a[<span class="st">'k'</span>] ?? <span class="st">'d'</span>
+<span class="kw">if</span> (!<span class="fn">isset</span>($a[<span class="st">'k'</span>])) $a[<span class="st">'k'</span>] = <span class="st">'d'</span>   →   $a[<span class="st">'k'</span>] ??= <span class="st">'d'</span>
+
+<span class="cm">// 3. Набор допустимых значений</span>
+<span class="kw">const</span> STATUS_DRAFT = <span class="st">'draft'</span>            →   <span class="kw">enum</span> <span class="nm">Status</span>: <span class="kw">string</span> { ... }
+
+<span class="cm">// 4. Ветвление с возвратом значения</span>
+<span class="kw">switch</span> + <span class="kw">break</span> + $result           →   $result = <span class="kw">match</span>(...) { ... }
+
+<span class="cm">// 5. DTO и value-объекты</span>
+свойства + конструктор + присвоение   →   продвижение свойств + readonly
+
+<span class="cm">// 6. Геттер без сеттера</span>
+<span class="kw">private</span> $x + <span class="fn">getX</span>()                   →   <span class="kw">public private</span>(<span class="kw">set</span>) $x        <span class="cm">// 8.4</span>
+
+<span class="cm">// 7. Вычисляемый геттер</span>
+<span class="kw">public function</span> <span class="fn">getFullName</span>()        →   <span class="kw">public string</span> $fullName { <span class="kw">get</span> =&gt; ... }
+
+<span class="cm">// 8. Колбэк по имени</span>
+[<span class="kw">$this</span>, <span class="st">'method'</span>]                    →   <span class="kw">$this</span>-&gt;<span class="fn">method</span>(...)
+
+<span class="cm">// 9. Поиск в массиве</span>
+<span class="kw">foreach</span> + <span class="kw">if</span> + <span class="kw">break</span>                 →   <span class="fn">array_find</span>($items, <span class="kw">fn</span> ($i) =&gt; ...)
+
+<span class="cm">// 10. Метаданные для фреймворка</span>
+<span class="cm">/** @Route("/path") */</span>              →   #[<span class="nm">Route</span>(<span class="st">'/path'</span>)]</code></pre></div>
+    <div class="box anti"><span class="lbl">Антипаттерн миграции</span>Массовый рефакторинг «под новый синтаксис» отдельным пул-реквестом на всю кодовую базу. Такой PR невозможно отревьюить, он конфликтует со всем, что делают коллеги, и прячет содержательные изменения среди тысячи механических. Работающий подход: автоматические правки Rector'ом отдельными узкими наборами правил (один набор — один PR) плюс правило «трогаешь файл по задаче — приводишь его к современному виду».</div>
+    <div class="box good"><span class="lbl">Что действительно стоит делать массово</span>Три вещи безопасны и окупаются: (1) <code>declare(strict_types=1)</code> в новых файлах, (2) добавление типов свойствам и сигнатурам — их проверит статанализ, (3) устранение deprecations перед обновлением версии. Всё остальное — по мере касания кода.</div>
+  </article>
+
+  <article class="card" id="migration">
+    <p class="path">справочник / обновление / процесс</p>
+    <div class="card-top"><h3>План миграции на новую версию</h3><span class="badge b-ver">Процесс</span></div>
+    <p>Порядок шагов важнее скорости: цель — чтобы в любой момент можно было откатиться и чтобы ошибка обнаружилась на CI, а не на проде.</p>
+    <div class="code"><div class="bar"><span>текст</span><span class="r">Шаги по порядку</span></div><pre><code>1. Зафиксировать точку старта
+   php -v ; composer show --platform
+   composer why-not php 8.5      ← кто держит на старой версии
+
+2. Включить видимость deprecations в CI
+   error_reporting = E_ALL
+   в PHPUnit: failOnDeprecation="true" в конфиге
+   → красный билд на каждый deprecated-вызов
+
+3. Поднять планку статанализа ДО смены версии
+   phpstan level 5+ или psalm level 4-
+   → большинство проблем 8.x видно ещё на старом PHP
+
+4. Обновить зависимости, оставаясь на текущей версии PHP
+   composer update
+   → отделяем «сломалась библиотека» от «сломался PHP»
+
+5. Прогнать Rector в режиме --dry-run
+   наборы: LevelSetList::UP_TO_PHP_84
+   → получаем список мест, применяем по частям
+
+6. Сменить версию PHP в Docker/CI, но не на проде
+   тесты + прогон реального трафика через staging
+
+7. Выкатить на прод с включённым логированием deprecations
+   первую неделю смотреть логи: часть путей кода
+   тестами не покрыта, и это нормально
+
+8. Только после стабилизации — внедрять новые возможности
+   (enum, readonly, хуки) по мере касания кода</code></pre></div>
+    <div class="tw"><table>
+      <caption>Таблица 9 · сложность каждого шага</caption>
+      <thead><tr><th>Переход</th><th>Сложность</th><th>Что займёт больше всего времени</th></tr></thead>
+      <tbody>
+        <tr><td>7.4 → 8.0</td><td><b>Высокая</b></td><td>Сравнения строк с числами, warning'и, ставшие ошибками, несовместимые сигнатуры наследников</td></tr>
+        <tr><td>8.0 → 8.1</td><td>Средняя</td><td><code>strlen(null)</code> и подобное: <code>null</code> во внутренние функции — правок много, но все механические</td></tr>
+        <tr><td>8.1 → 8.2</td><td>Низкая</td><td>Динамические свойства в легаси-моделях, интерполяция <code>"${x}"</code></td></tr>
+        <tr><td>8.2 → 8.3</td><td>Очень низкая</td><td>Обычно ничего; иногда <code>range()</code> и <code>get_class()</code> без аргумента</td></tr>
+        <tr><td>8.3 → 8.4</td><td>Низкая</td><td>Неявный nullable <code>Foo $x = null</code> — массово, но чинится Rector'ом</td></tr>
+        <tr><td>8.4 → 8.5</td><td>Очень низкая</td><td>Приведения <code>(integer)</code>/<code>(boolean)</code>, обратные кавычки</td></tr>
+      </tbody>
+    </table></div>
+    <div class="box imp"><span class="lbl">Важно про расширения</span>Ломается обычно не код, а окружение: pecl-расширения (redis, imagick, xdebug, grpc) собираются под конкретную версию PHP и требуют пересборки. Проверять их наличие нужно <b>до</b> начала работ — именно отсутствующее расширение чаще всего блокирует переход на пару месяцев. Команда <code>php -m</code> на текущем проде и в новом образе, сравнение списков — пять минут, которые экономят неделю.</div>
+    <div class="box task"><span class="lbl">Практика</span>Соберите Docker-образ с целевой версией PHP и запустите на нём тесты, не меняя ничего в коде. Количество упавших тестов — честная оценка объёма работ. Если упало ноль, а вы переходите через 8.0, — скорее всего, у вас просто мало тестов, и стоит начать с покрытия критичных путей.</div>
+  </article>
+
+  <article class="card" id="interview">
+    <p class="path">справочник / собеседование</p>
+    <div class="card-top"><h3>Вопросы по версиям с короткими ответами</h3><span class="badge b-must">Спрашивают часто</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Чем <code>match</code> отличается от <code>switch</code>?</span><span class="aa">Строгое сравнение <code>===</code> вместо <code>==</code>, это выражение с возвращаемым значением, нет проваливания, а ненайденная ветка бросает <code>UnhandledMatchError</code> вместо тихого пропуска. Обратная сторона: тело ветки — только одно выражение.</span></li>
+      <li><span class="qq">Что даёт <code>readonly</code> и от чего он <b>не</b> защищает?</span><span class="aa">Защищает свойство от повторной записи после инициализации. Не защищает содержимое объекта, на который свойство ссылается: <code>readonly array</code> нельзя переприсвоить, а вот у <code>readonly ArrayObject</code> можно добавлять элементы. Настоящая иммутабельность требует, чтобы вложенные объекты тоже были неизменяемыми.</span></li>
+      <li><span class="qq">Backed-enum или чистый — что выбрать?</span><span class="aa">Если значение пересекает границу процесса (БД, JSON, очередь) — backed, потому что нужно стабильное скалярное представление. Если enum живёт только внутри кода — чистый. Значения backed-enum становятся частью контракта, менять их так же опасно, как менять схему БД.</span></li>
+      <li><span class="qq">Зачем нужны файберы, если есть генераторы?</span><span class="aa">Генератор может приостановиться только на своём уровне: чтобы прокинуть <code>yield</code> сквозь пять вызовов, весь стек должен состоять из генераторов. Файбер приостанавливает произвольно глубокий стек целиком, поэтому асинхронную операцию можно вызвать из обычной функции. Это решение проблемы «цветных функций».</span></li>
+      <li><span class="qq">Даёт ли JIT прирост вашему приложению?</span><span class="aa">Веб-приложению — практически нет: время уходит на базу и сеть, а не на выполнение опкодов. CLI-задачам с интенсивными вычислениями — да, там прирост измеримый. Гораздо важнее opcache, который обязателен, и preloading, дающий 5–13%.</span></li>
+      <li><span class="qq">Что изменилось в сравнении строк и чисел в 8.0 и почему это важно для безопасности?</span><span class="aa">Нечисловая строка больше не приводится к нулю: <code>0 == 'foo'</code> стало <code>false</code>. В PHP 7 это порождало уязвимости в проверках токенов: если токен из базы был <code>0</code> (или приводился к нему), любая нечисловая строка проходила сравнение. Правильная защита не зависит от версии — строгое <code>===</code> и <code>hash_equals()</code> для секретов.</span></li>
+      <li><span class="qq">Чем хуки свойств отличаются от <code>__get</code>/<code>__set</code>?</span><span class="aa">Хуки работают на объявленных свойствах, типизированы, видны IDE и статанализу, их можно потребовать в интерфейсе и они не требуют магии в рантайме. <code>__get</code>/<code>__set</code> срабатывают только на необъявленных свойствах, возвращают <code>mixed</code> и известны анализатору лишь через докблок <code>@property</code>.</span></li>
+      <li><span class="qq">Когда <code>public private(set)</code>, а когда <code>readonly</code>?</span><span class="aa"><code>readonly</code> — ровно одна запись за жизнь объекта, подходит value-объектам. <code>private(set)</code> — сколько угодно записей, но только изнутри класса, подходит сущностям с жизненным циклом. Их можно комбинировать с хуками, но не друг с другом.</span></li>
+      <li><span class="qq">Зачем нужен <code>#[\Override]</code>?</span><span class="aa">Чтобы опечатка в имени переопределяемого метода или переименование метода в базовом классе библиотеки падали на этапе компиляции, а не превращались в тихо неработающий код. IDE проверяет момент написания, атрибут — момент сборки.</span></li>
+      <li><span class="qq">Что такое ленивые объекты в 8.4 и зачем они в ядре?</span><span class="aa">Это встроенный механизм прокси: объект создаётся при первом обращении. Раньше то же самое делали DI-контейнеры и ORM через кодогенерацию прокси-классов — медленно, хрупко и с проблемами при отладке. Теперь это умеет рефлексия: <code>newLazyProxy()</code> и <code>newLazyGhost()</code>.</span></li>
+      <li><span class="qq">Оператор конвейера — зачем он, если есть цепочки методов?</span><span class="aa">Цепочка методов работает только внутри одного API, где каждый шаг возвращает совместимый объект. Конвейер соединяет любые функции с одним параметром, включая встроенные, и восстанавливает порядок чтения: вложенные вызовы читаются изнутри наружу, конвейер — сверху вниз.</span></li>
+      <li><span class="qq">На какой версии PHP запускать новый проект в 2026 году?</span><span class="aa">8.4, если важна максимальная совместимость экосистемы, или 8.5, если нужны конвейер и <code>clone with</code>. 8.3 приемлемо только при жёстком ограничении окружения: у неё уже закончилась активная поддержка. Всё, что ниже 8.2, — вне поддержки и небезопасно.</span></li>
+    </ol>
+    <div class="box imp"><span class="lbl">Как отвечать</span>На вопросы про версии почти всегда ждут не перечисления возможностей, а понимания <b>зачем</b> они появились: какую проблему решает <code>enum</code>, почему <code>readonly</code> недостаточно для иммутабельности, почему JIT не помогает вебу. Ответ «в 8.1 добавили enum, readonly, файберы и never» показывает, что вы читали список изменений. Ответ «до enum набор значений выражали строковыми константами, и тип не проверялся — опечатка ловилась в рантайме» показывает, что вы им пользовались.</div>
+  </article>
+
+  <article class="card" id="sources">
+    <p class="path">справочник / источники</p>
+    <div class="card-top"><h3>Источники и как следить дальше</h3><span class="badge b-tag">Ссылки</span></div>
+    <ul>
+      <li><a href="https://www.php.net/supported-versions.php">php.net/supported-versions</a> — единственный авторитетный источник по срокам поддержки. Сверяйтесь с ним, а не с постами в блогах.</li>
+      <li><a href="https://www.php.net/manual/ru/migration80.incompatible.php">Разделы UPGRADING в руководстве PHP</a> — полные списки обратно несовместимых изменений по каждой версии. Читаются перед миграцией, а не после.</li>
+      <li><a href="https://wiki.php.net/rfc">wiki.php.net/rfc</a> — все RFC со статусами. Здесь видно, что реально принято в разработку, а что осталось предложением.</li>
+      <li><a href="https://stitcher.io/blog/new-in-php-86">stitcher.io</a> — разборы «что нового» по каждой версии с примерами; удобно для быстрого обзора ещё до релиза.</li>
+      <li><a href="https://github.com/rectorphp/rector">Rector</a> и <a href="https://phpstan.org/">PHPStan</a> — инструменты, которые делают миграцию управляемой. Наборы правил в Rector повторяют список изменений версии.</li>
+    </ul>
+    <div class="box good"><span class="lbl">Полезная привычка</span>Каждый ноябрь, когда выходит минорная версия, потратьте час на чтение раздела UPGRADING — не ради новых возможностей, а ради списка deprecations. Устранённое сразу изменение стоит десять минут; то же изменение через три года, когда оно стало ошибкой и заблокировало обновление, стоит спринт.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Справочник «Что нового в PHP: 7.4 → 8.6» · актуально на август 2026</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

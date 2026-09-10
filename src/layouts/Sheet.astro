@@ -1,0 +1,19 @@
+---
+// Голова страницы: воспроизводит <head> исходных конспектов один в один.
+// CSS вклеивается инлайном (is:inline), чтобы собранный файл оставался
+// самодостаточным и открывался с диска без сервера.
+const { title, description, author, robots, bodyId, css, html } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content={description}>
+<meta name="author" content={author}>
+<meta name="robots" content={robots}>
+<title>{title}</title>
+<style is:inline set:html={css}></style>
+</head>
+<body id={bodyId}><Fragment set:html={html} /></body>
+</html>

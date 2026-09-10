@@ -1,0 +1,9 @@
+---
+// Разводящая страница. Отдельный маршрут, чтобы витрина открывалась и по корню «/»,
+// и по «/index.html» — как раньше, когда файлы лежали в корне проекта.
+import Sheet from '../layouts/Sheet.astro';
+import { page } from '../data/render.js';
+
+const home = page('index');
+---
+<Sheet {...home} />

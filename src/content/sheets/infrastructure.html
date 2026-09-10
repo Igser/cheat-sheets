@@ -1,0 +1,1726 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · инфраструктура · доставка кода в прод</p>
+  <h1>Инфраструктура и деплой</h1>
+  <p class="lead">Код, который работает только на ноутбуке разработчика, ценности не имеет. Между «готово локально» и «работает у пользователей» лежит целый слой: веб-сервер и пул процессов, образ и его сборка, пайплайн с тестами, выкладка без простоя, миграции, секреты, воркеры, логи и мониторинг. PHP-разработчику этот слой обычно достаётся не целиком — но понимать его нужно полностью, иначе половина боевых проблем выглядит как магия.</p>
+  <p class="lead">Практическая ценность здесь измеряется конкретно: сколько времени занимает выкладка, можно ли откатиться за минуту, переживёт ли релиз миграцию на живой таблице, что произойдёт с текущими запросами при перезапуске, и через сколько минут вы узнаете, что всё сломалось. На собеседовании это проверяют вопросами «как у вас устроен деплой» и «что делать, если после релиза выросли 502» — оба про инфраструктуру, а не про язык.</p>
+  <p class="lead">Конспект построен снизу вверх: сначала боевое окружение и Linux-минимум, затем контейнеры и пайплайн, затем эксплуатация под нагрузкой. Kubernetes появляется в конце и с оговорками — это инструмент, а не обязательная ступень. Смежные темы: <a href="php.html">PHP</a>, <a href="system-design.html">System Design</a>, <a href="sql.html">базы данных</a>, <a href="symfony.html">Symfony</a>, <a href="laravel.html">Laravel</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Из чего состоит боевое окружение, Linux и systemd, nginx и PHP-FPM, Docker и compose, переменные окружения и конфигурация.</span></div>
+    <div class="aud m"><b>Middle</b><span>Production-образ, пайплайн CI, деплой без простоя, миграции в релизе, секреты, воркеры и cron, логи и метрики.</span></div>
+    <div class="aud s"><b>Senior</b><span>Kubernetes и когда он не нужен, расчёт ресурсов и лимитов, бэкапы и восстановление, IaC, безопасность, релизные практики.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>19</i></span>
+    <span>Блоков кода: <i>25</i></span>
+    <span>Сравнительных таблиц: <i>21</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#stack">Из чего состоит прод</a></li>
+    <li><span class="tree">├─</span> <a href="#linux">Linux-минимум</a></li>
+    <li><span class="tree">├─</span> <a href="#nginx">Nginx и PHP-FPM</a></li>
+    <li><span class="tree">├─</span> <a href="#docker">Docker: образы и контейнеры</a></li>
+    <li><span class="tree">├─</span> <a href="#compose">Compose для разработки</a></li>
+    <li><span class="tree">├─</span> <a href="#config">Конфигурация и окружения</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#images">Production-образ PHP</a></li>
+    <li><span class="tree">├─</span> <a href="#ci">Пайплайн CI</a></li>
+    <li><span class="tree">├─</span> <a href="#cd">Деплой без простоя</a></li>
+    <li><span class="tree">├─</span> <a href="#migrations">Миграции в релизе</a></li>
+    <li><span class="tree">├─</span> <a href="#secrets">Секреты и доступы</a></li>
+    <li><span class="tree">├─</span> <a href="#workers">Воркеры и cron</a></li>
+    <li><span class="tree">├─</span> <a href="#logs">Логи, метрики, health checks</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#k8s">Kubernetes и когда он не нужен</a></li>
+    <li><span class="tree">├─</span> <a href="#resources">Ресурсы, лимиты, ёмкость</a></li>
+    <li><span class="tree">├─</span> <a href="#backup">Бэкапы и восстановление</a></li>
+    <li><span class="tree">├─</span> <a href="#iac">Infrastructure as Code</a></li>
+    <li><span class="tree">├─</span> <a href="#security">Безопасность инфраструктуры</a></li>
+    <li><span class="tree">├─</span> <a href="#release">Релизные практики и инциденты</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#commands">Команды по ситуациям</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · окружение</p>
+    <h2>Junior: как устроено боевое окружение</h2>
+    <p>Первая задача — перестать воспринимать прод как чёрный ящик. Запрос проходит через несколько процессов, каждый со своим конфигом, логом и способом перезапуска. Junior, который умеет посмотреть логи, понять, кто именно вернул 502, и перезапустить нужный сервис, экономит команде часы — и на собеседовании это заметно сразу.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="stack">
+    <p class="path">junior / карта</p>
+    <div class="card-top"><h3>Из чего состоит прод</h3><span class="badge b-1">База</span></div>
+    <p>Минимальное боевое окружение PHP-приложения — это четыре-пять процессов на одной или нескольких машинах. Понимать нужно не только их назначение, но и границу между ними: именно на границах возникают самые непонятные ошибки.</p>
+
+    <div class="flow" role="img" aria-label="Браузер, nginx, php-fpm, приложение, база данных и Redis">
+      <div class="node">Браузер<small>HTTP/HTTPS</small></div><span class="arr">→</span>
+      <div class="node">nginx<small>статика, прокси, TLS</small></div><span class="arr">→</span>
+      <div class="node">php-fpm<small>пул процессов</small></div><span class="arr">→</span>
+      <div class="node">Приложение<small>ваш код</small></div><span class="arr">→</span>
+      <div class="node">MySQL / Redis<small>данные и кэш</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · компоненты, их конфиги и логи</caption>
+      <thead><tr><th>Компонент</th><th>За что отвечает</th><th>Конфигурация</th><th>Где смотреть логи</th></tr></thead>
+      <tbody>
+        <tr><td>nginx</td><td>TLS, статика, проксирование в FPM, лимиты и таймауты</td><td><code>/etc/nginx/</code></td><td><code>access.log</code>, <code>error.log</code></td></tr>
+        <tr><td>php-fpm</td><td>Пул процессов PHP, лимиты памяти и времени</td><td><code>/etc/php/8.x/fpm/</code></td><td><code>php-fpm.log</code>, slow log</td></tr>
+        <tr><td>Приложение</td><td>Бизнес-логика, обработка запроса</td><td><code>.env</code>, config-файлы</td><td>Свой лог или stdout</td></tr>
+        <tr><td>Воркеры</td><td>Фоновые задачи из очереди</td><td>supervisor / systemd</td><td>Лог воркера, лог супервизора</td></tr>
+        <tr><td>Cron</td><td>Периодические задачи</td><td><code>crontab</code> / таймеры systemd</td><td>Почта root или отдельный файл</td></tr>
+        <tr><td>СУБД</td><td>Хранение данных</td><td><code>my.cnf</code> / <code>postgresql.conf</code></td><td>error log, slow query log</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Кто возвращает ошибку</h4>
+    <p>Половина боевых инцидентов диагностируется одним вопросом: чья это ошибка. Разбирается по коду и по тому, в чьём логе она есть:</p>
+    <ul>
+      <li><strong>502 Bad Gateway</strong> — nginx не получил ответ от FPM: процесс упал, пул исчерпан, сокет недоступен. Ошибка PHP в логе приложения может отсутствовать.</li>
+      <li><strong>504 Gateway Timeout</strong> — FPM не ответил за <code>fastcgi_read_timeout</code>: скрипт выполняется слишком долго.</li>
+      <li><strong>500</strong> с трассировкой в логе приложения — исключение в коде: инфраструктура работает.</li>
+      <li><strong>413</strong> — размер тела больше <code>client_max_body_size</code>: запрос не дошёл до PHP вообще.</li>
+      <li><strong>Пустой ответ или обрыв</strong> — часто OOM: процесс убит ядром, ищите в <code>dmesg</code>.</li>
+    </ul>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Пользователи видят 502. Ваши действия?</b><br>Сначала смотрю <code>error.log</code> nginx — там причина: нет соединения с FPM, таймаут или сброс. Затем состояние пула FPM: не заняты ли все процессы и чем именно. Обычно виноват не PHP-код напрямую, а долгие запросы к базе или зависшие внешние вызовы, которые заняли весь пул. Параллельно проверяю память: если процессы убивает OOM killer, это видно в <code>dmesg</code>.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="linux">
+    <p class="path">junior / система</p>
+    <div class="card-top"><h3>Linux-минимум</h3><span class="badge b-1">База</span></div>
+    <p>Не нужно быть системным администратором, но нужно уверенно отвечать на четыре вопроса: что сейчас происходит на сервере, кончилось ли что-нибудь, кто держит ресурс и как перезапустить сервис, ничего не сломав.</p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Первая диагностика: пять минут до гипотезы</span></div><pre><code><span class="cm"># Нагрузка и процессы: кто ест CPU и память</span>
+top -o %CPU              <span class="cm"># или htop, если установлен</span>
+ps aux --sort=-%mem | head -15
+
+<span class="cm"># Место на диске — классическая причина «внезапно всё сломалось»</span>
+df -h                    <span class="cm"># свободное место по разделам</span>
+df -i                    <span class="cm"># inode: кончиться могут раньше места, при миллионах мелких файлов</span>
+du -sh /var/log/* | sort -h | tail
+
+<span class="cm"># Сеть: кто слушает порт и есть ли соединение</span>
+ss -tulpn | grep :9000   <span class="cm"># слушает ли php-fpm</span>
+curl -sv http://localhost/health
+
+<span class="cm"># Сервисы под systemd</span>
+systemctl status php8.3-fpm
+systemctl reload nginx           <span class="cm"># reload перечитывает конфиг без разрыва соединений</span>
+systemctl restart php8.3-fpm     <span class="cm"># restart убивает процессы — обрывает текущие запросы</span>
+journalctl -u php8.3-fpm -n 100 --no-pager
+
+<span class="cm"># Логи в реальном времени с фильтром</span>
+tail -f /var/log/nginx/error.log | grep -v favicon
+
+<span class="cm"># Кого убило ядро по памяти</span>
+dmesg -T | grep -i "killed process"</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · симптом и чем его смотреть</caption>
+      <thead><tr><th>Симптом</th><th>Команда</th><th>Что искать</th></tr></thead>
+      <tbody>
+        <tr><td>Сайт медленный</td><td><code>top</code>, <code>iostat</code>, slow log БД</td><td>CPU у PHP или у СУБД, ожидание диска</td></tr>
+        <tr><td>«Нет места на устройстве»</td><td><code>df -h</code>, <code>df -i</code>, <code>du -sh</code></td><td>Логи, временные файлы, старые релизы, дампы</td></tr>
+        <tr><td>Процесс не стартует</td><td><code>systemctl status</code>, <code>journalctl -u</code></td><td>Ошибка конфига, занятый порт, права</td></tr>
+        <tr><td>Порт занят</td><td><code>ss -tulpn</code>, <code>lsof -i :80</code></td><td>Кто держит и с каким PID</td></tr>
+        <tr><td>Файл не читается приложением</td><td><code>ls -la</code>, <code>id www-data</code>, <code>namei -l</code></td><td>Владелец, права, права на весь путь</td></tr>
+        <tr><td>Процессы исчезают без ошибок</td><td><code>dmesg -T</code></td><td>OOM killer</td></tr>
+        <tr><td>Диск занят удалённым файлом</td><td><code>lsof +L1</code></td><td>Процесс держит удалённый лог — нужен reload</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Права: 90 % проблем PHP на сервере</h4>
+    <p>Приложение работает от пользователя <code>www-data</code> (или другого), а файлы часто принадлежат разработчику или root. Права нужны на весь путь: если каталог выше закрыт, доступ к файлу внутри не поможет.</p>
+    <ul>
+      <li><strong>Каталоги</strong> — <code>755</code>, <strong>файлы</strong> — <code>644</code>. Запись нужна только каталогам загрузок, кэша и логов.</li>
+      <li><code>chmod 777</code> — не решение, а способ превратить загруженный файл в исполняемый скрипт.</li>
+      <li>Владелец кода не обязан совпадать с пользователем веб-сервера: читать достаточно.</li>
+      <li>В контейнере та же логика, только UID пользователя внутри должен совпадать с владельцем смонтированных томов.</li>
+    </ul>
+
+    <div class="box imp"><span class="lbl">Важно</span>Разница между <code>reload</code> и <code>restart</code> — вопрос, который задают часто. <code>reload</code> заставляет процесс перечитать конфигурацию, не разрывая обслуживаемые соединения; <code>restart</code> убивает и поднимает заново, обрывая всё текущее. На проде по умолчанию используется <code>reload</code>, а <code>restart</code> — осознанно и в окно.</div>
+    <div class="box task"><span class="lbl">Практика</span>Зайдите на тестовый сервер и без подсказок ответьте: сколько свободно места, какой процесс ест больше всего памяти, когда последний раз перезапускался FPM, что в последних 50 строках его лога. Засеките время — цель уложиться в пять минут.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="nginx">
+    <p class="path">junior / веб-сервер</p>
+    <div class="card-top"><h3>Nginx и PHP-FPM</h3><span class="badge b-1">База</span></div>
+    <p>Nginx не выполняет PHP. Он принимает запрос, отдаёт статику сам, а всё остальное передаёт по протоколу FastCGI в пул процессов php-fpm. Понимание этой границы объясняет, почему одни настройки живут в nginx, другие в FPM, а третьи в <code>php.ini</code>.</p>
+
+    <div class="code"><div class="bar"><span>nginx</span><span class="r">Рабочий конфиг для приложения с одной точкой входа</span></div><pre><code>server {
+    listen 443 ssl http2;
+    server_name example.com;
+
+    <span class="cm"># Корень — только public/: остальной код недоступен снаружи</span>
+    root /var/www/app/public;
+    index index.php;
+
+    client_max_body_size 20m;        <span class="cm"># иначе 413 ещё до PHP</span>
+
+    <span class="cm"># Статика отдаётся nginx напрямую, PHP не участвует</span>
+    location ~* \.(css|js|jpg|png|webp|woff2)$ {
+        expires 30d;
+        add_header Cache-Control <span class="st">"public, immutable"</span>;
+        try_files $uri =404;
+    }
+
+    <span class="cm"># Всё остальное — во фронт-контроллер</span>
+    location / {
+        try_files $uri /index.php$is_args$args;
+    }
+
+    location ~ ^/index\.php(/|$) {
+        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+
+        fastcgi_read_timeout 30s;    <span class="cm"># дольше — это 504</span>
+        fastcgi_buffering on;
+
+        internal;                    <span class="cm"># запрет прямого вызова любых .php извне</span>
+    }
+
+    <span class="cm"># Служебное наружу не отдаём</span>
+    location ~ /\.(env|git) { deny all; }
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>ini</span><span class="r">Пул php-fpm и продовые настройки PHP</span></div><pre><code><span class="cm">; /etc/php/8.3/fpm/pool.d/www.conf</span>
+user  = www-data
+listen = /run/php/php8.3-fpm.sock
+
+pm = dynamic
+pm.max_children      = 40      <span class="cm">; главный параметр: считается по памяти, см. раздел «Ресурсы»</span>
+pm.start_servers     = 8
+pm.min_spare_servers = 6
+pm.max_spare_servers = 12
+pm.max_requests      = 500     <span class="cm">; перезапуск процесса: страховка от утечек памяти</span>
+
+request_terminate_timeout = 30s
+slowlog = /var/log/php/slow.log
+request_slowlog_timeout  = 5s  <span class="cm">; трассировка всего, что дольше 5 секунд</span>
+
+<span class="cm">; php.ini для прода</span>
+display_errors = Off           <span class="cm">; трассировка не должна попадать пользователю</span>
+log_errors     = On
+memory_limit   = 256M
+opcache.enable = 1
+opcache.memory_consumption   = 256
+opcache.max_accelerated_files = 20000
+opcache.validate_timestamps  = 0   <span class="cm">; на проде: код меняется только вместе с перезапуском</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · где какая настройка живёт</caption>
+      <thead><tr><th>Что настраиваем</th><th>Где</th><th>Что ломается при ошибке</th></tr></thead>
+      <tbody>
+        <tr><td>Размер загружаемого файла</td><td><code>client_max_body_size</code> + <code>upload_max_filesize</code> + <code>post_max_size</code></td><td>413 в nginx или тихо обрезанный запрос в PHP</td></tr>
+        <tr><td>Время выполнения</td><td><code>fastcgi_read_timeout</code> + <code>request_terminate_timeout</code> + <code>max_execution_time</code></td><td>504 или зависшие процессы в пуле</td></tr>
+        <tr><td>Число одновременных запросов</td><td><code>pm.max_children</code></td><td>Мало — очередь и 502; много — своп и деградация всего</td></tr>
+        <tr><td>Кэш байткода</td><td><code>opcache.*</code></td><td>Без него каждый запрос компилирует сотни файлов</td></tr>
+        <tr><td>Отдача статики</td><td><code>location</code> в nginx</td><td>Картинки через PHP занимают процессы приложения</td></tr>
+        <tr><td>HTTPS</td><td>nginx или балансировщик</td><td>Смешанный контент, редирект-петли при неверных заголовках</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Корень сайта, указывающий на каталог проекта целиком, а не на <code>public/</code>. Тогда наружу доступны <code>.env</code>, <code>vendor/</code>, конфиги и файлы миграций. Проверяется за десять секунд: откройте <code>/.env</code> в браузере на своём проекте.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что делает nginx, а что php-fpm?</b><br>Nginx принимает соединение, терминирует TLS, отдаёт статику и решает, что передать дальше; PHP он не выполняет. FPM — менеджер пула процессов PHP: получает запрос по FastCGI, выделяет свободный процесс, выполняет скрипт и возвращает ответ. Поэтому лимиты на размер запроса и таймауты приходится согласовывать в двух местах.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="docker">
+    <p class="path">junior / контейнеры</p>
+    <div class="card-top"><h3>Docker: образы и контейнеры</h3><span class="badge b-1">База</span></div>
+    <p>Контейнер решает одну конкретную проблему: «у меня работает». Он фиксирует версию PHP, набор расширений, системные библиотеки и конфигурацию — и переносит их из ноутбука в CI и в прод без расхождений.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · термины, которые путают чаще всего</caption>
+      <thead><tr><th>Термин</th><th>Что это</th><th>Аналогия</th></tr></thead>
+      <tbody>
+        <tr><td>Образ (image)</td><td>Неизменяемый шаблон из слоёв</td><td>Класс</td></tr>
+        <tr><td>Контейнер</td><td>Запущенный экземпляр образа с изменяемым слоем</td><td>Объект</td></tr>
+        <tr><td>Слой (layer)</td><td>Результат одной инструкции Dockerfile, кэшируется</td><td>Коммит</td></tr>
+        <tr><td>Том (volume)</td><td>Хранилище, переживающее пересоздание контейнера</td><td>Внешний диск</td></tr>
+        <tr><td>Сеть</td><td>Изолированная сеть, где контейнеры видят друг друга по имени</td><td>Локальная подсеть</td></tr>
+        <tr><td>Registry</td><td>Хранилище образов, откуда их тянет прод</td><td>Composer-репозиторий</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>dockerfile</span><span class="r">Базовый образ приложения — порядок инструкций важен</span></div><pre><code>FROM php:8.3-fpm-alpine
+
+<span class="cm"># Системные зависимости и расширения — редко меняются, поэтому идут первыми:</span>
+<span class="cm"># слой попадёт в кэш и не будет пересобираться при каждом изменении кода</span>
+RUN apk add --no-cache icu-dev postgresql-dev linux-headers \
+ &amp;&amp; docker-php-ext-install pdo_pgsql intl opcache bcmath \
+ &amp;&amp; apk del linux-headers
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+<span class="cm"># Сначала только манифесты: пока они не менялись, установка зависимостей берётся из кэша</span>
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+
+<span class="cm"># Код меняется каждый коммит — копируется последним</span>
+COPY . .
+RUN composer dump-autoload --optimize --classmap-authoritative
+
+USER www-data
+CMD [<span class="st">"php-fpm"</span>]</code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">.dockerignore и повседневные команды</span></div><pre><code><span class="cm"># .dockerignore — без него в образ уедут vendor, node_modules, .git и .env</span>
+.git
+vendor
+node_modules
+var/cache
+.env
+tests
+
+<span class="cm"># Повседневное</span>
+docker build -t app:local .
+docker run --rm -it app:local php -v
+docker ps                          <span class="cm"># что запущено</span>
+docker logs -f app --tail 100      <span class="cm"># логи контейнера</span>
+docker exec -it app sh             <span class="cm"># зайти внутрь работающего контейнера</span>
+docker image ls                    <span class="cm"># размеры образов</span>
+docker system df                   <span class="cm"># сколько занято на диске</span>
+docker system prune -a             <span class="cm"># уборка (осторожно: удалит неиспользуемое)</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Кэш слоёв работает сверху вниз: изменилась инструкция — пересобираются она и всё, что ниже. Поэтому редко меняющееся (системные пакеты, расширения) ставят вверху, а <code>COPY . .</code> держат внизу. Перепутанный порядок превращает сборку из 20 секунд в 5 минут на каждый коммит.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Чем контейнер отличается от виртуальной машины?</b><br>Виртуальная машина эмулирует железо и несёт собственное ядро и ОС — это гигабайты и десятки секунд на старт. Контейнер — изолированный процесс на общем ядре хоста, изоляция обеспечивается namespaces и cgroups: десятки мегабайт и старт за доли секунды. Отсюда и ограничение: контейнер не даёт такой же изоляции безопасности, как виртуальная машина.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="compose">
+    <p class="path">junior / локальная среда</p>
+    <div class="card-top"><h3>Compose для разработки</h3><span class="badge b-1">База</span></div>
+    <p>Compose описывает набор связанных контейнеров одним файлом. Практическая цель — чтобы новый разработчик поднял проект одной командой и получил ровно то же окружение, что у остальных.</p>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">compose.yaml для типичного PHP-проекта</span></div><pre><code>services:
+  app:
+    build:
+      context: .
+      target: dev                 <span class="cm"># стадия из multi-stage Dockerfile</span>
+    volumes:
+      - .:/app                    <span class="cm"># код монтируется: правки видны без пересборки</span>
+      - /app/vendor               <span class="cm"># исключаем vendor из монтирования — он из образа</span>
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: postgres://app:secret@db:5432/app   <span class="cm"># db — имя сервиса, оно же DNS-имя</span>
+    depends_on:
+      db:
+        condition: service_healthy   <span class="cm"># ждём готовности, а не просто старта</span>
+
+  nginx:
+    image: nginx:alpine
+    ports: [<span class="st">"8080:80"</span>]        <span class="cm"># снаружи 8080, внутри 80</span>
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - .:/app
+    depends_on: [app]
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - db-data:/var/lib/postgresql/data   <span class="cm"># именованный том: данные переживут пересоздание</span>
+    healthcheck:
+      test: [<span class="st">"CMD-SHELL"</span>, <span class="st">"pg_isready -U app"</span>]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  worker:
+    build: { context: ., target: dev }
+    command: php bin/console messenger:consume async -vv
+    depends_on: [db, redis]
+
+volumes:
+  db-data:</code></pre></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Команды, которые нужны каждый день</span></div><pre><code>docker compose up -d                 <span class="cm"># поднять всё в фоне</span>
+docker compose ps                    <span class="cm"># статус контейнеров и healthcheck</span>
+docker compose logs -f app worker    <span class="cm"># логи нескольких сервисов сразу</span>
+docker compose exec app sh           <span class="cm"># внутрь контейнера приложения</span>
+docker compose exec app php bin/console doctrine:migrations:migrate
+docker compose down                  <span class="cm"># остановить и удалить контейнеры (тома остаются)</span>
+docker compose down -v               <span class="cm"># ... вместе с томами: данные БД будут удалены</span>
+docker compose build --no-cache app  <span class="cm"># пересобрать без кэша</span></code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Использовать один и тот же compose-файл для разработки и прода. В разработке нужны монтирование кода, xdebug, открытые порты и стартовые пароли — всё это в проде недопустимо. Прод собирает образ с кодом внутри и получает конфигурацию извне.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужен volume, если код и так в образе?</b><br>В разработке том монтирует исходники внутрь контейнера, чтобы правки применялись без пересборки. В проде наоборот: код запечён в образ, а тома используются только для данных, которые обязаны пережить пересоздание контейнера, — файлы БД, загрузки пользователей. Контейнер по умолчанию считается одноразовым.</div>
+  </article>
+
+  <!-- 6 -->
+  <article class="card" id="config">
+    <p class="path">junior / конфигурация</p>
+    <div class="card-top"><h3>Конфигурация и окружения</h3><span class="badge b-1">База</span></div>
+    <p>Правило простое: один и тот же артефакт (образ или архив) должен запускаться в любом окружении, а различия приходить снаружи — через переменные окружения. Если для прода нужна отдельная сборка, вы теряете главное свойство пайплайна: то, что протестировано, и есть то, что выкатывается.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · что где хранить</caption>
+      <thead><tr><th>Что</th><th>Где хранится</th><th>Почему так</th></tr></thead>
+      <tbody>
+        <tr><td>Структура конфигурации, значения по умолчанию</td><td>В репозитории</td><td>Часть кода, ревьюится вместе с ним</td></tr>
+        <tr><td>Адреса баз, ключи, домены окружения</td><td>Переменные окружения</td><td>Различаются между стендами, не требуют пересборки</td></tr>
+        <tr><td>Пароли, токены, приватные ключи</td><td>Секрет-хранилище CI и рантайма</td><td>Требуют ограниченного доступа и ротации</td></tr>
+        <tr><td>Пример конфигурации</td><td><code>.env.example</code> в репозитории</td><td>Документирует нужные переменные без значений</td></tr>
+        <tr><td>Реальный <code>.env</code></td><td>Только локально, в <code>.gitignore</code></td><td>Попадание в репозиторий = утечка</td></tr>
+        <tr><td>Флаги функциональности</td><td>Хранилище флагов или переменные</td><td>Меняются без релиза</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Валидация конфигурации на старте, а не в момент использования</span></div><pre><code>&lt;?php
+<span class="kw">declare</span>(strict_types=1);
+
+<span class="kw">final class</span> <span class="nm">AppConfig</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">public readonly string</span> $databaseUrl,
+        <span class="kw">public readonly string</span> $appEnv,
+        <span class="kw">public readonly int</span>    $queueTimeout,
+    ) {}
+
+    <span class="kw">public static function</span> <span class="fn">fromEnv</span>(<span class="nm">array</span> $env): <span class="kw">self</span>
+    {
+        <span class="cm">// Отсутствие обязательной переменной должно ронять приложение на старте,</span>
+        <span class="cm">// а не выдавать «connection to  failed» через два часа после деплоя</span>
+        <span class="kw">return new</span> <span class="kw">self</span>(
+            databaseUrl:  $env[<span class="st">'DATABASE_URL'</span>] ?? <span class="kw">throw new</span> <span class="nm">RuntimeException</span>(<span class="st">'DATABASE_URL is required'</span>),
+            appEnv:       $env[<span class="st">'APP_ENV'</span>] ?? <span class="st">'prod'</span>,
+            queueTimeout: (<span class="kw">int</span>) ($env[<span class="st">'QUEUE_TIMEOUT'</span>] ?? 30),
+        );
+    }
+}</code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Секрет, однажды попавший в git, считается скомпрометированным навсегда — удаление коммита не помогает, история остаётся в клонах и форках. Единственная правильная реакция: отозвать и перевыпустить ключ, а потом уже чистить историю. То же относится к секретам, попавшим в слои Docker-образа: <code>docker history</code> покажет их любому, кто скачал образ.</div>
+    <div class="box task"><span class="lbl">Практика</span>Проверьте свой проект: есть ли <code>.env</code> в истории git (<code>git log --all -- .env</code>), не попадают ли значения переменных в логи при старте, падает ли приложение сразу при отсутствии обязательной переменной или узнаёт об этом на первом запросе.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Знаю, из каких процессов состоит боевое окружение</li>
+        <li>Понимаю разницу 500, 502, 504 и 413 и знаю, чей это лог</li>
+        <li>Нахожу логи nginx, FPM, приложения и воркеров</li>
+        <li>Умею смотреть CPU, память, диск, inode и открытые порты</li>
+        <li>Различаю <code>reload</code> и <code>restart</code></li>
+        <li>Разбираюсь с правами на файлы и путь целиком</li>
+      </ul>
+      <ul class="check">
+        <li>Понимаю границу между nginx и php-fpm</li>
+        <li>Знаю, где настраиваются размер запроса и таймауты</li>
+        <li>Держу корень сайта на <code>public/</code></li>
+        <li>Понимаю образ, контейнер, слой, том и сеть</li>
+        <li>Пишу Dockerfile с правильным порядком слоёв и <code>.dockerignore</code></li>
+        <li>Поднимаю проект одной командой через compose</li>
+        <li>Храню секреты вне репозитория и валидирую конфиг на старте</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-уровень здесь закрывается практикой, а не чтением: поднимите проект в контейнерах, сломайте его четырьмя способами (нет места, нет прав, занят порт, отвалилась база) и каждый раз найдите причину по логам. После этого прод перестаёт быть чёрным ящиком.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · сборка и доставка</p>
+    <h2>Middle: пайплайн, релиз, эксплуатация</h2>
+    <p>Middle отвечает не за «как запустить», а за «как доставлять регулярно и безопасно». Это означает воспроизводимую сборку, пайплайн, который ловит проблемы до прода, выкладку без простоя, миграции, совместимые с обеими версиями кода, управляемые воркеры и достаточную наблюдаемость, чтобы узнавать о поломке раньше пользователей.</p>
+  </div>
+
+  <!-- 7 -->
+  <article class="card" id="images">
+    <p class="path">middle / сборка</p>
+    <div class="card-top"><h3>Production-образ PHP</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Образ для прода отличается от образа для разработки принципиально: в нём нет инструментов сборки, нет dev-зависимостей, нет исходников тестов, opcache работает в режиме без проверки времени изменения, а процесс запускается не от root. Достигается это multi-stage сборкой: тяжёлые стадии используются для подготовки, а в финальный образ копируется только результат.</p>
+
+    <div class="code"><div class="bar"><span>dockerfile</span><span class="r">Multi-stage: одна сборка для CI, разработки и прода</span></div><pre><code><span class="cm"># ---------- base: общее для всех стадий ----------</span>
+FROM php:8.3-fpm-alpine AS base
+RUN apk add --no-cache icu postgresql-libs \
+ &amp;&amp; apk add --no-cache --virtual .build gcc musl-dev icu-dev postgresql-dev \
+ &amp;&amp; docker-php-ext-install pdo_pgsql intl opcache \
+ &amp;&amp; apk del .build                                   <span class="cm"># инструменты сборки не остаются в образе</span>
+WORKDIR /app
+COPY docker/php/prod.ini /usr/local/etc/php/conf.d/99-app.ini
+
+<span class="cm"># ---------- vendor: зависимости отдельным слоем ----------</span>
+FROM base AS vendor
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader \
+      --prefer-dist --no-progress
+
+<span class="cm"># ---------- dev: то, чего не должно быть в проде ----------</span>
+FROM vendor AS dev
+RUN composer install --no-scripts --no-autoloader \
+ &amp;&amp; pecl install xdebug &amp;&amp; docker-php-ext-enable xdebug
+CMD [<span class="st">"php-fpm"</span>]
+
+<span class="cm"># ---------- prod: финальный образ ----------</span>
+FROM base AS prod
+COPY --from=vendor /app/vendor ./vendor
+COPY . .
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev \
+ &amp;&amp; php bin/console cache:warmup --env=prod \
+ &amp;&amp; chown -R www-data:www-data var/
+
+USER www-data                                        <span class="cm"># не root: обязательное требование</span>
+HEALTHCHECK --interval=10s --timeout=3s --start-period=20s \
+  CMD php -r <span class="st">'exit(@fsockopen("127.0.0.1", 9000) ? 0 : 1);'</span>
+CMD [<span class="st">"php-fpm"</span>]</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · чем production-образ отличается от dev</caption>
+      <thead><tr><th>Аспект</th><th>Разработка</th><th>Прод</th></tr></thead>
+      <tbody>
+        <tr><td>Зависимости</td><td>Все, включая dev</td><td><code>--no-dev</code>, автозагрузчик оптимизирован</td></tr>
+        <tr><td>Код</td><td>Монтируется томом</td><td>Запечён в образ</td></tr>
+        <tr><td>opcache</td><td><code>validate_timestamps=1</code></td><td><code>validate_timestamps=0</code>, при возможности preload</td></tr>
+        <tr><td>Отладчик</td><td>Xdebug</td><td>Отсутствует: он замедляет в разы</td></tr>
+        <tr><td>Пользователь</td><td>Часто root, ради удобства</td><td>Непривилегированный</td></tr>
+        <tr><td>Инструменты сборки</td><td>Есть</td><td>Удалены, образ меньше и уязвимостей меньше</td></tr>
+        <tr><td>Конфигурация</td><td><code>.env</code> в проекте</td><td>Переменные окружения снаружи</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Тег <code>latest</code> в проде — источник невоспроизводимых инцидентов: неизвестно, какая версия сейчас запущена и к какой откатываться. Образ помечается неизменяемым тегом — хешем коммита или номером сборки, — и именно этот тег проходит через все стенды. Тогда «выкатить как вчера» превращается в одну команду.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем нужна multi-stage сборка?</b><br>Чтобы инструменты сборки — компиляторы, composer, dev-зависимости — участвовали в подготовке, но не попадали в финальный образ. Итог: образ меньше в несколько раз, поверхность атаки уже, а сборка остаётся одной и той же для всех окружений — меняется только целевая стадия.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="ci">
+    <p class="path">middle / пайплайн</p>
+    <div class="card-top"><h3>Пайплайн CI</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Задача CI — поймать проблему до прода и сделать это быстро. Порядок шагов определяется ценой: сначала то, что выполняется за секунды и отсекает большую часть ошибок, потом дорогие интеграционные тесты. Пайплайн, который идёт 40 минут, разработчики начинают обходить.</p>
+
+    <div class="flow" role="img" aria-label="Этапы пайплайна от линтера до деплоя">
+      <div class="node">Lint<small>секунды</small></div><span class="arr">→</span>
+      <div class="node">Static<small>PHPStan/Psalm</small></div><span class="arr">→</span>
+      <div class="node">Tests<small>unit → интеграция</small></div><span class="arr">→</span>
+      <div class="node">Build<small>образ + тег</small></div><span class="arr">→</span>
+      <div class="node">Scan<small>уязвимости</small></div><span class="arr">→</span>
+      <div class="node">Deploy<small>stage → prod</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · этапы и что каждый ловит</caption>
+      <thead><tr><th>Этап</th><th>Что ловит</th><th>Время</th></tr></thead>
+      <tbody>
+        <tr><td>Синтаксис и стиль</td><td>Опечатки, несоответствие PSR-12</td><td>Секунды</td></tr>
+        <tr><td>Статический анализ</td><td>Несуществующие методы, неверные типы, потенциальные null</td><td>Десятки секунд</td></tr>
+        <tr><td>Модульные тесты</td><td>Регрессии в логике</td><td>1–3 минуты</td></tr>
+        <tr><td>Интеграционные тесты</td><td>Схема БД, запросы, интеграции</td><td>3–10 минут</td></tr>
+        <tr><td>Сборка образа</td><td>Проблемы сборки, отсутствующие расширения</td><td>1–3 минуты</td></tr>
+        <tr><td>Аудит зависимостей</td><td>Известные уязвимости в пакетах и базовом образе</td><td>Секунды</td></tr>
+        <tr><td>Проверка миграций</td><td>Несовместимые изменения схемы, необратимые шаги</td><td>Секунды</td></tr>
+        <tr><td>Smoke-тест после деплоя</td><td>Что окружение реально поднялось</td><td>Секунды</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">GitHub Actions: быстрые проверки параллельно, сборка после них</span></div><pre><code>name: CI
+on: [push, pull_request]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_PASSWORD: secret }
+        options: &gt;-
+          --health-cmd pg_isready --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: <span class="st">'8.3'</span>
+          coverage: none            <span class="cm"># покрытие замедляет прогон в разы</span>
+
+      <span class="cm"># Кэш зависимостей по хешу lock-файла: главный источник ускорения</span>
+      - uses: actions/cache@v4
+        with:
+          path: vendor
+          key: vendor-${{ hashFiles(<span class="st">'composer.lock'</span>) }}
+
+      - run: composer install --prefer-dist --no-progress
+      - run: vendor/bin/php-cs-fixer fix --dry-run --diff
+      - run: vendor/bin/phpstan analyse --no-progress
+      - run: vendor/bin/phpunit --testsuite=unit
+      - run: vendor/bin/phpunit --testsuite=integration
+      - run: composer audit                       <span class="cm"># известные уязвимости в зависимостях</span>
+
+  build:
+    needs: quality
+    if: github.ref == <span class="st">'refs/heads/main'</span>
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/build-push-action@v6
+        with:
+          target: prod
+          <span class="cm"># Тег = хеш коммита: образ однозначно связан с кодом</span>
+          tags: registry.example.com/app:${{ github.sha }}
+          cache-from: type=registry,ref=registry.example.com/app:cache
+          cache-to: type=registry,ref=registry.example.com/app:cache,mode=max
+          push: true</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Сборка образа отдельно для каждого стенда. Тогда в проде оказывается артефакт, который никто не тестировал: где-то другая версия зависимости, где-то другой базовый образ. Правильно — собрать один раз, протестировать этот образ и продвигать его дальше по стендам, меняя только конфигурацию.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как устроен ваш CI и что он проверяет?</b><br>Порядок от дешёвого к дорогому: стиль и синтаксис, статический анализ, модульные тесты, интеграционные с реальной БД в сервисном контейнере, сборка образа с тегом по хешу коммита, аудит зависимостей. Зависимости кэшируются по хешу lock-файла. Ветка мержится только при зелёном пайплайне, а в прод едет ровно тот образ, который проверен.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="cd">
+    <p class="path">middle / выкладка</p>
+    <div class="card-top"><h3>Деплой без простоя</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Деплой без простоя строится на двух свойствах: новая версия поднимается до того, как старая выводится, и в любой момент есть путь назад. Всё остальное — детали реализации, различающиеся между bare metal, контейнерами и оркестратором.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · стратегии выкладки</caption>
+      <thead><tr><th>Стратегия</th><th>Как работает</th><th>Плюс</th><th>Минус</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Rolling</strong></td><td>Узлы обновляются по одному</td><td>Не нужен двойной ресурс</td><td>Две версии работают одновременно</td></tr>
+        <tr><td><strong>Blue-green</strong></td><td>Поднимается полная вторая среда, трафик переключается разом</td><td>Мгновенный откат</td><td>Двойная инфраструктура, сложности с БД</td></tr>
+        <tr><td><strong>Canary</strong></td><td>Новая версия получает 1–5 % трафика, доля растёт</td><td>Проблема видна на малой аудитории</td><td>Нужны метрики по версиям и автоматика</td></tr>
+        <tr><td><strong>Атомарный симлинк</strong></td><td>Новый релиз в отдельный каталог, переключение ссылки</td><td>Просто, работает без контейнеров</td><td>Ручное управление релизами и общими каталогами</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Классическая атомарная выкладка без контейнеров</span></div><pre><code><span class="cm">#!/usr/bin/env bash</span>
+set -euo pipefail        <span class="cm"># падать на первой же ошибке, а не выкатывать половину</span>
+
+RELEASE=<span class="st">"/var/www/releases/$(date +%Y%m%d%H%M%S)"</span>
+SHARED=<span class="st">"/var/www/shared"</span>
+
+<span class="cm"># 1. Готовим новый релиз рядом, ничего не трогая в работающем</span>
+git clone --depth 1 --branch <span class="st">"$TAG"</span> <span class="st">"$REPO"</span> <span class="st">"$RELEASE"</span>
+cd <span class="st">"$RELEASE"</span>
+composer install --no-dev --optimize-autoloader --no-interaction
+
+<span class="cm"># 2. Общее состояние живёт вне релиза и переживает выкладки</span>
+ln -s <span class="st">"$SHARED/uploads"</span> <span class="st">"$RELEASE/public/uploads"</span>
+ln -s <span class="st">"$SHARED/.env"</span>    <span class="st">"$RELEASE/.env"</span>
+
+<span class="cm"># 3. Миграции — до переключения и только совместимые с текущим кодом</span>
+php bin/console doctrine:migrations:migrate --no-interaction
+
+<span class="cm"># 4. Прогрев до того, как пойдёт трафик</span>
+php bin/console cache:warmup --env=prod
+
+<span class="cm"># 5. Атомарное переключение: ln -sfn + mv меняет ссылку одной операцией</span>
+ln -sfn <span class="st">"$RELEASE"</span> /var/www/current.new
+mv -Tf /var/www/current.new /var/www/current
+
+<span class="cm"># 6. Перечитать конфиг и сбросить opcache: без этого работает старый байткод</span>
+systemctl reload php8.3-fpm
+
+<span class="cm"># 7. Воркеры дорабатывают текущую задачу и завершаются — их поднимет супервизор</span>
+php bin/console messenger:stop-workers
+
+<span class="cm"># 8. Проверка и уборка старых релизов, оставляя последние пять для отката</span>
+curl -fsS https://example.com/health &gt; /dev/null
+ls -1dt /var/www/releases/* | tail -n +6 | xargs -r rm -rf</code></pre></div>
+
+    <h4>Три вещи, которые ломают выкладку чаще всего</h4>
+    <ul>
+      <li><strong>Не сброшен opcache.</strong> При <code>validate_timestamps=0</code> процессы продолжают выполнять старый байткод: часть пользователей видит новую версию, часть — старую.</li>
+      <li><strong>Не перезапущены воркеры.</strong> Они держат в памяти старый код неделями и обрабатывают новые сообщения по старой логике.</li>
+      <li><strong>Миграция несовместима со старым кодом.</strong> Во время выкладки одновременно работают обе версии — обе должны работать с одной схемой.</li>
+    </ul>
+
+    <div class="box imp"><span class="lbl">Важно</span>Откат должен быть отрепетирован и занимать минуты, а не часы. Практический критерий готовности: «переключить <code>current</code> на предыдущий релиз или предыдущий тег образа и перезагрузить FPM» — одна команда. Откат кода без отката схемы возможен только если миграции совместимы в обе стороны, поэтому необратимые изменения выносят в отдельный поздний релиз.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как выкатить релиз без простоя?</b><br>Новая версия готовится рядом: отдельный каталог или новый образ. Выполняются миграции, совместимые со старым кодом, выполняется прогрев, затем происходит атомарное переключение — симлинк или подмена контейнеров по одному. После этого reload FPM для сброса opcache и корректная остановка воркеров. Обязательные условия: health check после переключения и возможность вернуться к предыдущей версии одной командой.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="migrations">
+    <p class="path">middle / схема</p>
+    <div class="card-top"><h3>Миграции в релизе</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Миграции — самое опасное место автоматической выкладки: это единственный шаг, который меняет состояние и плохо откатывается. Ключевое правило — во время деплоя одновременно работают старый и новый код, поэтому схема обязана быть совместима с обоими.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · безопасность изменений схемы</caption>
+      <thead><tr><th>Изменение</th><th>Безопасно?</th><th>Как делать правильно</th></tr></thead>
+      <tbody>
+        <tr><td>Добавить nullable-колонку</td><td>Да</td><td>Один шаг, обратно совместимо</td></tr>
+        <tr><td>Добавить NOT NULL без значения по умолчанию</td><td>Нет</td><td>Nullable → бэкфилл → NOT NULL отдельным релизом</td></tr>
+        <tr><td>Удалить или переименовать колонку</td><td>Нет</td><td>Expand → migrate → contract в три релиза</td></tr>
+        <tr><td>Добавить индекс на большой таблице</td><td>Осторожно</td><td><code>CREATE INDEX CONCURRENTLY</code> в PostgreSQL, вне пика</td></tr>
+        <tr><td>Изменить тип колонки</td><td>Нет</td><td>Новая колонка, двойная запись, бэкфилл, переключение</td></tr>
+        <tr><td>Массовый UPDATE в миграции</td><td>Нет</td><td>Отдельная фоновая задача пачками, не в деплое</td></tr>
+        <tr><td>Добавить внешний ключ</td><td>Осторожно</td><td>Сначала очистить данные, затем добавить с <code>NOT VALID</code> и провалидировать</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash + sql</span><span class="r">Миграции в пайплайне: отдельный шаг с блокировкой и таймаутом</span></div><pre><code><span class="cm"># Миграции выполняются один раз, а не каждым экземпляром приложения:</span>
+<span class="cm"># при пяти подах старт «на каждом» — это пять параллельных миграций.</span>
+php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+
+<span class="cm"># Защита от долгой блокировки: лучше упасть, чем положить прод</span>
+<span class="cm"># PostgreSQL:</span>
+SET lock_timeout = <span class="st">'5s'</span>;          <span class="cm">-- не ждать блокировку дольше 5 секунд</span>
+SET statement_timeout = <span class="st">'60s'</span>;    <span class="cm">-- и не выполнять оператор дольше минуты</span>
+
+<span class="cm"># Индекс без блокировки записи (вне транзакции!)</span>
+CREATE INDEX CONCURRENTLY idx_orders_created ON orders (created_at);
+
+<span class="cm"># Проверка перед релизом: нет ли в миграциях запрещённых операций</span>
+grep -REn <span class="st">"DROP COLUMN|RENAME COLUMN|MODIFY .* NOT NULL"</span> migrations/ &amp;&amp; exit 1</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Запускать миграции из entrypoint контейнера приложения. При масштабировании это означает одновременный запуск на всех экземплярах: в лучшем случае гонка за блокировку таблицы миграций, в худшем — частично применённая схема. Миграции запускаются отдельным разовым шагом пайплайна или отдельной job.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как выкатить удаление колонки без простоя?</b><br>В три релиза. Первый: код перестаёт читать и писать колонку, но она остаётся. Второй: проверяем по логам и метрикам, что обращений нет. Третий: удаляем колонку миграцией. Одновременный выкат кода и удаления невозможен, потому что во время деплоя часть экземпляров ещё работает по-старому.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="secrets">
+    <p class="path">middle / доступы</p>
+    <div class="card-top"><h3>Секреты и доступы</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Секрет — это то, что даёт доступ: пароль БД, ключ платёжного провайдера, токен деплоя, приватный ключ подписи. Задача инфраструктуры — сделать так, чтобы секрет попадал только туда, где нужен, не оседал в артефактах и мог быть заменён без переписывания кода.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · где хранить секреты</caption>
+      <thead><tr><th>Способ</th><th>Когда достаточно</th><th>Ограничения</th></tr></thead>
+      <tbody>
+        <tr><td>Переменные окружения на сервере</td><td>Небольшой проект, один-два сервера</td><td>Видны в <code>/proc</code> и в дампах, ротация вручную</td></tr>
+        <tr><td>Секреты CI</td><td>Доступ пайплайна к registry и серверам</td><td>Нужен контроль, кто может запускать пайплайн</td></tr>
+        <tr><td>Файл с ограниченными правами</td><td>Ключи и сертификаты</td><td>Права <code>600</code>, владелец — пользователь сервиса</td></tr>
+        <tr><td>Secret manager (Vault, облачный)</td><td>Много сервисов, требования аудита</td><td>Дополнительный компонент и его доступность</td></tr>
+        <tr><td>Kubernetes Secret</td><td>Кластер</td><td>По умолчанию это base64, а не шифрование: нужен контроль доступа</td></tr>
+        <tr><td>Хардкод в коде или образе</td><td>Никогда</td><td>Утечка через git, registry, <code>docker history</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>dockerfile + bash</span><span class="r">Секрет в сборке: как не оставить его в слоях</span></div><pre><code><span class="cm"># Плохо: токен навсегда остаётся в истории слоёв, docker history его покажет</span>
+<span class="cm"># RUN composer config github-oauth.github.com $TOKEN &amp;&amp; composer install</span>
+
+<span class="cm"># Хорошо: BuildKit-секрет монтируется только на время выполнения инструкции</span>
+RUN --mount=type=secret,id=composer_auth,target=/root/.composer/auth.json \
+    composer install --no-dev --prefer-dist
+
+<span class="cm"># Сборка:</span>
+DOCKER_BUILDKIT=1 docker build --secret id=composer_auth,src=./auth.json -t app .
+
+<span class="cm"># Проверка, что секрет не уехал в образ:</span>
+docker history --no-trunc app | grep -i token
+docker run --rm app env | grep -i -E <span class="st">'token|password|secret'</span></code></pre></div>
+
+    <h4>Правила, которые экономят инциденты</h4>
+    <ul>
+      <li><strong>Разные секреты для разных стендов.</strong> Общий пароль между stage и prod означает, что доступ к тестовому стенду — это доступ к бою.</li>
+      <li><strong>Ротация должна быть рутиной.</strong> Если смена пароля БД требует ручной правки на пяти серверах, её не будут делать никогда.</li>
+      <li><strong>Маскирование в логах.</strong> CI умеет скрывать значения секретов в выводе — но только если они переданы как секреты, а не собраны в строку в скрипте.</li>
+      <li><strong>Минимальные права.</strong> Токен деплоя должен уметь выкладывать, а не администрировать репозиторий; пользователь БД приложения не должен иметь права на <code>DROP</code>.</li>
+      <li><strong>Проверка на утечки в CI.</strong> Сканер секретов в пайплайне ловит случайно закоммиченный ключ до того, как он уедет в общий репозиторий.</li>
+    </ul>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Куда положить пароль от базы в контейнеризованном приложении?</b><br>В переменную окружения контейнера, значение которой приходит из секрет-хранилища платформы или CI, — но не в образ и не в репозиторий. В образе не должно быть ни секрета, ни следа от него в слоях, поэтому при сборке используются BuildKit-секреты. Отдельно важно, чтобы секрет можно было заменить без пересборки образа: иначе ротация превращается в релиз.</div>
+  </article>
+
+  <!-- 12 -->
+  <article class="card" id="workers">
+    <p class="path">middle / фоновые процессы</p>
+    <div class="card-top"><h3>Воркеры и cron</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Фоновые процессы живут по другим правилам, чем веб-запросы: они долгоживущие, их никто не видит, и падают они тихо. Три вещи обязательны: их кто-то должен перезапускать, они должны корректно завершаться по сигналу и их состояние должно быть видно в мониторинге.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · чем управлять воркерами</caption>
+      <thead><tr><th>Инструмент</th><th>Когда подходит</th><th>Особенности</th></tr></thead>
+      <tbody>
+        <tr><td>supervisor</td><td>Классический сервер без контейнеров</td><td>Простая настройка, число процессов, автоперезапуск</td></tr>
+        <tr><td>systemd</td><td>Сервер, где уже всё под systemd</td><td>Логи в journal, зависимости, таймеры вместо cron</td></tr>
+        <tr><td>Отдельный контейнер</td><td>Docker/compose</td><td>Один процесс на контейнер, перезапуск политикой</td></tr>
+        <tr><td>Deployment в кластере</td><td>Kubernetes</td><td>Масштабирование репликами, аккуратная остановка</td></tr>
+        <tr><td>CronJob / systemd timer</td><td>Периодические задачи</td><td>Нужна защита от наложения запусков</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>ini + systemd</span><span class="r">Два способа держать воркеров живыми</span></div><pre><code><span class="cm">; supervisor: /etc/supervisor/conf.d/worker.conf</span>
+[program:messenger]
+command=php /var/www/current/bin/console messenger:consume async
+         --time-limit=3600 --memory-limit=192M --limit=1000
+user=www-data
+numprocs=4                      <span class="cm">; четыре параллельных воркера</span>
+process_name=%(program_name)s_%(process_num)02d
+autostart=true
+autorestart=true
+stopsignal=TERM                 <span class="cm">; сигнал завершения, а не KILL</span>
+stopwaitsecs=60                 <span class="cm">; даём доработать текущее сообщение</span>
+stdout_logfile=/var/log/worker.log
+
+<span class="cm"># systemd-таймер вместо cron: удобнее логи и нет наложения запусков</span>
+<span class="cm"># /etc/systemd/system/reports.timer</span>
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true                 <span class="cm"># запустить пропущенное, если сервер был выключен</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Корректное завершение: воркер обязан уметь останавливаться сам</span></div><pre><code>&lt;?php
+<span class="fn">pcntl_async_signals</span>(<span class="kw">true</span>);
+$shouldStop = <span class="kw">false</span>;
+
+<span class="cm">// TERM приходит при деплое, перезапуске и остановке контейнера</span>
+<span class="fn">pcntl_signal</span>(<span class="nm">SIGTERM</span>, <span class="kw">function</span> () <span class="kw">use</span> (&amp;$shouldStop) { $shouldStop = <span class="kw">true</span>; });
+<span class="fn">pcntl_signal</span>(<span class="nm">SIGINT</span>,  <span class="kw">function</span> () <span class="kw">use</span> (&amp;$shouldStop) { $shouldStop = <span class="kw">true</span>; });
+
+$processed = 0;
+<span class="kw">while</span> (!$shouldStop) {
+    $message = $queue-&gt;<span class="fn">pop</span>(timeout: 5);
+    <span class="kw">if</span> ($message === <span class="kw">null</span>) { <span class="kw">continue</span>; }
+
+    $handler-&gt;<span class="fn">handle</span>($message);      <span class="cm">// текущее сообщение дорабатывается до конца</span>
+    $queue-&gt;<span class="fn">ack</span>($message);
+
+    <span class="cm">// Плановый выход: страховка от утечек памяти и от старого кода после деплоя</span>
+    <span class="kw">if</span> (++$processed &gt;= 1000 || <span class="fn">memory_get_usage</span>(<span class="kw">true</span>) &gt; 192 * 1024 * 1024) {
+        <span class="kw">break</span>;
+    }
+}
+
+$logger-&gt;<span class="fn">info</span>(<span class="st">'worker stopped gracefully'</span>, [<span class="st">'processed'</span> =&gt; $processed]);
+<span class="kw">exit</span>(0);                              <span class="cm">// супервизор поднимет новый процесс с новым кодом</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>У воркера обязаны быть три лимита: по числу задач, по памяти и по времени жизни. PHP не рассчитан на бесконечно живущие процессы: утечки накапливаются, соединения с БД отваливаются по таймауту, а после деплоя процесс продолжает выполнять старый код. Плановый перезапуск решает все три проблемы разом.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что произойдёт с воркером при деплое?</b><br>Если ничего не делать — он продолжит работать со старым кодом, пока не перезапустится сам. Правильно: после переключения релиза послать воркерам сигнал остановки, они дорабатывают текущее сообщение и завершаются, а супервизор поднимает новые процессы уже с новым кодом. Ключевое требование — обработчик должен быть идемпотентным: при жёсткой остановке сообщение вернётся в очередь и придёт повторно.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="logs">
+    <p class="path">middle / наблюдаемость</p>
+    <div class="card-top"><h3>Логи, метрики, health checks</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Инфраструктурная часть наблюдаемости отвечает на вопрос «как данные о состоянии выбираются из процессов и доезжают до места, где их видно». Приложение при этом обязано соблюдать одно правило: писать логи в stdout, а не в файлы внутри контейнера.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · куда что писать</caption>
+      <thead><tr><th>Что</th><th>Куда</th><th>Почему</th></tr></thead>
+      <tbody>
+        <tr><td>Логи приложения</td><td>stdout/stderr в формате JSON</td><td>Их подхватит любой сборщик; файл в контейнере теряется при пересоздании</td></tr>
+        <tr><td>Логи веб-сервера</td><td>stdout контейнера или файл с ротацией</td><td>Без ротации диск кончается за недели</td></tr>
+        <tr><td>Метрики</td><td>Эндпоинт для сбора или push в коллектор</td><td>Числовые ряды дешевле хранить, чем логи</td></tr>
+        <tr><td>Ошибки с трассировкой</td><td>Трекер ошибок</td><td>Группировка, дедупликация, оповещение</td></tr>
+        <tr><td>Аудит действий</td><td>Отдельное хранилище с длинным сроком</td><td>Другие требования к хранению и доступу</td></tr>
+        <tr><td>Отладочные данные</td><td>Только не в прод</td><td>Debug-уровень в проде — главный источник счетов за логи</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Health check: что проверять и чего не проверять</span></div><pre><code>&lt;?php
+<span class="cm">// /health/live — жив ли процесс. Никаких зависимостей!</span>
+<span class="cm">// Если сюда добавить проверку БД, отказ базы приведёт к перезапуску всех подов.</span>
+$app-&gt;<span class="fn">get</span>(<span class="st">'/health/live'</span>, <span class="kw">fn</span> () =&gt; <span class="kw">new</span> <span class="nm">JsonResponse</span>([<span class="st">'status'</span> =&gt; <span class="st">'ok'</span>]));
+
+<span class="cm">// /health/ready — готов ли принимать трафик. Здесь критичные зависимости уместны.</span>
+$app-&gt;<span class="fn">get</span>(<span class="st">'/health/ready'</span>, <span class="kw">function</span> () <span class="kw">use</span> ($db, $redis) {
+    $checks = [];
+
+    <span class="kw">try</span> {
+        $db-&gt;<span class="fn">executeQuery</span>(<span class="st">'SELECT 1'</span>);
+        $checks[<span class="st">'db'</span>] = <span class="st">'ok'</span>;
+    } <span class="kw">catch</span> (<span class="nm">Throwable</span> $e) {
+        $checks[<span class="st">'db'</span>] = <span class="st">'fail'</span>;
+    }
+
+    <span class="cm">// Кэш некритичен: без него работаем медленнее, но работаем → не валим readiness</span>
+    $checks[<span class="st">'redis'</span>] = $redis-&gt;<span class="fn">isConnected</span>() ? <span class="st">'ok'</span> : <span class="st">'degraded'</span>;
+
+    $healthy = $checks[<span class="st">'db'</span>] === <span class="st">'ok'</span>;
+
+    <span class="kw">return new</span> <span class="nm">JsonResponse</span>($checks, $healthy ? 200 : 503);
+});</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Один health check на все случаи, проверяющий все зависимости и используемый одновременно балансировщиком и оркестратором. Тогда кратковременная недоступность второстепенного сервиса выводит из ротации весь кластер. Разделяйте: «жив» — без зависимостей, «готов принимать трафик» — только критичные зависимости.</div>
+    <div class="box task"><span class="lbl">Практика</span>Посчитайте, сколько логов в день пишет ваш прод и сколько это стоит при хранении 30 дней. Затем найдите три самых частых сообщения — обычно 60–80 % объёма даёт одна-две строки, которые никто никогда не читал.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Собираю production-образ через multi-stage без dev-зависимостей</li>
+        <li>Запускаю процесс не от root и тегирую образ хешем коммита</li>
+        <li>Строю пайплайн от дешёвых проверок к дорогим</li>
+        <li>Кэширую зависимости и слои сборки</li>
+        <li>Продвигаю один артефакт по стендам вместо пересборки</li>
+        <li>Выкатываю атомарно и умею откатиться одной командой</li>
+        <li>Сбрасываю opcache и перезапускаю воркеров при деплое</li>
+      </ul>
+      <ul class="check">
+        <li>Держу миграции совместимыми со старым и новым кодом</li>
+        <li>Запускаю миграции отдельным шагом, а не на каждом экземпляре</li>
+        <li>Ставлю <code>lock_timeout</code> и создаю индексы без блокировки</li>
+        <li>Храню секреты вне образа и умею их ротировать</li>
+        <li>Управляю воркерами супервизором и лимитирую их по памяти и времени</li>
+        <li>Обрабатываю SIGTERM и завершаюсь корректно</li>
+        <li>Пишу логи в stdout структурированно и разделяю liveness и readiness</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Проверка зрелости процесса одним вопросом: сколько времени занимает выкатить однострочное исправление в прод и сколько — вернуть всё назад. Если ответ «полчаса и страшно» — проблема не в людях, а в пайплайне. Цель — минуты и без адреналина.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · эксплуатация</p>
+    <h2>Senior: ресурсы, устойчивость, ответственность</h2>
+    <p>На senior-уровне инфраструктура перестаёт быть набором инструментов и становится набором решений с ценой. Сколько стоит кластер и нужен ли он. Сколько процессов помещается в память и что произойдёт при превышении. Как быстро мы восстановимся, если потеряем основную базу. И кто именно об этом узнает в три часа ночи.</p>
+  </div>
+
+  <!-- 14 -->
+  <article class="card" id="k8s">
+    <p class="path">senior / оркестрация</p>
+    <div class="card-top"><h3>Kubernetes и когда он не нужен</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Kubernetes решает задачу управления множеством контейнеров на множестве машин: размещение, перезапуск, обновление, обнаружение сервисов, масштабирование. Он не делает приложение быстрее и не заменяет архитектуру — он снимает ручную работу там, где её действительно много.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · объекты, которые нужно понимать разработчику</caption>
+      <thead><tr><th>Объект</th><th>Что это</th><th>Зачем PHP-разработчику</th></tr></thead>
+      <tbody>
+        <tr><td>Pod</td><td>Один или несколько контейнеров с общей сетью</td><td>Единица запуска; логи и exec смотрят здесь</td></tr>
+        <tr><td>Deployment</td><td>Управляет репликами и обновлением</td><td>Rolling update и откат к предыдущей ревизии</td></tr>
+        <tr><td>Service</td><td>Стабильное имя и балансировка на поды</td><td>По нему приложения находят друг друга</td></tr>
+        <tr><td>Ingress</td><td>Вход HTTP-трафика снаружи</td><td>Домены, TLS, маршруты</td></tr>
+        <tr><td>ConfigMap / Secret</td><td>Конфигурация и секреты как объекты</td><td>Переменные окружения без пересборки образа</td></tr>
+        <tr><td>Job / CronJob</td><td>Разовая и периодическая задача</td><td>Миграции, отчёты, регламентные работы</td></tr>
+        <tr><td>HPA</td><td>Автомасштабирование по метрике</td><td>Больше подов на пике, меньше ночью</td></tr>
+        <tr><td>PVC</td><td>Постоянное хранилище</td><td>Нужен редко: файлы правильнее хранить в объектном хранилище</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Deployment для PHP: минимальный набор, который делает выкладку безопасной</span></div><pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata: { name: app }
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0        <span class="cm"># не выводим старые поды, пока новые не готовы</span>
+      maxSurge: 1
+  template:
+    spec:
+      containers:
+        - name: php
+          image: registry.example.com/app:9f3c1ab   <span class="cm"># неизменяемый тег, не latest</span>
+          envFrom:
+            - configMapRef: { name: app-config }
+            - secretRef:    { name: app-secrets }
+
+          resources:
+            requests: { cpu: 200m, memory: 256Mi }  <span class="cm"># по этому планировщик размещает под</span>
+            limits:   { cpu: "1",  memory: 512Mi }  <span class="cm"># превышение памяти = OOMKilled</span>
+
+          <span class="cm"># Жив ли процесс. Без зависимостей: иначе отказ БД перезапустит весь кластер</span>
+          livenessProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            periodSeconds: 10
+            failureThreshold: 3
+
+          <span class="cm"># Готов ли принимать трафик. Здесь критичные зависимости уместны</span>
+          readinessProbe:
+            httpGet: { path: /health/ready, port: 8080 }
+            periodSeconds: 5
+
+          <span class="cm"># Стартовая проба для медленного прогрева: liveness не бьёт раньше времени</span>
+          startupProbe:
+            httpGet: { path: /health/live, port: 8080 }
+            failureThreshold: 30
+            periodSeconds: 2
+
+          lifecycle:
+            preStop:
+              exec:
+                <span class="cm"># Пауза, чтобы под успел выйти из балансировки до остановки процессов</span>
+                command: ["sh", "-c", "sleep 5"]
+
+      terminationGracePeriodSeconds: 60   <span class="cm"># воркерам нужно доработать задачу</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · три пробы и последствия ошибок в них</caption>
+      <thead><tr><th>Проба</th><th>Отвечает на вопрос</th><th>Что делает при провале</th><th>Частая ошибка</th></tr></thead>
+      <tbody>
+        <tr><td>liveness</td><td>Процесс завис?</td><td>Перезапускает контейнер</td><td>Проверка БД внутри: отказ базы кладёт весь кластер</td></tr>
+        <tr><td>readiness</td><td>Можно давать трафик?</td><td>Убирает под из балансировки</td><td>Отсутствует: трафик идёт в непрогретый под</td></tr>
+        <tr><td>startup</td><td>Приложение ещё стартует?</td><td>Откладывает liveness</td><td>Нет её при долгом прогреве — бесконечный цикл перезапусков</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Когда Kubernetes не нужен</h4>
+    <p>Честный ответ на собеседовании ценится выше энтузиазма. Кластер — это отдельная система, которую нужно обновлять, мониторить и уметь чинить. Для двух-трёх серверов и одной команды он почти всегда дороже, чем даёт: те же задачи закрывают docker compose с внешним балансировщиком, systemd или обычная атомарная выкладка. Kubernetes оправдан, когда сервисов десятки, команд несколько, нагрузка неравномерная и нужна общая платформа с единым способом деплоя, секретов и наблюдаемости.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что происходит с запросами при обновлении Deployment?</b><br>Поды заменяются постепенно: новый поднимается, проходит readiness, только потом старый получает SIGTERM. Между исключением из балансировки и остановкой процесса есть гонка — поэтому нужны <code>preStop</code>-пауза и достаточный <code>terminationGracePeriodSeconds</code>, иначе часть запросов обрывается. При <code>maxUnavailable: 0</code> ёмкость не проседает во время выкладки.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="resources">
+    <p class="path">senior / ёмкость</p>
+    <div class="card-top"><h3>Ресурсы, лимиты, ёмкость</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Главный инфраструктурный параметр PHP-приложения — число одновременно работающих процессов. Он определяется памятью, а не желанием: превышение выводит сервер в своп или под OOM killer, и деградирует всё сразу, а не постепенно.</p>
+
+    <p class="formula">pm.max_children = (доступная память − запас) ÷ средний размер процесса<span>Средний размер измеряется на реальной нагрузке, а не берётся из документации</span></p>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Измерение и расчёт, а не угадывание</span></div><pre><code><span class="cm"># Реальный средний размер процесса FPM (RSS в мегабайтах)</span>
+ps --no-headers -o rss -C php-fpm8.3 | awk <span class="st">'{s+=$1; n++} END {print s/n/1024 " MB avg, " n " procs"}'</span>
+
+<span class="cm"># Расчёт для узла с 8 ГБ, где база живёт на отдельном сервере</span>
+<span class="cm">#   всего            8192 МБ</span>
+<span class="cm">#   ОС и nginx      - 1024 МБ</span>
+<span class="cm">#   запас 20 %      - 1434 МБ</span>
+<span class="cm">#   доступно          5734 МБ</span>
+<span class="cm">#   процесс ≈ 60 МБ → max_children = 95</span>
+
+<span class="cm"># Проверка: занятость пула под нагрузкой</span>
+curl -s localhost/fpm-status | grep -E <span class="st">'active processes|listen queue|slow requests'</span>
+<span class="cm"># listen queue &gt; 0 постоянно = процессов не хватает</span>
+<span class="cm"># active = max_children = пул исчерпан, дальше идут 502</span>
+
+<span class="cm"># В контейнере лимит виден иначе — PHP не знает про cgroups автоматически</span>
+cat /sys/fs/cgroup/memory.max          <span class="cm"># реальный лимит контейнера</span>
+cat /sys/fs/cgroup/cpu.stat | grep throttled   <span class="cm"># троттлинг по CPU-лимиту</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · requests, limits и что происходит при превышении</caption>
+      <thead><tr><th>Параметр</th><th>Смысл</th><th>При превышении</th><th>Как выбирать</th></tr></thead>
+      <tbody>
+        <tr><td>CPU request</td><td>Гарантия для планировщика</td><td>—</td><td>По среднему потреблению</td></tr>
+        <tr><td>CPU limit</td><td>Потолок</td><td>Троттлинг: процесс тормозят, растёт p99</td><td>С запасом или без лимита для латентных сервисов</td></tr>
+        <tr><td>Memory request</td><td>Резервируется на узле</td><td>—</td><td>По реальному RSS с запасом</td></tr>
+        <tr><td>Memory limit</td><td>Жёсткий потолок</td><td>OOMKilled — процесс убивают без предупреждения</td><td>Пик + 30 %; равен request для предсказуемости</td></tr>
+        <tr><td><code>memory_limit</code> PHP</td><td>Потолок одного скрипта</td><td>Fatal error в скрипте</td><td>Меньше лимита контейнера</td></tr>
+        <tr><td><code>pm.max_children</code></td><td>Число процессов</td><td>Очередь, затем 502</td><td>По формуле выше от лимита памяти</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Слишком низкий CPU-лимит вреднее отсутствия лимита: троттлинг не убивает процесс, а размазывает задержку — сервис «работает», но p99 растёт в разы, и причину ищут в коде неделями. Признак — ненулевой счётчик throttled в cgroup при невысокой средней утилизации.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как подобрать <code>pm.max_children</code>?</b><br>Измерить реальный средний RSS процесса под нагрузкой, вычесть из доступной памяти потребление ОС и запас, разделить одно на другое. Больше ставить бессмысленно: при исчерпании памяти сервер уходит в своп и деградирует целиком, а в контейнере процессы просто убивает OOM. Если процессов не хватает, правильный ход — сокращать время запроса, а не увеличивать число процессов.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="backup">
+    <p class="path">senior / данные</p>
+    <div class="card-top"><h3>Бэкапы и восстановление</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Бэкап, восстановление из которого никогда не проверяли, бэкапом не является. Это самое частое и самое дорогое заблуждение в эксплуатации: файлы копируются годами, а в момент аварии выясняется, что дамп неполный, ключ шифрования утерян или восстановление занимает восемнадцать часов.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · уровни защиты данных</caption>
+      <thead><tr><th>Механизм</th><th>От чего защищает</th><th>От чего НЕ защищает</th></tr></thead>
+      <tbody>
+        <tr><td>Реплика</td><td>Отказ узла, потеря диска</td><td>Ошибочный <code>DELETE</code> — он повторится на реплике мгновенно</td></tr>
+        <tr><td>RAID</td><td>Отказ диска</td><td>Логические ошибки, удаление, шифровальщик</td></tr>
+        <tr><td>Полный дамп</td><td>Потеря данных и логические ошибки</td><td>Потерю с момента снятия — отсюда RPO</td></tr>
+        <tr><td>PITR (журнал транзакций)</td><td>Позволяет откатиться на точку до ошибки</td><td>Требует хранения журналов и репетиции</td></tr>
+        <tr><td>Копия в другом регионе</td><td>Потеря площадки</td><td>Ошибки прав доступа: доступ к обеим копиям одним ключом</td></tr>
+        <tr><td>Снимки (snapshots)</td><td>Быстрый откат состояния</td><td>Часто хранятся рядом с исходным диском</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Бэкап с проверкой: копия без верификации не считается</span></div><pre><code><span class="cm">#!/usr/bin/env bash</span>
+set -euo pipefail
+
+STAMP=$(date +%F-%H%M)
+DUMP=<span class="st">"/backup/app-$STAMP.dump"</span>
+
+<span class="cm"># 1. Снятие в машинном формате — он восстанавливается параллельно и выборочно</span>
+pg_dump --format=custom --compress=6 --file=<span class="st">"$DUMP"</span> <span class="st">"$DATABASE_URL"</span>
+
+<span class="cm"># 2. Немедленная проверка целостности файла</span>
+pg_restore --list <span class="st">"$DUMP"</span> &gt; /dev/null
+
+<span class="cm"># 3. Отправка в другое место, а не рядом с базой</span>
+aws s3 cp <span class="st">"$DUMP"</span> <span class="st">"s3://backups/db/$STAMP.dump"</span> --storage-class STANDARD_IA
+
+<span class="cm"># 4. Раз в неделю — настоящее восстановление на отдельный сервер и проверка данных.</span>
+<span class="cm">#    Это единственный шаг, который отличает бэкап от иллюзии бэкапа.</span>
+pg_restore --clean --if-exists --dbname=<span class="st">"$VERIFY_DB"</span> --jobs=4 <span class="st">"$DUMP"</span>
+psql <span class="st">"$VERIFY_DB"</span> -tAc <span class="st">"SELECT count(*) FROM orders"</span> | tee /backup/last-verify.txt
+
+<span class="cm"># 5. Метрика и алерт: возраст последнего успешного восстановления</span>
+curl -fsS --data <span class="st">"backup_verify_timestamp $(date +%s)"</span> <span class="st">"$PUSHGATEWAY/metrics/job/backup"</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Три числа, которые должны быть записаны и согласованы с бизнесом: RPO (сколько данных допустимо потерять), RTO (за сколько обязаны восстановиться) и фактическое время последнего проверенного восстановления. Если фактическое время больше RTO, это не риск, а известная неготовность — и говорить о ней нужно до аварии, а не после.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Реплика заменяет бэкап?</b><br>Нет. Реплика защищает от отказа железа, но повторяет любые логические ошибки: ошибочный <code>DELETE</code> или миграция уедут на неё за миллисекунды. Бэкап защищает от ошибок и от шифровальщика, но только если хранится отдельно, с ограниченным доступом, и если восстановление регулярно проверяется на реальных данных.</div>
+  </article>
+
+  <!-- 17 -->
+  <article class="card" id="iac">
+    <p class="path">senior / воспроизводимость</p>
+    <div class="card-top"><h3>Infrastructure as Code</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Инфраструктура, настроенная руками по SSH, существует ровно до первого отказа. IaC переводит её в код: те же ревью, та же история, та же воспроизводимость. Практический критерий зрелости — вопрос «сколько времени займёт поднять окружение с нуля, если мы потеряем все серверы».</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 17 · инструменты и их роли</caption>
+      <thead><tr><th>Слой</th><th>Инструмент</th><th>Что описывает</th></tr></thead>
+      <tbody>
+        <tr><td>Ресурсы провайдера</td><td>Terraform, OpenTofu</td><td>Серверы, сети, базы, балансировщики, DNS</td></tr>
+        <tr><td>Настройка машин</td><td>Ansible</td><td>Пакеты, конфиги, пользователи, сервисы</td></tr>
+        <tr><td>Приложения в кластере</td><td>Helm, Kustomize</td><td>Манифесты и их параметризация по стендам</td></tr>
+        <tr><td>Синхронизация состояния</td><td>GitOps (Argo CD, Flux)</td><td>Кластер приводится к тому, что описано в git</td></tr>
+        <tr><td>Образы машин</td><td>Packer</td><td>Готовый образ вместо настройки при каждом старте</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>hcl</span><span class="r">Terraform: инфраструктура как ревьюируемый код</span></div><pre><code><span class="cm"># Состояние хранится удалённо с блокировкой: иначе два инженера</span>
+<span class="cm"># одновременно применят изменения и получат расхождение</span>
+terraform {
+  backend <span class="st">"s3"</span> {
+    bucket         = <span class="st">"tf-state"</span>
+    key            = <span class="st">"prod/app.tfstate"</span>
+    dynamodb_table = <span class="st">"tf-locks"</span>
+  }
+}
+
+<span class="cm"># Один модуль, разные параметры для стендов — окружения не расходятся</span>
+module <span class="st">"app"</span> {
+  source        = <span class="st">"./modules/app"</span>
+  environment   = <span class="st">"prod"</span>
+  instance_type = <span class="st">"c6i.large"</span>
+  min_size      = 3
+  max_size      = 12
+}
+
+<span class="cm"># Порядок работы: plan → ревью diff → apply в CI, а не с ноутбука</span>
+<span class="cm">#   terraform plan -out=tfplan   # показывает, что именно изменится</span>
+<span class="cm">#   terraform apply tfplan</span></code></pre></div>
+
+    <p><strong>Дрейф конфигурации</strong> — главный враг IaC: кто-то поправил настройку руками «на пять минут», и описанное состояние перестало соответствовать реальному. Лечится двумя вещами: регулярным <code>plan</code> в CI, который показывает расхождение, и запретом на ручные изменения в проде — с явной процедурой для аварийных случаев и обязательным возвратом изменения в код.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем IaC небольшой команде?</b><br>Ради воспроизводимости и передачи знаний. Инфраструктура в коде переживает уход человека, ревьюится, версионируется и позволяет поднять идентичный стенд для проверки. Плюс исчезает класс проблем «на stage работает, на prod нет»: расхождение видно в diff, а не выясняется в инциденте.</div>
+  </article>
+
+  <!-- 18 -->
+  <article class="card" id="security">
+    <p class="path">senior / защита</p>
+    <div class="card-top"><h3>Безопасность инфраструктуры</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Безопасность инфраструктуры — это про поверхность атаки и про доступы. Она не отменяет безопасность кода, но именно она определяет, во что превратится одна найденная уязвимость: в один скомпрометированный контейнер или в весь кластер вместе с базой.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 18 · уровень и минимальный контроль</caption>
+      <thead><tr><th>Уровень</th><th>Контроль</th><th>Частая дыра</th></tr></thead>
+      <tbody>
+        <tr><td>Сеть</td><td>База и Redis недоступны из интернета, только из приложения</td><td>Redis без пароля на публичном адресе</td></tr>
+        <tr><td>Доступ к серверам</td><td>Ключи вместо паролей, отдельные учётки, журналирование</td><td>Общий root-ключ у всей команды</td></tr>
+        <tr><td>Образы</td><td>Проверенные базовые образы, регулярное обновление, сканирование</td><td>Образ двухлетней давности с известными CVE</td></tr>
+        <tr><td>Зависимости</td><td>Аудит в CI, lock-файл, контроль новых пакетов</td><td>Установка из непроверенного источника</td></tr>
+        <tr><td>Контейнер</td><td>Non-root, read-only ФС, без лишних capabilities</td><td>Контейнер от root с доступом к сокету Docker</td></tr>
+        <tr><td>Права в БД</td><td>Отдельный пользователь приложения без DDL</td><td>Приложение ходит под суперпользователем</td></tr>
+        <tr><td>TLS</td><td>Актуальные версии, автопродление сертификатов</td><td>Сертификат, истекающий в выходные</td></tr>
+        <tr><td>Обновления</td><td>Регламент обновления ОС и базовых образов</td><td>«Работает — не трогаем» на три года</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>bash + yaml</span><span class="r">Проверки, которые стоит поставить в пайплайн</span></div><pre><code><span class="cm"># Уязвимости в образе и зависимостях — до выката, а не после</span>
+trivy image --severity HIGH,CRITICAL --exit-code 1 registry.example.com/app:$SHA
+composer audit --locked
+
+<span class="cm"># Секреты, случайно попавшие в репозиторий</span>
+gitleaks detect --no-banner --redact
+
+<span class="cm"># Ужесточение контейнера в манифесте</span>
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: true      <span class="cm"># запись только в примонтированные tmp/var</span>
+  allowPrivilegeEscalation: false
+  capabilities: { drop: ["ALL"] }
+
+<span class="cm"># Сеть: по умолчанию запрет, разрешения — явно</span>
+<span class="cm"># NetworkPolicy: приложение может ходить в БД, БД никуда не ходит</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Отдельный класс риска — цепочка поставки: сборочный агент имеет доступ и к коду, и к registry, и к проду. Скомпрометированный пайплайн выкатывает что угодно, минуя ревью. Отсюда практические требования: минимальные права токенов, запрет запуска пайплайна с прода из форков, фиксация версий действий и образов, подпись артефактов.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему нельзя запускать контейнер от root?</b><br>Потому что при выходе за границу контейнера — через уязвимость ядра, примонтированный сокет Docker или неверные capabilities — root внутри превращается в root на узле. Non-root, отключённая эскалация привилегий, read-only корневая ФС и сброшенные capabilities превращают компрометацию приложения в компрометацию одного процесса, а не всего сервера.</div>
+  </article>
+
+  <!-- 19 -->
+  <article class="card" id="release">
+    <p class="path">senior / процесс</p>
+    <div class="card-top"><h3>Релизные практики и инциденты</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Зрелость команды измеряется не отсутствием инцидентов, а скоростью обнаружения и восстановления. Практики релиза здесь важнее технологий: они определяют, сколько пользователей увидит проблему до того, как её заметят.</p>
+
+    <div class="cols">
+      <div>
+        <h4>Что снижает риск релиза</h4>
+        <ul>
+          <li>Маленькие частые релизы вместо больших редких.</li>
+          <li>Канареечная раскатка с метриками по версиям.</li>
+          <li>Feature flag: выкладка кода отделена от включения функции.</li>
+          <li>Автоматический откат по превышению доли ошибок.</li>
+          <li>Smoke-проверка сразу после переключения.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Что нужно во время инцидента</h4>
+        <ul>
+          <li>Один человек координирует, остальные исследуют.</li>
+          <li>Сначала восстановление, потом поиск причины.</li>
+          <li>Откат — легитимное первое действие, а не поражение.</li>
+          <li>Хронология пишется по ходу, а не по памяти.</li>
+          <li>Отдельный канал общения и понятный статус для бизнеса.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Канарейка: доля трафика растёт только при здоровых метриках</span></div><pre><code><span class="cm"># Идея не зависит от инструмента: часть трафика на новую версию,</span>
+<span class="cm"># автоматическая проверка метрик, автоматический откат при ухудшении.</span>
+analysis:
+  interval: 1m
+  threshold: 5                <span class="cm"># пять неудачных проверок подряд → откат</span>
+  stepWeights: [5, 25, 50, 100]
+
+  metrics:
+    - name: request-success-rate
+      thresholdRange: { min: 99 }      <span class="cm"># доля успешных ответов не ниже 99 %</span>
+      interval: 1m
+    - name: request-duration-p99
+      thresholdRange: { max: 500 }     <span class="cm"># p99 не выше 500 мс</span>
+      interval: 1m
+
+  webhooks:
+    - name: smoke-test
+      url: http://tests/run
+      timeout: 30s</code></pre></div>
+
+    <p><strong>Разбор инцидента без поиска виноватых</strong> — не гуманизм, а инженерная необходимость: как только за инцидент наказывают, люди перестают о них сообщать, и организация теряет главный источник улучшений. Полезный разбор отвечает на четыре вопроса: что произошло по времени, почему это стало возможным, почему заметили не сразу и какие конкретные действия с владельцем и сроком из этого следуют.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>После релиза выросли ошибки. Ваши действия?</b><br>Сначала восстановить: откатить релиз или выключить функцию флагом — расследование ведётся на здоровой системе. Затем зафиксировать хронологию и сравнить метрики до и после, найти конкретное изменение, воспроизвести на стенде. И отдельный вопрос по итогам: почему мы узнали от пользователей, а не от мониторинга, — обычно это ценнее самой причины сбоя.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Понимаю объекты Kubernetes и умею объяснить, когда он не нужен</li>
+        <li>Различаю liveness, readiness и startup и знаю цену ошибки в каждой</li>
+        <li>Обеспечиваю выкладку без обрыва запросов: preStop и grace period</li>
+        <li>Считаю <code>pm.max_children</code> от измеренной памяти</li>
+        <li>Знаю разницу между OOMKilled и CPU-троттлингом</li>
+        <li>Согласую <code>memory_limit</code> PHP с лимитом контейнера</li>
+      </ul>
+      <ul class="check">
+        <li>Проверяю восстановление из бэкапа регулярно, а не в аварию</li>
+        <li>Знаю RPO, RTO и фактическое время восстановления</li>
+        <li>Описываю инфраструктуру кодом и слежу за дрейфом</li>
+        <li>Держу контейнеры non-root с минимальными правами</li>
+        <li>Сканирую образы и зависимости в пайплайне</li>
+        <li>Раскатываю канареечно и умею откатиться автоматически</li>
+        <li>Провожу разборы инцидентов без поиска виноватых</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ по инфраструктуре всегда содержит число и условие: не «у нас Kubernetes», а «четыре узла, 12 подов, выкатываем канареечно за семь минут, откат — 40 секунд, восстановление базы проверяли в прошлый вторник, заняло 25 минут при RTO в час». Такие ответы заканчивают дискуссию быстрее любых аргументов.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения: какой инструмент решает какую задачу, что проверить перед запуском и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Задача → инструмент</h3><span class="badge b-tag">Таблица 19</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 19 · что применить и чем за это платите</caption>
+      <thead><tr><th>Задача</th><th>Решение</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td>«У меня работает, а на сервере нет»</td><td>Контейнеризация сборки и рантайма</td><td>Кривая обучения, дисциплина с образами</td></tr>
+        <tr><td>Одинаковое окружение у всей команды</td><td>compose с фиксированными версиями</td><td>Ресурсы ноутбука, время на поддержку файла</td></tr>
+        <tr><td>Регрессии доезжают до прода</td><td>Пайплайн: анализ, тесты, сборка</td><td>Время прогона, поддержка пайплайна</td></tr>
+        <tr><td>Простой при выкладке</td><td>Атомарное переключение или rolling update</td><td>Совместимость схемы и двух версий кода</td></tr>
+        <tr><td>Страшно выкатывать</td><td>Канарейка, feature flags, быстрый откат</td><td>Метрики по версиям, уборка флагов</td></tr>
+        <tr><td>Долгие операции в запросе</td><td>Очередь и воркеры под супервизором</td><td>Управление процессами и их мониторинг</td></tr>
+        <tr><td>Утечки в долгоживущих процессах</td><td>Лимиты по памяти, времени, числу задач</td><td>Регулярные перезапуски, идемпотентность</td></tr>
+        <tr><td>Секреты в репозитории</td><td>Секрет-хранилище и BuildKit-секреты</td><td>Дополнительный компонент, процедура ротации</td></tr>
+        <tr><td>Ручные настройки на серверах</td><td>IaC и запрет ручных правок</td><td>Дисциплина, контроль дрейфа</td></tr>
+        <tr><td>Неравномерная нагрузка</td><td>Автомасштабирование stateless-части</td><td>Оркестратор, метрики, лимиты</td></tr>
+        <tr><td>Десятки сервисов и несколько команд</td><td>Kubernetes как общая платформа</td><td>Кластер как отдельная система в эксплуатации</td></tr>
+        <tr><td>Потеря данных и логические ошибки</td><td>Бэкапы с PITR и проверкой восстановления</td><td>Хранилище, регламент, регулярные учения</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Чек-лист готовности инфраструктуры</h3><span class="badge b-tag">Таблица 20</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 20 · что проверить до запуска в прод</caption>
+      <thead><tr><th>Область</th><th>Вопрос, на который нужен ответ</th></tr></thead>
+      <tbody>
+        <tr><td>Сборка</td><td>Собирается ли образ одной командой и однозначно ли он связан с коммитом?</td></tr>
+        <tr><td>Артефакт</td><td>В прод едет ровно тот образ, который прошёл тесты?</td></tr>
+        <tr><td>Выкладка</td><td>Есть ли простой при релизе и сколько он длится?</td></tr>
+        <tr><td>Откат</td><td>Проверяли ли откат и сколько он занимает?</td></tr>
+        <tr><td>Миграции</td><td>Совместима ли схема с обеими версиями кода и есть ли <code>lock_timeout</code>?</td></tr>
+        <tr><td>opcache и воркеры</td><td>Сбрасывается ли байткод и перезапускаются ли воркеры при деплое?</td></tr>
+        <tr><td>Ресурсы</td><td>Посчитаны ли <code>max_children</code>, лимиты памяти и CPU?</td></tr>
+        <tr><td>Пробы</td><td>Разделены ли liveness и readiness, не проверяет ли liveness базу?</td></tr>
+        <tr><td>Логи</td><td>Пишутся ли в stdout структурированно, есть ли ротация и retention?</td></tr>
+        <tr><td>Алерты</td><td>Узнаем ли мы о поломке раньше пользователей и есть ли runbook?</td></tr>
+        <tr><td>Секреты</td><td>Отсутствуют ли они в образе и репозитории, можно ли их ротировать?</td></tr>
+        <tr><td>Бэкапы</td><td>Когда последний раз восстанавливали и сколько это заняло?</td></tr>
+        <tr><td>Доступы</td><td>Закрыты ли БД и Redis от внешней сети, есть ли персональные учётки?</td></tr>
+        <tr><td>Стоимость</td><td>Сколько стоит окружение в месяц и что растёт быстрее всего?</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 21</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 21 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Сервер</td><td>Находит логи, смотрит ресурсы, перезапускает сервис</td><td>Настраивает nginx, FPM, лимиты и таймауты</td><td>Считает ёмкость и обосновывает конфигурацию числами</td></tr>
+        <tr><td>Контейнеры</td><td>Поднимает проект через compose</td><td>Пишет multi-stage образ для прода</td><td>Отвечает за размер, безопасность и цепочку поставки</td></tr>
+        <tr><td>CI</td><td>Понимает, что проверяет пайплайн</td><td>Строит и оптимизирует пайплайн</td><td>Проектирует процесс доставки и требования к нему</td></tr>
+        <tr><td>Деплой</td><td>Знает, как выкатывается проект</td><td>Делает выкладку без простоя с откатом</td><td>Вводит канарейку, флаги, автоматический откат</td></tr>
+        <tr><td>Миграции</td><td>Запускает миграции</td><td>Делает их совместимыми и безопасными</td><td>Планирует изменения больших таблиц без простоя</td></tr>
+        <tr><td>Наблюдаемость</td><td>Читает логи</td><td>Настраивает метрики, пробы, алерты</td><td>Определяет SLO и требования к обнаружению</td></tr>
+        <tr><td>Данные</td><td>Знает, что бэкапы есть</td><td>Настраивает и проверяет их</td><td>Отвечает за RPO, RTO и учения по восстановлению</td></tr>
+        <tr><td>Инцидент</td><td>Эскалирует и собирает данные</td><td>Восстанавливает и находит причину</td><td>Координирует, отвечает за выводы и изменения процесса</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== КОМАНДЫ ==================== -->
+<section class="level lvl-n" id="commands">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Команды по ситуациям</h2>
+    <p>Не полный справочник, а тот минимум, который нужен во время инцидента, когда думать некогда. Стоит один раз выполнить каждую команду осознанно — тогда в нужный момент они вспоминаются сами.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Сервер: «что сейчас происходит»</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Диагностика по симптомам</span></div><pre><code><span class="cm"># Общая картина за 30 секунд</span>
+uptime                                  <span class="cm"># load average: три числа — 1, 5, 15 минут</span>
+top -o %MEM                             <span class="cm"># кто ест память</span>
+df -h &amp;&amp; df -i                          <span class="cm"># место и inode</span>
+free -m                                 <span class="cm"># память и своп; своп &gt; 0 при нагрузке — плохой знак</span>
+
+<span class="cm"># PHP-FPM: занятость пула — главный индикатор</span>
+curl -s localhost/fpm-status?full | head -40
+systemctl status php8.3-fpm
+journalctl -u php8.3-fpm --since <span class="st">"10 min ago"</span>
+
+<span class="cm"># Что именно тормозит: медленные запросы PHP и БД</span>
+tail -f /var/log/php/slow.log
+mysql -e <span class="st">"SHOW FULL PROCESSLIST"</span> | grep -v Sleep
+psql -c <span class="st">"SELECT pid, now()-query_start AS dur, state, query
+        FROM pg_stat_activity WHERE state &lt;&gt; 'idle' ORDER BY dur DESC LIMIT 10"</span>
+
+<span class="cm"># Сеть и доступность соседей</span>
+ss -s                                   <span class="cm"># сводка по соединениям</span>
+ss -tan state time-wait | wc -l         <span class="cm"># много TIME-WAIT — признак отсутствия keep-alive</span>
+curl -w <span class="st">"%{time_total}\n"</span> -o /dev/null -s https://api.partner.com/health
+
+<span class="cm"># Кто держит место и удалённые файлы</span>
+du -x -d1 -h / | sort -h | tail
+lsof +L1 | head</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Docker и compose</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Повседневное и аварийное</span></div><pre><code><span class="cm"># Состояние и ресурсы</span>
+docker ps -a --format <span class="st">"table {{.Names}}\t{{.Status}}\t{{.Image}}"</span>
+docker stats --no-stream              <span class="cm"># CPU и память по контейнерам</span>
+docker system df                      <span class="cm"># что занимает диск</span>
+
+<span class="cm"># Разбор проблем</span>
+docker logs --tail 200 -f app
+docker inspect app --format <span class="st">'{{.State.ExitCode}} {{.State.OOMKilled}}'</span>   <span class="cm"># убит по памяти?</span>
+docker exec -it app sh
+docker exec app php -i | grep -E <span class="st">'memory_limit|opcache.enable'</span>
+
+<span class="cm"># Что внутри образа и откуда он</span>
+docker image inspect app:$SHA --format <span class="st">'{{.Created}} {{.Size}}'</span>
+docker history --no-trunc app:$SHA | head
+
+<span class="cm"># compose</span>
+docker compose up -d --build
+docker compose restart worker
+docker compose exec app php bin/console cache:clear
+docker compose logs -f --tail=100 app worker
+docker compose down -v                <span class="cm"># осторожно: удаляет тома вместе с данными</span></code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Kubernetes: минимум для разработчика</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>bash</span><span class="r">Что смотреть, когда «в кластере что-то не так»</span></div><pre><code><span class="cm"># Состояние подов: столбцы RESTARTS и STATUS отвечают на половину вопросов</span>
+kubectl get pods -l app=api -o wide
+kubectl describe pod api-7d9f-abc      <span class="cm"># события внизу: OOMKilled, ImagePullBackOff, проба не прошла</span>
+
+<span class="cm"># Логи, в том числе предыдущего упавшего контейнера</span>
+kubectl logs -f deploy/api --tail=200
+kubectl logs api-7d9f-abc --previous   <span class="cm"># почему он перезапустился</span>
+
+<span class="cm"># Внутрь и наружу</span>
+kubectl exec -it deploy/api -- sh
+kubectl port-forward svc/api 8080:80   <span class="cm"># доступ к сервису без публикации</span>
+
+<span class="cm"># Выкладка и откат</span>
+kubectl set image deploy/api php=registry.example.com/app:$SHA
+kubectl rollout status deploy/api --timeout=120s
+kubectl rollout undo deploy/api        <span class="cm"># откат на предыдущую ревизию</span>
+kubectl rollout history deploy/api
+
+<span class="cm"># Ресурсы и события кластера</span>
+kubectl top pods --sort-by=memory
+kubectl get events --sort-by=.lastTimestamp | tail -20</code></pre></div>
+    <div class="box imp"><span class="lbl">Важно</span>Три статуса, объясняющие большинство проблем: <code>ImagePullBackOff</code> — образ не найден или нет доступа к registry; <code>CrashLoopBackOff</code> — контейнер падает при старте, смотрите <code>logs --previous</code>; <code>OOMKilled</code> в описании пода — превышен лимит памяти, лимит нужно поднять или найти утечку.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас, а не документация. Сильный ответ про инфраструктуру почти всегда содержит механизм и последствие ошибки: не «нужен health check», а «нужен, и если в liveness проверять базу, её отказ перезапустит все поды».</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Из чего состоит боевое окружение PHP-приложения?</span><span class="aa">Веб-сервер (nginx) принимает запросы и отдаёт статику, php-fpm держит пул процессов PHP и выполняет код, приложение работает с базой и кэшем, отдельно живут воркеры очередей и cron. У каждого компонента свой конфиг, свой лог и свой способ перезапуска.</span></li>
+      <li><span class="qq">Что делает nginx, а что php-fpm?</span><span class="aa">Nginx терминирует TLS, отдаёт статику и проксирует запрос по FastCGI; сам PHP он не выполняет. FPM — менеджер процессов PHP: принимает запрос, отдаёт его свободному процессу, возвращает результат. Поэтому лимиты на размер тела и таймауты настраиваются в обоих местах.</span></li>
+      <li><span class="qq">Чем 502 отличается от 504 и от 500?</span><span class="aa">500 — исключение в коде, инфраструктура жива, трассировка в логе приложения. 502 — nginx не получил ответ от FPM: пул исчерпан, процесс упал, сокет недоступен. 504 — FPM не ответил за отведённое время: скрипт слишком долгий.</span></li>
+      <li><span class="qq">Пользователь получает 413. Что это и где чинится?</span><span class="aa">Тело запроса больше разрешённого. Правится в трёх местах согласованно: <code>client_max_body_size</code> в nginx, <code>upload_max_filesize</code> и <code>post_max_size</code> в PHP. Если увеличить только в PHP, запрос не дойдёт до него вообще.</span></li>
+      <li><span class="qq">Где искать логи при проблеме?</span><span class="aa">По цепочке: <code>error.log</code> nginx — не дошло ли до PHP; лог FPM и slow log — что с пулом и с долгими запросами; лог приложения — исключения; <code>journalctl</code> или <code>docker logs</code> для сервисов; <code>dmesg</code>, если процессы исчезают без следа.</span></li>
+      <li><span class="qq">Чем <code>reload</code> отличается от <code>restart</code>?</span><span class="aa"><code>reload</code> заставляет процесс перечитать конфигурацию, не разрывая текущие соединения; <code>restart</code> убивает и поднимает заново, обрывая всё в работе. На проде по умолчанию используется reload, restart — осознанно.</span></li>
+      <li><span class="qq">Сайт лёг, ошибка про запись файла. Что проверить первым?</span><span class="aa">Свободное место (<code>df -h</code>) и inode (<code>df -i</code>) — их можно исчерпать раньше места при миллионах мелких файлов. Дальше права на каталог и то, не держит ли процесс уже удалённый лог (<code>lsof +L1</code>): место в этом случае освободится только после reload.</span></li>
+      <li><span class="qq">Что такое OOM killer и как понять, что он сработал?</span><span class="aa">Механизм ядра, убивающий процесс при нехватке памяти. Признак — процессы исчезают без ошибок в логе приложения. Проверяется командой <code>dmesg -T | grep -i "killed process"</code>. В контейнере то же самое означает превышение лимита памяти.</span></li>
+      <li><span class="qq">Какие права нужны файлам PHP-проекта?</span><span class="aa">Каталогам 755, файлам 644; запись — только каталогам загрузок, кэша и логов. Права нужны на весь путь, а не только на конечный файл. <code>chmod 777</code> — не решение, а способ сделать загруженный файл исполняемым.</span></li>
+      <li><span class="qq">Почему корень сайта должен указывать на <code>public/</code>?</span><span class="aa">Иначе наружу доступны <code>.env</code>, <code>vendor/</code>, конфиги и миграции — то есть учётные данные и структура проекта. В <code>public/</code> лежит только фронт-контроллер и статика, весь остальной код физически недоступен из веба.</span></li>
+      <li><span class="qq">После деплоя работает старый код. Почему?</span><span class="aa">Opcache отдаёт ранее скомпилированный байткод: на проде проверка времени изменения файлов обычно отключена ради скорости. В процедуру деплоя должен входить reload FPM. Вторая причина того же симптома — воркеры, которые держат старый код в памяти, пока их не перезапустят.</span></li>
+      <li><span class="qq">Чем контейнер отличается от виртуальной машины?</span><span class="aa">ВМ несёт собственное ядро и ОС: гигабайты и десятки секунд на старт. Контейнер — изолированный процесс на общем ядре хоста через namespaces и cgroups: десятки мегабайт и мгновенный старт. Обратная сторона — более слабая изоляция с точки зрения безопасности.</span></li>
+      <li><span class="qq">Что такое образ, контейнер и слой?</span><span class="aa">Образ — неизменяемый шаблон из слоёв, контейнер — его запущенный экземпляр с изменяемым верхним слоем, слой — результат одной инструкции Dockerfile, который кэшируется и переиспользуется между сборками.</span></li>
+      <li><span class="qq">Зачем нужен <code>.dockerignore</code>?</span><span class="aa">Чтобы в контекст сборки и в образ не уезжали <code>.git</code>, <code>vendor</code>, <code>node_modules</code>, кэш и <code>.env</code>. Без него образ раздувается, сборка замедляется, а секреты могут оказаться внутри слоёв.</span></li>
+      <li><span class="qq">Почему порядок инструкций в Dockerfile важен?</span><span class="aa">Кэш слоёв инвалидируется сверху вниз: изменилась инструкция — пересобирается она и всё, что ниже. Поэтому системные пакеты и расширения ставят вверху, зависимости — по манифестам, а <code>COPY . .</code> держат внизу. Иначе каждая правка кода пересобирает образ целиком.</span></li>
+      <li><span class="qq">Зачем нужен volume, если код внутри образа?</span><span class="aa">В разработке том монтирует исходники, чтобы правки применялись без пересборки. В проде тома нужны только для данных, обязанных пережить пересоздание контейнера: файлы БД, загрузки. Сам контейнер считается одноразовым.</span></li>
+      <li><span class="qq">Как контейнеры находят друг друга в compose?</span><span class="aa">По имени сервиса: оно же DNS-имя внутри сети compose. В строке подключения пишется <code>db:5432</code>, а не <code>localhost</code> — localhost внутри контейнера указывает на него самого.</span></li>
+      <li><span class="qq">Зачем нужен healthcheck и <code>condition: service_healthy</code>?</span><span class="aa">Потому что запущенный контейнер БД ещё не означает готовую принимать соединения базу. Без проверки готовности приложение стартует раньше и падает на первом запросе. Healthcheck переводит зависимость из «запущен» в «работает».</span></li>
+      <li><span class="qq">Почему конфигурация должна приходить из окружения?</span><span class="aa">Чтобы один и тот же артефакт запускался на всех стендах и в прод попадало ровно то, что тестировали. Различия — адреса, ключи, флаги — приходят переменными. Отдельная сборка под прод ломает это свойство.</span></li>
+      <li><span class="qq">Что делать, если секрет попал в репозиторий?</span><span class="aa">Считать его скомпрометированным и немедленно отозвать и перевыпустить — удаление коммита не помогает, история остаётся в клонах, форках и кэшах. Чистка истории делается вторым шагом, а третьим — сканер секретов в пайплайне, чтобы это не повторилось.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Зачем нужна multi-stage сборка?</span><span class="aa">Чтобы компиляторы, composer и dev-зависимости участвовали в подготовке, но не попадали в финальный образ. Результат — образ в несколько раз меньше, уязвимостей меньше, а сборка остаётся единой для всех окружений: меняется только целевая стадия.</span></li>
+      <li><span class="qq">Чем production-образ отличается от dev?</span><span class="aa">Нет dev-зависимостей и Xdebug, автозагрузчик оптимизирован, код запечён внутрь, opcache без проверки времени изменения, процесс запускается не от root, инструменты сборки удалены. Конфигурация приходит переменными окружения, а не файлом в образе.</span></li>
+      <li><span class="qq">Почему нельзя использовать тег <code>latest</code> в проде?</span><span class="aa">Потому что неизвестно, какая версия сейчас запущена и к какой откатываться: два узла могут работать на разных образах с одинаковым тегом. Тег должен быть неизменяемым — хеш коммита или номер сборки, — и именно он проходит все стенды.</span></li>
+      <li><span class="qq">Как ускорить сборку образа?</span><span class="aa">Правильный порядок слоёв (редко меняющееся вверх), копирование сначала <code>composer.json</code> и <code>composer.lock</code> и только потом кода, <code>.dockerignore</code>, внешний кэш слоёв в registry для CI и multi-stage, чтобы тяжёлые стадии не пересобирались при правке кода.</span></li>
+      <li><span class="qq">В каком порядке идут этапы CI и почему?</span><span class="aa">От дешёвого к дорогому: стиль и синтаксис, статический анализ, модульные тесты, интеграционные, сборка образа, сканирование. Смысл — отсекать большинство ошибок за секунды. Пайплайн длиннее 10–15 минут перестают ждать и начинают обходить.</span></li>
+      <li><span class="qq">Как кэшировать зависимости в CI?</span><span class="aa">По ключу из хеша lock-файла: пока зависимости не менялись, кэш переиспользуется, при изменении собирается заново. Кэшировать по имени ветки нельзя — получите устаревшие пакеты и невоспроизводимые сборки.</span></li>
+      <li><span class="qq">Почему в прод должен ехать тот же артефакт, что тестировался?</span><span class="aa">Иначе тестировали одно, а работает другое: пересборка может подтянуть другую минорную версию зависимости или обновлённый базовый образ. Правильная схема — собрать один раз, протестировать этот образ и продвигать его по стендам, меняя только конфигурацию.</span></li>
+      <li><span class="qq">Как выкатить релиз без простоя?</span><span class="aa">Новая версия готовится рядом — отдельный каталог или новый образ; выполняются совместимые миграции и прогрев; происходит атомарное переключение (симлинк или замена подов по одному); затем reload FPM и корректная остановка воркеров. Обязательны health check после переключения и возможность отката одной командой.</span></li>
+      <li><span class="qq">Чем отличаются rolling, blue-green и canary?</span><span class="aa">Rolling обновляет узлы по одному — дёшево, но какое-то время работают две версии. Blue-green поднимает полную вторую среду и переключает трафик разом — мгновенный откат ценой двойной инфраструктуры. Canary даёт новой версии малую долю трафика и увеличивает её по метрикам — безопаснее всего, но требует метрик по версиям.</span></li>
+      <li><span class="qq">Что чаще всего ломается при деплое?</span><span class="aa">Три вещи: не сброшен opcache и часть процессов работает на старом коде; не перезапущены воркеры и фон обрабатывает сообщения по старой логике; миграция несовместима со старым кодом, который во время выкладки ещё работает.</span></li>
+      <li><span class="qq">Как устроен откат?</span><span class="aa">Переключением на предыдущий артефакт: старый симлинк или предыдущий тег образа, плюс reload и перезапуск воркеров. Код откатывается легко, схема — нет, поэтому миграции держат совместимыми в обе стороны, а необратимые изменения выносят в отдельный поздний релиз. Откат должен быть отрепетирован, а не изобретён в инциденте.</span></li>
+      <li><span class="qq">Как удалить колонку без простоя?</span><span class="aa">В три релиза: сначала код перестаёт её читать и писать, затем убеждаемся по логам и метрикам, что обращений нет, и только третьим релизом выполняется миграция удаления. Одновременный выкат невозможен, потому что во время деплоя часть экземпляров работает по-старому.</span></li>
+      <li><span class="qq">Почему миграции нельзя запускать из entrypoint приложения?</span><span class="aa">Потому что при нескольких экземплярах они стартуют одновременно: гонка за блокировку таблицы миграций, а при неудачном стечении — частично применённая схема. Миграции выполняются отдельным разовым шагом пайплайна или отдельной job перед выкаткой.</span></li>
+      <li><span class="qq">Как добавить индекс на большой таблице в проде?</span><span class="aa">В PostgreSQL — <code>CREATE INDEX CONCURRENTLY</code> вне транзакции: он не блокирует запись, но выполняется дольше и может завершиться неудачно, оставив невалидный индекс. Дополнительно ставятся <code>lock_timeout</code> и окно вне пика, а прогресс контролируется по нагрузке и лагу реплик.</span></li>
+      <li><span class="qq">Где хранить секреты и как не оставить их в образе?</span><span class="aa">Значения приходят из секрет-хранилища платформы или CI в переменные окружения контейнера. При сборке используются BuildKit-секреты: они монтируются только на время инструкции и не остаются в слоях. Проверка — <code>docker history</code> и просмотр переменных запущенного контейнера.</span></li>
+      <li><span class="qq">Как организовать ротацию секретов?</span><span class="aa">Так, чтобы она не требовала релиза: значение читается из окружения при старте, замена сводится к обновлению секрета и перезапуску процессов. Для БД удобна схема с двумя действующими учётными данными на время перехода. Если смена пароля означает правку файлов на пяти серверах, её не будут делать.</span></li>
+      <li><span class="qq">Чем управлять воркерами и зачем им лимиты?</span><span class="aa">Supervisor, systemd или отдельные контейнеры/деплойменты — что-то обязано перезапускать упавший процесс. Лимиты по числу задач, памяти и времени жизни обязательны: PHP не рассчитан на бесконечно живущие процессы, накапливаются утечки, отваливаются соединения, а после деплоя процесс продолжает работать на старом коде.</span></li>
+      <li><span class="qq">Что происходит с воркером при деплое?</span><span class="aa">Ему посылается SIGTERM: обработчик выставляет флаг, воркер дорабатывает текущее сообщение, подтверждает его и завершается, а супервизор поднимает новый процесс уже с новым кодом. Если процесс убить жёстко, сообщение вернётся в очередь и придёт повторно — поэтому обработчик должен быть идемпотентным.</span></li>
+      <li><span class="qq">Почему логи нужно писать в stdout?</span><span class="aa">Потому что файл внутри контейнера исчезает вместе с ним и не виден сборщику. Поток подхватывается платформой и уезжает в общее хранилище. Формат — структурированный JSON с идентификатором запроса: по нему собирается вся история, включая фоновую обработку.</span></li>
+      <li><span class="qq">Чем liveness отличается от readiness?</span><span class="aa">Liveness отвечает «процесс жив» и при провале перезапускает контейнер — поэтому в нём не должно быть проверок внешних зависимостей, иначе отказ базы перезапустит весь кластер. Readiness отвечает «можно давать трафик» и при провале просто выводит экземпляр из балансировки — здесь критичные зависимости проверять уместно.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Когда Kubernetes не нужен?</span><span class="aa">Когда сервисов единицы, команда одна, а нагрузка ровная: кластер сам становится системой, которую нужно обновлять, мониторить и чинить, и стоит дороже, чем экономит. Те же задачи закрываются compose с внешним балансировщиком, systemd или атомарной выкладкой. Оправдан он при десятках сервисов, нескольких командах и потребности в единой платформе.</span></li>
+      <li><span class="qq">Что происходит с запросами при обновлении Deployment?</span><span class="aa">Поды заменяются постепенно: новый поднимается, проходит readiness, только потом старый получает SIGTERM. Между исключением из балансировки и остановкой процесса возможна гонка, поэтому нужны preStop-пауза и достаточный grace period. При <code>maxUnavailable: 0</code> ёмкость не проседает во время выкладки.</span></li>
+      <li><span class="qq">Зачем preStop и terminationGracePeriodSeconds?</span><span class="aa">Первое даёт паузу между решением остановить под и отправкой сигнала — за это время он успевает выйти из балансировки, и текущие запросы не обрываются. Второе задаёт, сколько ждать завершения процесса: для веб-контейнера хватает секунд, для воркера нужно время доработать задачу, иначе она будет убита и придёт повторно.</span></li>
+      <li><span class="qq">Как подобрать <code>pm.max_children</code>?</span><span class="aa">Измерить реальный средний RSS процесса под нагрузкой, вычесть из доступной памяти потребление ОС и запас, разделить. Больше — бессмысленно: сервер уйдёт в своп или процессы начнёт убивать OOM. Если процессов не хватает, правильнее сокращать время запроса, а не увеличивать их число.</span></li>
+      <li><span class="qq">Чем OOMKilled отличается от превышения <code>memory_limit</code> PHP?</span><span class="aa"><code>memory_limit</code> — лимит одного скрипта: PHP аккуратно завершает его фатальной ошибкой, остальные процессы работают. OOMKilled — лимит контейнера или узла: процесс убивает ядро без предупреждения и без записи в лог приложения. Поэтому <code>memory_limit</code> обязан быть заметно ниже лимита контейнера.</span></li>
+      <li><span class="qq">Что такое CPU-троттлинг и почему он коварнее OOM?</span><span class="aa">При достижении CPU-лимита процессу принудительно урезают время выполнения. Он не падает — он замедляется, поэтому симптом выглядит как «медленный код», а не как отказ. Виден в счётчике throttled в cgroup, часто при невысокой средней утилизации. Для сервисов с требованиями к задержке лимит ставят с запасом.</span></li>
+      <li><span class="qq">Чем requests отличается от limits?</span><span class="aa">Requests — то, что резервируется на узле и используется планировщиком при размещении; limits — жёсткий потолок. Requests сильно ниже реального потребления приводят к переподписке узла и деградации соседей, а слишком высокие — к простою ресурсов. Для памяти в критичных сервисах их часто делают равными ради предсказуемости.</span></li>
+      <li><span class="qq">Что можно и чего нельзя автомасштабировать?</span><span class="aa">Масштабируется stateless-часть: приложение и воркеры. Не масштабируются автоматически базы и всё, что держит состояние. Отдельная ловушка — масштабирование приложения при упёртой базе: больше подов означает больше соединений и ускоряет её падение, поэтому пулер соединений и лимит на пул обязательны.</span></li>
+      <li><span class="qq">Реплика заменяет бэкап?</span><span class="aa">Нет. Реплика защищает от отказа железа, но мгновенно повторяет логические ошибки: ошибочный DELETE или неудачную миграцию. Бэкап защищает от ошибок и шифровальщика, но только если лежит отдельно, с ограниченным доступом, и если восстановление регулярно проверяется на реальных данных.</span></li>
+      <li><span class="qq">Что такое RPO и RTO и как понять, что они выполнимы?</span><span class="aa">RPO — допустимый объём потерянных данных, он задаёт частоту бэкапов и режим репликации; RTO — допустимое время восстановления, оно задаёт необходимость горячего резерва. Проверяются единственным способом: настоящим восстановлением на отдельный сервер с замером времени. Незамеренный RTO — это не цель, а надежда.</span></li>
+      <li><span class="qq">Что даёт PITR?</span><span class="aa">Восстановление на произвольный момент времени за счёт хранения журналов транзакций поверх базового бэкапа. Это единственный способ откатиться на минуту до ошибочного удаления, не теряя всё, что произошло после последнего полного дампа. Цена — хранение журналов и обязательные репетиции: процедура сложнее обычного восстановления.</span></li>
+      <li><span class="qq">Зачем нужен IaC и что такое дрейф конфигурации?</span><span class="aa">IaC даёт воспроизводимость, ревью и историю изменений инфраструктуры, а также переживает уход людей. Дрейф — расхождение между описанным и реальным состоянием из-за ручных правок. Лечится регулярным <code>plan</code> в CI, показывающим отличия, и запретом ручных изменений с явной аварийной процедурой.</span></li>
+      <li><span class="qq">Почему состояние Terraform хранят удалённо с блокировкой?</span><span class="aa">Потому что оно описывает соответствие кода реальным ресурсам. Локальный файл теряется вместе с ноутбуком и не виден коллегам, а без блокировки два одновременных <code>apply</code> приводят к рассинхронизации и повреждению состояния. Плюс в состоянии могут быть чувствительные значения — доступ к нему ограничивается.</span></li>
+      <li><span class="qq">Почему нельзя запускать контейнер от root?</span><span class="aa">Потому что при выходе за границу контейнера — уязвимость ядра, примонтированный сокет Docker, лишние capabilities — root внутри становится root на узле. Non-root, запрет эскалации привилегий, read-only корневая ФС и сброшенные capabilities ограничивают компрометацию одним процессом.</span></li>
+      <li><span class="qq">В чём риск цепочки поставки в CI?</span><span class="aa">Сборочный агент имеет доступ к коду, registry и проду одновременно: скомпрометированный пайплайн или подменённое стороннее действие выкатывает что угодно в обход ревью. Меры: минимальные права токенов, фиксация версий действий и базовых образов по дайджесту, запрет привилегированных пайплайнов из форков, подпись артефактов.</span></li>
+      <li><span class="qq">Как поддерживать образы и зависимости в актуальном состоянии?</span><span class="aa">Регламентом, а не порывами: автоматические PR на обновление зависимостей, регулярная пересборка образа с обновлённым базовым слоем, сканирование в пайплайне с блокировкой на критичных уязвимостях. Редкие большие обновления рискованнее частых мелких — именно поэтому «работает — не трогаем» со временем становится дороже.</span></li>
+      <li><span class="qq">Как устроена канареечная выкладка?</span><span class="aa">Новая версия получает малую долю трафика, метрики по версиям сравниваются автоматически: доля успешных ответов, задержка, ошибки. При превышении порога происходит откат, при здоровых метриках доля растёт по ступеням. Условие применимости — метрики с разбивкой по версии и достаточный трафик, чтобы разница была статистически видна.</span></li>
+      <li><span class="qq">Зачем feature flags, если есть откат?</span><span class="aa">Флаг отделяет выкладку кода от включения функции: выключить проблемную возможность можно за секунды, не откатывая весь релиз с остальными изменениями. Плюс появляется постепенное включение по сегментам. Цена — ветвление логики и обязательная уборка флагов, иначе они превращаются в неуправляемую матрицу состояний.</span></li>
+      <li><span class="qq">После релиза выросла доля ошибок. Ваши действия?</span><span class="aa">Сначала восстановить — откатить релиз или выключить функцию флагом; расследование ведётся на здоровой системе. Затем сравнить метрики до и после, найти конкретное изменение, воспроизвести на стенде. Отдельно разбирается, почему узнали от пользователей, а не от мониторинга: обычно это ценнее самой причины.</span></li>
+      <li><span class="qq">Как понять, что процесс доставки зрелый?</span><span class="aa">По четырём числам: как часто выкатываем, сколько времени проходит от коммита до прода, какая доля релизов приводит к сбою и за сколько восстанавливаемся. Зрелость — это частые мелкие релизы, короткое время доставки, низкая доля неудач и быстрое восстановление. Это же лучший набор аргументов в разговоре с бизнесом.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Инфраструктура — навык моторный: она выучивается тем, что вы что-то ломали и чинили. Каждое задание оставляет артефакт: конфиг, пайплайн, замер или отчёт, который можно показать на собеседовании.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Четыре поломки на стенде</h4>
+    <p>На тестовом сервере последовательно устройте: заполнение диска, неверные права на каталог кэша, занятый порт, недоступную базу. Каждый раз найдите причину только по логам и командам диагностики.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица «симптом → где увидел → чем починил» и засечённое время на каждый случай.</div>
+
+    <h4>2. Первый Dockerfile</h4>
+    <p>Соберите образ приложения, добавьте <code>.dockerignore</code>, затем уменьшите размер: alpine-базис, удаление инструментов сборки, правильный порядок слоёв. Замерьте размер и время повторной сборки до и после.</p>
+    <div class="box task"><span class="lbl">Результат</span>Два числа: размер образа и время пересборки при правке одной строки кода.</div>
+
+    <h4>3. Проект одной командой</h4>
+    <p>Напишите compose с приложением, nginx, БД, Redis и воркером, с healthcheck и ожиданием готовности базы. Проверьте на чистой машине: клонирование, одна команда, работающий проект.</p>
+    <div class="box task"><span class="lbl">Результат</span>README из трёх строк и подтверждение от коллеги, что у него всё поднялось без вопросов.</div>
+
+    <h4>4. Настройка nginx и FPM</h4>
+    <p>Настройте корень на <code>public/</code>, отдачу статики, лимит размера тела и таймауты. Затем намеренно получите 413 и 504 и убедитесь, что понимаете, какая настройка за это отвечает.</p>
+    <div class="box task"><span class="lbl">Результат</span>Конфиг с комментариями и проверка, что <code>/.env</code> недоступен снаружи.</div>
+
+    <h4>5. Конфигурация через окружение</h4>
+    <p>Вынесите настройки в переменные, добавьте <code>.env.example</code>, сделайте так, чтобы отсутствие обязательной переменной роняло приложение на старте с внятным сообщением. Проверьте историю git на утечки.</p>
+    <div class="box task"><span class="lbl">Результат</span>Приложение, которое невозможно запустить с неполной конфигурацией, и чистая история.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Production-образ</h4>
+    <p>Переведите сборку на multi-stage со стадиями dev и prod: без dev-зависимостей, с оптимизированным автозагрузчиком, non-root пользователем и healthcheck. Сравните с исходным образом.</p>
+    <div class="box task"><span class="lbl">Результат</span>Таблица «размер, время сборки, число пакетов, найденные уязвимости» до и после.</div>
+
+    <h4>7. Пайплайн за пять минут</h4>
+    <p>Соберите CI: анализ, тесты с реальной БД, сборка образа с тегом по коммиту, аудит зависимостей. Затем оптимизируйте: кэш зависимостей и слоёв, параллельные шаги, отказ от покрытия там, где оно не нужно.</p>
+    <div class="box task"><span class="lbl">Результат</span>Время прогона до и после оптимизации и зелёный пайплайн на защищённой ветке.</div>
+
+    <h4>8. Выкладка без простоя и откат</h4>
+    <p>Реализуйте атомарный деплой со сбросом opcache, остановкой воркеров, health-проверкой и хранением последних релизов. Затем прогоняйте нагрузку во время выкладки и замерьте число ошибок.</p>
+    <div class="box task"><span class="lbl">Результат</span>Ноль (или почти ноль) ошибок под нагрузкой при релизе и откат, выполненный за минуту по секундомеру.</div>
+
+    <h4>9. Удаление колонки в три релиза</h4>
+    <p>Проведите на тестовой копии полный цикл: код перестаёт использовать колонку, наблюдение по логам, миграция удаления. Отдельно проверьте, что произойдёт при попытке сделать это одним релизом.</p>
+    <div class="box task"><span class="lbl">Результат</span>Описанная процедура и воспроизведённая ошибка «одним релизом» — лучшее объяснение, зачем нужны три.</div>
+
+    <h4>10. Воркер, который корректно умирает</h4>
+    <p>Настройте воркера под супервизором с обработкой SIGTERM и лимитами по памяти, времени и числу задач. Пошлите сигнал во время обработки сообщения и убедитесь, что оно не потерялось и не обработалось дважды.</p>
+    <div class="box task"><span class="lbl">Результат</span>Демонстрация: остановка в середине обработки не приводит ни к потере, ни к дублю.</div>
+
+    <h4>11. Наблюдаемость окружения</h4>
+    <p>Переведите логи в stdout в JSON, разделите liveness и readiness, соберите метрики занятости пула FPM и длины очереди, настройте один осмысленный алерт с runbook.</p>
+    <div class="box task"><span class="lbl">Результат</span>Дашборд, по которому за 30 секунд видно состояние окружения, и алерт, который вы проверили искусственной поломкой.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Расчёт ёмкости и нагрузочный тест</h4>
+    <p>Измерьте средний RSS процесса, пересчитайте <code>max_children</code> и лимиты, затем прогоните нагрузку и найдите точку насыщения. Сравните расчёт с наблюдаемым поведением и объясните расхождение.</p>
+    <div class="box task"><span class="lbl">Результат</span>Обоснованная конфигурация пула и график «RPS — задержка» с отмеченным пределом.</div>
+
+    <h4>13. Учения по восстановлению</h4>
+    <p>Восстановите боевой бэкап на отдельный сервер с нуля, замерьте время, проверьте полноту данных. Сравните с заявленным RTO и зафиксируйте расхождение.</p>
+    <div class="box task"><span class="lbl">Результат</span>Протокол учений: время, найденные проблемы, изменения в процедуре. Самый ценный документ из всех пятнадцати.</div>
+
+    <h4>14. Безопасная раскатка</h4>
+    <p>Внедрите канареечную выкладку или feature flag с метриками по версиям и автоматическим откатом по превышению доли ошибок. Проверьте на намеренно сломанной версии.</p>
+    <div class="box task"><span class="lbl">Результат</span>Подтверждённый автоматический откат и время, за которое он сработал.</div>
+
+    <h4>15. Аудит инфраструктуры</h4>
+    <p>Пройдите по чек-листу готовности: доступы, сеть, права контейнеров, секреты, сканирование образов, обновления, бэкапы. Оформите находки с приоритетом и оценкой трудозатрат.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ на 2–3 страницы, пригодный для обсуждения с руководством, и три закрытые находки из верха списка.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Тема осваивается только руками: нужен стенд, который не жалко сломать, — виртуальная машина, домашний сервер или дешёвый VPS.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Сервер, nginx, контейнеры</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Состав боевого окружения и границы между компонентами, коды ошибок и чей это лог, Linux-минимум и диагностика, права, systemd, nginx и php-fpm, opcache, образы и слои Docker, compose, конфигурация через окружение.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: четыре поломки, первый Dockerfile, проект одной командой, настройка nginx и FPM, конфигурация через переменные.</li>
+      <li>Развернуть проект на чистом VPS вручную, без готовых скриптов, — один раз это стоит сделать.</li>
+      <li>Проверить свой рабочий проект: доступен ли <code>/.env</code>, есть ли ротация логов, включён ли opcache.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Проект, поднимающийся одной командой локально и развёрнутый вручную на сервере, с осознанной конфигурацией nginx и FPM.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что делает nginx, а что php-fpm?</li>
+      <li>Чем 502 отличается от 504 и 500?</li>
+      <li>Чем <code>reload</code> отличается от <code>restart</code>?</li>
+      <li>Почему после деплоя работает старый код?</li>
+      <li>Почему важен порядок инструкций в Dockerfile?</li>
+      <li>Зачем нужен healthcheck в compose?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Сборка и пайплайн</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Multi-stage сборка, отличия prod-образа, неизменяемые теги, кэш слоёв и зависимостей, этапы пайплайна и их стоимость, сервисные контейнеры для интеграционных тестов, аудит зависимостей, продвижение одного артефакта по стендам.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6 и 7: production-образ и пайплайн с оптимизацией времени прогона.</li>
+      <li>Прогнать сканер уязвимостей по своему образу и разобрать первые десять находок.</li>
+      <li>Измерить, сколько сейчас занимает путь от коммита до прода, и найти самый долгий шаг.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Образ в несколько раз меньше исходного и пайплайн, который проходит за минуты и ловит проблемы до прода.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Зачем нужна multi-stage сборка?</li>
+      <li>Чем prod-образ отличается от dev?</li>
+      <li>Почему нельзя выкатывать <code>latest</code>?</li>
+      <li>Как кэшировать зависимости в CI?</li>
+      <li>Почему в прод едет тот же артефакт, что тестировался?</li>
+      <li>В каком порядке идут этапы пайплайна и почему?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Релиз, миграции, фон</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Стратегии выкладки, атомарное переключение, сброс opcache и перезапуск воркеров, откат, совместимость миграций, безопасные изменения схемы и индексы без блокировки, секреты и ротация, управление воркерами, сигналы и лимиты, логи в stdout, liveness и readiness.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 8–11: выкладка без простоя с откатом, удаление колонки в три релиза, корректно завершающийся воркер, наблюдаемость окружения.</li>
+      <li>Прогнать нагрузку во время деплоя и посчитать число ошибок — это и есть проверка «без простоя».</li>
+      <li>Проверить, что произойдёт с фоновой обработкой при перезапуске: потеря, дубль или корректная доработка.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Релиз без ошибок под нагрузкой, откат за минуту, воркеры, переживающие деплой, и алерт, который вы проверили искусственной поломкой.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как выкатить релиз без простоя?</li>
+      <li>Что ломается при деплое чаще всего?</li>
+      <li>Как удалить колонку без простоя?</li>
+      <li>Почему миграции нельзя запускать из entrypoint?</li>
+      <li>Что происходит с воркером при деплое?</li>
+      <li>Чем liveness отличается от readiness?</li>
+      <li>Как не оставить секрет в образе?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Ресурсы, устойчивость, процесс</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Kubernetes и границы его применимости, пробы и корректная остановка, расчёт ёмкости, requests и limits, OOM и троттлинг, бэкапы, PITR, RPO и RTO, IaC и дрейф, безопасность инфраструктуры и цепочки поставки, канареечная раскатка, флаги, инциденты и разборы.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: расчёт ёмкости и нагрузочный тест, учения по восстановлению, безопасная раскатка, аудит инфраструктуры.</li>
+      <li>Посчитать четыре метрики доставки для своей команды: частота релизов, время от коммита до прода, доля неудачных релизов, время восстановления.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд на ответ, обязательно с числами.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Обоснованная конфигурация ресурсов, протокол учений по восстановлению, работающий автоматический откат и аудит с закрытыми находками верхнего приоритета.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Когда Kubernetes не нужен?</li>
+      <li>Как подобрать <code>pm.max_children</code>?</li>
+      <li>Чем OOMKilled отличается от <code>memory_limit</code>?</li>
+      <li>Почему CPU-троттлинг коварнее отказа?</li>
+      <li>Реплика заменяет бэкап?</li>
+      <li>Как проверить, что RTO выполним?</li>
+      <li>Почему контейнер не должен работать от root?</li>
+      <li>Как понять, что процесс доставки зрелый?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы про инфраструктуру</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Отвечайте механизмом, а не названием.</strong> «У нас Docker и GitLab CI» — ни о чём. «Собираем multi-stage образ с тегом по коммиту, он проходит стенды без пересборки, выкатываем rolling с health-проверкой, откат — предыдущий тег» — это ответ.</li>
+      <li><strong>Называйте числа.</strong> Сколько узлов, сколько процессов, сколько идёт пайплайн, сколько занимает откат, когда последний раз проверяли восстановление. Числа мгновенно отличают личный опыт от прочитанного.</li>
+      <li><strong>Говорите о последствиях ошибок.</strong> Сильный признак опыта — знать, что ломается: проверка базы в liveness кладёт кластер, миграция в entrypoint даёт гонку, отсутствие сброса opcache даёт две версии кода одновременно.</li>
+      <li><strong>Не защищайте лишнюю сложность.</strong> «Kubernetes нам не нужен, четыре сервера и compose закрывают задачу, а кластер пришлось бы обслуживать» — это сильная позиция, а не слабость.</li>
+      <li><strong>Разделяйте своё и командное.</strong> Честное «пайплайн настраивал не я, но я его читаю и правлю, вот что делал сам» лучше присвоенных заслуг, которые вскрываются уточняющим вопросом.</li>
+      <li><strong>Держите наготове историю инцидента.</strong> Что сломалось, как обнаружили, как чинили, что изменили после. Это самый убедительный формат ответа: он показывает и технику, и мышление, и отношение к ошибкам.</li>
+      <li><strong>Приносите артефакты.</strong> Конфиг пайплайна, скрипт деплоя, протокол учений по восстановлению, отчёт аудита. Они переводят разговор из «что вы знаете» в «что вы сделали».</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Инфраструктура и деплой» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>

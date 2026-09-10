@@ -1,0 +1,1585 @@
+
+<div class="layout">
+
+<header class="hero">
+  <p class="eyebrow">Конспект · проектирование кода · рефакторинг</p>
+  <h1>Паттерны и архитектура кода</h1>
+  <p class="lead">Архитектура кода отвечает на один вопрос: сколько будет стоить следующее изменение. Не «красиво ли написано» и не «сколько паттернов применено» — а получится ли через год добавить новый способ оплаты, не переписав половину системы, и сможет ли новый человек внести правку, не сломав то, о чём он не знал.</p>
+  <p class="lead">Отсюда две противоположные ошибки. Первая — не проектировать вовсе: логика расползается по контроллерам, один класс знает про всё, любое изменение задевает десяток файлов. Вторая, более обидная, — проектировать про запас: пять уровней абстракции, интерфейсы с единственной реализацией, фабрики фабрик. Обе ошибки дают одинаковый результат — изменения становятся дорогими, только по разным причинам.</p>
+  <p class="lead">Конспект идёт от принципов к границам: связность и связанность, SOLID и повседневные паттерны → композиция, тактический DDD, порты и адаптеры, рефакторинг → модульные границы, технический долг, работа с легаси и, отдельным разделом, когда абстракцию применять <em>не</em> надо. Смежные темы: <a href="php.html">PHP</a>, <a href="system-design.html">System Design</a>, <a href="testing.html">тестирование</a>, <a href="symfony.html">Symfony</a>, <a href="laravel.html">Laravel</a>.</p>
+
+  <div class="audience">
+    <div class="aud j"><b>Junior</b><span>Связность и связанность, SOLID, повседневные паттерны, запахи кода и антипаттерны, слои приложения.</span></div>
+    <div class="aud m"><b>Middle</b><span>Композиция и внедрение зависимостей, продвинутые паттерны, тактический DDD, порты и адаптеры, разделение чтения и записи, техника рефакторинга.</span></div>
+    <div class="aud s"><b>Senior</b><span>Модульные границы, технический долг, легаси и антикоррупционный слой, цена абстракции, архитектура и команда.</span></div>
+  </div>
+
+  <p class="stats">
+    <span>Тематических блоков: <i>16</i></span>
+    <span>Блоков кода: <i>21</i></span>
+    <span>Сравнительных таблиц: <i>19</i></span>
+    <span>Вопросов с ответами: <i>60</i></span>
+    <span>Практических заданий: <i>15</i></span>
+  </p>
+</header>
+
+<nav class="toc" aria-label="Оглавление">
+  <h2>Оглавление</h2>
+
+  <p class="grp j">Junior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#why">Зачем архитектура кода</a></li>
+    <li><span class="tree">├─</span> <a href="#solid">SOLID на практике</a></li>
+    <li><span class="tree">├─</span> <a href="#patterns">Повседневные паттерны</a></li>
+    <li><span class="tree">├─</span> <a href="#smells">Запахи и антипаттерны</a></li>
+    <li><span class="tree">├─</span> <a href="#layers">Слои приложения</a></li>
+    <li><span class="tree">└─</span> <a href="#junior-checklist">Junior checklist</a></li>
+  </ul>
+
+  <p class="grp m">Middle</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#composition">Композиция и зависимости</a></li>
+    <li><span class="tree">├─</span> <a href="#patterns-adv">Паттерны посложнее</a></li>
+    <li><span class="tree">├─</span> <a href="#ddd">Тактический DDD</a></li>
+    <li><span class="tree">├─</span> <a href="#hexagonal">Порты и адаптеры</a></li>
+    <li><span class="tree">├─</span> <a href="#readwrite">Чтение и запись</a></li>
+    <li><span class="tree">├─</span> <a href="#refactoring">Техника рефакторинга</a></li>
+    <li><span class="tree">└─</span> <a href="#middle-checklist">Middle checklist</a></li>
+  </ul>
+
+  <p class="grp s">Senior</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#boundaries">Модульные границы</a></li>
+    <li><span class="tree">├─</span> <a href="#debt">Технический долг</a></li>
+    <li><span class="tree">├─</span> <a href="#legacy">Легаси-архитектура</a></li>
+    <li><span class="tree">├─</span> <a href="#cost">Цена абстракции</a></li>
+    <li><span class="tree">├─</span> <a href="#team">Архитектура и команда</a></li>
+    <li><span class="tree">└─</span> <a href="#senior-checklist">Senior checklist</a></li>
+  </ul>
+
+  <p class="grp">Справочник</p>
+  <ul>
+    <li><span class="tree">├─</span> <a href="#tables">Сравнительные таблицы</a></li>
+    <li><span class="tree">├─</span> <a href="#cheatsheet">Задача → паттерн</a></li>
+    <li><span class="tree">├─</span> <a href="#interview">Вопросы на собеседовании</a></li>
+    <li><span class="tree">├─</span> <a href="#practice">Практические задания</a></li>
+    <li><span class="tree">└─</span> <a href="#plan">План подготовки на 4 недели</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ==================== JUNIOR ==================== -->
+<section class="level lvl-j" id="junior">
+  <div class="level-head">
+    <p class="kicker">Уровень 01 · основы</p>
+    <h2>Junior: принципы, паттерны, запахи</h2>
+    <p>На этом уровне не ждут знания двадцати трёх паттернов по именам. Ждут понимания, зачем вообще разделять код на части: что такое связность и связанность, почему класс на тысячу строк — проблема и почему интерфейс иногда нужен, а иногда это лишний файл.</p>
+  </div>
+
+  <!-- 1 -->
+  <article class="card" id="why">
+    <p class="path">junior / принципы</p>
+    <div class="card-top"><h3>Зачем архитектура кода</h3><span class="badge b-1">База</span></div>
+    <p>Вся тема сводится к двум свойствам. <strong>Связность</strong> (cohesion) — насколько части одного модуля относятся к одной задаче: высокая связность хороша. <strong>Связанность</strong> (coupling) — насколько модули зависят друг от друга: низкая связанность хороша. Всё остальное — SOLID, паттерны, слои — это способы достичь именно этого.</p>
+
+    <div class="formula">Цена изменения ≈ число мест, которые придётся тронуть × риск в каждом<span>Хорошая архитектура уменьшает первый множитель; тесты — второй</span></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Одна и та же логика: высокая связанность и низкая</span></div><pre><code>&lt;?php
+<span class="cm">// Высокая связанность: класс знает про SMTP, про структуру таблицы, про формат письма.</span>
+<span class="cm">// Чтобы добавить отправку в мессенджер, придётся править этот класс.</span>
+<span class="kw">final class</span> <span class="nm">OrderService</span>
+{
+    <span class="kw">public function</span> <span class="fn">complete</span>(<span class="nm">int</span> $orderId): <span class="nm">void</span>
+    {
+        $pdo = <span class="kw">new</span> <span class="nm">PDO</span>(DB_DSN, DB_USER, DB_PASS);
+        $pdo-&gt;<span class="fn">exec</span>(<span class="st">"UPDATE orders SET status='done' WHERE id={$orderId}"</span>);
+
+        $mailer = <span class="kw">new</span> <span class="nm">SmtpMailer</span>(<span class="st">'smtp.example.com'</span>, 587);
+        $mailer-&gt;<span class="fn">send</span>($to, <span class="st">'Заказ выполнен'</span>, <span class="st">"Ваш заказ #{$orderId} готов"</span>);
+    }
+}
+
+<span class="cm">// Низкая связанность: класс знает только про интерфейсы.</span>
+<span class="cm">// Новый канал уведомлений — новый класс, этот файл не меняется.</span>
+<span class="kw">final class</span> <span class="nm">CompleteOrder</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">OrderRepository</span> $orders,
+        <span class="kw">private readonly</span> <span class="nm">Notifier</span> $notifier,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">OrderId</span> $id): <span class="nm">void</span>
+    {
+        $order = $this-&gt;orders-&gt;<span class="fn">get</span>($id);
+        $order-&gt;<span class="fn">complete</span>();                 <span class="cm">// правило перехода живёт в самом заказе</span>
+        $this-&gt;orders-&gt;<span class="fn">save</span>($order);
+
+        $this-&gt;notifier-&gt;<span class="fn">notify</span>(<span class="kw">new</span> <span class="nm">OrderCompleted</span>($id));
+    }
+}</code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 1 · признаки, по которым видно качество структуры</caption>
+      <thead><tr><th>Вопрос</th><th>Хорошо</th><th>Плохо</th></tr></thead>
+      <tbody>
+        <tr><td>Сколько файлов правится при типовом изменении?</td><td>Один-два</td><td>Десяток в разных слоях</td></tr>
+        <tr><td>Понятно ли из имени, что внутри?</td><td>Да, класс делает одно</td><td><code>Helper</code>, <code>Manager</code>, <code>Utils</code></td></tr>
+        <tr><td>Можно ли протестировать без базы и сети?</td><td>Да, зависимости приходят снаружи</td><td>Нет, всё создаётся внутри</td></tr>
+        <tr><td>Что нужно знать, чтобы внести правку?</td><td>Один модуль</td><td>Половину системы</td></tr>
+        <tr><td>Сколько причин у класса меняться?</td><td>Одна</td><td>Формат письма, схема БД и бизнес-правило сразу</td></tr>
+        <tr><td>Новый вариант поведения — это…</td><td>Новый класс</td><td>Новое условие в существующем <code>if</code></td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Архитектура — это не то, что делается один раз в начале. Это накопленный результат ежедневных мелких решений: куда положить метод, создать ли интерфейс, добавить ли ещё одно условие в существующий класс. Именно поэтому она важна для junior не меньше, чем для senior: большие проблемы вырастают из сотен маленьких решений, а не из одной ошибки на старте.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое связность и связанность?</b><br>Связность — насколько всё внутри модуля относится к одной задаче; её хотят высокой. Связанность — насколько модули зависят друг от друга; её хотят низкой. Практический критерий: при типовом изменении правится один модуль, а не десяток файлов в разных слоях. Все принципы проектирования — по сути разные способы добиться этих двух свойств.</div>
+  </article>
+
+  <!-- 2 -->
+  <article class="card" id="solid">
+    <p class="path">junior / принципы</p>
+    <div class="card-top"><h3>SOLID на практике</h3><span class="badge b-1">База</span></div>
+    <p>SOLID спрашивают почти на каждом собеседовании, и почти всегда получают пересказ определений. Ценность ответа появляется, когда вы можете показать нарушение в реальном коде и объяснить, чем оно вредит.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 2 · пять принципов и как выглядит нарушение</caption>
+      <thead><tr><th>Принцип</th><th>Смысл</th><th>Как выглядит нарушение</th></tr></thead>
+      <tbody>
+        <tr><td>Единственная ответственность</td><td>У класса одна причина меняться</td><td>Класс парсит файл, считает скидку и шлёт письмо</td></tr>
+        <tr><td>Открытость/закрытость</td><td>Новое поведение — новым кодом, не правкой старого</td><td>Растущий <code>switch</code> по типу при каждом новом варианте</td></tr>
+        <tr><td>Подстановка Лисков</td><td>Наследник не ломает ожиданий от базового типа</td><td>Наследник бросает исключение там, где база возвращает значение</td></tr>
+        <tr><td>Разделение интерфейса</td><td>Клиент не зависит от методов, которые не использует</td><td>Интерфейс на 15 методов, реализации кидают «не поддерживается»</td></tr>
+        <tr><td>Инверсия зависимостей</td><td>Зависимость от абстракции, а не от реализации</td><td>Сервис создаёт внутри себя конкретный HTTP-клиент</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Открытость/закрытость: самый практичный из пяти</span></div><pre><code>&lt;?php
+<span class="cm">// Нарушение: каждый новый способ доставки — правка этого метода.</span>
+<span class="cm">// Риск сломать существующее при добавлении нового.</span>
+<span class="kw">public function</span> <span class="fn">cost</span>(<span class="nm">Order</span> $order, <span class="nm">string</span> $type): <span class="nm">Money</span>
+{
+    <span class="kw">return match</span> ($type) {
+        <span class="st">'pickup'</span>  =&gt; <span class="nm">Money</span>::<span class="fn">zero</span>(),
+        <span class="st">'courier'</span> =&gt; <span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'300.00'</span>),
+        <span class="st">'post'</span>    =&gt; <span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'150.00'</span>)-&gt;<span class="fn">plus</span>($order-&gt;<span class="fn">weightFee</span>()),
+        <span class="cm">// ...и так до пятнадцати вариантов</span>
+    };
+}
+
+<span class="cm">// Решение: поведение выносится в отдельные реализации одного контракта</span>
+<span class="kw">interface</span> <span class="nm">DeliveryMethod</span>
+{
+    <span class="kw">public function</span> <span class="fn">supports</span>(<span class="nm">Order</span> $order): <span class="nm">bool</span>;
+    <span class="kw">public function</span> <span class="fn">cost</span>(<span class="nm">Order</span> $order): <span class="nm">Money</span>;
+}
+
+<span class="kw">final class</span> <span class="nm">CourierDelivery</span> <span class="kw">implements</span> <span class="nm">DeliveryMethod</span>
+{
+    <span class="kw">public function</span> <span class="fn">supports</span>(<span class="nm">Order</span> $order): <span class="nm">bool</span> { <span class="kw">return</span> $order-&gt;<span class="fn">isInCity</span>(); }
+    <span class="kw">public function</span> <span class="fn">cost</span>(<span class="nm">Order</span> $order): <span class="nm">Money</span> { <span class="kw">return</span> <span class="nm">Money</span>::<span class="fn">rub</span>(<span class="st">'300.00'</span>); }
+}
+
+<span class="cm">// Новый способ доставки = новый класс. Существующий код не трогается.</span>
+<span class="kw">final class</span> <span class="nm">DeliveryCalculator</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private iterable</span> $methods) {}   <span class="cm">// контейнер соберёт все реализации</span>
+
+    <span class="kw">public function</span> <span class="fn">cost</span>(<span class="nm">Order</span> $order, <span class="nm">DeliveryType</span> $type): <span class="nm">Money</span>
+    {
+        <span class="kw">foreach</span> ($this-&gt;methods <span class="kw">as</span> $method) {
+            <span class="kw">if</span> ($method-&gt;<span class="fn">supports</span>($order)) { <span class="kw">return</span> $method-&gt;<span class="fn">cost</span>($order); }
+        }
+
+        <span class="kw">throw new</span> <span class="nm">NoDeliveryAvailable</span>($order-&gt;id);
+    }
+}</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Применять принцип открытости/закрытости заранее, «на всякий случай»: интерфейс с единственной реализацией и фабрика к нему для кода, который не менялся два года. Правило практичнее формулируется так: первый вариант пишем прямо, при появлении <em>второго</em> — выделяем абстракцию. Два случая уже показывают, где проходит настоящая граница изменчивости, а один — нет.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Расскажите про SOLID с примером нарушения.</b><br>Сильный ответ — не пересказ, а живой пример. Например, единственная ответственность: класс, который и достаёт данные из базы, и считает скидку, и формирует письмо, меняется по трём независимым причинам, и правка формата письма способна сломать расчёт. Разделение даёт три класса, каждый с одной причиной меняться и с быстрыми тестами. Хорошо добавить и обратную сторону: делить до бесконечности тоже вредно — критерий в том, меняются ли части независимо.</div>
+  </article>
+
+  <!-- 3 -->
+  <article class="card" id="patterns">
+    <p class="path">junior / паттерны</p>
+    <div class="card-top"><h3>Повседневные паттерны</h3><span class="badge b-1">База</span></div>
+    <p>Паттерн — это имя для решения, которое всё равно возникает само. Ценность в общем словаре: «здесь стратегия» короче, чем описание из трёх предложений. Знать наизусть все двадцать три не нужно; нужно уверенно владеть теми семью, что встречаются каждую неделю.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 3 · паттерны, которые реально применяются в PHP-проектах</caption>
+      <thead><tr><th>Паттерн</th><th>Задача</th><th>Признак, что он нужен</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Стратегия</strong></td><td>Взаимозаменяемые варианты алгоритма</td><td>Растущий <code>match</code> по типу</td></tr>
+        <tr><td><strong>Фабрика</strong></td><td>Создание объекта скрыто за одним местом</td><td>Сложное создание повторяется в разных местах</td></tr>
+        <tr><td><strong>Адаптер</strong></td><td>Приспособить чужой интерфейс к своему</td><td>Внешняя библиотека протекает по всему коду</td></tr>
+        <tr><td><strong>Декоратор</strong></td><td>Добавить поведение, не меняя класс</td><td>Нужны кэш, логирование, повторы поверх сервиса</td></tr>
+        <tr><td><strong>Наблюдатель / события</strong></td><td>Реакция на факт без связывания сторон</td><td>После действия должно произойти «ещё несколько вещей»</td></tr>
+        <tr><td><strong>Репозиторий</strong></td><td>Доступ к данным за контрактом коллекции</td><td>SQL расползается по сервисам</td></tr>
+        <tr><td><strong>Объект-значение</strong></td><td>Тип с инвариантом вместо голого скаляра</td><td>Валидация одного и того же поля в пяти местах</td></tr>
+        <tr><td><strong>Шаблонный метод</strong></td><td>Общий каркас, различаются шаги</td><td>Три почти одинаковых импорта</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Декоратор: кэш и повторы без правки исходного класса</span></div><pre><code>&lt;?php
+<span class="kw">interface</span> <span class="nm">RateProvider</span> { <span class="kw">public function</span> <span class="fn">rate</span>(<span class="nm">string</span> $currency): <span class="nm">string</span>; }
+
+<span class="cm">// Базовая реализация ничего не знает ни про кэш, ни про повторы</span>
+<span class="kw">final class</span> <span class="nm">HttpRateProvider</span> <span class="kw">implements</span> <span class="nm">RateProvider</span> { <span class="cm">/* ... */</span> }
+
+<span class="cm">// Декоратор реализует тот же интерфейс и оборачивает другой экземпляр</span>
+<span class="kw">final class</span> <span class="nm">CachedRateProvider</span> <span class="kw">implements</span> <span class="nm">RateProvider</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(
+        <span class="kw">private readonly</span> <span class="nm">RateProvider</span> $inner,
+        <span class="kw">private readonly</span> <span class="nm">CacheInterface</span> $cache,
+    ) {}
+
+    <span class="kw">public function</span> <span class="fn">rate</span>(<span class="nm">string</span> $currency): <span class="nm">string</span>
+    {
+        <span class="kw">return</span> $this-&gt;cache-&gt;<span class="fn">get</span>(<span class="st">"rate:{$currency}"</span>, <span class="kw">fn</span> () =&gt; $this-&gt;inner-&gt;<span class="fn">rate</span>($currency));
+    }
+}
+
+<span class="cm">// Собирается как матрёшка — порядок обёрток задаёт поведение</span>
+$provider = <span class="kw">new</span> <span class="nm">CachedRateProvider</span>(
+    <span class="kw">new</span> <span class="nm">RetryingRateProvider</span>(
+        <span class="kw">new</span> <span class="nm">LoggingRateProvider</span>(<span class="kw">new</span> <span class="nm">HttpRateProvider</span>($http), $logger),
+        attempts: 3
+    ),
+    $cache
+);
+
+<span class="cm">// Выигрыш: базовый класс остаётся простым и тестируется без кэша и логов,</span>
+<span class="cm">// а каждую обёртку можно включать и выключать конфигурацией.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Объект-значение: самый недооценённый приём</span></div><pre><code>&lt;?php
+<span class="cm">// Было: email — строка. Проверяется в контроллере, в сервисе, в обработчике очереди.</span>
+<span class="cm">// Однажды где-нибудь проверить забудут.</span>
+
+<span class="kw">final readonly class</span> <span class="nm">Email</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">public string</span> $value)
+    {
+        <span class="cm">// Инвариант проверяется один раз — при создании.</span>
+        <span class="cm">// Дальше по коду объект корректен по построению.</span>
+        <span class="kw">if</span> (!<span class="fn">filter_var</span>($value, <span class="nm">FILTER_VALIDATE_EMAIL</span>)) {
+            <span class="kw">throw new</span> <span class="nm">InvalidArgumentException</span>(<span class="st">"Некорректный email: {$value}"</span>);
+        }
+    }
+
+    <span class="kw">public function</span> <span class="fn">domain</span>(): <span class="nm">string</span>
+    {
+        <span class="kw">return</span> <span class="fn">substr</span>(<span class="fn">strrchr</span>($this-&gt;value, <span class="st">'@'</span>), 1);   <span class="cm">// поведение рядом с данными</span>
+    }
+
+    <span class="kw">public function</span> <span class="fn">equals</span>(<span class="kw">self</span> $other): <span class="nm">bool</span>
+    {
+        <span class="kw">return</span> <span class="fn">strtolower</span>($this-&gt;value) === <span class="fn">strtolower</span>($other-&gt;value);
+    }
+}
+
+<span class="cm">// Теперь сигнатура сама документирует контракт и защищает от ошибки:</span>
+<span class="kw">public function</span> <span class="fn">register</span>(<span class="nm">Email</span> $email, <span class="nm">Password</span> $password): <span class="nm">User</span>
+<span class="cm">// вместо register(string $email, string $password) — где легко перепутать местами</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Какие паттерны вы применяете и зачем?</b><br>Отвечать стоит от задачи, а не от списка. Стратегия — когда вариантов алгоритма несколько и они растут: вместо разрастающегося <code>match</code> появляются реализации одного контракта. Декоратор — чтобы навесить кэш, логирование и повторы, не трогая исходный класс. Объект-значение — чтобы проверить инвариант один раз при создании, а не в пяти местах. Ответ вида «использую синглтон, фабрику и наблюдатель» без контекста ценности не имеет.</div>
+  </article>
+
+  <!-- 4 -->
+  <article class="card" id="smells">
+    <p class="path">junior / диагностика</p>
+    <div class="card-top"><h3>Запахи и антипаттерны</h3><span class="badge b-1">База</span></div>
+    <p>Запах кода — не ошибка, а признак: работает, но, вероятно, скоро станет проблемой. Ценность списка в том, что он даёт язык для ревью: вместо «мне не нравится» можно назвать конкретный признак и то, чем он грозит.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 4 · запахи кода и что с ними делать</caption>
+      <thead><tr><th>Запах</th><th>Как выглядит</th><th>Чем грозит</th><th>Лечение</th></tr></thead>
+      <tbody>
+        <tr><td>Божественный объект</td><td>Класс на 1500 строк, знает про всё</td><td>Любая правка рискованна</td><td>Выделение классов по причинам изменения</td></tr>
+        <tr><td>Длинный метод</td><td>200 строк с пятью уровнями вложенности</td><td>Невозможно протестировать по частям</td><td>Выделение методов, ранний возврат</td></tr>
+        <tr><td>Одержимость примитивами</td><td>Везде <code>string $email</code>, <code>float $price</code></td><td>Валидация размазана, легко перепутать аргументы</td><td>Объекты-значения</td></tr>
+        <tr><td>Завистливый метод</td><td>Метод дёргает данные чужого объекта</td><td>Логика оторвана от данных</td><td>Перенести метод туда, где данные</td></tr>
+        <tr><td>Дробовик</td><td>Одно изменение задевает десять файлов</td><td>Забыть одно место — получить баг</td><td>Собрать разбросанное в один модуль</td></tr>
+        <tr><td>Анемичная модель</td><td>Сущности — только геттеры, вся логика в сервисах</td><td>Правила дублируются, инварианты не защищены</td><td>Перенести правила в сущность</td></tr>
+        <tr><td>Цепочка вызовов</td><td><code>$a-&gt;b()-&gt;c()-&gt;d()-&gt;e()</code></td><td>Знание о чужой структуре, хрупкость</td><td>Метод на нужном уровне</td></tr>
+        <tr><td>Флаг в аргументе</td><td><code>save($order, true, false)</code></td><td>Нечитаемо, метод делает два дела</td><td>Два метода или перечисление</td></tr>
+        <tr><td>Мёртвый код</td><td>Классы «на будущее», закомментированное</td><td>Отвлекает и вводит в заблуждение</td><td>Удалить: он есть в истории</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Анемичная модель против богатой: где живут правила</span></div><pre><code>&lt;?php
+<span class="cm">// Анемичная: сущность — контейнер для данных, правила снаружи</span>
+<span class="kw">class</span> <span class="nm">Order</span>
+{
+    <span class="kw">public string</span> $status;
+    <span class="kw">public array</span> $items = [];
+}
+
+<span class="cm">// ...и в каждом сервисе, который меняет заказ, повторяется одна и та же проверка</span>
+<span class="kw">if</span> ($order-&gt;status === <span class="st">'paid'</span> &amp;&amp; <span class="fn">count</span>($order-&gt;items) &gt; 0) {
+    $order-&gt;status = <span class="st">'shipped'</span>;      <span class="cm">// а где-то проверку забудут</span>
+}
+
+<span class="cm">// Богатая: правило перехода живёт там же, где состояние.</span>
+<span class="cm">// Нарушить инвариант снаружи физически нельзя.</span>
+<span class="kw">final class</span> <span class="nm">Order</span>
+{
+    <span class="kw">private</span> <span class="nm">OrderStatus</span> $status = <span class="nm">OrderStatus</span>::New;
+    <span class="kw">private array</span> $items = [];
+
+    <span class="kw">public function</span> <span class="fn">ship</span>(): <span class="nm">void</span>
+    {
+        <span class="kw">if</span> ($this-&gt;status !== <span class="nm">OrderStatus</span>::Paid) {
+            <span class="kw">throw new</span> <span class="nm">OrderNotPaid</span>($this-&gt;id);
+        }
+
+        <span class="kw">if</span> ($this-&gt;items === []) {
+            <span class="kw">throw new</span> <span class="nm">EmptyOrder</span>($this-&gt;id);
+        }
+
+        $this-&gt;status = <span class="nm">OrderStatus</span>::Shipped;
+        $this-&gt;<span class="fn">record</span>(<span class="kw">new</span> <span class="nm">OrderShipped</span>($this-&gt;id));   <span class="cm">// доменное событие</span>
+    }
+}
+
+<span class="cm">// Тест такого правила не требует ни базы, ни контейнера — он мгновенный.</span></code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Анемичная модель — не всегда ошибка. Для CRUD-раздела, где «правило» состоит в сохранении полей, богатая модель избыточна. Она окупается там, где есть настоящие инварианты и переходы состояний: заказы, платежи, подписки, остатки. Признак, что пора: одна и та же проверка появилась в третьем месте.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое анемичная модель и всегда ли это плохо?</b><br>Это сущности без поведения — только данные, а все правила в сервисах. Проблема в том, что инвариант не защищён: один и тот же переход статуса проверяется в нескольких местах, и однажды где-то проверку забудут. Но это не универсальное зло: для простого CRUD она уместна и дешевле. Богатая модель окупается там, где есть реальные бизнес-правила и переходы состояний.</div>
+  </article>
+
+  <!-- 5 -->
+  <article class="card" id="layers">
+    <p class="path">junior / структура</p>
+    <div class="card-top"><h3>Слои приложения</h3><span class="badge b-1">База</span></div>
+    <p>Слои отвечают на вопрос «куда положить этот код». Даже простейшее разделение — контроллер, сервис, репозиторий — снимает большинство проблем типичного проекта, где вся логика живёт в контроллерах.</p>
+
+    <div class="flow" role="img" aria-label="Слои: контроллер, сервис приложения, домен, репозиторий, база">
+      <div class="node">Контроллер<small>HTTP, валидация формата</small></div><span class="arr">→</span>
+      <div class="node">Сервис<small>сценарий, транзакция</small></div><span class="arr">→</span>
+      <div class="node">Домен<small>правила и инварианты</small></div><span class="arr">→</span>
+      <div class="node">Репозиторий<small>контракт хранения</small></div><span class="arr">→</span>
+      <div class="node">БД<small>реализация</small></div>
+    </div>
+
+    <div class="tw"><table>
+      <caption>Таблица 5 · что где живёт</caption>
+      <thead><tr><th>Слой</th><th>Отвечает за</th><th>Не должен содержать</th></tr></thead>
+      <tbody>
+        <tr><td>Контроллер</td><td>Разбор запроса, вызов сценария, формирование ответа</td><td>Бизнес-правил и SQL</td></tr>
+        <tr><td>Сервис приложения</td><td>Сценарий: получить, вызвать домен, сохранить, уведомить</td><td>Правил домена и знания об HTTP</td></tr>
+        <tr><td>Домен</td><td>Правила, инварианты, переходы состояний</td><td>Знания о фреймворке, БД и HTTP</td></tr>
+        <tr><td>Репозиторий</td><td>Контракт получения и сохранения агрегатов</td><td>Бизнес-логики</td></tr>
+        <tr><td>Инфраструктура</td><td>Реализации: SQL, HTTP-клиенты, очереди, письма</td><td>Решений о том, что должно произойти</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Тонкий контроллер: разбор запроса и вызов сценария</span></div><pre><code>&lt;?php
+<span class="cm">// Контроллер знает про HTTP и ничего — про правила</span>
+<span class="kw">final class</span> <span class="nm">ShipOrderController</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly</span> <span class="nm">ShipOrder</span> $shipOrder) {}
+
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">Request</span> $request, <span class="nm">string</span> $id): <span class="nm">JsonResponse</span>
+    {
+        <span class="kw">try</span> {
+            $order = ($this-&gt;shipOrder)(<span class="kw">new</span> <span class="nm">OrderId</span>($id), $this-&gt;<span class="fn">currentUser</span>());
+        } <span class="kw">catch</span> (<span class="nm">OrderNotPaid</span> $e) {
+            <span class="cm">// Перевод доменной ошибки в протокол — работа контроллера</span>
+            <span class="kw">return</span> $this-&gt;<span class="fn">problem</span>(422, <span class="st">'order-not-paid'</span>);
+        }
+
+        <span class="kw">return new</span> <span class="nm">JsonResponse</span>(<span class="nm">OrderView</span>::<span class="fn">from</span>($order));
+    }
+}
+
+<span class="cm">// Сервис приложения — сценарий целиком, без знания об HTTP</span>
+<span class="kw">final class</span> <span class="nm">ShipOrder</span>
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">OrderId</span> $id, <span class="nm">User</span> $user): <span class="nm">Order</span>
+    {
+        <span class="kw">return</span> $this-&gt;transaction-&gt;<span class="fn">run</span>(<span class="kw">function</span> () <span class="kw">use</span> ($id, $user) {
+            $order = $this-&gt;orders-&gt;<span class="fn">getForUser</span>($id, $user);   <span class="cm">// права — в слое данных</span>
+            $order-&gt;<span class="fn">ship</span>();                                  <span class="cm">// правило — в домене</span>
+            $this-&gt;orders-&gt;<span class="fn">save</span>($order);
+            $this-&gt;events-&gt;<span class="fn">dispatch</span>(...$order-&gt;<span class="fn">releaseEvents</span>());
+
+            <span class="kw">return</span> $order;
+        });
+    }
+}</code></pre></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Слой ради слоя: контроллер вызывает сервис, который вызывает другой сервис, который вызывает репозиторий и просто передаёт данные дальше без единого решения. Такой «прослойка-сервис» не добавляет ничего, кроме файла и прыжка при чтении кода. Слой оправдан, только если он принимает решения или скрывает детали — иначе его лучше убрать.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Где должна жить бизнес-логика?</b><br>Не в контроллере и не в запросах к базе. Правила и инварианты — в доменных объектах: там, где живёт состояние, которое они защищают. Сценарий (получить, вызвать, сохранить, уведомить, транзакция) — в сервисе приложения. Контроллер только разбирает запрос и переводит доменные ошибки в коды ответа. Проверка простая: можно ли выполнить бизнес-правило из консольной команды и из обработчика очереди, не дублируя код.</div>
+  </article>
+
+  <!-- J CHECKLIST -->
+  <article class="card" id="junior-checklist">
+    <p class="path">junior / итог</p>
+    <div class="card-top"><h3>Junior checklist</h3><span class="badge b-1">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Объясняю связность и связанность на примере</li>
+        <li>Оцениваю структуру по числу файлов, которые правит типовое изменение</li>
+        <li>Знаю SOLID и умею показать нарушение в коде</li>
+        <li>Выделяю абстракцию при появлении второго варианта, а не первого</li>
+        <li>Применяю стратегию вместо растущего <code>match</code></li>
+        <li>Использую декоратор для кэша, логов и повторов</li>
+      </ul>
+      <ul class="check">
+        <li>Заменяю голые скаляры объектами-значениями</li>
+        <li>Узнаю запахи: божественный объект, длинный метод, дробовик</li>
+        <li>Понимаю, когда анемичная модель уместна, а когда нет</li>
+        <li>Держу правила в домене, сценарий — в сервисе</li>
+        <li>Пишу тонкие контроллеры без SQL и правил</li>
+        <li>Не завожу слои, которые ничего не решают</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Junior-секция по архитектуре почти всегда сводится к SOLID и паре паттернов. Отвечать выигрышнее не определениями, а примером из своего кода: что было, чем это мешало, что изменили и что стало проще. Такой ответ сразу отличает человека, который проектировал, от человека, который прочитал.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== MIDDLE ==================== -->
+<section class="level lvl-m" id="middle">
+  <div class="level-head">
+    <p class="kicker">Уровень 02 · проектирование</p>
+    <h2>Middle: домен, границы, рефакторинг</h2>
+    <p>Middle уже не просто узнаёт паттерны, а выбирает между ними и умеет объяснить цену. И, что важнее, умеет доводить систему до нужной структуры постепенно — рефакторингом маленькими безопасными шагами, а не «перепишем всё за спринт».</p>
+  </div>
+
+  <!-- 6 -->
+  <article class="card" id="composition">
+    <p class="path">middle / связи</p>
+    <div class="card-top"><h3>Композиция и зависимости</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Наследование — самая жёсткая связь между классами: наследник зависит от всего в родителе, включая то, чем не пользуется, и любое изменение базового класса задевает всю иерархию. Композиция даёт то же переиспользование без этой связи.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 6 · наследование против композиции</caption>
+      <thead><tr><th>Критерий</th><th>Наследование</th><th>Композиция</th></tr></thead>
+      <tbody>
+        <tr><td>Связь</td><td>Жёсткая, на этапе компиляции</td><td>Слабая, через контракт</td></tr>
+        <tr><td>Изменение поведения в рантайме</td><td>Невозможно</td><td>Подмена зависимости</td></tr>
+        <tr><td>Комбинирование поведений</td><td>Комбинаторный взрыв классов</td><td>Обёртки и наборы</td></tr>
+        <tr><td>Тестируемость</td><td>Тянет за собой весь родитель</td><td>Подставляется двойник</td></tr>
+        <tr><td>Когда уместно</td><td>Настоящее «является»: иерархия исключений, тип-суперкласс</td><td>Почти всё остальное</td></tr>
+        <tr><td>Признак ошибки</td><td>Наследуемся ради переиспользования метода</td><td>Обёртка вокруг обёртки без смысла</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Комбинаторный взрыв: как наследование заводит в тупик</span></div><pre><code>&lt;?php
+<span class="cm">// Наследование: каждое сочетание — новый класс. Пять свойств — 32 класса.</span>
+<span class="kw">class</span> <span class="nm">Report</span> {}
+<span class="kw">class</span> <span class="nm">CachedReport</span> <span class="kw">extends</span> <span class="nm">Report</span> {}
+<span class="kw">class</span> <span class="nm">LoggedReport</span> <span class="kw">extends</span> <span class="nm">Report</span> {}
+<span class="kw">class</span> <span class="nm">CachedLoggedReport</span> <span class="kw">extends</span> ???      <span class="cm">// ← тупик</span>
+
+<span class="cm">// Композиция: свойства собираются в любом сочетании и порядке</span>
+$report = <span class="kw">new</span> <span class="nm">CachedReport</span>(<span class="kw">new</span> <span class="nm">LoggedReport</span>(<span class="kw">new</span> <span class="nm">SqlReport</span>($db), $logger), $cache);
+
+<span class="cm">// Отдельный случай — трейты. Они выглядят как композиция, но работают как</span>
+<span class="cm">// копирование кода в класс: источник поведения не виден, подменить его нельзя,</span>
+<span class="cm">// а конфликты имён приходится разрешать вручную. Для технической мелочи</span>
+<span class="cm">// (общий метод-хелпер) годятся, для бизнес-логики — нет.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Инверсия зависимостей: направление важнее самой абстракции</span></div><pre><code>&lt;?php
+<span class="cm">// Ключевая мысль: интерфейс принадлежит НЕ инфраструктуре, а тому, кто его использует.</span>
+<span class="cm">// Он лежит рядом с доменом и написан на языке домена, а не хранилища.</span>
+
+<span class="cm">// src/Domain/Order/OrderRepository.php — контракт домена</span>
+<span class="kw">interface</span> <span class="nm">OrderRepository</span>
+{
+    <span class="kw">public function</span> <span class="fn">get</span>(<span class="nm">OrderId</span> $id): <span class="nm">Order</span>;             <span class="cm">// не найден → исключение</span>
+    <span class="kw">public function</span> <span class="fn">save</span>(<span class="nm">Order</span> $order): <span class="nm">void</span>;
+    <span class="kw">public function</span> <span class="fn">nextId</span>(): <span class="nm">OrderId</span>;
+}
+<span class="cm">// Обратите внимание: ни слова про SQL, таблицы, limit, offset и сортировку —</span>
+<span class="cm">// это язык предметной области, а не хранилища.</span>
+
+<span class="cm">// src/Infrastructure/Persistence/DoctrineOrderRepository.php — реализация</span>
+<span class="kw">final class</span> <span class="nm">DoctrineOrderRepository</span> <span class="kw">implements</span> <span class="nm">OrderRepository</span> { <span class="cm">/* ... */</span> }
+
+<span class="cm">// Зависимость направлена внутрь: инфраструктура знает о домене, домен о ней — нет.</span>
+<span class="cm">// Практический выигрыш: домен тестируется реализацией в памяти за миллисекунды,</span>
+<span class="cm">// а смена ORM не задевает бизнес-правила.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Интерфейс с единственной реализацией оправдан не всегда. Он полезен, когда нужен для инверсии зависимости (домен не должен знать инфраструктуру) или для подстановки двойника в тестах. Он бесполезен, когда просто дублирует публичные методы класса «для соблюдения принципа»: это лишний файл, который придётся править вместе с классом. Критерий — есть ли второй потребитель контракта: другая реализация, тест или другой слой.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Почему композиция предпочтительнее наследования?</b><br>Наследование связывает классы жёстко: наследник зависит от всего родителя, комбинации поведений дают взрыв числа классов, а изменение базового класса задевает всю иерархию. Композиция даёт то же переиспользование через контракт: поведение собирается в любом сочетании, подменяется в тестах и меняется конфигурацией. Наследование остаётся уместным там, где есть настоящее отношение «является», — например, в иерархии исключений.</div>
+  </article>
+
+  <!-- 7 -->
+  <article class="card" id="patterns-adv">
+    <p class="path">middle / паттерны</p>
+    <div class="card-top"><h3>Паттерны посложнее</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Эти паттерны применяются реже, но именно они отличают ответ «знаю названия» от «понимаю, когда это нужно». Общий принцип тот же: паттерн вводится, когда проблема уже проявилась, а не заранее.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 7 · паттерны второго эшелона</caption>
+      <thead><tr><th>Паттерн</th><th>Решает</th><th>Признак, что пора</th><th>Цена</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Команда</strong></td><td>Действие как объект: очередь, отмена, журнал</td><td>Операции нужно ставить в очередь и повторять</td><td>Больше классов</td></tr>
+        <tr><td><strong>Состояние</strong></td><td>Поведение зависит от статуса</td><td>Условия по статусу в десяти методах</td><td>Класс на каждое состояние</td></tr>
+        <tr><td><strong>Спецификация</strong></td><td>Правило отбора как переиспользуемый объект</td><td>Одно и то же условие в запросе и в проверке</td><td>Абстракция поверх запросов</td></tr>
+        <tr><td><strong>Цепочка обязанностей</strong></td><td>Последовательная обработка с возможностью прервать</td><td>Пайплайн проверок или преобразований</td><td>Порядок становится неявным</td></tr>
+        <tr><td><strong>Строитель</strong></td><td>Пошаговое создание сложного объекта</td><td>Конструктор на десять параметров</td><td>Дублирование структуры объекта</td></tr>
+        <tr><td><strong>Посредник / шина</strong></td><td>Развязка отправителя и обработчика</td><td>Много связей «каждый с каждым»</td><td>Поток управления скрыт</td></tr>
+        <tr><td><strong>Null-объект</strong></td><td>Поведение по умолчанию вместо <code>null</code></td><td>Проверки на <code>null</code> по всему коду</td><td>Может маскировать ошибку</td></tr>
+        <tr><td><strong>Единица работы</strong></td><td>Атомарное сохранение набора изменений</td><td>Несколько агрегатов в одной транзакции</td><td>Обычно уже есть в ORM</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Состояние: когда условия по статусу расползлись</span></div><pre><code>&lt;?php
+<span class="cm">// Было: в каждом методе проверка статуса, правила размазаны</span>
+<span class="kw">public function</span> <span class="fn">cancel</span>(): <span class="nm">void</span>
+{
+    <span class="kw">if</span> ($this-&gt;status === <span class="st">'new'</span> || $this-&gt;status === <span class="st">'paid'</span>) { <span class="cm">/* ... */</span> }
+    <span class="kw">elseif</span> ($this-&gt;status === <span class="st">'shipped'</span>) { <span class="kw">throw new</span> ...; }
+    <span class="cm">// и такой же набор условий ещё в пяти методах</span>
+}
+
+<span class="cm">// Стало: таблица переходов в одном месте — читается как документация</span>
+<span class="kw">enum</span> <span class="nm">OrderStatus</span>: <span class="nm">string</span>
+{
+    <span class="kw">case</span> New = <span class="st">'new'</span>;
+    <span class="kw">case</span> Paid = <span class="st">'paid'</span>;
+    <span class="kw">case</span> Shipped = <span class="st">'shipped'</span>;
+    <span class="kw">case</span> Cancelled = <span class="st">'cancelled'</span>;
+
+    <span class="kw">public function</span> <span class="fn">canTransitionTo</span>(<span class="kw">self</span> $target): <span class="nm">bool</span>
+    {
+        <span class="kw">return</span> <span class="fn">in_array</span>($target, <span class="kw">match</span>($this) {
+            <span class="kw">self</span>::New       =&gt; [<span class="kw">self</span>::Paid, <span class="kw">self</span>::Cancelled],
+            <span class="kw">self</span>::Paid      =&gt; [<span class="kw">self</span>::Shipped, <span class="kw">self</span>::Cancelled],
+            <span class="kw">self</span>::Shipped   =&gt; [],                       <span class="cm">// конечное состояние</span>
+            <span class="kw">self</span>::Cancelled =&gt; [],
+        }, <span class="kw">true</span>);
+    }
+}
+
+<span class="cm">// В сущности остаётся одна проверка на все переходы</span>
+<span class="kw">private function</span> <span class="fn">transitionTo</span>(<span class="nm">OrderStatus</span> $target): <span class="nm">void</span>
+{
+    <span class="kw">if</span> (!$this-&gt;status-&gt;<span class="fn">canTransitionTo</span>($target)) {
+        <span class="kw">throw new</span> <span class="nm">InvalidTransition</span>($this-&gt;status, $target);
+    }
+
+    $this-&gt;status = $target;
+}</code></pre></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Спецификация: одно правило — и для проверки, и для выборки</span></div><pre><code>&lt;?php
+<span class="cm">// Проблема: «активный клиент с просроченным платежом» описан дважды —</span>
+<span class="cm">// один раз условием в PHP, другой раз — WHERE в запросе. Они расходятся.</span>
+
+<span class="kw">interface</span> <span class="nm">Specification</span>
+{
+    <span class="kw">public function</span> <span class="fn">isSatisfiedBy</span>(<span class="nm">Customer</span> $customer): <span class="nm">bool</span>;
+    <span class="kw">public function</span> <span class="fn">toCriteria</span>(): <span class="nm">Criteria</span>;              <span class="cm">// то же правило для запроса</span>
+}
+
+<span class="kw">final class</span> <span class="nm">OverduePayment</span> <span class="kw">implements</span> <span class="nm">Specification</span>
+{
+    <span class="kw">public function</span> <span class="fn">__construct</span>(<span class="kw">private readonly</span> <span class="nm">DateTimeImmutable</span> $now) {}
+
+    <span class="kw">public function</span> <span class="fn">isSatisfiedBy</span>(<span class="nm">Customer</span> $c): <span class="nm">bool</span>
+    {
+        <span class="kw">return</span> $c-&gt;<span class="fn">dueDate</span>() &lt; $this-&gt;now &amp;&amp; !$c-&gt;<span class="fn">isPaid</span>();
+    }
+
+    <span class="kw">public function</span> <span class="fn">toCriteria</span>(): <span class="nm">Criteria</span>
+    {
+        <span class="kw">return</span> <span class="nm">Criteria</span>::<span class="fn">create</span>()
+            -&gt;<span class="fn">andWhere</span>(<span class="nm">Criteria</span>::<span class="fn">expr</span>()-&gt;<span class="fn">lt</span>(<span class="st">'dueDate'</span>, $this-&gt;now))
+            -&gt;<span class="fn">andWhere</span>(<span class="nm">Criteria</span>::<span class="fn">expr</span>()-&gt;<span class="fn">eq</span>(<span class="st">'paid'</span>, <span class="kw">false</span>));
+    }
+}
+
+<span class="cm">// Честная оговорка: поддерживать две формы одного правила — работа.</span>
+<span class="cm">// Паттерн окупается, когда правил много и они комбинируются;</span>
+<span class="cm">// для двух-трёх условий проще оставить именованный метод репозитория.</span></code></pre></div>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Когда паттерн приносит вред?</b><br>Когда он введён до появления проблемы. Фабрика для объекта с одним конструктором, интерфейс с единственной реализацией «на будущее», шина сообщений там, где хватает прямого вызова, — всё это добавляет файлы, прыжки при чтении и стоимость поддержки, не решая ничего. Правило: паттерн вводится как ответ на уже проявившуюся боль — третье повторение, растущий <code>switch</code>, невозможность протестировать.</div>
+  </article>
+
+  <!-- 8 -->
+  <article class="card" id="ddd">
+    <p class="path">middle / домен</p>
+    <div class="card-top"><h3>Тактический DDD</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Из большого DDD в повседневной работе полезны прежде всего строительные блоки. Они дают ответ на вопросы, которые иначе решаются интуитивно: что считать целым при сохранении, где проверять инвариант и как связаны сущности между собой.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 8 · строительные блоки и их роль</caption>
+      <thead><tr><th>Блок</th><th>Что это</th><th>Признак</th></tr></thead>
+      <tbody>
+        <tr><td>Сущность</td><td>Объект с идентичностью, живущий во времени</td><td>Два заказа с одинаковыми полями — разные заказы</td></tr>
+        <tr><td>Объект-значение</td><td>Определяется значением, неизменяем</td><td>Две суммы 100 ₽ взаимозаменяемы</td></tr>
+        <tr><td>Агрегат</td><td>Группа объектов с единой границей согласованности</td><td>Заказ и его позиции сохраняются вместе</td></tr>
+        <tr><td>Корень агрегата</td><td>Единственная точка входа в агрегат</td><td>Позицию меняем только через заказ</td></tr>
+        <tr><td>Репозиторий</td><td>Коллекция агрегатов за контрактом</td><td>Один репозиторий на агрегат, не на таблицу</td></tr>
+        <tr><td>Доменное событие</td><td>Факт, который произошёл в домене</td><td>«Заказ оплачен» — интересно другим частям</td></tr>
+        <tr><td>Доменный сервис</td><td>Правило, не принадлежащее одной сущности</td><td>Перевод между счетами</td></tr>
+        <tr><td>Фабрика</td><td>Создание агрегата в валидном состоянии</td><td>Создание требует нескольких шагов и проверок</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Агрегат: граница согласованности и единственная точка входа</span></div><pre><code>&lt;?php
+<span class="kw">final class</span> <span class="nm">Order</span>                       <span class="cm">// корень агрегата</span>
+{
+    <span class="kw">private array</span> $items = [];          <span class="cm">// часть агрегата: снаружи недоступна напрямую</span>
+    <span class="kw">private array</span> $events = [];
+
+    <span class="cm">// Инвариант агрегата: не более 50 позиций и сумма не превышает лимит.</span>
+    <span class="cm">// Он может быть проверен только здесь — потому что только здесь видно целое.</span>
+    <span class="kw">public function</span> <span class="fn">addItem</span>(<span class="nm">Sku</span> $sku, <span class="nm">int</span> $qty, <span class="nm">Money</span> $price): <span class="nm">void</span>
+    {
+        <span class="kw">if</span> (<span class="fn">count</span>($this-&gt;items) &gt;= 50) {
+            <span class="kw">throw new</span> <span class="nm">TooManyItems</span>($this-&gt;id);
+        }
+
+        $item = <span class="kw">new</span> <span class="nm">OrderItem</span>($sku, $qty, $price);
+
+        <span class="kw">if</span> ($this-&gt;<span class="fn">total</span>()-&gt;<span class="fn">plus</span>($item-&gt;<span class="fn">subtotal</span>())-&gt;<span class="fn">isGreaterThan</span>($this-&gt;limit)) {
+            <span class="kw">throw new</span> <span class="nm">OrderLimitExceeded</span>($this-&gt;id);
+        }
+
+        $this-&gt;items[] = $item;
+        $this-&gt;events[] = <span class="kw">new</span> <span class="nm">ItemAdded</span>($this-&gt;id, $sku, $qty);
+    }
+
+    <span class="cm">// Наружу отдаём копию: никто не изменит состав в обход правил</span>
+    <span class="kw">public function</span> <span class="fn">items</span>(): <span class="nm">array</span> { <span class="kw">return</span> <span class="fn">array_map</span>(<span class="kw">fn</span> ($i) =&gt; <span class="kw">clone</span> $i, $this-&gt;items); }
+
+    <span class="kw">public function</span> <span class="fn">releaseEvents</span>(): <span class="nm">array</span>
+    {
+        $events = $this-&gt;events;
+        $this-&gt;events = [];
+
+        <span class="kw">return</span> $events;                  <span class="cm">// сервис приложения опубликует их после сохранения</span>
+    }
+}
+
+<span class="cm">// Правила выбора границы агрегата:</span>
+<span class="cm">//   1. Внутри агрегата инварианты соблюдаются немедленно и в одной транзакции.</span>
+<span class="cm">//   2. Между агрегатами — согласованность отложенная, через события.</span>
+<span class="cm">//   3. Ссылки на другие агрегаты — по идентификатору, а не объектом.</span>
+<span class="cm">//   4. Одна транзакция меняет один агрегат: иначе граница выбрана неверно.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Самая частая ошибка — слишком крупный агрегат: «Клиент» со всеми заказами, платежами и адресами внутри. Такой объект невозможно загрузить целиком, он создаёт блокировки и конфликты при параллельной работе. Признак правильного размера: агрегат целиком помещается в памяти без усилий, а его инварианты действительно требуют проверки в одной транзакции. Если сомневаетесь — берите меньший.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что такое агрегат и как выбрать его границу?</b><br>Группа объектов, которая сохраняется и проверяется как целое, с единственной точкой входа — корнем. Граница определяется инвариантами: что обязано быть согласованным немедленно, входит внутрь; остальное связывается по идентификатору и согласуется через события. Практическое правило — одна транзакция меняет один агрегат. Частая ошибка в другую сторону: слишком крупный агрегат, который тяжело грузить и который создаёт конфликты при параллельной работе.</div>
+  </article>
+
+  <!-- 9 -->
+  <article class="card" id="hexagonal">
+    <p class="path">middle / границы</p>
+    <div class="card-top"><h3>Порты и адаптеры</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Гексагональная архитектура (она же «порты и адаптеры», близка к «чистой») формулирует одно правило: зависимости направлены внутрь. Домен не знает ни про HTTP, ни про базу, ни про фреймворк — они знают про него.</p>
+
+    <div class="flow" role="img" aria-label="Входящие адаптеры, порты, домен, исходящие порты и адаптеры">
+      <div class="node">HTTP / CLI / очередь<small>входящие адаптеры</small></div><span class="arr">→</span>
+      <div class="node">Порт<small>сценарий приложения</small></div><span class="arr">→</span>
+      <div class="node">Домен<small>правила, ничего не знает</small></div><span class="arr">→</span>
+      <div class="node">Порт<small>интерфейс репозитория</small></div><span class="arr">→</span>
+      <div class="node">БД / API / почта<small>исходящие адаптеры</small></div>
+    </div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Структура каталогов, отражающая направление зависимостей</span></div><pre><code>src/
+├── Domain/                    <span class="cm"># не зависит НИ ОТ ЧЕГО, кроме PHP</span>
+│   └── Order/
+│       ├── Order.php                  <span class="cm"># агрегат</span>
+│       ├── OrderStatus.php            <span class="cm"># перечисление</span>
+│       ├── Money.php                  <span class="cm"># объект-значение</span>
+│       ├── OrderRepository.php        <span class="cm"># ПОРТ: интерфейс, а не реализация</span>
+│       └── Event/OrderShipped.php
+│
+├── Application/               <span class="cm"># зависит только от Domain</span>
+│   └── Order/
+│       ├── ShipOrder.php              <span class="cm"># сценарий</span>
+│       └── ShipOrderCommand.php       <span class="cm"># входные данные сценария</span>
+│
+├── Infrastructure/            <span class="cm"># зависит от Domain и Application</span>
+│   ├── Persistence/DoctrineOrderRepository.php   <span class="cm"># АДАПТЕР</span>
+│   ├── Http/StripePaymentGateway.php
+│   └── Notification/SymfonyMailerNotifier.php
+│
+└── Ui/                        <span class="cm"># входящие адаптеры</span>
+    ├── Http/ShipOrderController.php
+    ├── Cli/ShipOrderCommand.php
+    └── Queue/ShipOrderHandler.php
+
+<span class="cm"># Проверить направление зависимостей можно автоматически, в CI:</span>
+<span class="cm">#   Domain не должен импортировать ничего из Infrastructure, Ui и вендоров ORM.</span>
+<span class="cm">#   Это ровно то правило, которое ломается первым — и незаметно.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 9 · что даёт и чего стоит</caption>
+      <thead><tr><th>Даёт</th><th>Стоит</th></tr></thead>
+      <tbody>
+        <tr><td>Домен тестируется мгновенно, без базы и контейнера</td><td>Больше файлов и слоёв отображения данных</td></tr>
+        <tr><td>Смена ORM или транспорта не задевает правила</td><td>Нужны преобразования между слоями</td></tr>
+        <tr><td>Один сценарий вызывается из HTTP, CLI и очереди</td><td>Порог входа для новых людей выше</td></tr>
+        <tr><td>Бизнес-правила читаются в одном месте</td><td>Соблазн «протащить» ORM-сущность в домен</td></tr>
+        <tr><td>Границы проверяются автоматически</td><td>Простой CRUD становится многословным</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Полная гексагональная структура не обязана применяться ко всему проекту сразу. Рабочий компромисс: сложный домен (заказы, платежи, тарификация) — по этой схеме, простые CRUD-разделы — обычным способом через фреймворк. Единообразие ценно, но платить за него многословием там, где нет правил, не окупается. Главное — не смешивать подходы внутри одного модуля.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Что даёт гексагональная архитектура и в чём её цена?</b><br>Она направляет зависимости внутрь: домен не знает про фреймворк, базу и HTTP, поэтому правила тестируются мгновенно, а смена инфраструктуры их не задевает. Цена — больше файлов, преобразования между слоями и более высокий порог входа. Поэтому её применяют там, где есть настоящие бизнес-правила, а для CRUD оставляют прямой путь через фреймворк. И направление зависимостей стоит проверять автоматически: вручную оно ломается незаметно.</div>
+  </article>
+
+  <!-- 10 -->
+  <article class="card" id="readwrite">
+    <p class="path">middle / модели</p>
+    <div class="card-top"><h3>Чтение и запись</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Одна и та же модель редко хороша и для записи, и для чтения. Записи нужны инварианты и небольшой агрегат; чтению — плоские данные ровно под экран, часто из нескольких таблиц. Попытка обслужить оба сценария одной моделью даёт либо тяжёлые запросы, либо анемичный домен.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Разделение без тяжёлой инфраструктуры</span></div><pre><code>&lt;?php
+<span class="cm">// ЗАПИСЬ: агрегат с правилами, загружается целиком, сохраняется целиком</span>
+<span class="kw">final class</span> <span class="nm">ShipOrder</span>
+{
+    <span class="kw">public function</span> <span class="fn">__invoke</span>(<span class="nm">ShipOrderCommand</span> $command): <span class="nm">void</span>
+    {
+        $order = $this-&gt;orders-&gt;<span class="fn">get</span>($command-&gt;orderId);
+        $order-&gt;<span class="fn">ship</span>();
+        $this-&gt;orders-&gt;<span class="fn">save</span>($order);
+    }
+}
+
+<span class="cm">// ЧТЕНИЕ: никакого агрегата — плоский запрос ровно под нужды экрана.</span>
+<span class="cm">// Загружать агрегат ради списка из двадцати строк — верный способ получить N+1.</span>
+<span class="kw">final class</span> <span class="nm">OrderListQuery</span>
+{
+    <span class="kw">public function</span> <span class="fn">execute</span>(<span class="nm">string</span> $tenantId, ?<span class="nm">string</span> $cursor, <span class="nm">int</span> $limit): <span class="nm">array</span>
+    {
+        <span class="kw">return</span> $this-&gt;db-&gt;<span class="fn">fetchAll</span>(
+            <span class="st">'SELECT o.id, o.status, o.total, c.display_name AS customer
+               FROM orders o
+               JOIN customers c ON c.id = o.customer_id
+              WHERE o.tenant_id = :t'</span> . ($cursor ? <span class="st">' AND o.id &lt; :cursor'</span> : <span class="st">''</span>) . <span class="st">'
+              ORDER BY o.created_at DESC, o.id DESC
+              LIMIT :limit'</span>,
+            <span class="fn">compact</span>(<span class="st">'tenantId'</span>, <span class="st">'cursor'</span>, <span class="st">'limit'</span>)
+        );
+    }
+}
+
+<span class="cm">// Это «CQRS для бедных»: разные модели для чтения и записи в одной базе,</span>
+<span class="cm">// без отдельного хранилища и синхронизации. Девяносто процентов пользы</span>
+<span class="cm">// за десять процентов сложности.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 10 · где чему место</caption>
+      <thead><tr><th>Объект</th><th>Роль</th><th>Живёт</th></tr></thead>
+      <tbody>
+        <tr><td>Команда</td><td>Намерение изменить состояние</td><td>Слой приложения</td></tr>
+        <tr><td>Агрегат</td><td>Правила и инварианты записи</td><td>Домен</td></tr>
+        <tr><td>Запрос (query)</td><td>Чтение под конкретный сценарий</td><td>Слой приложения или инфраструктура</td></tr>
+        <tr><td>Модель чтения / DTO</td><td>Плоские данные для представления</td><td>Приложение и интерфейс</td></tr>
+        <tr><td>Ресурс API</td><td>Публичный контракт наружу</td><td>Слой интерфейса</td></tr>
+        <tr><td>ORM-сущность</td><td>Отображение на таблицу</td><td>Инфраструктура (в идеале не покидает её)</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>Полноценный CQRS с отдельным хранилищем для чтения и синхронизацией через события — там, где не было проблемы с производительностью чтения. Это отдельная база, лаг синхронизации, расхождения и целый новый класс инцидентов. Начинать нужно с разделения моделей внутри одной базы; отдельное хранилище вводится, когда чтение измеримо упёрлось.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Зачем разделять модели чтения и записи?</b><br>Потому что у них разные требования. Записи нужен небольшой агрегат с инвариантами; чтению — плоские данные под конкретный экран, часто из нескольких таблиц. Загружать агрегаты ради списка означает N+1 и лишнюю работу. Разделение делается дёшево в одной базе: команды идут через домен, запросы — отдельными классами с прямым SQL. Полный CQRS с отдельным хранилищем — уже про масштаб, и вводится по измеренной причине.</div>
+  </article>
+
+  <!-- 11 -->
+  <article class="card" id="refactoring">
+    <p class="path">middle / изменение</p>
+    <div class="card-top"><h3>Техника рефакторинга</h3><span class="badge b-2">Ключевое</span></div>
+    <p>Рефакторинг — изменение структуры без изменения поведения. Ключевое слово «без»: как только вы попутно чините баг или добавляете функцию, это уже не рефакторинг, и если что-то сломается, вы не будете знать, что именно виновато.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 11 · базовые приёмы и когда применять</caption>
+      <thead><tr><th>Приём</th><th>Когда</th><th>Первый шаг</th></tr></thead>
+      <tbody>
+        <tr><td>Выделение метода</td><td>Фрагмент требует комментария-пояснения</td><td>Дать фрагменту имя</td></tr>
+        <tr><td>Выделение класса</td><td>У класса больше одной причины меняться</td><td>Сгруппировать поля и методы по теме</td></tr>
+        <tr><td>Замена условия полиморфизмом</td><td>Растущий <code>match</code> по типу</td><td>Ввести контракт для одной ветки</td></tr>
+        <tr><td>Введение объекта-значения</td><td>Валидация скаляра повторяется</td><td>Обернуть в тип с проверкой в конструкторе</td></tr>
+        <tr><td>Введение параметра-объекта</td><td>Пять аргументов ходят вместе</td><td>Собрать их в один тип</td></tr>
+        <tr><td>Перенос метода</td><td>Метод пользуется чужими данными</td><td>Переместить туда, где данные</td></tr>
+        <tr><td>Инкапсуляция поля</td><td>Публичное свойство меняют снаружи</td><td>Сделать приватным, добавить метод-действие</td></tr>
+        <tr><td>Замена <code>null</code> на объект</td><td>Проверки на <code>null</code> повсюду</td><td>Реализация с поведением по умолчанию</td></tr>
+        <tr><td>Разделение цикла</td><td>Один цикл делает три вещи</td><td>Скопировать цикл, оставить в каждом одну задачу</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Безопасный рефакторинг: маленькими шагами, каждый обратим</span></div><pre><code>&lt;?php
+<span class="cm">// Задача: вынести расчёт скидки из 200-строчного метода. Порядок шагов:</span>
+
+<span class="cm">// Шаг 0. Убедиться, что поведение зафиксировано тестами.</span>
+<span class="cm">//        Нет тестов — сначала характеризующие тесты на реальных данных.</span>
+
+<span class="cm">// Шаг 1. Выделить метод, ничего не меняя внутри. Тесты зелёные.</span>
+<span class="kw">private function</span> <span class="fn">calculateDiscount</span>(<span class="nm">array</span> $items, <span class="nm">string</span> $promo): <span class="nm">float</span>
+{
+    <span class="cm">// ...перенесённый код как есть, даже если он некрасив...</span>
+}
+
+<span class="cm">// Шаг 2. Заменить примитивы типами. Тесты зелёные.</span>
+<span class="kw">private function</span> <span class="fn">calculateDiscount</span>(<span class="nm">ItemList</span> $items, <span class="nm">PromoCode</span> $promo): <span class="nm">Money</span>
+
+<span class="cm">// Шаг 3. Вынести в отдельный класс с явными зависимостями. Тесты зелёные.</span>
+<span class="kw">final class</span> <span class="nm">DiscountCalculator</span>
+{
+    <span class="kw">public function</span> <span class="fn">calculate</span>(<span class="nm">ItemList</span> $items, <span class="nm">PromoCode</span> $promo): <span class="nm">Money</span> { <span class="cm">/* ... */</span> }
+}
+
+<span class="cm">// Шаг 4. Появился второй вид скидки — только теперь вводим абстракцию.</span>
+<span class="kw">interface</span> <span class="nm">DiscountRule</span> { <span class="kw">public function</span> <span class="fn">apply</span>(<span class="nm">ItemList</span> $items): <span class="nm">Money</span>; }
+
+<span class="cm">// Каждый шаг — отдельный коммит. Если что-то сломалось, видно ровно где,</span>
+<span class="cm">// и откат стоит одну команду. «Перепишу всё и потом починю» — так не работает.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Рефакторинг и изменение поведения не смешиваются в одном коммите — и тем более в одном pull request. Иначе ревьюер видит дифф на пятьсот строк, где невозможно отделить перестановку кода от новой логики, и ревью превращается в формальность. Правильный порядок: сначала рефакторинг отдельным PR при зелёных тестах, потом новая функция в чистой структуре.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы подходите к рефакторингу большого метода?</b><br>Сначала фиксирую поведение тестами — если их нет, пишу характеризующие на реальных данных. Затем маленькими шагами: выделить метод, не меняя содержимое; заменить примитивы типами; вынести в класс с явными зависимостями. Каждый шаг — отдельный коммит с зелёными тестами, поэтому в любой момент можно остановиться и откатиться. Абстракцию ввожу последней, когда появился второй вариант, а не заранее.</div>
+  </article>
+
+  <!-- M CHECKLIST -->
+  <article class="card" id="middle-checklist">
+    <p class="path">middle / итог</p>
+    <div class="card-top"><h3>Middle checklist</h3><span class="badge b-2">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Предпочитаю композицию наследованию и знаю исключения</li>
+        <li>Держу интерфейс рядом с потребителем, а не с реализацией</li>
+        <li>Не завожу интерфейс без второго потребителя контракта</li>
+        <li>Заменяю разросшиеся условия по статусу таблицей переходов</li>
+        <li>Ввожу паттерн как ответ на проявившуюся боль</li>
+        <li>Различаю сущность, объект-значение и агрегат</li>
+        <li>Выбираю границу агрегата по инвариантам</li>
+      </ul>
+      <ul class="check">
+        <li>Ссылаюсь на другие агрегаты по идентификатору</li>
+        <li>Меняю один агрегат за транзакцию</li>
+        <li>Направляю зависимости внутрь и проверяю это автоматически</li>
+        <li>Применяю строгую структуру к сложному домену, а не ко всему</li>
+        <li>Разделяю модели чтения и записи внутри одной базы</li>
+        <li>Не тащу ORM-сущности в контракт наружу</li>
+        <li>Рефакторю маленькими шагами при зелёных тестах</li>
+        <li>Не смешиваю рефакторинг с изменением поведения</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Признак middle-уровня в этой теме — способность назвать не только выигрыш решения, но и его цену. «Введём порты и адаптеры» — половина ответа. «Введём для модуля тарификации: правила станут тестироваться без базы, платим многословием и преобразованиями между слоями; для CRUD-разделов оставим прямой путь» — полный.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== SENIOR ==================== -->
+<section class="level lvl-s" id="senior">
+  <div class="level-head">
+    <p class="kicker">Уровень 03 · границы и эволюция</p>
+    <h2>Senior: границы, долг, простота</h2>
+    <p>Senior отвечает не за красоту кода, а за скорость команды через год. Это означает три вещи: правильно нарезать модули, управлять техническим долгом как инженерной величиной, а не как ругательством, и — самое трудное — вовремя отказываться от абстракций, которые кажутся правильными.</p>
+  </div>
+
+  <!-- 12 -->
+  <article class="card" id="boundaries">
+    <p class="path">senior / модули</p>
+    <div class="card-top"><h3>Модульные границы</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Главный архитектурный вопрос в коде — не «какие паттерны», а «где проходят границы». Правильно нарезанные модули позволяют менять один, не читая остальные. Неправильно нарезанные превращают систему в набор файлов, где любое изменение требует знания всего.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 12 · способы нарезки и их последствия</caption>
+      <thead><tr><th>Нарезка</th><th>Как выглядит</th><th>Последствие</th></tr></thead>
+      <tbody>
+        <tr><td>По техническим слоям</td><td><code>Controllers/</code>, <code>Services/</code>, <code>Repositories/</code></td><td>Одна функция размазана по трём каталогам; изменение задевает всё</td></tr>
+        <tr><td>По бизнес-возможностям</td><td><code>Ordering/</code>, <code>Billing/</code>, <code>Catalog/</code></td><td>Изменение локально внутри модуля</td></tr>
+        <tr><td>По типам объектов</td><td><code>Entities/</code>, <code>Dto/</code>, <code>Enums/</code></td><td>То же, что по слоям, только хуже</td></tr>
+        <tr><td>Смешанная</td><td>Модуль по возможности, слои внутри</td><td>Рабочий вариант для большинства проектов</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>text</span><span class="r">Нарезка по возможностям, слои — внутри модуля</span></div><pre><code>src/
+├── Ordering/                  <span class="cm"># модуль = бизнес-возможность</span>
+│   ├── Domain/                <span class="cm"># слои живут ВНУТРИ модуля</span>
+│   ├── Application/
+│   ├── Infrastructure/
+│   └── Ui/
+├── Billing/
+├── Catalog/
+└── Shared/                    <span class="cm"># общее — намеренно небольшое</span>
+    └── Money.php
+
+<span class="cm"># Правила связей между модулями:</span>
+<span class="cm">#   1. Модуль обращается к другому только через его публичный контракт,</span>
+<span class="cm">#      а не лезет в его Domain или, тем более, в его таблицы.</span>
+<span class="cm">#   2. Циклических зависимостей нет: если Ordering нужен Billing и наоборот —</span>
+<span class="cm">#      значит граница проведена неверно или нужен посредник через события.</span>
+<span class="cm">#   3. Shared растёт медленно и осознанно: «общий» модуль легко превращается</span>
+<span class="cm">#      в свалку, от которой зависят все и которую поэтому нельзя менять.</span></code></pre></div>
+
+    <div class="code"><div class="bar"><span>yaml</span><span class="r">Правила связей проверяются автоматически, иначе размываются</span></div><pre><code><span class="cm"># deptrac.yaml — статическая проверка архитектурных правил в CI</span>
+layers:
+  - name: Domain
+    collectors: [{ type: directory, value: src/.*/Domain/.* }]
+  - name: Application
+    collectors: [{ type: directory, value: src/.*/Application/.* }]
+  - name: Infrastructure
+    collectors: [{ type: directory, value: src/.*/Infrastructure/.* }]
+
+ruleset:
+  Domain: ~                    <span class="cm"># домену не разрешено НИЧЕГО: ни ORM, ни HTTP, ни соседей</span>
+  Application: [Domain]
+  Infrastructure: [Domain, Application]
+
+<span class="cm"># Аналогично описываются границы модулей:</span>
+<span class="cm">#   Ordering может зависеть от Shared, но не от внутренностей Billing.</span>
+<span class="cm">#</span>
+<span class="cm"># Без такой проверки правило живёт ровно до первого дедлайна: кто-то</span>
+<span class="cm"># подключит ORM-сущность прямо в домене, ревью это пропустит, и через</span>
+<span class="cm"># полгода границы не останется. Договорённость без автоматики — пожелание.</span></code></pre></div>
+
+    <div class="box imp"><span class="lbl">Важно</span>Границы модулей стоит проводить по тому, что меняется вместе. Если каждое изменение в тарификации требует правки в оформлении заказа — это одна возможность, разрезанная пополам, и её лучше объединить. Обратный признак: модуль, который годами меняется независимо от остальных, — кандидат на выделение в отдельный сервис, если для этого появится причина (см. конспект по <a href="system-design.html">System Design</a>).</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы решаете, где провести границу модуля?</b><br>По тому, что меняется вместе. Нарезка по техническим слоям выглядит аккуратно, но размазывает каждую функцию по трём каталогам, поэтому я режу по бизнес-возможностям, а слои держу внутри модуля. Между модулями — только публичные контракты, без обращения к чужому домену и чужим таблицам, и без циклов. И обязательно автоматическая проверка правил в CI: без неё границы размываются за полгода.</div>
+  </article>
+
+  <!-- 13 -->
+  <article class="card" id="debt">
+    <p class="path">senior / долг</p>
+    <div class="card-top"><h3>Технический долг</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Технический долг — не синоним плохого кода. Это осознанный компромисс: мы сделали быстрее и хуже, чтобы получить что-то ценное сейчас, и знаем, что позже заплатим процентами в виде замедления. Проблема начинается, когда долг берут неосознанно и не учитывают.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 13 · виды долга и что с ними делать</caption>
+      <thead><tr><th>Вид</th><th>Как возник</th><th>Стратегия</th></tr></thead>
+      <tbody>
+        <tr><td>Осознанный и разумный</td><td>«Срезали угол ради срока, знаем где»</td><td>Записать, оценить, вернуться по плану</td></tr>
+        <tr><td>Осознанный и безрассудный</td><td>«Времени нет, тесты потом»</td><td>Остановить: так долг растёт быстрее, чем выплачивается</td></tr>
+        <tr><td>Неосознанный от неопытности</td><td>«Не знали, что так нельзя»</td><td>Ревью, обучение, стандарты</td></tr>
+        <tr><td>Неосознанный от развития</td><td>«Тогда это было правильно»</td><td>Нормально: пересматривать при изменении требований</td></tr>
+        <tr><td>Долг зависимостей</td><td>Версии устарели, пакеты заброшены</td><td>Регулярные мелкие обновления вместо редких больших</td></tr>
+        <tr><td>Долг знаний</td><td>Модуль понимает один человек</td><td>Ротация, ревью, записи решений</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Долг, который видно в коде и в бэклоге</span></div><pre><code>&lt;?php
+<span class="cm">// Плохо: комментарий без контекста, который никто никогда не увидит</span>
+<span class="cm">// TODO: переделать</span>
+
+<span class="cm">// Хорошо: понятно что, почему, чем грозит и где задача</span>
+<span class="cm">// ДОЛГ: расчёт скидки дублируется здесь и в LegacyOrderController.</span>
+<span class="cm">// Причина: при переносе не успели мигрировать старый экран (срок акции).</span>
+<span class="cm">// Риск: расхождение правил — уже дважды приводило к неверным суммам.</span>
+<span class="cm">// Задача: PROJ-318, план — после отключения старого экрана в марте.</span>
+
+<span class="cm">// И, что важнее, тот же долг заведён задачей в бэклоге с оценкой:</span>
+<span class="cm">//   стоимость исправления: ~3 дня</span>
+<span class="cm">//   стоимость бездействия: ~4 часа в месяц на синхронизацию правил</span>
+<span class="cm">//                          + риск неверных сумм у клиентов</span>
+<span class="cm">// Такая формулировка превращает «хотим порефакторить» в решение с числами,</span>
+<span class="cm">// которое можно обсуждать с продуктом на его языке.</span></code></pre></div>
+
+    <p><strong>Стратегия выплаты.</strong> Три подхода, которые работают: правило бойскаута (трогаешь файл — оставь чуть лучше, но без расширения объёма задачи), постоянная доля времени спринта на долг (обычно 10–20 %, зафиксированная договорённостью, а не по остаточному принципу) и целевая выплата, когда долг мешает конкретной задаче — тогда рефакторинг становится частью задачи и не требует отдельного согласования. Большие «спринты рефакторинга» без функциональной цели соглашуются редко и почти всегда съедаются срочными делами.</p>
+
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как убедить бизнес выделить время на рефакторинг?</b><br>Не аргументом «код плохой» — он ничего не значит для продукта. Через числа: сколько сейчас занимает типовая задача в этом модуле и сколько будет занимать после; сколько инцидентов пришло отсюда за квартал; сколько времени уходит на ручную синхронизацию дублирующихся правил. И предлагать не «спринт рефакторинга», а привязку к ближайшей функциональной задаче в этом же модуле — так решение принимается легче и результат виден сразу.</div>
+  </article>
+
+  <!-- 14 -->
+  <article class="card" id="legacy">
+    <p class="path">senior / легаси</p>
+    <div class="card-top"><h3>Легаси-архитектура</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Легаси — это код, который приносит деньги и который страшно менять. Полное переписывание почти всегда проигрывает: новая система догоняет старую по функциональности годами, а старая всё это время продолжает меняться.</p>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Антикоррупционный слой: изоляция от чужой модели</span></div><pre><code>&lt;?php
+<span class="cm">// Проблема: легаси-модуль оперирует массивами со странными ключами</span>
+<span class="cm">// и статусами вроде 'N', 'P', 'S'. Тащить это в новый код — значит</span>
+<span class="cm">// заразить его чужими решениями навсегда.</span>
+
+<span class="cm">// Решение: слой перевода на границе. Внутри нового модуля живёт своя модель.</span>
+<span class="kw">final class</span> <span class="nm">LegacyOrderGateway</span> <span class="kw">implements</span> <span class="nm">OrderRepository</span>
+{
+    <span class="kw">public function</span> <span class="fn">get</span>(<span class="nm">OrderId</span> $id): <span class="nm">Order</span>
+    {
+        $row = $this-&gt;legacy-&gt;<span class="fn">fetchOrder</span>($id-&gt;<span class="fn">toInt</span>());   <span class="cm">// чужой формат</span>
+
+        <span class="cm">// Перевод один раз, в одном месте, с явными правилами</span>
+        <span class="kw">return</span> <span class="nm">Order</span>::<span class="fn">restore</span>(
+            id:     $id,
+            status: <span class="kw">match</span> ($row[<span class="st">'ord_st'</span>]) {
+                <span class="st">'N'</span> =&gt; <span class="nm">OrderStatus</span>::New,
+                <span class="st">'P'</span> =&gt; <span class="nm">OrderStatus</span>::Paid,
+                <span class="st">'S'</span> =&gt; <span class="nm">OrderStatus</span>::Shipped,
+                <span class="kw">default</span> =&gt; <span class="kw">throw new</span> <span class="nm">UnknownLegacyStatus</span>($row[<span class="st">'ord_st'</span>]),
+            },
+            total:  <span class="nm">Money</span>::<span class="fn">fromMinor</span>((<span class="kw">int</span>) $row[<span class="st">'sum_kop'</span>], <span class="st">'RUB'</span>),
+        );
+    }
+}
+
+<span class="cm">// Выигрыш: новый модуль пишется на своей модели и не зависит от легаси.</span>
+<span class="cm">// Когда легаси уйдёт, меняется одна реализация, а не весь новый код.</span></code></pre></div>
+
+    <div class="tw"><table>
+      <caption>Таблица 14 · стратегии работы с легаси</caption>
+      <thead><tr><th>Стратегия</th><th>Когда применять</th><th>Риск</th></tr></thead>
+      <tbody>
+        <tr><td>Оставить как есть</td><td>Код стабилен и почти не меняется</td><td>Никакого — это правильный выбор чаще, чем кажется</td></tr>
+        <tr><td>Обложить тестами и рефакторить</td><td>Код активно меняется</td><td>Требует времени на характеризующие тесты</td></tr>
+        <tr><td>Антикоррупционный слой</td><td>Новый код должен работать со старым</td><td>Дополнительный слой перевода</td></tr>
+        <tr><td>Постепенное замещение</td><td>Функциональность переносится по частям</td><td>Долгое сосуществование двух реализаций</td></tr>
+        <tr><td>Переписать с нуля</td><td>Почти никогда</td><td>Догонять движущуюся цель годами</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="box anti"><span class="lbl">Антипаттерн</span>«Большое переписывание»: параллельная разработка новой версии, пока старая живёт и развивается. Классический исход — новая система два года догоняет старую, бизнес всё это время не получает новых функций, а команда выгорает. Работающая альтернатива — постепенное замещение: маршрутизатор перед легаси, по одной функции за раз в новую реализацию, доля трафика растёт, старый код удаляется по мере опустошения.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Вам достался проект без архитектуры. С чего начнёте?</b><br>Не с переписывания. Сначала пойму, где болит на самом деле: какие модули меняются чаще всего, откуда приходят инциденты, что дольше всего делается. Это видно по истории репозитория и по трекеру. Затем в самой болезненной точке — характеризующие тесты, выделение границ и антикоррупционный слой для нового кода. Улучшения привязываю к функциональным задачам, чтобы они шли непрерывно, а не отдельным проектом, который отменят при первом же срочном деле.</div>
+  </article>
+
+  <!-- 15 -->
+  <article class="card" id="cost">
+    <p class="path">senior / простота</p>
+    <div class="card-top"><h3>Цена абстракции</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Самый недооценённый навык в теме — умение <em>не</em> вводить абстракцию. Каждый интерфейс, слой и уровень косвенности стоит: файл, прыжок при чтении, время на понимание для нового человека. Абстракция окупается, только если её гибкость действительно используется.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 15 · когда абстракция не нужна</caption>
+      <thead><tr><th>Соблазн</th><th>Реальность</th><th>Что делать</th></tr></thead>
+      <tbody>
+        <tr><td>«Вдруг понадобится вторая база»</td><td>За пять лет не понадобилась</td><td>Одна реализация, абстракция при появлении второй</td></tr>
+        <tr><td>Интерфейс к каждому сервису</td><td>Реализация одна, меняются вместе</td><td>Интерфейс там, где нужен для инверсии или теста</td></tr>
+        <tr><td>Конфигурируемость всего</td><td>Настройки никто не менял</td><td>Захардкодить, вынести при первом запросе</td></tr>
+        <tr><td>Универсальный «движок»</td><td>Второй случай не похож на первый</td><td>Дублирование дешевле неверной абстракции</td></tr>
+        <tr><td>Слой на всякий случай</td><td>Только передаёт вызов дальше</td><td>Убрать</td></tr>
+        <tr><td>Обобщение по двум случаям</td><td>Третий не влезает, ломаем абстракцию</td><td>Ждать третьего: он показывает настоящую ось изменчивости</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="code"><div class="bar"><span>php</span><span class="r">Неверная абстракция дороже дублирования</span></div><pre><code>&lt;?php
+<span class="cm">// Два импорта выглядели похоже — обобщили. Появился третий,</span>
+<span class="cm">// и «универсальный» класс начал обрастать флагами:</span>
+<span class="kw">final class</span> <span class="nm">UniversalImporter</span>
+{
+    <span class="kw">public function</span> <span class="fn">import</span>(
+        <span class="nm">string</span> $file,
+        <span class="nm">bool</span> $skipHeader = <span class="kw">true</span>,
+        <span class="nm">bool</span> $validateEmails = <span class="kw">false</span>,
+        ?<span class="nm">string</span> $delimiter = <span class="kw">null</span>,
+        <span class="nm">bool</span> $legacyMode = <span class="kw">false</span>,        <span class="cm">// ← третий случай не влез</span>
+        ?<span class="kw">callable</span> $customMapper = <span class="kw">null</span>,   <span class="cm">// ← и четвёртый</span>
+    ): <span class="nm">void</span> { <span class="cm">/* ... 300 строк условий ... */</span> }
+}
+
+<span class="cm">// Признак неверной абстракции: параметры-флаги, меняющие поведение,</span>
+<span class="cm">// и условия «если это тот самый случай» внутри общего кода.</span>
+
+<span class="cm">// Часто правильнее откатиться к дублированию и обобщить заново —</span>
+<span class="cm">// уже по настоящей общности, которая видна на трёх примерах:</span>
+<span class="kw">final class</span> <span class="nm">CustomerImporter</span> { <span class="cm">/* своя логика, читается за минуту */</span> }
+<span class="kw">final class</span> <span class="nm">ProductImporter</span>  { <span class="cm">/* своя логика */</span> }
+<span class="kw">final class</span> <span class="nm">LegacyImporter</span>   { <span class="cm">/* своя логика */</span> }
+
+<span class="cm">// Общее (чтение файла потоком, отчёт об ошибках) выносится в маленькие</span>
+<span class="cm">// переиспользуемые части, а не в один класс с флагами.</span></code></pre></div>
+
+    <div class="box good"><span class="lbl">Практический вывод</span>Полезное правило: дублирование дешевле неверной абстракции. Повторённый код виден и легко правится в двух местах; неверная абстракция расползается по всей системе, обрастает флагами и стоит недель на распутывание. Отсюда практика: первое повторение — копируем, второе — присматриваемся, третье — обобщаем, уже понимая, что именно общего.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как понять, что архитектура переусложнена?</b><br>По симптомам: чтобы понять один сценарий, приходится открыть восемь файлов; половина интерфейсов имеет единственную реализацию; есть слои, которые только передают вызов дальше; новый человек не может внести правку без сопровождающего неделю. Проверка простая — попросите коллегу, не знающего модуль, проследить путь одного запроса. Если это занимает больше пятнадцати минут, сложность не оправдана.</div>
+  </article>
+
+  <!-- 16 -->
+  <article class="card" id="team">
+    <p class="path">senior / команда</p>
+    <div class="card-top"><h3>Архитектура и команда</h3><span class="badge b-3">Архитектура</span></div>
+    <p>Структура кода стремится повторить структуру общения в команде — это наблюдение известно как закон Конвея. Практическое следствие: архитектурные решения, идущие против устройства команды, не приживаются, а изменение структуры команды рано или поздно проявится в коде.</p>
+
+    <div class="tw"><table>
+      <caption>Таблица 16 · как структура команды отражается в коде</caption>
+      <thead><tr><th>Ситуация в команде</th><th>Что получается в коде</th></tr></thead>
+      <tbody>
+        <tr><td>Одна команда, один продукт</td><td>Модульный монолит — естественная и удобная форма</td></tr>
+        <tr><td>Несколько команд по возможностям</td><td>Модули с чёткими контрактами, позже — сервисы</td></tr>
+        <tr><td>Команды по слоям (фронт, бэк, БД)</td><td>Каждая функция требует согласования трёх команд</td></tr>
+        <tr><td>Общий модуль без владельца</td><td>Свалка: менять боятся все, качество падает</td></tr>
+        <tr><td>Один человек знает модуль</td><td>Узкое место и риск: уход человека парализует направление</td></tr>
+        <tr><td>Нет договорённостей о стиле</td><td>Разные подходы в соседних файлах, споры на ревью</td></tr>
+      </tbody>
+    </table></div>
+
+    <p><strong>Что реально удерживает архитектуру.</strong> Не диаграмма на стене и не документ на сорок страниц, а три вещи: автоматические проверки правил в CI (направление зависимостей, границы модулей); короткие записи принятых решений с отвергнутыми вариантами — они не дают возвращаться к одному спору дважды; и владельцы модулей, назначенные явно, чтобы у каждого куска был человек, отвечающий за целостность. Всё остальное размывается за полгода.</p>
+
+    <div class="box imp"><span class="lbl">Важно</span>Архитектурное решение, которое не могут объяснить в команде, не будет соблюдаться — независимо от того, насколько оно верное. Поэтому часть работы senior — не спроектировать, а донести: показать на примере, зафиксировать письменно, встроить в ревью и в автоматику. Решение живёт ровно столько, сколько существует его объяснение.</div>
+    <div class="box qa"><span class="lbl">Типичный вопрос на собеседовании</span><b>Как вы внедряете архитектурные решения в команде?</b><br>Сначала объясняю проблему, а не решение: пока люди не почувствовали боль, любое правило воспринимается как бюрократия. Затем показываю на одном реальном модуле, что меняется. Фиксирую письменно короткой записью с контекстом и отвергнутыми вариантами. И встраиваю в процесс: проверка правил в CI и пункт в чек-листе ревью. Без последнего шага договорённость держится примерно до первого срочного релиза.</div>
+  </article>
+
+  <!-- S CHECKLIST -->
+  <article class="card" id="senior-checklist">
+    <p class="path">senior / итог</p>
+    <div class="card-top"><h3>Senior checklist</h3><span class="badge b-3">Самопроверка</span></div>
+    <div class="cols">
+      <ul class="check">
+        <li>Режу модули по бизнес-возможностям, слои держу внутри</li>
+        <li>Провожу границы по тому, что меняется вместе</li>
+        <li>Запрещаю циклы между модулями и обращение к чужому домену</li>
+        <li>Проверяю архитектурные правила автоматически в CI</li>
+        <li>Отличаю осознанный долг от неосознанного и веду его учёт</li>
+        <li>Аргументирую рефакторинг числами, а не качеством кода</li>
+      </ul>
+      <ul class="check">
+        <li>Привязываю выплату долга к функциональным задачам</li>
+        <li>Изолирую новый код от легаси антикоррупционным слоем</li>
+        <li>Выбираю постепенное замещение вместо переписывания</li>
+        <li>Считаю дублирование дешевле неверной абстракции</li>
+        <li>Обобщаю на третьем случае, а не на первом</li>
+        <li>Узнаю переусложнение по числу файлов на один сценарий</li>
+        <li>Учитываю структуру команды при выборе границ</li>
+        <li>Фиксирую решения письменно и встраиваю их в ревью и CI</li>
+      </ul>
+    </div>
+    <div class="box good"><span class="lbl">Ориентир</span>Senior-ответ по архитектуре всегда содержит отказ от чего-то. «Ввели порты и адаптеры в биллинге, потому что там настоящие правила; в каталоге оставили прямой путь через фреймворк — там CRUD; интерфейсы завели только там, где есть вторая реализация или подстановка в тестах; долг по дублированию скидок записан с оценкой и привязан к отключению старого экрана». Перечисление применённых паттернов без единого «не стали» звучит заметно слабее.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ТАБЛИЦЫ ==================== -->
+<section class="level lvl-n" id="tables">
+  <div class="level-head">
+    <p class="kicker">Справочник · сравнения</p>
+    <h2>Сравнительные таблицы</h2>
+    <p>Компактный справочник для повторения: по каким признакам решать, что пора менять структуру, и чего ждут на каждом уровне.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Симптом → решение</h3><span class="badge b-tag">Таблица 17</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 17 · что болит и что с этим делать</caption>
+      <thead><tr><th>Симптом</th><th>Вероятная причина</th><th>Решение</th></tr></thead>
+      <tbody>
+        <tr><td>Одно изменение задевает десять файлов</td><td>Границы проведены по слоям, а не по возможностям</td><td>Собрать функцию в один модуль</td></tr>
+        <tr><td>Класс невозможно протестировать</td><td>Зависимости создаются внутри</td><td>Внедрение через конструктор</td></tr>
+        <tr><td>Растущий <code>match</code> по типу</td><td>Нарушена открытость/закрытость</td><td>Стратегия: реализации одного контракта</td></tr>
+        <tr><td>Одна проверка в пяти местах</td><td>Одержимость примитивами</td><td>Объект-значение с проверкой в конструкторе</td></tr>
+        <tr><td>Условия по статусу в десяти методах</td><td>Состояние размазано</td><td>Таблица переходов в перечислении</td></tr>
+        <tr><td>Правило дублируется в коде и в запросе</td><td>Логика отбора не выделена</td><td>Спецификация или именованный метод репозитория</td></tr>
+        <tr><td>Сущности без поведения, логика в сервисах</td><td>Анемичная модель</td><td>Перенести правила в домен — если правила есть</td></tr>
+        <tr><td>Список тормозит, много запросов</td><td>Чтение через агрегаты</td><td>Отдельная модель чтения плоским запросом</td></tr>
+        <tr><td>Библиотека протекает по всему коду</td><td>Нет границы с внешним миром</td><td>Адаптер или антикоррупционный слой</td></tr>
+        <tr><td>Восемь файлов на один сценарий</td><td>Переусложнение</td><td>Убрать слои, которые ничего не решают</td></tr>
+        <tr><td>Класс с флагами в аргументах</td><td>Неверная абстракция</td><td>Разделить на явные варианты</td></tr>
+        <tr><td>Домен импортирует ORM</td><td>Нарушено направление зависимостей</td><td>Порт в домене, адаптер в инфраструктуре, проверка в CI</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Ложные признаки хорошей архитектуры</h3><span class="badge b-tag">Таблица 18</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 18 · что кажется правильным, но ничего не гарантирует</caption>
+      <thead><tr><th>Признак</th><th>Почему обманчив</th><th>Что смотреть вместо</th></tr></thead>
+      <tbody>
+        <tr><td>Много применённых паттернов</td><td>Паттерн без проблемы — лишняя сложность</td><td>Стоимость типового изменения</td></tr>
+        <tr><td>Интерфейс у каждого класса</td><td>Единственная реализация не даёт гибкости</td><td>Есть ли второй потребитель контракта</td></tr>
+        <tr><td>Много слоёв</td><td>Слой без решений — только прыжок при чтении</td><td>Что решает каждый слой</td></tr>
+        <tr><td>Соблюдение всех букв SOLID</td><td>Можно раздробить до нечитаемости</td><td>Меняются ли части независимо</td></tr>
+        <tr><td>Красивая диаграмма</td><td>Код обычно устроен иначе</td><td>Автоматическая проверка правил</td></tr>
+        <tr><td>Всё покрыто интерфейсами «для тестов»</td><td>Часто признак того, что код не разделён</td><td>Скорость и надёжность тестов</td></tr>
+        <tr><td>Нет дублирования нигде</td><td>Обобщение непохожего хуже копии</td><td>Правда ли это одно и то же правило</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Junior vs Middle vs Senior: чего ждут</h3><span class="badge b-tag">Таблица 19</span></div>
+    <div class="tw"><table>
+      <caption>Таблица 19 · ожидания по уровням</caption>
+      <thead><tr><th>Область</th><th>Junior</th><th>Middle</th><th>Senior</th></tr></thead>
+      <tbody>
+        <tr><td>Принципы</td><td>Знает SOLID и показывает нарушение</td><td>Применяет осознанно, видит перегибы</td><td>Определяет, где принцип не нужен</td></tr>
+        <tr><td>Паттерны</td><td>Владеет повседневными</td><td>Выбирает и называет цену</td><td>Отказывается от лишних</td></tr>
+        <tr><td>Домен</td><td>Различает данные и правила</td><td>Строит агрегаты и границы согласованности</td><td>Проводит границы модулей</td></tr>
+        <tr><td>Слои</td><td>Не пишет логику в контроллере</td><td>Направляет зависимости внутрь</td><td>Решает, где строгость нужна, а где нет</td></tr>
+        <tr><td>Рефакторинг</td><td>Выделяет методы</td><td>Ведёт безопасными шагами под тестами</td><td>Планирует и защищает перед бизнесом</td></tr>
+        <tr><td>Легаси</td><td>Работает по образцу</td><td>Изолирует новый код</td><td>Выбирает стратегию замещения</td></tr>
+        <tr><td>Долг</td><td>Замечает проблемы</td><td>Фиксирует и оценивает</td><td>Управляет как величиной с числами</td></tr>
+        <tr><td>Ответ на собеседовании</td><td>Определение и пример</td><td>Механизм и цена</td><td>Компромиссы и осознанный отказ</td></tr>
+      </tbody>
+    </table></div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ШПАРГАЛКА ==================== -->
+<section class="level lvl-n" id="cheatsheet">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>Задача → паттерн</h2>
+    <p>Короткий указатель: от формулировки задачи к решению и к признаку, что решение действительно нужно.</p>
+  </div>
+
+  <article class="card">
+    <div class="card-top"><h3>Указатель по задачам</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>text</span><span class="r">Формулировка → приём → когда вводить</span></div><pre><code>«Вариантов алгоритма несколько и они растут»
+   → Стратегия                     вводить: при втором варианте
+
+«Нужно добавить кэш/логи/повторы, не трогая класс»
+   → Декоратор                     вводить: сразу, это дёшево
+
+«Создание объекта сложное и повторяется»
+   → Фабрика / Строитель           вводить: при третьем повторении
+
+«Чужая библиотека протекает по всему коду»
+   → Адаптер                       вводить: сразу на границе
+
+«После действия должно произойти ещё несколько вещей»
+   → События                       вводить: при третьем «ещё и...»
+
+«Валидация одного поля в нескольких местах»
+   → Объект-значение               вводить: при втором месте
+
+«Условия по статусу расползлись по методам»
+   → Таблица переходов / Состояние вводить: при третьем методе
+
+«SQL расползается по сервисам»
+   → Репозиторий                   вводить: сразу
+
+«Правило отбора нужно и в запросе, и в проверке»
+   → Спецификация                  вводить: когда правил много
+
+«Операцию нужно ставить в очередь и повторять»
+   → Команда                       вводить: при появлении очереди
+
+«Домен зависит от базы и фреймворка»
+   → Порты и адаптеры              вводить: если в модуле есть правила
+
+«Список тормозит из-за загрузки агрегатов»
+   → Отдельная модель чтения       вводить: по измеренной причине
+
+«Новый код вынужден работать со старым»
+   → Антикоррупционный слой        вводить: сразу
+
+«Кажется, что здесь нужна абстракция»
+   → Ничего                        вводить: подождать третьего случая</code></pre></div>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Вопросы к своему коду</h3><span class="badge b-tag">Шпаргалка</span></div>
+    <div class="code"><div class="bar"><span>text</span><span class="r">Чек-лист для ревью и самопроверки</span></div><pre><code><span class="cm"># Про класс</span>
+Сколько у него причин меняться?                        &gt; 1 — делить
+Можно ли протестировать без базы и сети?               нет — зависимости внутрь
+Понятно ли из имени, что он делает?                    Manager/Helper — плохой знак
+Сколько он знает о внешнем мире?                       домен не знает ничего
+
+<span class="cm"># Про метод</span>
+Помещается ли на экран?                                нет — выделять
+Сколько уровней вложенности?                           &gt; 2 — ранний возврат
+Есть ли флаги в аргументах?                            да — разделить метод
+Работает ли он с чужими данными?                       да — перенести
+
+<span class="cm"># Про модуль</span>
+Что придётся изменить при типовой задаче?              один модуль
+Есть ли циклы зависимостей?                            нет — обязательное правило
+Обращаемся ли к чужому домену напрямую?                только через контракт
+Проверяются ли правила автоматически?                  иначе размоются
+
+<span class="cm"># Про абстракцию</span>
+Сколько реализаций у интерфейса?                       одна — нужен ли он
+Используется ли гибкость на практике?                  нет — убрать
+Сколько файлов открыть, чтобы понять сценарий?         &gt; 5 — переусложнение
+Это третий похожий случай или первый?                  первый — не обобщать</code></pre></div>
+    <div class="box good"><span class="lbl">Ориентир</span>Самый быстрый способ оценить архитектуру незнакомого проекта — взять типовую задачу («добавить новый способ оплаты») и проследить, что именно придётся изменить. Один модуль и один новый класс — структура хорошая. Правки в контроллере, сервисе, репозитории, шаблоне и трёх перечислениях — граница проведена не там.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ВОПРОСЫ ==================== -->
+<section class="level lvl-n" id="interview">
+  <div class="level-head">
+    <p class="kicker">Справочник · собеседование</p>
+    <h2>60 вопросов с эталонными ответами</h2>
+    <p>Ответы короткие — это каркас. Вопросы по архитектуре почти всегда проверяют не знание определений, а способность назвать цену решения и условие, при котором вы поступили бы иначе.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 20 вопросов</h3><span class="badge b-1">Junior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Что такое связность и связанность?</span><span class="aa">Связность — насколько всё внутри модуля относится к одной задаче, её хотят высокой. Связанность — насколько модули зависят друг от друга, её хотят низкой. Практический критерий: при типовом изменении правится один модуль, а не десяток файлов в разных слоях.</span></li>
+      <li><span class="qq">Зачем вообще думать об архитектуре кода?</span><span class="aa">Чтобы следующее изменение стоило дёшево. Архитектура не про красоту, а про число мест, которые придётся тронуть, и риск в каждом из них. Проект без структуры костенеет: улучшать становится страшно, и качество падает само собой.</span></li>
+      <li><span class="qq">Расскажите про принцип единственной ответственности.</span><span class="aa">У класса должна быть одна причина меняться. Класс, который достаёт данные, считает скидку и формирует письмо, меняется по трём независимым причинам, и правка формата письма способна сломать расчёт. Оговорка: дробить до бесконечности тоже вредно — критерий в том, меняются ли части независимо.</span></li>
+      <li><span class="qq">Что такое открытость/закрытость и как её достичь?</span><span class="aa">Новое поведение добавляется новым кодом, а не правкой существующего. Практически это переход от растущего <code>match</code> по типу к набору реализаций одного контракта: новый способ доставки — новый класс, старый код не трогается. Вводить стоит при появлении второго варианта, а не первого.</span></li>
+      <li><span class="qq">Что означает принцип подстановки Лисков?</span><span class="aa">Наследник должен работать везде, где ожидается базовый тип, не ломая ожиданий. Классическое нарушение — наследник, который бросает «не поддерживается» там, где база возвращает значение, или ужесточает требования к аргументам. Это обычно признак того, что связь «является» надуманная и нужна композиция.</span></li>
+      <li><span class="qq">Что такое инверсия зависимостей?</span><span class="aa">Зависимость от абстракции вместо конкретной реализации, причём интерфейс принадлежит потребителю. Сервис принимает интерфейс отправителя писем, а не создаёт внутри SMTP-клиент. Тогда в проде это SMTP, в тестах — двойник, а код не меняется.</span></li>
+      <li><span class="qq">Чем внедрение зависимостей отличается от DI-контейнера?</span><span class="aa">Внедрение — приём: зависимости приходят через конструктор. Контейнер — инструмент, который их собирает. Приём работает и без контейнера, а контейнер без приёма превращается в service locator, когда класс сам достаёт что хочет, и зависимости снова становятся скрытыми.</span></li>
+      <li><span class="qq">Что такое паттерн стратегия и когда он нужен?</span><span class="aa">Взаимозаменяемые варианты алгоритма за общим контрактом. Признак, что пора: условие по типу, которое растёт с каждой новой задачей. После выделения новый вариант — это новый класс, а существующий код и его тесты не трогаются.</span></li>
+      <li><span class="qq">Зачем нужен декоратор?</span><span class="aa">Чтобы добавить поведение, не меняя исходный класс: кэш, логирование, повторы, замеры. Декоратор реализует тот же интерфейс и оборачивает другой экземпляр, поэтому обёртки собираются в любом порядке и включаются конфигурацией. Базовый класс при этом остаётся простым и легко тестируется.</span></li>
+      <li><span class="qq">Что такое объект-значение и зачем он?</span><span class="aa">Небольшой неизменяемый объект, определяемый значением: деньги, email, период. Он переносит инвариант в тип: проверка выполняется один раз при создании, дальше объект корректен по построению. Плюс сигнатура метода начинает документировать контракт и защищать от перепутанных аргументов.</span></li>
+      <li><span class="qq">Что такое репозиторий?</span><span class="aa">Контракт доступа к объектам домена, выглядящий как коллекция: получить, сохранить, найти по правилу. Он не даёт SQL расползтись по сервисам и позволяет подменить хранилище в тестах. Важно, что он описан на языке домена, а не хранилища: без limit, offset и join в сигнатурах.</span></li>
+      <li><span class="qq">Какие вы знаете запахи кода?</span><span class="aa">Божественный объект, длинный метод, одержимость примитивами, завистливый метод, дробовик (одно изменение задевает десять файлов), анемичная модель, флаги в аргументах, длинные цепочки вызовов. Запах — не ошибка, а сигнал: работает, но скоро станет дорого.</span></li>
+      <li><span class="qq">Что такое анемичная модель и всегда ли это плохо?</span><span class="aa">Сущности без поведения, вся логика в сервисах. Проблема в том, что инвариант не защищён: одна и та же проверка повторяется в нескольких местах и однажды будет забыта. Но для простого CRUD анемичная модель уместна и дешевле; богатая окупается там, где есть настоящие правила и переходы состояний.</span></li>
+      <li><span class="qq">Почему не стоит писать логику в контроллере?</span><span class="aa">Потому что она становится недоступной из консольной команды, обработчика очереди и другого эндпоинта — и её приходится дублировать. Плюс её нельзя протестировать без HTTP-слоя. Контроллер разбирает запрос, вызывает сценарий и переводит ошибки в коды ответа, не более.</span></li>
+      <li><span class="qq">Какие бывают слои и что в каждом?</span><span class="aa">Контроллер — HTTP и формат. Сервис приложения — сценарий: получить, вызвать домен, сохранить, уведомить, транзакция. Домен — правила и инварианты, без знания о фреймворке и базе. Репозиторий — контракт хранения. Инфраструктура — реализации. Слой оправдан, только если он принимает решения или скрывает детали.</span></li>
+      <li><span class="qq">Что такое «тонкий контроллер»?</span><span class="aa">Контроллер без бизнес-логики и без SQL: он разбирает вход, вызывает один сценарий и формирует ответ. Проверка простая — можно ли выполнить то же действие из консоли и из очереди, не дублируя код. Если нет, логика застряла в контроллере.</span></li>
+      <li><span class="qq">Зачем нужны DTO?</span><span class="aa">Чтобы отделить внутреннюю модель от того, что уходит наружу или приходит внутрь. Без них любое переименование поля сущности ломает клиентов, а новое поле публикуется без ревью. Плюс DTO явно описывает, какие данные нужны конкретному сценарию.</span></li>
+      <li><span class="qq">Когда абстракция вредна?</span><span class="aa">Когда введена до появления проблемы: интерфейс с единственной реализацией «на будущее», фабрика для объекта с простым конструктором, слой, который только передаёт вызов дальше. Каждая такая абстракция стоит файла, прыжка при чтении и времени нового человека, не давая взамен гибкости.</span></li>
+      <li><span class="qq">Что такое трейт и когда он уместен?</span><span class="aa">Механизм примешивания методов в класс. Выглядит как композиция, но работает как копирование кода: источник поведения не виден, подменить его нельзя, конфликты имён приходится разрешать вручную. Для технической мелочи годится, для бизнес-логики лучше композиция через зависимость.</span></li>
+      <li><span class="qq">Как понять, что код плохой?</span><span class="aa">Не по ощущениям, а по признакам: типовое изменение задевает много файлов, класс нельзя протестировать без базы, у класса несколько причин меняться, одна и та же проверка повторяется в разных местах, новый человек не может внести правку без сопровождения. Всё это измеримо и обсуждаемо, в отличие от «мне не нравится».</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 20 вопросов</h3><span class="badge b-2">Middle</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Почему композиция предпочтительнее наследования?</span><span class="aa">Наследование связывает жёстко: наследник зависит от всего родителя, комбинации поведений дают взрыв числа классов, изменение базового класса задевает иерархию. Композиция даёт переиспользование через контракт, собирается в любом сочетании и подменяется в тестах. Наследование остаётся для настоящего «является» — например, иерархии исключений.</span></li>
+      <li><span class="qq">Кому принадлежит интерфейс — потребителю или реализации?</span><span class="aa">Потребителю. Интерфейс репозитория лежит в домене и написан на языке домена, а реализация — в инфраструктуре. Это и есть инверсия зависимостей: инфраструктура знает о домене, домен о ней — нет. Если интерфейс лежит рядом с реализацией и повторяет её методы, инверсии не произошло.</span></li>
+      <li><span class="qq">Нужен ли интерфейс, если реализация одна?</span><span class="aa">Только если есть второй потребитель контракта: инверсия зависимости, подстановка двойника в тестах или другой слой. Интерфейс, дублирующий публичные методы класса «для соблюдения принципа», — лишний файл, который придётся править вместе с классом. Критерий практический, а не идеологический.</span></li>
+      <li><span class="qq">Что такое агрегат и как выбрать границу?</span><span class="aa">Группа объектов, сохраняемая и проверяемая как целое, с единственной точкой входа — корнем. Границу определяют инварианты: что обязано быть согласованным немедленно, входит внутрь, остальное связывается по идентификатору и согласуется через события. Правило — одна транзакция меняет один агрегат.</span></li>
+      <li><span class="qq">Чем сущность отличается от объекта-значения?</span><span class="aa">Сущность имеет идентичность и живёт во времени: два заказа с одинаковыми полями — разные заказы. Объект-значение определяется значением и взаимозаменяем: две суммы по 100 ₽ неразличимы. Отсюда следствия: сущность изменяема и сравнивается по идентификатору, объект-значение неизменяем и сравнивается по содержимому.</span></li>
+      <li><span class="qq">Зачем нужны доменные события?</span><span class="aa">Чтобы развязать «что произошло» и «что должно случиться в ответ». Агрегат фиксирует факт, а подписчики реагируют: письмо, обновление отчёта, синхронизация с внешней системой. Без событий эти реакции накапливаются в сервисе, который начинает знать про всю систему. Цена — поток управления становится менее явным, поэтому события не стоит применять там, где хватает прямого вызова.</span></li>
+      <li><span class="qq">Что такое доменный сервис?</span><span class="aa">Место для правила, которое не принадлежит ни одной сущности: например, перевод средств между счетами затрагивает два агрегата. Важно не превращать его в свалку: если поведение можно выразить внутри сущности, оно должно жить там, иначе модель снова становится анемичной.</span></li>
+      <li><span class="qq">Что даёт гексагональная архитектура и в чём цена?</span><span class="aa">Направление зависимостей внутрь: домен не знает про фреймворк, базу и HTTP, поэтому правила тестируются мгновенно и переживают смену инфраструктуры, а один сценарий вызывается из HTTP, консоли и очереди. Цена — больше файлов, преобразования между слоями и более высокий порог входа. Поэтому применяют её к сложным модулям, а не ко всему проекту.</span></li>
+      <li><span class="qq">Как не дать архитектурным границам размыться?</span><span class="aa">Автоматической проверкой в CI: домену запрещено импортировать инфраструктуру, модулю — лезть во внутренности соседа, циклы запрещены. Договорённость без автоматики живёт до первого дедлайна: кто-то подключит ORM-сущность в домене, ревью пропустит, и через полгода границы не будет.</span></li>
+      <li><span class="qq">Зачем разделять модели чтения и записи?</span><span class="aa">У них разные требования: записи нужен небольшой агрегат с инвариантами, чтению — плоские данные под конкретный экран, часто из нескольких таблиц. Загрузка агрегатов ради списка даёт N+1 и лишнюю работу. Разделение делается дёшево в одной базе: команды через домен, запросы отдельными классами.</span></li>
+      <li><span class="qq">Когда нужен полноценный CQRS с отдельным хранилищем?</span><span class="aa">Когда чтение измеримо упёрлось и разделения моделей внутри одной базы не хватает. Это отдельное хранилище, синхронизация через события, лаг и расхождения — то есть новый класс инцидентов. Начинать всегда стоит с лёгкого варианта: он даёт большую часть пользы почти без сложности.</span></li>
+      <li><span class="qq">Что такое рефакторинг и чем он не является?</span><span class="aa">Изменение структуры без изменения поведения. Как только вы попутно чините баг или добавляете функцию — это уже не рефакторинг, и при поломке будет непонятно, что виновато. Отсюда практика: рефакторинг отдельным коммитом и отдельным pull request, при зелёных тестах.</span></li>
+      <li><span class="qq">Как рефакторить большой метод?</span><span class="aa">Сначала зафиксировать поведение тестами, при их отсутствии — характеризующими на реальных данных. Затем маленькими шагами: выделить метод, не меняя содержимое; заменить примитивы типами; вынести в класс с явными зависимостями. Каждый шаг — коммит с зелёными тестами. Абстракция вводится последней, при появлении второго варианта.</span></li>
+      <li><span class="qq">Что делать, если код невозможно протестировать?</span><span class="aa">Это сигнал о дизайне, а не о тестах. Признаки: зависимости создаются внутри, статические вызовы, обращение ко времени и случайности изнутри, вычисления вперемешку с записью в базу. Лечение — вынести зависимости в конструктор, отделить вычисление от побочного эффекта, при необходимости сделать шов с параметрами по умолчанию.</span></li>
+      <li><span class="qq">Когда паттерн приносит вред?</span><span class="aa">Когда введён до появления проблемы. Фабрика для простого конструктора, интерфейс «на будущее», шина сообщений вместо прямого вызова — всё это добавляет файлы и прыжки при чтении, не решая ничего. Паттерн — ответ на проявившуюся боль: третье повторение, растущий <code>switch</code>, невозможность протестировать.</span></li>
+      <li><span class="qq">Как заменить разросшиеся условия по статусу?</span><span class="aa">Собрать переходы в одно место: таблица допустимых переходов в перечислении и единственная проверка в сущности. Тогда правила читаются как документация, а добавление статуса — правка в одном месте. Полноценный паттерн «состояние» с классом на каждое состояние нужен реже — когда у состояний много собственного поведения.</span></li>
+      <li><span class="qq">Что такое спецификация и когда она оправдана?</span><span class="aa">Правило отбора как объект, применимый и к загруженному объекту, и к запросу в базу. Она решает проблему, когда одно условие описано дважды — в PHP и в SQL — и эти описания расходятся. Оправдана, когда правил много и они комбинируются; для двух-трёх условий проще именованный метод репозитория.</span></li>
+      <li><span class="qq">Как правильно работать с ORM-сущностями?</span><span class="aa">Не выпускать их за пределы инфраструктуры и не отдавать наружу как контракт API. Иначе переименование колонки ломает клиентов, ленивая загрузка приводит к N+1 при сериализации, а внутренние поля публикуются без ревью. Наружу отдаётся DTO, а домен в строгих модулях работает со своей моделью.</span></li>
+      <li><span class="qq">Что такое единица работы и нужна ли она?</span><span class="aa">Механизм, накапливающий изменения и сохраняющий их одной транзакцией. В PHP-проектах она обычно уже есть в ORM, поэтому писать свою почти никогда не нужно. Понимать её полезно по другой причине: она объясняет, почему изменения сущности сохраняются «сами» и почему важно контролировать границы транзакции в сервисе приложения.</span></li>
+      <li><span class="qq">Как выбрать между событиями и прямым вызовом?</span><span class="aa">Прямой вызов, когда результат нужен здесь и сейчас и отправитель обязан знать об исходе. События — когда реакций несколько, они не влияют на основной сценарий и могут выполняться позже. Цена событий — неявный поток управления и сложность отладки, поэтому вводить их стоит с третьего «после этого нужно ещё...», а не сразу.</span></li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 20 вопросов</h3><span class="badge b-3">Senior</span></div>
+    <ol class="qlist">
+      <li><span class="qq">Как вы решаете, где провести границу модуля?</span><span class="aa">По тому, что меняется вместе. Нарезка по техническим слоям выглядит аккуратно, но размазывает каждую функцию по трём каталогам, поэтому я режу по бизнес-возможностям, а слои держу внутри модуля. Между модулями — только публичные контракты, без обращения к чужому домену и таблицам, и без циклов.</span></li>
+      <li><span class="qq">Чем плоха нарезка по техническим слоям?</span><span class="aa">Тем, что любая осмысленная задача требует правок в трёх-четырёх каталогах, а связанные вещи лежат далеко друг от друга. Модуль перестаёт быть единицей понимания: чтобы разобраться в тарификации, нужно обойти всю структуру. При нарезке по возможностям изменение остаётся внутри одного каталога.</span></li>
+      <li><span class="qq">Что делать, если два модуля зависят друг от друга?</span><span class="aa">Считать это сигналом об ошибке в границах. Обычно либо это на самом деле один модуль, разрезанный пополам, либо часть общего нужно вынести в третий модуль, либо связь должна стать односторонней через событие. Циклическая зависимость означает, что модули нельзя ни понять, ни изменить по отдельности.</span></li>
+      <li><span class="qq">Как не дать общему модулю превратиться в свалку?</span><span class="aa">Держать его намеренно маленьким и требовать обоснования на каждое добавление: «общее» должно быть действительно общим и стабильным, вроде типа денег. У него должен быть владелец и осознанное правило, что изменение затрагивает всех потребителей. Без этого он быстро становится модулем, который никто не решается менять.</span></li>
+      <li><span class="qq">Что такое технический долг и всегда ли он плох?</span><span class="aa">Осознанный компромисс: сделали быстрее и хуже ради ценности сейчас, зная, что заплатим замедлением потом. Разумный осознанный долг — нормальный инженерный инструмент. Плох долг неосознанный и неучтённый: он не виден, не оценён и растёт быстрее, чем выплачивается.</span></li>
+      <li><span class="qq">Как вести учёт технического долга?</span><span class="aa">Записями в бэклоге с двумя оценками: стоимость исправления и стоимость бездействия (сколько времени и рисков он съедает в месяц). В коде — комментарий с причиной, риском и ссылкой на задачу, а не безымянное «TODO». Тогда долг обсуждается как обычная работа с приоритетом, а не как просьба «дать время на порядок».</span></li>
+      <li><span class="qq">Как убедить бизнес выделить время на рефакторинг?</span><span class="aa">Не через «код плохой», а через числа: сколько занимает типовая задача в этом модуле сейчас и будет после, сколько инцидентов пришло отсюда за квартал, сколько времени уходит на синхронизацию дублирующихся правил. И предлагать не отдельный спринт, а привязку к ближайшей задаче в том же модуле — так согласовывается заметно легче.</span></li>
+      <li><span class="qq">Какие есть стратегии выплаты долга?</span><span class="aa">Правило бойскаута — трогаешь файл, оставь чуть лучше, не расширяя объём задачи. Фиксированная доля времени спринта, оформленная договорённостью, а не по остаточному принципу. Целевая выплата, когда долг мешает конкретной задаче — тогда рефакторинг становится её частью. Большие «спринты рефакторинга» без функциональной цели обычно съедаются срочными делами.</span></li>
+      <li><span class="qq">Вам достался проект без архитектуры. С чего начнёте?</span><span class="aa">С диагностики, а не с переписывания: какие модули меняются чаще всего, откуда приходят инциденты, что делается дольше всего. Это видно по истории репозитория и трекеру. Затем в самой болезненной точке — характеризующие тесты, выделение границ, антикоррупционный слой для нового кода. Улучшения привязываю к функциональным задачам.</span></li>
+      <li><span class="qq">Что такое антикоррупционный слой?</span><span class="aa">Слой перевода на границе с чужой или старой моделью: внутри нового модуля живёт своя модель, а на входе и выходе происходит преобразование. Он не даёт чужим решениям — странным статусам, форматам, структурам — расползтись по новому коду. Когда легаси уходит, меняется одна реализация, а не вся система.</span></li>
+      <li><span class="qq">Почему переписывание с нуля обычно плохая идея?</span><span class="aa">Потому что старая система не стоит на месте: она продолжает меняться, пока новая её догоняет, и бизнес всё это время не получает нового. Плюс в старом коде зашиты годы неочевидных правил и исключений, которые обнаруживаются только в проде. Рабочая альтернатива — постепенное замещение по одной функции с возможностью вернуть трафик обратно.</span></li>
+      <li><span class="qq">Как понять, что архитектура переусложнена?</span><span class="aa">По симптомам: чтобы проследить один сценарий, нужно открыть восемь файлов; половина интерфейсов имеет единственную реализацию; есть слои, только передающие вызов дальше; новый человек не может внести правку без сопровождения неделю. Проверка — попросить коллегу проследить путь запроса: дольше пятнадцати минут означает неоправданную сложность.</span></li>
+      <li><span class="qq">Почему дублирование бывает лучше абстракции?</span><span class="aa">Потому что неверная абстракция дороже. Дублирование видно и правится в двух местах; неверное обобщение расползается по системе, обрастает флагами и условиями «если это тот случай», и распутывание занимает недели. Практика: первое повторение копируем, второе — присматриваемся, третье — обобщаем, уже понимая настоящую ось изменчивости.</span></li>
+      <li><span class="qq">Как решить, применять ли строгую архитектуру ко всему проекту?</span><span class="aa">Не применять ко всему. Сложные модули с настоящими правилами — заказы, платежи, тарификация — по строгой схеме с портами и адаптерами; простые CRUD-разделы — прямым путём через фреймворк. Единообразие ценно, но платить многословием там, где нет правил, не окупается. Важно только не смешивать подходы внутри одного модуля.</span></li>
+      <li><span class="qq">Как закон Конвея влияет на архитектуру?</span><span class="aa">Структура кода стремится повторить структуру общения в команде. Команды, нарезанные по слоям, дают систему, где каждая функция требует согласования трёх команд. Команды по бизнес-возможностям естественно приводят к модулям с контрактами. Практический вывод: архитектурное решение против устройства команды не приживётся, и менять приходится обе стороны.</span></li>
+      <li><span class="qq">Что реально удерживает архитектуру от размывания?</span><span class="aa">Три вещи: автоматические проверки правил в CI, короткие записи решений с отвергнутыми вариантами и явно назначенные владельцы модулей. Диаграммы и документы на сорок страниц не работают: код расходится с ними за месяцы, и никто этого не замечает. Работает то, что ломает сборку или всплывает на ревью.</span></li>
+      <li><span class="qq">Как вы внедряете архитектурные решения в команде?</span><span class="aa">Сначала объясняю проблему, а не решение: пока боль не почувствовали, правило воспринимается как бюрократия. Затем показываю на одном реальном модуле. Фиксирую письменно с контекстом и отвергнутыми вариантами. И встраиваю в процесс — проверка в CI и пункт в чек-листе ревью. Без последнего шага договорённость держится до первого срочного релиза.</span></li>
+      <li><span class="qq">Как оценить архитектуру незнакомого проекта за час?</span><span class="aa">Взять типовую задачу и проследить, что придётся изменить: один модуль и новый класс — хорошо, правки в пяти местах — граница не там. Посмотреть, зависит ли домен от фреймворка. Посчитать, сколько файлов нужно открыть для понимания одного сценария. И заглянуть в историю: какие файлы меняются чаще всего — там и болит.</span></li>
+      <li><span class="qq">Что делать, если команда спорит о подходе на каждом ревью?</span><span class="aa">Спор в комментариях — симптом отсутствия договорённости. Нужно вынести решение из ревью: обсудить один раз голосом, зафиксировать короткой записью с аргументами и отвергнутыми вариантами, где возможно — закрепить автоматикой. Тогда ревью обсуждает конкретный код, а не заново тот же принцип.</span></li>
+      <li><span class="qq">Какой архитектурой вы гордитесь и что бы сделали иначе?</span><span class="aa">Вопрос проверяет рефлексию. Сильный ответ содержит конкретное решение с числами (что изменилось в скорости работы или в числе инцидентов) и честное «сделал бы иначе»: обычно это про преждевременные абстракции, слишком крупные агрегаты или строгую схему там, где хватило бы простого CRUD. Ответ без второй части выглядит слабее.</span></li>
+    </ol>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПРАКТИКА ==================== -->
+<section class="level lvl-n" id="practice">
+  <div class="level-head">
+    <p class="kicker">Справочник · практика</p>
+    <h2>15 практических заданий</h2>
+    <p>Тема плохо усваивается чтением: паттерны запоминаются, когда вы сами упёрлись в проблему, которую они решают. Почти все задания выполняются на рабочем проекте.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Junior · 5 заданий</h3><span class="badge b-1">Junior</span></div>
+
+    <h4>1. Найти нарушения SOLID в своём коде</h4>
+    <p>Возьмите три класса из проекта и для каждого ответьте: сколько у него причин меняться, что придётся изменить при добавлении нового варианта поведения, можно ли протестировать без базы.</p>
+    <div class="box task"><span class="lbl">Результат</span>Список конкретных нарушений с описанием, чем каждое мешает, — и готовый пример для ответа на собеседовании.</div>
+
+    <h4>2. Заменить условие стратегией</h4>
+    <p>Найдите растущий <code>match</code> или <code>switch</code> по типу и переведите его на набор реализаций одного контракта. Затем добавьте новый вариант и убедитесь, что старый код не изменился.</p>
+    <div class="box task"><span class="lbl">Результат</span>Наглядная демонстрация принципа открытости/закрытости на своём коде.</div>
+
+    <h4>3. Ввести объект-значение</h4>
+    <p>Выберите поле, валидация которого повторяется в нескольких местах, и заверните его в тип с проверкой в конструкторе. Проследите, сколько проверок после этого удалось удалить.</p>
+    <div class="box task"><span class="lbl">Результат</span>Число убранных дублирующихся проверок — обычно оно удивляет.</div>
+
+    <h4>4. Тонкий контроллер</h4>
+    <p>Возьмите контроллер с логикой и вынесите сценарий в отдельный класс. Проверьте результат: получится ли вызвать то же действие из консольной команды, не дублируя код.</p>
+    <div class="box task"><span class="lbl">Результат</span>Один сценарий, вызываемый из двух точек входа, и контроллер, который читается за минуту.</div>
+
+    <h4>5. Каталог запахов проекта</h4>
+    <p>Пройдите по проекту с таблицей запахов и выпишите найденное: божественные объекты, длинные методы, флаги в аргументах, дублирующиеся правила. Оцените каждое по вредности.</p>
+    <div class="box task"><span class="lbl">Результат</span>Приоритизированный список — основа для последующих заданий и для разговора о рефакторинге.</div>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Middle · 6 заданий</h3><span class="badge b-2">Middle</span></div>
+
+    <h4>6. Богатая модель вместо анемичной</h4>
+    <p>Выберите сущность с переходами состояний и перенесите правила внутрь: таблица переходов, проверки в методах, доменные события. Удалите проверки, которые дублировались в сервисах.</p>
+    <div class="box task"><span class="lbl">Результат</span>Тесты правил, выполняющиеся без базы за миллисекунды, и невозможность нарушить инвариант снаружи.</div>
+
+    <h4>7. Границы агрегата</h4>
+    <p>Опишите для своего домена, где проходят границы агрегатов и почему: какие инварианты требуют немедленной согласованности, что связывается по идентификатору. Найдите места, где одна транзакция меняет несколько агрегатов.</p>
+    <div class="box task"><span class="lbl">Результат</span>Схема границ и список мест, где они нарушены, — типичный источник блокировок и конфликтов.</div>
+
+    <h4>8. Порты и адаптеры на одном модуле</h4>
+    <p>Переведите один сложный модуль на структуру с направлением зависимостей внутрь: домен без фреймворка, интерфейсы репозиториев в домене, реализации в инфраструктуре.</p>
+    <div class="box task"><span class="lbl">Результат</span>Домен, тестируемый реализацией в памяти, и честная оценка: сколько файлов добавилось и оправдано ли это.</div>
+
+    <h4>9. Проверка границ в CI</h4>
+    <p>Настройте статическую проверку архитектурных правил: домену запрещено импортировать инфраструктуру, модулям — лезть во внутренности друг друга. Зафиксируйте текущие нарушения как базовую линию.</p>
+    <div class="box task"><span class="lbl">Результат</span>Пайплайн, который падает на намеренно добавленном импорте ORM в домене.</div>
+
+    <h4>10. Разделение чтения и записи</h4>
+    <p>Найдите список, который строится через загрузку агрегатов, и замените его отдельным запросом под нужды экрана. Замерьте число запросов к базе и время до и после.</p>
+    <div class="box task"><span class="lbl">Результат</span>Два числа, которые обычно отличаются в разы, и понимание, где ещё в проекте та же проблема.</div>
+
+    <h4>11. Рефакторинг по шагам</h4>
+    <p>Возьмите метод длиннее ста строк и разберите его серией маленьких коммитов: тесты, выделение метода, типы вместо примитивов, вынос в класс. Каждый шаг — зелёные тесты.</p>
+    <div class="box task"><span class="lbl">Результат</span>История коммитов, по которой видно каждый шаг, и возможность откатиться на любом из них.</div>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Senior · 4 задания</h3><span class="badge b-3">Senior</span></div>
+
+    <h4>12. Карта модулей и границ</h4>
+    <p>Постройте карту зависимостей проекта: какие модули есть, кто от кого зависит, есть ли циклы, что лежит в общем модуле. Сопоставьте с тем, что меняется вместе по истории репозитория.</p>
+    <div class="box task"><span class="lbl">Результат</span>Схема с отмеченными проблемными связями и предложение по перенарезке одного модуля.</div>
+
+    <h4>13. Реестр технического долга</h4>
+    <p>Соберите долг проекта в таблицу: что, почему возникло, чем грозит, стоимость исправления и стоимость бездействия в месяц. Отсортируйте по отношению второго к первому.</p>
+    <div class="box task"><span class="lbl">Результат</span>Документ, с которым можно идти к продукту, и три верхние позиции, привязанные к ближайшим задачам.</div>
+
+    <h4>14. Антикоррупционный слой</h4>
+    <p>Выберите точку соприкосновения нового кода со старым и постройте слой перевода: своя модель внутри, преобразование на границе, явная обработка неизвестных значений.</p>
+    <div class="box task"><span class="lbl">Результат</span>Новый модуль, не зависящий от чужой модели, и одно место, которое придётся изменить при отключении легаси.</div>
+
+    <h4>15. Ревизия сложности</h4>
+    <p>Найдите в проекте абстракции, которые не окупились: интерфейсы с единственной реализацией, слои без решений, «универсальные» классы с флагами. Удалите три самых бесполезных.</p>
+    <div class="box task"><span class="lbl">Результат</span>Меньше файлов, короче путь чтения сценария — и полезный опыт: убирать сложность технически и психологически труднее, чем добавлять.</div>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+<!-- ==================== ПЛАН ==================== -->
+<section class="level lvl-n" id="plan">
+  <div class="level-head">
+    <p class="kicker">Финал · подготовка</p>
+    <h2>План подготовки на 4 недели</h2>
+    <p>Расчёт на 1,5–2 часа в будний день и 3–4 часа в выходной. Тема требует не заучивания, а переделывания собственного кода: каждое задание выполняется на рабочем проекте и сразу окупается.</p>
+  </div>
+
+  <article class="card lvl-j">
+    <div class="card-top"><h3>Неделя 1 · Принципы и повседневные паттерны</h3><span class="badge b-1">Фундамент</span></div>
+    <h4>Темы</h4>
+    <p>Связность и связанность, цена изменения, SOLID с примерами нарушений, стратегия, декоратор, адаптер, репозиторий, объект-значение, запахи кода, слои приложения и тонкий контроллер.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 1–5: нарушения SOLID в своём коде, замена условия стратегией, объект-значение, тонкий контроллер, каталог запахов.</li>
+      <li>Взять типовую задачу проекта и посчитать, сколько файлов она задевает.</li>
+      <li>Найти в проекте три класса с именами <code>Manager</code>, <code>Helper</code>, <code>Utils</code> и понять, что в них смешано.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Список конкретных проблем своего проекта, два-три исправленных места и умение объяснить SOLID на своём коде, а не по определению.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что такое связность и связанность?</li>
+      <li>Как выглядит нарушение единственной ответственности?</li>
+      <li>Что такое открытость/закрытость и когда её вводить?</li>
+      <li>Когда нужна стратегия, а когда декоратор?</li>
+      <li>Зачем объект-значение вместо строки?</li>
+      <li>Где должна жить бизнес-логика?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 2 · Домен и зависимости</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Композиция против наследования, кому принадлежит интерфейс, нужен ли интерфейс с одной реализацией, сущности и объекты-значения, агрегаты и границы согласованности, доменные события и сервисы, паттерны второго эшелона.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 6 и 7: богатая модель вместо анемичной, описание границ агрегатов.</li>
+      <li>Найти в проекте наследование, введённое ради переиспользования метода, и заменить композицией.</li>
+      <li>Проверить, есть ли транзакции, меняющие несколько агрегатов сразу.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Сущность с правилами внутри и быстрыми тестами, схема границ агрегатов и список мест, где они нарушены.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Почему композиция предпочтительнее наследования?</li>
+      <li>Кому принадлежит интерфейс и почему это важно?</li>
+      <li>Чем сущность отличается от объекта-значения?</li>
+      <li>Как выбрать границу агрегата?</li>
+      <li>Зачем нужны доменные события и чем за них платят?</li>
+      <li>Когда паттерн приносит вред?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-m">
+    <div class="card-top"><h3>Неделя 3 · Структура и рефакторинг</h3><span class="badge b-2">Инженерия</span></div>
+    <h4>Темы</h4>
+    <p>Порты и адаптеры, направление зависимостей и его автоматическая проверка, что даёт и чего стоит строгая структура, разделение чтения и записи, техника рефакторинга маленькими шагами, характеризующие тесты.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 8–11: порты и адаптеры на одном модуле, проверка границ в CI, разделение чтения и записи, рефакторинг по шагам.</li>
+      <li>Посчитать, сколько файлов добавилось после перевода модуля на строгую структуру, и честно оценить, оправдано ли это.</li>
+      <li>Найти эндпоинт списка с N+1 и заменить чтение плоским запросом.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Модуль с направленными внутрь зависимостями, автоматическая проверка правил в пайплайне и ускоренный список с замерами.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Что даёт гексагональная архитектура и в чём цена?</li>
+      <li>Как не дать границам размыться?</li>
+      <li>Зачем разделять модели чтения и записи?</li>
+      <li>Что такое рефакторинг и чем он не является?</li>
+      <li>Как рефакторить большой метод?</li>
+      <li>Что делать, если код невозможно протестировать?</li>
+    </ol>
+  </article>
+
+  <article class="card lvl-s">
+    <div class="card-top"><h3>Неделя 4 · Границы, долг, простота</h3><span class="badge b-3">Архитектура</span></div>
+    <h4>Темы</h4>
+    <p>Нарезка модулей и правила связей, циклы и общий модуль, виды технического долга и стратегии выплаты, легаси и антикоррупционный слой, постепенное замещение, цена абстракции и признаки переусложнения, закон Конвея.</p>
+    <h4>Практика</h4>
+    <ul>
+      <li>Задания 12–15: карта модулей, реестр технического долга, антикоррупционный слой, ревизия сложности.</li>
+      <li>Сопоставить границы модулей с тем, что меняется вместе по истории репозитория.</li>
+      <li>Проговорить вслух 20 senior-вопросов с таймером: 60–90 секунд, обязательно с ценой решения и с тем, от чего отказались.</li>
+    </ul>
+    <h4>Результат недели</h4>
+    <p>Карта модулей с проблемными связями, реестр долга с оценками, работающий слой изоляции от легаси и три удалённые бесполезные абстракции.</p>
+    <h4>Контрольные вопросы</h4>
+    <ol>
+      <li>Как решить, где провести границу модуля?</li>
+      <li>Что делать с циклическими зависимостями между модулями?</li>
+      <li>Как вести учёт технического долга и аргументировать рефакторинг?</li>
+      <li>Что такое антикоррупционный слой?</li>
+      <li>Почему переписывание с нуля обычно плохая идея?</li>
+      <li>Как понять, что архитектура переусложнена?</li>
+      <li>Почему дублирование бывает лучше абстракции?</li>
+      <li>Что удерживает архитектуру от размывания?</li>
+    </ol>
+  </article>
+
+  <article class="card">
+    <div class="card-top"><h3>Как отвечать на вопросы по архитектуре</h3><span class="badge b-tag">Бонус</span></div>
+    <ul>
+      <li><strong>Всегда называйте цену.</strong> «Применили порты и адаптеры» — половина ответа. «Применили в биллинге, домен тестируется без базы; заплатили многословием и преобразованиями между слоями; в каталоге не стали — там CRUD» — полный.</li>
+      <li><strong>Говорите об отказах.</strong> Сильнее всего звучит ответ, где есть «не стали»: не завели интерфейс, не выделили слой, не стали обобщать до третьего случая. Это отличает человека, который платил за сложность, от того, кто её только добавлял.</li>
+      <li><strong>Приводите пример из своего кода.</strong> На вопрос про SOLID выигрышнее всего рассказать про конкретный класс: что смешивалось, чем мешало, что изменилось после разделения.</li>
+      <li><strong>Не путайте уровни.</strong> Вопросы про модули, агрегаты и слои — про архитектуру кода; вопросы про сервисы, очереди и базы — про <a href="system-design.html">системный дизайн</a>. Полезно уточнить, о каком уровне речь, если формулировка расплывчата.</li>
+      <li><strong>Признавайте контекст.</strong> «Для команды из трёх человек и CRUD-проекта я бы не стал вводить строгую структуру» — сильный ответ. Универсальные рецепты без условий выдают отсутствие опыта.</li>
+      <li><strong>Держите наготове историю рефакторинга.</strong> Что болело, как измерили, какими шагами шли, что стало. Это отвечает сразу на вопросы про паттерны, тесты, работу с легаси и взаимодействие с бизнесом.</li>
+      <li><strong>Приносите артефакты.</strong> Карта модулей, реестр долга с оценками, конфигурация проверки границ, история коммитов пошагового рефакторинга.</li>
+    </ul>
+  </article>
+
+  <a class="up" href="#top">↑ Наверх</a>
+</section>
+
+</main>
+
+<footer class="foot">
+  <span>Конспект «Паттерны и архитектура кода» · Junior / Middle / Senior</span>
+  <span><a href="index.html">Все конспекты</a> · печать через Ctrl+P</span>
+</footer>
+
+</div>
